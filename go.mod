@@ -3,6 +3,7 @@ module github.com/kudobuilder/kuttl
 go 1.13
 
 require (
+	github.com/Masterminds/semver v1.5.0
 	github.com/Microsoft/go-winio v0.4.14 // indirect
 	github.com/containerd/containerd v1.2.9 // indirect
 	github.com/docker/distribution v2.7.1+incompatible // indirect
@@ -10,7 +11,6 @@ require (
 	github.com/docker/go-connections v0.4.0 // indirect
 	github.com/docker/go-units v0.4.0 // indirect
 	github.com/dustinkirkland/golang-petname v0.0.0-20191129215211-8e5a1ed0cff0
-	github.com/go-bindata/go-bindata v3.1.2+incompatible
 	github.com/gogo/protobuf v1.3.1 // indirect
 	github.com/golang/groupcache v0.0.0-20190129154638-5b532d6fd5ef // indirect
 	github.com/google/shlex v0.0.0-20191202100458-e7afc7fbc510
@@ -27,6 +27,7 @@ require (
 	github.com/opencontainers/image-spec v1.0.1 // indirect
 	github.com/pmezard/go-difflib v1.0.0
 	github.com/prometheus/client_golang v1.0.0 // indirect
+	github.com/spf13/cobra v0.0.5
 	github.com/spf13/pflag v1.0.5
 	github.com/stretchr/testify v1.4.0
 	github.com/thoas/go-funk v0.5.0
