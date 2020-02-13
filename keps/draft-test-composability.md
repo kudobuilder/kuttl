@@ -65,7 +65,7 @@ error:
 - ./install-error.yaml
 ```
 
-This will compose well with the existing `commands` feature of `TestSteps`.
+This will compose well with the existing `commands` feature of `TestSteps` (note: `commands` will be run prior to either `apply`, `assert`, or `error` during the actual test execution).
 
 ### Test Case file structure
 
