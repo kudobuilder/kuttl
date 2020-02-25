@@ -65,6 +65,10 @@ error:
 
 This will compose well with the existing `commands` feature of `TestSteps` (note: `commands` will be run prior to either `apply`, `assert`, or `error` during the actual test execution).
 
+### Testing Life-cycle
+
+Needed in order to make this `implementable` is definition of life-cycle with TestSteps, numbered test files, commands and controller hooks (controller setup).
+
 ### Test Case file structure
 
 By default, `TestCases` will use the same file structure they did before (documented in KEP-0002), where the first part of the file name indicates the `TestStep's` index and file usage (`assert`, `errors`, or other for files to apply). This will maintain backwards compatibility and the new `TestStep` settings can be used on any existing tests.
