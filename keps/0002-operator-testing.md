@@ -1,55 +1,54 @@
 ---
-kep-number: 8
+kep-number: 2
 title: Operator Testing
 short-desc: Description of how to test operators
 authors:
   - "@jbarrick-mesosphere"
-owners:
-  - "TBD"
-editor: TBD
+owners:  
+  - "@jbarrick-mesosphere"
+  - "@kensipe"
+editor: "@kensipe"
 creation-date: 2019-05-03
-last-updated: 2019-05-03
+last-updated: 2020-02-25
 status: implementable
-see-also:
-  - KEP-0004
 ---
 
 # Operator Testing
 
 ## Table of Contents
 
-  * [Summary](#summary)
-  * [Motivation](#motivation)
-     * [Goals](#goals)
-     * [Non-Goals](#non-goals)
-  * [User Stories](#user-stories)
-     * [KUDO Developers](#kudo-developers)
-     * [Operator Developer](#operator-developer)
-     * [Cluster Administrator](#cluster-administrator)
-     * [Application Operator](#application-operator)
-  * [Risks and Mitigations](#risks-and-mitigations)
-  * [Proposal](#proposal)
-     * [Definitions](#definitions)
-     * [Running the tests](#running-the-tests)
-     * [Directory structure](#directory-structure)
-     * [Test step file structure](#test-step-file-structure)
-        * [TestStep object](#teststep-object)
-        * [Assertion files](#assertion-files)
-          * [Resources that have non-deterministic names](#resources-that-have-non-deterministic-names)
-          * [TestAssert object](#testassert-object)
-        * [Test constraints](#test-constraints)
-     * [Results collection](#results-collection)
-     * [Garbage collection](#garbage-collection)
-  * [Graduation Criteria](#graduation-criteria)
-  * [Implementation History](#implementation-history)
-  * [Alternatives](#alternatives)
-  * [Infrastructure Needed](#infrastructure-needed)
+* [Summary](#summary)
+* [Motivation](#motivation)
+   * [Goals](#goals)
+   * [Non-Goals](#non-goals)
+* [User Stories](#user-stories)
+      * [Operator Developer](#operator-developer)
+      * [Cluster Administrator](#cluster-administrator)
+      * [Application Operator](#application-operator)
+* [Risks and Mitigations](#risks-and-mitigations)
+* [Proposal](#proposal)
+   * [Definitions](#definitions)
+   * [Running the tests](#running-the-tests)
+   * [Test suite configuration](#test-suite-configuration)
+   * [Test suite directory structure](#test-suite-directory-structure)
+   * [Test step file structure](#test-step-file-structure)
+      * [TestStep object](#teststep-object)
+      * [Assertion files](#assertion-files)
+         * [Resources that have non-deterministic names](#resources-that-have-non-deterministic-names)
+         * [TestAssert object](#testassert-object)
+      * [Commands](#commands)
+   * [Results collection](#results-collection)
+   * [Garbage collection](#garbage-collection)
+* [Graduation Criteria](#graduation-criteria)
+* [Implementation History](#implementation-history)
+* [Alternatives](#alternatives)
+* [Infrastructure Needed](#infrastructure-needed)
 
 ## Summary
 
-In order to ensure the reliability of Operators built on KUDO, it is important that developers of Operators are able to simply author and run tests that validate that their Operators are running correctly. Tests can be run in CI to verify changes, by Operator developers in their development cycle, and by cluster administrators to verify that Operators are fully functional in their Kubernetes clusters, across a variety of configurations.
+In order to ensure the reliability of Operators built for Kubernetes, it is important that developers of Operators are able to validate that their Operators are running correctly. Tests can be run in CI to verify changes, by Operator developers in their development cycle, and by cluster administrators to verify that Operators are fully functional in their Kubernetes clusters, across a variety of configurations.
 
-This document outlines a simple, declarative test harness for authoring and running acceptance test suites for KUDO Operators.
+This document outlines a simple, declarative test harness for authoring and running acceptance test suites for Kubernetes Operators.
 
 ## Motivation
 
@@ -58,9 +57,9 @@ This document outlines a simple, declarative test harness for authoring and runn
 * Allow Operator developers to write acceptance and unit test cases for Operators.
 * Allow Application Operators and Cluster Administrators to write test cases that validate their customizations to Operators.
 * Run test suites for Operators on pull requests for Operators.
-* Support running test suites via a `kubectl kudo` subcommand against any cluster.
+* Support running test suites via a `kubectl kuttl` subcommand against any cluster.
 * Integration with Sonobuoy to validate Operators in any cluster.
-* Ensure that KUDO Operator developers have a consistent development experience - from writing their operators to testing them.
+* Ensure that Operator developers have a consistent development experience - from writing their operators to testing them.
 
 ### Non-Goals
 
@@ -68,14 +67,6 @@ This document outlines a simple, declarative test harness for authoring and runn
 * Provisioning Kubernetes test infrastructure.
 
 ## User Stories
-
-#### KUDO Developers
-
-As the KUDO development team, I...
-
-* *Must* be able to validate that KUDO releases do not break existing Operators.
-* *Must* be able to validate that Operator contributions do not break existing Operators.
-* *Must* be able to validate Operators in many different Kubernetes environments to ensure compatibility.
 
 #### Operator Developer
 
@@ -102,7 +93,7 @@ As an Application Operator, I...
 
 ## Risks and Mitigations
 
-* Perhaps the most important consideration when building any testing pipeline is ensuring that developer velocity is not impacted. This is especially important for KUDO, since the developer experience for Operator developers is critical to the success of the project. To mitigate this, we need to optimize the runtime of the test suites and pull request flow. Operator contributions should only run tests for the Operators that are affected by the pull request. Tests should have a fixed upper time limit to prevent any new tests from causing excessive delays. Tests fail early.
+* Perhaps the most important consideration when building any testing pipeline is ensuring that developer velocity is not impacted.  To mitigate this, we need to optimize the runtime of the test suites and pull request flow. Operator contributions should only run tests for the Operators that are affected by the pull request. Tests should have a fixed upper time limit to prevent any new tests from causing excessive delays. Tests fail early.
 * If the test harness is not designed well, contributions to the project become very difficult or the harness does not get adopted by developers. We provide a minimal, declarative format for authoring tests to encourage adoption and provide simple ways to execute the tests to ensure that it is easy to get started.
 * The test harness is not valuable if no test cases are written. This means Operator developers need to write test cases! We encourage test case authoring by writing good documentation, integrating the test harness into the CI/CD pipeline, and potentially enacting policies around testing for official Operators. We can also advocate for testing via blogs and interactions with Operator developers.
 * As we take a declarative approach to testing, it's important to ensure that the abstractions built are not leaky. Leaky abstractions lead to greater complexity and make the test suite hard to use. We decrease this risk by narrowing the scope to focus on the state of Kubernetes objects in the Kubernetes API, refering to prior work (see [Alternatives](#Alternatives)), and building a minimal solution. We also will write tests for existing Operators and work with authors of new Operators to ensure that the solution is generally useful.
@@ -114,7 +105,7 @@ Test cases will be authored by defining Kubernetes objects to apply and Kubernet
 ### Definitions
 
 
-* `Operator`: A KUDO Operator.
+* `Operator`: A [Kubernetes Operator](https://kubernetes.io/docs/concepts/extend-kubernetes/operator/).
 * `Test Harness`: the tool that runs a test suite.
 * `Test Suite`: a collection of test cases.
 * `Test Case`: a single, self contained test - can be run in parallel to other test cases.
@@ -123,7 +114,7 @@ Test cases will be authored by defining Kubernetes objects to apply and Kubernet
 
 ### Running the tests
 
-Tests will be invoked via a CLI tool that runs the test suite against the current Kubernetes context by default, or optionally against a mocked control plane or kind (kubernetes-in-docker) cluster. It will be packaged with the default set of test suites from the KUDO Operators repository using go-bindata, with the ability to provide alternative directories containing tests to use.
+Tests will be invoked via a CLI tool that runs the test suite against the current Kubernetes context by default, or optionally against a mocked control plane or kind (kubernetes-in-docker) cluster.
 
 The tool will enumerate each test case (group of test steps) and run them concurrently in batches. Each test case will run in its own namespace (care must be taken that cluster-level resources do not collide with other test cases [??? TODO: solvable?]) which will be deleted after the test case has been completed. Resources in test steps that are namespace-level will have their namespace set to the test case namespace if it is not present.
 
@@ -135,7 +126,7 @@ The test harness can also be run in a unit testing mode, where it spins up a dum
 
 ### Test suite configuration
 
-The test suite is configured either using command line arguments to `kubectl kudo test` or a provided configuration file.
+The test suite is configured either using command line arguments to `kubectl kuttl test` or a provided configuration file.
 
 The configuration format is a YAML file containing the following struct:
 
@@ -152,7 +143,7 @@ type TestSuite struct {
 	TestDirs          []string
 	// Kubectl specifies a list of kubectl commands to run prior to running the tests.
 	Kubectl []string `json:"kubectl"`
-	// Commands to run prior to running the tests. 
+	// Commands to run prior to running the tests.
 	Commands []Command `json:"commands"`
 	// Whether or not to start a local etcd and kubernetes API server for the tests (cannot be set with StartKIND)
 	StartControlPlane bool
@@ -165,8 +156,6 @@ type TestSuite struct {
 	// If set, each node defined in the kind configuration will have a docker named volume mounted into it to persist
 	// pulled container images across test runs.
 	KINDNodeCache bool `json:"kindNodeCache"`
-	// Whether or not to start the KUDO controller for the tests.
-	StartKUDO         bool
 	// If set, do not delete the resources after running the tests (implies SkipClusterDelete).
 	SkipDelete bool `json:"skipDelete"`
 	// If set, do not delete the mocked control plane or kind cluster.
@@ -185,7 +174,7 @@ type Command struct {
 }
 ```
 
-A configuration file can be provided to `kubectl kudo test` using the `--config` argument.
+A configuration file can be provided to `kubectl kuttl test` using the `--config` argument.
 
 ### Test suite directory structure
 
@@ -372,17 +361,17 @@ In order for a test case to be considered successful, all resources created by i
 
 ## Alternatives
 
-Controllers are typically tested using test libraries in the same language that they are written in. While these libraries and examples can provide good inspiration and insights into how to test Operators, they depart from the declarative spirit of KUDO making them unsuitable for use as the user-facing interface for writing tests.
+Controllers are typically tested using test libraries in the same language that they are written in. While these libraries and examples can provide good inspiration and insights into how to test Operators, they depart from the declarative spirit of Kubernetes making them unsuitable for use as the user-facing interface for writing tests.
 
 * [Kubernetes e2e test operator](https://godoc.org/k8s.io/kubernetes/test/e2e/operator) provides a methods that interact with Kubernetes resources and wait for certain Kubernetes state. It also supports conditionally running tests and collecting logs and results from pods and nodes.
 * Unit tests can be written using the [Kubernetes fake clientset](https://godoc.org/k8s.io/client-go/kubernetes/fake) without needing a Kubernetes API at all - allowing easy testing of expected state transitions in a controller.
-* The [controller-runtime](https://godoc.org/sigs.k8s.io/controller-runtime/pkg) provides test machinery that makes it easy to integration test controllers without a running Kubernetes cluster. The KUDO project itself uses these extensively.
-* The [Kubernetes command-line integration test suite](https://github.com/kubernetes/kubernetes/tree/master/test/cmd) is a BASH-driven integration test suite that uses kubectl commands to run tests. This could be a suitable option as it is not a specialized programming language, but it is an imperative method of testing which may not be the right UX for KUDO.
+* The [controller-runtime](https://godoc.org/sigs.k8s.io/controller-runtime/pkg) provides test machinery that makes it easy to integration test controllers without a running Kubernetes cluster.
+* The [Kubernetes command-line integration test suite](https://github.com/kubernetes/kubernetes/tree/master/test/cmd) is a BASH-driven integration test suite that uses kubectl commands to run tests. This could be a suitable option as it is not a specialized programming language, but it is an imperative method of testing.
 * [Terratest](https://godoc.org/github.com/gruntwork-io/terratest/modules/k8s) is a Go-based testing harness that provides methods for interacting with Kubernetes resources and waiting for them to be ready.
 * [metacontroller](https://github.com/GoogleCloudPlatform/metacontroller/blob/master/examples/daemonjob/test.sh) does not provide a test harness out of the box, but many of their examples use a bash script with kubectl commands to compose simple tests.
 * [Terraform provider acceptance tests](https://www.terraform.io/docs/extend/testing/acceptance-tests/testcase.html) are authored by providing a series of configurations to apply with expected states and provided some inspiration for this design.
 
-[Helm charts](https://github.com/helm/helm/blob/master/docs/chart_tests.md) use a scheme for running tests where tests are defined as Kubernetes Jobs that are run and the result is determined by the Job status. This methodology is compatible with KUDO and can be seen applied in the Zookeeper Operator's [validation job](https://github.com/kudobuilder/operators/blob/2b1151eca761c0fbe61474ba44b0bdaa4f80a0fb/repo/stable/zookeeper/versions/0/zookeeper-operatorversion.yaml#L161-L188). This document does not supercede this technique (tests written for KUDO Operators can easily incorporate these validation stages), the machinery provided here will be able to easily incorporate these tests to improve test quality.
+[Helm charts](https://github.com/helm/helm/blob/master/docs/chart_tests.md) use a scheme for running tests where tests are defined as Kubernetes Jobs that are run and the result is determined by the Job status. This methodology can be seen applied in the Zookeeper Operator's [validation job](https://github.com/kudobuilder/operators/blob/2b1151eca761c0fbe61474ba44b0bdaa4f80a0fb/repo/stable/zookeeper/versions/0/zookeeper-operatorversion.yaml#L161-L188). This document does not supercede this technique, the machinery provided here will be able to easily incorporate these tests to improve test quality.
 
 [OPA's testing harness](https://www.openpolicyagent.org/docs/v0.10.7/how-do-i-test-policies/) takes a similar approach to testing JSON objects, by allowing evaluating OPA policies and then asserting on certain attributes or responses given mock inputs and OPA in general is a good example of testing declarative resources (see [terraform testing](https://www.openpolicyagent.org/docs/latest/terraform/)). If we find the proposed scheme for asserting on resource attributes is not powerful enough, then OPA policies may be a good approach for authoring assertions.
 
