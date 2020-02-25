@@ -1,5 +1,5 @@
 ---
-kep-number: 0
+kep-number: 5
 short-desc: Overview of providing KUTTL for use as a Go library
 title: KUTTL as a Library
 authors:
@@ -8,12 +8,10 @@ authors:
 owners:
   - "@mpereira"
   - "@jbarrick-mesosphere"
-editor: TBD
+editor: "@kensipe"
 creation-date: 2020-02-13
-last-updated: 2020-02-13
+last-updated: 2020-02-25
 status: provisional
-see-also:
-  - KEP-2
 ---
 
 # KUTTL as a Library
@@ -55,7 +53,7 @@ Rather than building an entirely new library, we will unify the library and test
 * Err on the side of flexibility
 * Err on the side of returning errors instead of panicking/Fatalf/etc.
 * Cohesive logging output (parameters, formatting, etc.)
-* Separation of concerns between domains (KUDO, Kubernetes, etc.)
+* Separation of concerns between domains (KUDO, Operators, Kubernetes, etc.)
 
 ## Proposal
 
@@ -67,7 +65,7 @@ We will improve and break-down the interface of the kuttl library to make it eas
 * Test setup and tear down methods (is currently coupled to steps).
 * Cluster and test environment provisioning (this is currently coupled to `Harness` in `harness.go`).
 
-Additionally, KUDO-specific helper methods will be provided in the library that can be used by library users.
+Additionally, Operator-specific helper methods will be provided in the library that can be used by library users.
 
 We will also endeavor to stay close to the API used by the kudo-cassandra-operator testing library to ensure that migration of existing tests is easy.
 
