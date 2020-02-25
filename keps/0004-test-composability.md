@@ -1,17 +1,15 @@
 ---
-kep-number: 0
+kep-number: 4
 short-desc: This KEP proposes a scheme for making test steps, asserts, and manifests composable in order to prevent repetition of YAML across test cases.
 title: KUTTL Test Composability
 authors:
   - "@jbarrick-mesosphere"
 owners:
   - "@jbarrick-mesosphere"
-editor: TBD
+editor: "@kensipe"
 creation-date: 2020-02-12
-last-updated: 2020-02-12
-status: draft
-see-also:
-  - KEP-2
+last-updated: 2020-02-25
+status: provisional
 ---
 
 # KUTTL Test Composability
@@ -20,11 +18,11 @@ This KEP proposes a scheme for making test steps, asserts, and manifests composa
 
 ## Table of Contents
 
-* [Table of Contents](#table-of-contents)
 * [Summary](#summary)
-* [Motivation](#motivation)
-    * [Goals](#goals)
-* [Proposal](#proposal)
+  * [Motivation](#motivation)
+     * [Goals](#goals)
+  * [Proposal](#proposal)
+     * [Test Case file structure](#test-case-file-structure)
 
 ## Summary
 
