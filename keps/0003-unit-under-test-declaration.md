@@ -1,17 +1,15 @@
 ---
-kep-number: 0
+kep-number: 3
 short-desc: This KEP describes how we will launch the process that is being tested as a part of KUTTL.
 title: KUTTL Unit Under Test Declaration
 authors:
   - "@jbarrick-mesosphere"
 owners:
   - "@jbarrick-mesosphere"
-editor: TBD
+editor: "@kensipe"
 creation-date: 2020-02-12
-last-updated: 2020-02-12
-status: draft
-see-also:
-  - KEP-2
+last-updated: 2020-02-25
+status: provisional
 ---
 
 # KUTTL Unit Under Test Declaration
@@ -21,8 +19,7 @@ This KEP describes how we will launch the process that is being tested as a part
 ## Table of Contents
 
 * [Summary](#summary)
-* [Motivation](#motivation)
-    * [Goals](#goals)
+  * [Goals](#goals)
 * [Proposal](#proposal)
 * [Alternatives](#alternatives)
 
