@@ -1,0 +1,216 @@
+#!starlark
+# vi:syntax=python
+
+def storageResource(name):
+    resource(name, type = "storage", params = {
+        "type": "gcs",
+        "location": "s3://artifacts",
+    }, secrets = {
+        "BOTO_CONFIG": k8s.corev1.SecretKeySelector(key = "boto", localObjectReference = k8s.corev1.LocalObjectReference(name = "s3-config"))
+    })
+
+    return name
+
+def secretVar(name, key):
+    return k8s.corev1.EnvVarSource(secretKeyRef=k8s.corev1.SecretKeySelector(localObjectReference=k8s.corev1.LocalObjectReference(name=name), key=key))
+
+def buildkitContainer(name, image, workingDir, command, output=True, **kwargs):
+    """
+    buildkitContainer returns a Kubernetes corev1.Container that runs inside of buildkit.
+
+    The container can take advantage of buildkit's cache mount feature as the cache is mounted into /cache.
+    """
+
+    envStr = ""
+
+    for envVar in kwargs.get("env", []):
+        envStr += "ENV {} {}\n".format(envVar.name, envVar.value)
+
+    dockerfile = """
+cat > /tmp/Dockerfile.buildkit <<EOF
+# syntax = docker/dockerfile:experimental
+FROM {image}
+
+WORKDIR {workingDir}
+
+ENV GOCACHE /cache/go-cache
+ENV GOPATH /cache/go
+ENV DOCKER_CONFIG /tekton/home/.docker
+
+{envStr}
+
+ADD /tekton/home/.docker /tekton/home/.docker
+"""
+
+    if output:
+        dockerfile += "ADD /workspace/output/ /workspace/output/"
+
+    dockerfile += """
+ADD {workingDir} {workingDir}
+
+RUN --mount=type=cache,target=/cache {command}
+
+FROM scratch
+
+"""
+
+    if output:
+        dockerfile += "COPY --from=0 /workspace/output/ /workspace/output/"
+
+    dockerfile += """
+COPY --from=0 {workingDir} {workingDir}
+EOF
+
+buildctl --debug --addr=tcp://buildkitd.buildkit:1234 build --progress=plain --frontend=dockerfile.v0 \
+    --opt filename=Dockerfile.buildkit --local context=/ --local dockerfile=/tmp/ --output type=local,dest=/
+"""
+
+    return k8s.corev1.Container(
+        name = name,
+        image = "moby/buildkit:v0.6.2",
+        workingDir = workingDir,
+        command = [
+            "sh", "-c", dockerfile.format(envStr=envStr, name=name, workingDir=workingDir, image=image, command=command)
+        ],
+        **kwargs)
+
+def go_test(git, name, paths=None, **kwargs):
+    if not paths:
+        paths = []
+
+    taskName = "{}-test".format(name)
+
+    storageResource(taskName)
+
+    task(taskName, inputs = [git], outputs = [taskName], steps = [
+        buildkitContainer(
+            name = "go-test-{}".format(name),
+            image = "golang:1.13.0-buster",
+            command = [ "go", "test", "-v", "-coverprofile", "/workspace/output/{}/coverage.out".format(taskName) ] + paths,
+            env = [ k8s.corev1.EnvVar(name="GO111MODULE", value="on") ],
+            workingDir = "/workspace/{}".format(git)
+        ),
+        k8s.corev1.Container(
+            name = "coverage-report-{}".format(name),
+            image = "golang:1.13.0-buster",
+            workingDir = "/workspace/{}/".format(git),
+            command = [
+                "sh", "-c",
+                """
+                go tool cover -func /workspace/output/{}/coverage.out | tee /workspace/output/{}/coverage.txt
+                cp /workspace/output/{}/coverage.txt coverage.txt
+                git add coverage.txt
+                git diff --cached coverage.txt
+                """.format(taskName, taskName, taskName)
+            ],
+            env = [ k8s.corev1.EnvVar(name="GO111MODULE", value="on") ],
+        )], **kwargs)
+
+    return taskName
+
+def go(git, name, ldflags=None, os=None, **kwargs):
+    if not os:
+        os = ['linux']
+
+    taskName = "{}-build".format(name)
+
+    storageResource(taskName)
+
+    command = [ "go", "build" ]
+
+    if ldflags:
+        command += ["-ldflags", ldflags]
+
+    steps = []
+
+    for os_name in os:
+        steps.append(buildkitContainer(
+            name = "go-build-{}".format(os_name),
+            image = "golang:1.13.0-buster",
+            command = command + [
+                "-o", "/workspace/output/{}/{}_{}".format(taskName, name, os_name), "./cmd/{}".format(name)
+            ],
+            env = [
+                k8s.corev1.EnvVar(name="GO111MODULE", value="on"),
+                k8s.corev1.EnvVar(name="GOOS", value=os_name),
+                k8s.corev1.EnvVar(name="CGO_ENABLED", value="0"),
+            ],
+            workingDir = "/workspace/{}".format(git)
+        ))
+
+    task(taskName, inputs = [git], outputs = [taskName], steps=steps, **kwargs)
+    return taskName
+
+git = "kuttl-git"
+
+gitResource(git, url="$(context.git.url)", revision="$(context.git.commit)")
+
+kuttl_test = go_test(git, "kuttl", paths=["./pkg/...", "./cmd/..."])
+
+kuttl = go(git, "kubectl-kuttl", os=[
+    "linux", "darwin"
+])
+
+task("lint", inputs = [ git ], steps = [
+    buildkitContainer(
+        name = "lint",
+        image = "golangci/golangci-lint:v1.23.8",
+        command = [ "golangci-lint", "run", "-v", "--timeout=300s", "./pkg/...", "./cmd/..." ],
+        env = [ k8s.corev1.EnvVar(name="GO111MODULE", value="on") ],
+        workingDir = "/workspace/{}".format(git),
+        output = False
+    )
+])
+
+kubebuilder = storageResource("kubebuilder")
+
+task("fetch-kubebuilder", outputs = [ kubebuilder ], steps = [
+    k8s.corev1.Container(
+        name = "fetch-kubebuilder",
+        image = "byrnedo/alpine-curl",
+        command = [ "/bin/ash", "-c", """
+        curl -L https://github.com/kubernetes-sigs/kubebuilder/releases/download/v{version}/kubebuilder_{version}_linux_amd64.tar.gz |tar -C /workspace/output/{storage}/ --strip-components=2 -xzf - kubebuilder_{version}_linux_amd64/bin/kube-apiserver kubebuilder_{version}_linux_amd64/bin/etcd kubebuilder_{version}_linux_amd64/bin/kubectl
+        """.format(version="2.3.0", storage = kubebuilder)]
+    )
+])
+
+task("integration-test", inputs = [ git, kuttl, kubebuilder ], steps = [
+    k8s.corev1.Container(
+        name = "integration-test",
+        image = "debian:buster",
+        command = [ "/bin/bash", "-c", """
+            cp /workspace/{kubebuilder}/kubectl /usr/bin
+            /workspace/{kuttl}/kubectl-kuttl_linux test
+        """.format(kuttl=kuttl, kubebuilder=kubebuilder) ],
+        env = [ k8s.corev1.EnvVar(name="KUBEBUILDER_ASSETS", value="/workspace/{}".format(kubebuilder)) ],
+        workingDir = "/workspace/{}".format(git)
+    )
+])
+
+tasks = [ kuttl_test, kuttl, "lint", "integration-test" ]
+
+task("release", inputs = [ git, kuttl ], deps = tasks, steps = [
+    k8s.corev1.Container(
+        name = "release",
+        image = "debian:buster",
+        workingDir = "/workspace/{}".format(git),
+        command = [
+            "/bin/bash", "-c",
+            """
+            set -e
+            apt-get update && apt-get install -y curl bzip2
+            curl -L https://github.com/aktau/github-release/releases/download/v0.7.2/linux-amd64-github-release.tar.bz2 |tar -C /usr/bin/ --strip-components=3 -xjf - bin/linux/amd64/github-release
+            github-release release --user kudobuilder --repo kuttl --tag {tag} --name {tag} --description {tag}
+            github-release upload --user kudobuilder --repo kuttl --tag {tag} --file /workspace/{kuttl}/kubectl-kuttl_linux --name kubectl-kuttl_linux_{tag}
+            github-release upload --user kudobuilder --repo kuttl --tag {tag} --file /workspace/{kuttl}/kubectl-kuttl_darwin --name kubectl-kuttl_darwin_{tag}
+            """.format(tag="$(context.git.tag)", kuttl=kuttl)
+        ],
+        env = [
+            k8s.corev1.EnvVar(name="GITHUB_TOKEN", valueFrom=secretVar("scmtoken", "password"))
+        ]
+    )
+])
+
+action(tasks = tasks, on = pullRequest())
+action(tasks = tasks, on = pullRequest(chatops=["build"]))
+action(tasks = tasks + [ "release" ], on = tag())

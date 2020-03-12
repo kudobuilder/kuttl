@@ -1,6 +1,6 @@
 apiVersion: kudo.dev/v1beta1
 kind: TestSuite
 testDirs:
-- ./test/integration
+- ./pkg/test/test_data/
 startControlPlane: true
 parallel: 4
