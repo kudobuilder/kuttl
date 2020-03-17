@@ -283,6 +283,7 @@ func (h *Harness) DockerClient() (testutils.DockerClient, error) {
 // RunTests should be called from within a Go test (t) and launches all of the KUDO integration
 // tests at dir.
 func (h *Harness) RunTests() {
+	h.T.Log("Running tests")
 	tests := []*Case{}
 
 	for _, testDir := range h.TestSuite.TestDirs {
@@ -313,11 +314,17 @@ func (h *Harness) RunTests() {
 	})
 }
 
-// Run the test harness - start KUDO and the control plane and install the operators, if necessary
-// and then run the tests.
+// Run the test harness - start KUDO and the control plane and then run the tests.
 func (h *Harness) Run() {
-	rand.Seed(time.Now().UTC().UnixNano())
+	h.Setup()
+	h.RunTests()
+}
 
+// Setup spins up the test env based on configuration
+// It can be used to start env which can than be modified prior to running tests, otherwise use Run().
+func (h *Harness) Setup() {
+	rand.Seed(time.Now().UTC().UnixNano())
+	h.T.Log("Starting Setup")
 	defer h.Stop()
 
 	cl, err := h.Client(false)
@@ -361,8 +368,6 @@ func (h *Harness) Run() {
 	if err := testutils.RunKubectlCommands(h.GetLogger(), "default", h.TestSuite.Kubectl, ""); err != nil {
 		h.T.Fatal(err)
 	}
-
-	h.RunTests()
 }
 
 // Stop the test environment and KUDO, clean up the harness.
