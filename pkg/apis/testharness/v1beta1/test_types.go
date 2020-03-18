@@ -33,8 +33,6 @@ type TestSuite struct {
 	KINDNodeCache bool `json:"kindNodeCache"`
 	// Containers to load to each KIND node prior to running the tests.
 	KINDContainers []string `json:"kindContainers"`
-	// Whether or not to start the KUDO controller for the tests.
-	StartKUDO bool `json:"startKUDO"`
 	// If set, do not delete the resources after running the tests (implies SkipClusterDelete).
 	SkipDelete bool `json:"skipDelete"`
 	// If set, do not delete the mocked control plane or kind cluster.
