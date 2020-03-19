@@ -946,8 +946,10 @@ func RunCommand(ctx context.Context, namespace string, command string, cmd harne
 	}
 
 	builtCmd.Dir = cwd
-	builtCmd.Stdout = stdout
-	builtCmd.Stderr = stderr
+	if !cmd.Background {
+		builtCmd.Stdout = stdout
+		builtCmd.Stderr = stderr
+	}
 	builtCmd.Env = []string{
 		fmt.Sprintf("KUBECONFIG=%s/kubeconfig", actualDir),
 		fmt.Sprintf("PATH=%s/bin/:%s", actualDir, os.Getenv("PATH")),
@@ -992,7 +994,9 @@ func RunCommands(logger Logger, namespace string, command string, commands []har
 		bg, err := RunCommand(context.TODO(), namespace, command, cmd, workdir, stdout, stderr)
 		if err != nil {
 			errs = append(errs, err)
-			bgs = append(bgs, bg)
+			if bg != nil {
+				bgs = append(bgs, bg)
+			}
 		}
 
 		logger.Log(stderr.String())

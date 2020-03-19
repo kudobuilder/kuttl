@@ -365,10 +365,10 @@ func (h *Harness) Setup() {
 		}
 	}
 	bgs, errs := testutils.RunCommands(h.GetLogger(), "default", "", h.TestSuite.Commands, "")
-	// assign any background processes first for cleanup if err is fatal
+	// assign any background processes first for cleanup in case of any errors
 	h.bgProcesses = append(h.bgProcesses, bgs...)
 	if errs != nil {
-		h.fatal(err)
+		h.fatal(errs)
 	}
 
 	if errs := testutils.RunKubectlCommands(h.GetLogger(), "default", h.TestSuite.Kubectl, ""); errs != nil {
@@ -404,8 +404,8 @@ func (h *Harness) Stop() {
 	}
 
 	if h.bgProcesses != nil {
-		for _, process := range h.bgProcesses {
-			err := process.Process.Kill()
+		for _, p := range h.bgProcesses {
+			err := p.Process.Kill()
 			if err != nil {
 				h.T.Log("background process kill error", err)
 			}
@@ -436,6 +436,7 @@ func (h *Harness) Stop() {
 }
 
 // wraps Test.Fatal in order to clean up harness
+// fatal should NOT be used with a go routine, it is not thread safe
 func (h *Harness) fatal(args ...interface{}) {
 	// clean up on fatal in setup
 	if !h.stopping {
