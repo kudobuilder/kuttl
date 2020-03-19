@@ -933,15 +933,16 @@ func GetArgs(ctx context.Context, command string, cmd harness.Command, namespace
 
 // RunCommand runs a command with args.
 // args gets split on spaces (respecting quoted strings).
-func RunCommand(ctx context.Context, namespace string, command string, cmd harness.Command, cwd string, stdout io.Writer, stderr io.Writer) error {
+// if the command is run in the background a reference to the process is returned for later cleanup
+func RunCommand(ctx context.Context, namespace string, command string, cmd harness.Command, cwd string, stdout io.Writer, stderr io.Writer) (*exec.Cmd, error) {
 	actualDir, err := os.Getwd()
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	builtCmd, err := GetArgs(ctx, command, cmd, namespace)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	builtCmd.Dir = cwd
@@ -952,23 +953,34 @@ func RunCommand(ctx context.Context, namespace string, command string, cmd harne
 		fmt.Sprintf("PATH=%s/bin/:%s", actualDir, os.Getenv("PATH")),
 	}
 
-	err = builtCmd.Run()
+	err = builtCmd.Start()
 	if err != nil {
 		if _, ok := err.(*exec.ExitError); ok && cmd.IgnoreFailure {
-			return nil
+			return nil, nil
 		}
+		return nil, err
 	}
 
-	return err
+	if cmd.Background {
+		return builtCmd, nil
+	}
+
+	err = builtCmd.Wait()
+	if _, ok := err.(*exec.ExitError); ok && cmd.IgnoreFailure {
+		return nil, nil
+	}
+	return nil, err
 }
 
 // RunCommands runs a set of commands, returning any errors.
 // If `command` is set, then `command` will be the command that is invoked (if a command specifies it already, it will not be prepended again).
-func RunCommands(logger Logger, namespace string, command string, commands []harness.Command, workdir string) []error {
+// commands running in the background are returned
+func RunCommands(logger Logger, namespace string, command string, commands []harness.Command, workdir string) ([]*exec.Cmd, []error) {
 	errs := []error{}
+	bgs := []*exec.Cmd{}
 
 	if commands == nil {
-		return nil
+		return nil, nil
 	}
 
 	for _, cmd := range commands {
@@ -977,9 +989,10 @@ func RunCommands(logger Logger, namespace string, command string, commands []har
 
 		logger.Logf("Running command: %s %s", command, cmd)
 
-		err := RunCommand(context.TODO(), namespace, command, cmd, workdir, stdout, stderr)
+		bg, err := RunCommand(context.TODO(), namespace, command, cmd, workdir, stdout, stderr)
 		if err != nil {
 			errs = append(errs, err)
+			bgs = append(bgs, bg)
 		}
 
 		logger.Log(stderr.String())
@@ -987,10 +1000,10 @@ func RunCommands(logger Logger, namespace string, command string, commands []har
 	}
 
 	if len(errs) == 0 {
-		return nil
+		return nil, nil
 	}
 
-	return errs
+	return bgs, errs
 }
 
 // RunKubectlCommands runs a set of kubectl commands, returning any errors.
@@ -1003,8 +1016,9 @@ func RunKubectlCommands(logger Logger, namespace string, commands []string, work
 			Namespaced: true,
 		})
 	}
-
-	return RunCommands(logger, namespace, "kubectl", apiCommands, workdir)
+	// ignore background processes as kubectl commands are not allowed to have them
+	_, errs := RunCommands(logger, namespace, "kubectl", apiCommands, workdir)
+	return errs
 }
 
 // Kubeconfig converts a rest.Config into a YAML kubeconfig and writes it to w

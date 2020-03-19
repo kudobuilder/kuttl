@@ -104,6 +104,8 @@ type Command struct {
 	Namespaced bool `json:"namespaced"`
 	// If set, failures will be ignored.
 	IgnoreFailure bool `json:"ignoreFailure"`
+	// If set, the command is run in the background.
+	Background bool `json:"background"`
 }
 
 // DefaultKINDContext defines the default kind context to use.
