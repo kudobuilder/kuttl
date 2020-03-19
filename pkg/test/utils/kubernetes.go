@@ -955,9 +955,11 @@ func RunCommand(ctx context.Context, namespace string, command string, cmd harne
 		fmt.Sprintf("PATH=%s/bin/:%s", actualDir, os.Getenv("PATH")),
 	}
 
+	// process started and exited with error
+	var exerr *exec.ExitError
 	err = builtCmd.Start()
 	if err != nil {
-		if _, ok := err.(*exec.ExitError); ok && cmd.IgnoreFailure {
+		if errors.As(err, &exerr) && cmd.IgnoreFailure {
 			return nil, nil
 		}
 		return nil, err
@@ -968,7 +970,7 @@ func RunCommand(ctx context.Context, namespace string, command string, cmd harne
 	}
 
 	err = builtCmd.Wait()
-	if _, ok := err.(*exec.ExitError); ok && cmd.IgnoreFailure {
+	if errors.As(err, &exerr) && cmd.IgnoreFailure {
 		return nil, nil
 	}
 	return nil, err

@@ -3,6 +3,7 @@
 package utils
 
 import (
+	"bytes"
 	"context"
 	"fmt"
 	"log"
@@ -13,6 +14,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"k8s.io/apimachinery/pkg/watch"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+
+	harness "github.com/kudobuilder/kuttl/pkg/apis/testharness/v1beta1"
 )
 
 var testenv TestEnvironment
@@ -106,4 +109,57 @@ func TestClientWatch(t *testing.T) {
 	assert.Equal(t, client.ObjectKey{"default", "my-pod"}, ObjectKey(event.Object))
 
 	events.Stop()
+}
+
+func TestRunCommand(t *testing.T) {
+	stdout := &bytes.Buffer{}
+	stderr := &bytes.Buffer{}
+	hcmd := harness.Command{
+		Command: "echo 'hello'",
+	}
+
+	// assert foreground cmd returns nil
+	cmd, err := RunCommand(context.TODO(), "", "", hcmd, "", stdout, stderr)
+	assert.NoError(t, err)
+	assert.Nil(t, cmd)
+	// foreground processes should have stdout
+	assert.NotEmpty(t, stdout)
+
+	hcmd.Background = true
+	stdout = &bytes.Buffer{}
+
+	// assert background cmd returns process
+	cmd, err = RunCommand(context.TODO(), "", "", hcmd, "", stdout, stderr)
+	assert.NoError(t, err)
+	assert.NotNil(t, cmd)
+	// no stdout for background processes
+	assert.Empty(t, stdout)
+}
+
+func TestRunCommandIgnoreErrors(t *testing.T) {
+	stdout := &bytes.Buffer{}
+	stderr := &bytes.Buffer{}
+	hcmd := harness.Command{
+		Command:       "sleep -u",
+		IgnoreFailure: true,
+	}
+
+	// assert foreground cmd returns nil
+	cmd, err := RunCommand(context.TODO(), "", "", hcmd, "", stdout, stderr)
+	assert.NoError(t, err)
+	assert.Nil(t, cmd)
+
+	hcmd.IgnoreFailure = false
+	cmd, err = RunCommand(context.TODO(), "", "", hcmd, "", stdout, stderr)
+	assert.Error(t, err)
+	assert.Nil(t, cmd)
+
+	// bad commands have errors regardless of ignore setting
+	hcmd = harness.Command{
+		Command:       "bad-command",
+		IgnoreFailure: true,
+	}
+	cmd, err = RunCommand(context.TODO(), "", "", hcmd, "", stdout, stderr)
+	assert.Error(t, err)
+	assert.Nil(t, cmd)
 }
