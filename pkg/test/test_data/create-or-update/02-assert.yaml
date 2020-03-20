@@ -20,17 +20,6 @@ spec:
         ports:
         - containerPort: 80
 ---
-apiVersion: kudo.dev/v1beta1
-kind: Instance
-metadata:
-  name: my-instance
-spec:
-  parameters:
-    PARAM: "abcdef"
-  operatorVersion:
-    name: job-operator
-    kind: OperatorVersion
----
 apiVersion: v1
 kind: Service
 metadata:
