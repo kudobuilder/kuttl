@@ -404,6 +404,14 @@ func TestGetKubectlArgs(t *testing.T) {
 				"kubectl", "kudo", "test", "--namespace", "default",
 			},
 		},
+		{
+			testName:  "namespace not present isn't appended",
+			namespace: "",
+			args:      "kubectl kudo test",
+			expected: []string{
+				"kubectl", "kudo", "test",
+			},
+		},
 	} {
 		test := test
 

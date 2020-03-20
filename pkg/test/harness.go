@@ -371,7 +371,7 @@ func (h *Harness) Setup() {
 		h.fatal(errs)
 	}
 
-	if errs := testutils.RunKubectlCommands(h.GetLogger(), "default", h.TestSuite.Kubectl, ""); errs != nil {
+	if errs := testutils.RunKubectlCommands(h.GetLogger(), "", h.TestSuite.Kubectl, ""); errs != nil {
 		h.fatal(errs)
 	}
 }

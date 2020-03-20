@@ -920,7 +920,7 @@ func GetArgs(ctx context.Context, command string, cmd harness.Command, namespace
 			return nil, err
 		}
 
-		if *namespaceParsed == "" {
+		if *namespaceParsed == "" && namespace != "" {
 			argSlice = append(argSlice, "--namespace", namespace)
 		}
 	}
