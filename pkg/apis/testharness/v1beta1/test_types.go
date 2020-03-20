@@ -33,8 +33,6 @@ type TestSuite struct {
 	KINDNodeCache bool `json:"kindNodeCache"`
 	// Containers to load to each KIND node prior to running the tests.
 	KINDContainers []string `json:"kindContainers"`
-	// Whether or not to start the KUDO controller for the tests.
-	StartKUDO bool `json:"startKUDO"`
 	// If set, do not delete the resources after running the tests (implies SkipClusterDelete).
 	SkipDelete bool `json:"skipDelete"`
 	// If set, do not delete the mocked control plane or kind cluster.
@@ -104,8 +102,10 @@ type Command struct {
 	Command string `json:"command"`
 	// If set, the `--namespace` flag will be appended to the command with the namespace to use.
 	Namespaced bool `json:"namespaced"`
-	// If set, failures will be ignored.
+	// If set, exit failures (`exec.ExitError`) will be ignored. `exec.Error` are NOT ignored.
 	IgnoreFailure bool `json:"ignoreFailure"`
+	// If set, the command is run in the background.
+	Background bool `json:"background"`
 }
 
 // DefaultKINDContext defines the default kind context to use.
