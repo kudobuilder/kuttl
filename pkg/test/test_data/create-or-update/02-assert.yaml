@@ -20,6 +20,17 @@ spec:
         ports:
         - containerPort: 80
 ---
+apiVersion: kudo.dev/v1beta1
+kind: Instance
+metadata:
+  name: my-instance
+spec:
+  parameters:
+    PARAM: "abcdef"
+  operatorVersion:
+    name: job-operator
+    kind: OperatorVersion
+---
 apiVersion: v1
 kind: Service
 metadata:
@@ -32,7 +43,7 @@ spec:
     targetPort: 80
   type: ClusterIP
 ---
-apiVersion: prow.k8s.io/v1
+apiVersion: prow.example.com/v1
 kind: ProwJob
 metadata:
   name: my-job

@@ -32,7 +32,16 @@ spec:
         ports:
         - containerPort: 80
 ---
-apiVersion: prow.k8s.io/v1
+apiVersion: kudo.dev/v1beta1
+kind: Instance
+metadata:
+  name: my-instance
+spec:
+  operatorVersion:
+    name: job-operator
+    kind: OperatorVersion
+---
+apiVersion: prow.example.com/v1
 kind: ProwJob
 metadata:
   name: my-job
