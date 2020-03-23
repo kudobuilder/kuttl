@@ -31,6 +31,10 @@ endif
 integration-test:
 	./hack/run-integration-tests.sh
 
+# Run e2e tests
+.PHONY: e2e-test
+e2e-test: cli
+	./hack/run-e2e-tests.sh
 
 .PHONY: lint
 lint:
