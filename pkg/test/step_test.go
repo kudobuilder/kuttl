@@ -255,43 +255,43 @@ func TestRun(t *testing.T) {
 		updateMethod func(*testing.T, client.Client)
 	}{
 		{
-			"successful run", false, Step{
-			Apply: []runtime.Object{
-				testutils.NewPod("hello", ""),
+			testName: "successful run", Step: Step{
+				Apply: []runtime.Object{
+					testutils.NewPod("hello", ""),
+				},
+				Asserts: []runtime.Object{
+					testutils.NewPod("hello", ""),
+				},
 			},
-			Asserts: []runtime.Object{
-				testutils.NewPod("hello", ""),
-			},
-		}, nil,
 		},
 		{
 			"failed run", true, Step{
-			Apply: []runtime.Object{
-				testutils.NewPod("hello", ""),
-			},
-			Asserts: []runtime.Object{
-				testutils.WithStatus(t, testutils.NewPod("hello", ""), map[string]interface{}{
-					"phase": "Ready",
-				}),
-			},
-		}, nil,
+				Apply: []runtime.Object{
+					testutils.NewPod("hello", ""),
+				},
+				Asserts: []runtime.Object{
+					testutils.WithStatus(t, testutils.NewPod("hello", ""), map[string]interface{}{
+						"phase": "Ready",
+					}),
+				},
+			}, nil,
 		},
 		{
 			"delayed run", false, Step{
-			Apply: []runtime.Object{
-				testutils.NewPod("hello", ""),
-			},
-			Asserts: []runtime.Object{
-				testutils.WithStatus(t, testutils.NewPod("hello", ""), map[string]interface{}{
+				Apply: []runtime.Object{
+					testutils.NewPod("hello", ""),
+				},
+				Asserts: []runtime.Object{
+					testutils.WithStatus(t, testutils.NewPod("hello", ""), map[string]interface{}{
+						"phase": "Ready",
+					}),
+				},
+			}, func(t *testing.T, client client.Client) {
+				// mock kubelet to set the pod status
+				assert.Nil(t, client.Update(context.TODO(), testutils.WithStatus(t, testutils.NewPod("hello", testNamespace), map[string]interface{}{
 					"phase": "Ready",
-				}),
+				})))
 			},
-		}, func(t *testing.T, client client.Client) {
-			// mock kubelet to set the pod status
-			assert.Nil(t, client.Update(context.TODO(), testutils.WithStatus(t, testutils.NewPod("hello", testNamespace), map[string]interface{}{
-				"phase": "Ready",
-			})))
-		},
 		},
 	} {
 		test := test
