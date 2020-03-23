@@ -1,0 +1,74 @@
+env:
+  - GO111MODULE=on
+  - CGO_ENABLED=0
+# This is an example goreleaser.yaml file with some sane defaults.
+# Make sure to check the documentation at http://goreleaser.com
+before:
+  hooks:
+    # you may remove this if you don't use vgo
+    - go mod download
+builds:
+  - id: "kubectl-kuttl"
+    binary: kubectl-kuttl
+    main: cmd/kubectl-kuttl/main.go
+    ldflags:
+      - -s -w -X github.com/kudobuilder/kuttl/pkg/version.gitVersion={{ .Version }} -X github.com/kudobuilder/kuttl/pkg/version.gitCommit={{ .ShortCommit }} -X github.com/kudobuilder/kuttl/pkg/version.buildDate={{ .Date }}
+    goos:
+      - linux
+      - darwin
+    goarch:
+      - 386
+      - amd64
+      - arm
+archives:
+  - id: kubectl-kuttl-tarball
+    builds:
+      - kubectl-kuttl
+    replacements:
+      386: i386
+      amd64: x86_64
+    format: tar.gz
+  - id: binaries
+    builds:
+      - manager
+      - kubectl-kuttl
+    replacements:
+      386: i386
+      amd64: x86_64
+    format: binary
+brews:
+  - name: kuttl-cli
+    github:
+      owner: kudobuilder
+      name: homebrew-tap
+    commit_author:
+      name: kudoreleasebot
+      email: release@kudo.dev
+    skip_upload: auto
+    folder: Formula
+    homepage: https://kudo.dev
+    description: Interact with KUTTL via the kubectl plugin
+    dependencies:
+      - kubernetes-cli
+    install: |
+      bin.install "kubectl-kuttl"
+checksum:
+  name_template: "checksums.txt"
+snapshot:
+  name_template: "{{ .Tag }}-next"
+
+release:
+  github:
+    owner: kudobuilder
+    name: kuttl
+  draft: false
+  prerelease: auto
+  name_template: "{{.ProjectName}}-v{{.Version}}"
+  disable: false
+
+changelog:
+  sort: asc
+  filters:
+    exclude:
+      - "^docs:"
+      - "^test:"
