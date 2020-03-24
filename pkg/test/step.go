@@ -360,7 +360,7 @@ func (s *Step) Check(namespace string) []error {
 	return testErrors
 }
 
-// Run runs a KUDO test step:
+// Run runs a KUTTL test step:
 // 1. Apply all desired objects to Kubernetes.
 // 2. Wait for all of the states defined in the test step's asserts to be true.'
 func (s *Step) Run(namespace string) []error {

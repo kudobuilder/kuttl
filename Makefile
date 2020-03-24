@@ -31,6 +31,10 @@ endif
 integration-test:
 	./hack/run-integration-tests.sh
 
+# Run e2e tests
+.PHONY: e2e-test
+e2e-test: cli
+	./hack/run-e2e-tests.sh
 
 .PHONY: lint
 lint:
@@ -43,42 +47,11 @@ endif
 download:
 	go mod download
 
-.PHONY: prebuild
-prebuild: generate lint
-
-.PHONY: generate
-# Generate code
-generate:
-ifeq (, $(shell which controller-gen))
-	go get sigs.k8s.io/controller-tools/cmd/controller-gen@$$(go list -f '{{.Version}}' -m sigs.k8s.io/controller-tools)
-endif
-	controller-gen crd paths=./pkg/apis/... output:crd:dir=config/crds output:stdout
-	./hack/update_codegen.sh
-
-.PHONY: generate-clean
-generate-clean:
-	rm -rf hack/code-gen
-
-.PHONY: clean
-# Clean all
-clean: test-clean
-
-.PHONY: imports
-# used to update imports on project.  NOT a linter.
-imports:
-ifeq (, $(shell which golangci-lint))
-	./hack/install-golangcilint.sh
-endif
-	golangci-lint run --disable-all -E goimports --fix
-
-.PHONY: cli-fast
-# Build CLI but don't lint or run code generation first.
-cli-fast:
-	go build -ldflags "${LDFLAGS}" -o bin/${CLI} ./cmd/kubectl-kuttl
 
 .PHONY: cli
 # Build CLI
-cli: prebuild cli-fast
+cli:
+	go build -ldflags "${LDFLAGS}" -o bin/${CLI} ./cmd/kubectl-kuttl
 
 .PHONY: cli-clean
 # Clean CLI build
@@ -89,13 +62,14 @@ cli-clean:
 cli-install:
 	go install -ldflags "${LDFLAGS}" ./cmd/kubectl-kuttl
 
-
 .PHONY: todo
 # Show to-do items per file.
 todo:
 	@grep \
 		--exclude-dir=hack \
 		--exclude=Makefile \
+		--exclude-dir=.git \
+		--exclude-dir=bin \
 		--text \
 		--color \
-		-nRo -E ' TODO:.*|SkipNow' .
+		-nRo -E " *[^\.]TODO.*|SkipNow" .

@@ -283,7 +283,7 @@ func (h *Harness) DockerClient() (testutils.DockerClient, error) {
 	return h.docker, err
 }
 
-// RunTests should be called from within a Go test (t) and launches all of the KUDO integration
+// RunTests should be called from within a Go test (t) and launches all of the KUTTL integration
 // tests at dir.
 func (h *Harness) RunTests() {
 	// cleanup after running tests
@@ -319,7 +319,7 @@ func (h *Harness) RunTests() {
 	})
 }
 
-// Run the test harness - start KUDO and the control plane and then run the tests.
+// Run the test harness - start the control plane and then run the tests.
 func (h *Harness) Run() {
 	h.Setup()
 	h.RunTests()
