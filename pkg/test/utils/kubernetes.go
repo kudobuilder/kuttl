@@ -1006,24 +1006,24 @@ func RunCommands(logger Logger, namespace string, command string, commands []har
 		stdout := &bytes.Buffer{}
 		stderr := &bytes.Buffer{}
 
-		logger.Logf("Running command: %s %s", command, cmd)
+		logger.Logf("running command: %s %s", command, cmd)
 
 		bg, err := RunCommand(context.TODO(), namespace, command, cmd, workdir, stdout, stderr)
 		if err != nil {
 			errs = append(errs, err)
-			if bg != nil {
-				bgs = append(bgs, bg)
-			}
 		}
-
-		logger.Log(stderr.String())
-		logger.Log(stdout.String())
+		if bg != nil {
+			bgs = append(bgs, bg)
+		} else {
+			logger.Log(stderr.String())
+			logger.Log(stdout.String())
+		}
 	}
 
-	if len(errs) == 0 {
-		return nil, nil
+	if len(bgs) > 0 {
+		logger.Log("background processes", bgs)
 	}
-
+	// handling of errs and bg processes external to this function
 	return bgs, errs
 }
 

@@ -317,6 +317,7 @@ func (h *Harness) RunTests() {
 			})
 		}
 	})
+	h.T.Log("run tests finished")
 }
 
 // Run the test harness - start the control plane and then run the tests.
@@ -333,11 +334,13 @@ func (h *Harness) Setup() {
 
 	cl, err := h.Client(false)
 	if err != nil {
+		h.T.Log("fatal error getting client")
 		h.fatal(err)
 	}
 
 	dClient, err := h.DiscoveryClient()
 	if err != nil {
+		h.T.Log("fatal error getting discovery client")
 		h.fatal(err)
 	}
 
@@ -345,33 +348,39 @@ func (h *Harness) Setup() {
 	crdKind := testutils.NewResource("apiextensions.k8s.io/v1beta1", "CustomResourceDefinition", "", "")
 	crds, err := testutils.InstallManifests(context.TODO(), cl, dClient, h.TestSuite.CRDDir, crdKind)
 	if err != nil {
+		h.T.Log("fatal error installing crds")
 		h.fatal(err)
 	}
 
 	if err := testutils.WaitForCRDs(dClient, crds); err != nil {
+		h.T.Log("fatal error waiting for crds")
 		h.fatal(err)
 	}
 
 	// Create a new client to bust the client's CRD cache.
 	cl, err = h.Client(true)
 	if err != nil {
+		h.T.Log("fatal error getting client after crd update")
 		h.fatal(err)
 	}
 
 	// Install required manifests.
 	for _, manifestDir := range h.TestSuite.ManifestDirs {
 		if _, err := testutils.InstallManifests(context.TODO(), cl, dClient, manifestDir); err != nil {
+			h.T.Log("fatal error installing manifests")
 			h.fatal(err)
 		}
 	}
 	bgs, errs := testutils.RunCommands(h.GetLogger(), "default", "", h.TestSuite.Commands, "")
 	// assign any background processes first for cleanup in case of any errors
 	h.bgProcesses = append(h.bgProcesses, bgs...)
-	if errs != nil {
+	if len(errs) > 0 {
+		h.T.Log("fatal error running commands")
 		h.fatal(errs)
 	}
 
-	if errs := testutils.RunKubectlCommands(h.GetLogger(), "default", h.TestSuite.Kubectl, ""); errs != nil {
+	if errs := testutils.RunKubectlCommands(h.GetLogger(), "default", h.TestSuite.Kubectl, ""); len(errs) > 0 {
+		h.T.Log("fatal error running kubectl commands")
 		h.fatal(errs)
 	}
 }
@@ -393,6 +402,16 @@ func (h *Harness) Stop() {
 		}
 	}
 
+	if h.bgProcesses != nil {
+		for _, p := range h.bgProcesses {
+			h.T.Log("killing process ", p)
+			err := p.Process.Kill()
+			if err != nil {
+				h.T.Log("background process kill error", err)
+			}
+		}
+	}
+
 	if h.TestSuite.SkipClusterDelete || h.TestSuite.SkipDelete {
 		cwd, _ := os.Getwd()
 		kubeconfig := filepath.Join(cwd, "kubeconfig")
@@ -401,15 +420,6 @@ func (h *Harness) Stop() {
 		h.T.Log(fmt.Sprintf("to connect to the cluster, run: export KUBECONFIG=\"%s\"", kubeconfig))
 
 		return
-	}
-
-	if h.bgProcesses != nil {
-		for _, p := range h.bgProcesses {
-			err := p.Process.Kill()
-			if err != nil {
-				h.T.Log("background process kill error", err)
-			}
-		}
 	}
 
 	if h.env != nil {
