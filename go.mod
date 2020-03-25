@@ -16,6 +16,7 @@ require (
 	github.com/gorilla/mux v1.6.2 // indirect
 	github.com/imdario/mergo v0.3.7 // indirect
 	github.com/konsorten/go-windows-terminal-sequences v1.0.2 // indirect
+	github.com/kudobuilder/kudo v0.11.1 // indirect
 	github.com/mattn/go-colorable v0.1.4 // indirect
 	github.com/morikuni/aec v1.0.0 // indirect
 	github.com/opencontainers/go-digest v1.0.0-rc1 // indirect

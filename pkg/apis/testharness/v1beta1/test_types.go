@@ -45,8 +45,6 @@ type TestSuite struct {
 	Parallel int `json:"parallel"`
 	// The directory to output artifacts to (current working directory if not specified).
 	ArtifactsDir string `json:"artifactsDir"`
-	// Kubectl commands to run before running any tests.
-	Kubectl []string `json:"kubectl"`
 	// Commands to run prior to running the tests.
 	Commands []Command `json:"commands"`
 }
@@ -67,9 +65,6 @@ type TestStep struct {
 
 	// Indicates that this is a unit test - safe to run without a real Kubernetes cluster.
 	UnitTest bool `json:"unitTest"`
-
-	// Kubectl commands to run at the start of the test
-	Kubectl []string `json:"kubectl"`
 
 	// Commands to run prior at the beginning of the test step.
 	Commands []Command `json:"commands"`

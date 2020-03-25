@@ -382,10 +382,6 @@ func (s *Step) Run(namespace string) []error {
 		if _, errors := testutils.RunCommands(s.Logger, namespace, "", s.Step.Commands, s.Dir); errors != nil {
 			testErrors = append(testErrors, errors...)
 		}
-
-		if errors := testutils.RunKubectlCommands(s.Logger, namespace, s.Step.Kubectl, s.Dir); errors != nil {
-			testErrors = append(testErrors, errors...)
-		}
 	}
 
 	testErrors = append(testErrors, s.Create(namespace)...)

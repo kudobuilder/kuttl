@@ -378,11 +378,6 @@ func (h *Harness) Setup() {
 		h.T.Log("fatal error running commands")
 		h.fatal(errs)
 	}
-
-	if errs := testutils.RunKubectlCommands(h.GetLogger(), "default", h.TestSuite.Kubectl, ""); len(errs) > 0 {
-		h.T.Log("fatal error running kubectl commands")
-		h.fatal(errs)
-	}
 }
 
 // Stop the test environment and clean up the harness.

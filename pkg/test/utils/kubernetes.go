@@ -1027,21 +1027,6 @@ func RunCommands(logger Logger, namespace string, command string, commands []har
 	return bgs, errs
 }
 
-// RunKubectlCommands runs a set of kubectl commands, returning any errors.
-func RunKubectlCommands(logger Logger, namespace string, commands []string, workdir string) []error {
-	apiCommands := []harness.Command{}
-
-	for _, cmd := range commands {
-		apiCommands = append(apiCommands, harness.Command{
-			Command:    cmd,
-			Namespaced: true,
-		})
-	}
-	// ignore background processes as kubectl commands are not allowed to have them
-	_, errs := RunCommands(logger, namespace, "kubectl", apiCommands, workdir)
-	return errs
-}
-
 // Kubeconfig converts a rest.Config into a YAML kubeconfig and writes it to w
 func Kubeconfig(cfg *rest.Config, w io.Writer) error {
 	var authProvider *api.AuthProviderConfig

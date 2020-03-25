@@ -47,6 +47,18 @@ endif
 download:
 	go mod download
 
+.PHONY: generate
+# Generate code
+generate:
+ifeq (, $(shell which controller-gen))
+	go get sigs.k8s.io/controller-tools/cmd/controller-gen@$$(go list -f '{{.Version}}' -m sigs.k8s.io/controller-tools)
+endif
+	controller-gen crd paths=./pkg/apis/... output:crd:dir=config/crds output:stdout
+	./hack/update_codegen.sh
+
+.PHONY: generate-clean
+generate-clean:
+	rm -rf hack/code-gen
 
 .PHONY: cli
 # Build CLI
