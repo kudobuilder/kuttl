@@ -404,17 +404,17 @@ func (h *Harness) Stop() {
 
 	if h.bgProcesses != nil {
 		for _, p := range h.bgProcesses {
-			h.T.Log("killing process ", p)
+			h.T.Logf("killing process %q", p)
 			err := p.Process.Kill()
 			if err != nil {
-				h.T.Log("background process kill error", err)
+				h.T.Logf("bg process: %q kill error %v", p, err)
 			}
 			ps, err := p.Process.Wait()
 			if err != nil {
-				h.T.Log("background process kill wait error", err)
+				h.T.Logf("bg process: %q kill wait error %v", p, err)
 			}
 			if ps != nil {
-				h.T.Log("background process exit code ", ps.ExitCode())
+				h.T.Logf("bg process: %q exit code %v", p, ps.ExitCode())
 			}
 		}
 	}
