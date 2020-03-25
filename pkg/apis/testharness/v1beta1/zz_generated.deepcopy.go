@@ -99,11 +99,6 @@ func (in *TestStep) DeepCopyInto(out *TestStep) {
 			(*in)[i].DeepCopyInto(&(*out)[i])
 		}
 	}
-	if in.Kubectl != nil {
-		in, out := &in.Kubectl, &out.Kubectl
-		*out = make([]string, len(*in))
-		copy(*out, *in)
-	}
 	if in.Commands != nil {
 		in, out := &in.Commands, &out.Commands
 		*out = make([]Command, len(*in))
@@ -147,11 +142,6 @@ func (in *TestSuite) DeepCopyInto(out *TestSuite) {
 	}
 	if in.KINDContainers != nil {
 		in, out := &in.KINDContainers, &out.KINDContainers
-		*out = make([]string, len(*in))
-		copy(*out, *in)
-	}
-	if in.Kubectl != nil {
-		in, out := &in.Kubectl, &out.Kubectl
 		*out = make([]string, len(*in))
 		copy(*out, *in)
 	}
