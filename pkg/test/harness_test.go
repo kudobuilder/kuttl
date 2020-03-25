@@ -106,7 +106,5 @@ func TestRunBackgroundCommands(t *testing.T) {
 
 	// cleans up bg processes
 	h.Stop()
-	_, err := h.bgProcesses[0].Process.Wait()
-	assert.NoError(t, err)
 	assert.Error(t, h.bgProcesses[0].Process.Signal(syscall.Signal(0)))
 }

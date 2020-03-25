@@ -409,6 +409,13 @@ func (h *Harness) Stop() {
 			if err != nil {
 				h.T.Log("background process kill error", err)
 			}
+			ps, err := p.Process.Wait()
+			if err != nil {
+				h.T.Log("background process kill wait error", err)
+			}
+			if ps != nil {
+				h.T.Log("background process exit code ", ps.ExitCode())
+			}
 		}
 	}
 
