@@ -5,6 +5,7 @@ hack/code-gen
 hack/controller-gen
 test/.git-credentials
 reports/
+kuttl.yaml
 
 
 ### mac
