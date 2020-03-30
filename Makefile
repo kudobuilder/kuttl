@@ -10,6 +10,7 @@ BUILD_DATE_PATH := github.com/kudobuilder/kuttl/pkg/version.buildDate
 DATE_FMT := "%Y-%m-%dT%H:%M:%SZ"
 BUILD_DATE := $(shell date -u -d "@$SOURCE_DATE_EPOCH" "+${DATE_FMT}" 2>/dev/null || date -u -r "${SOURCE_DATE_EPOCH}" "+${DATE_FMT}" 2>/dev/null || date -u "+${DATE_FMT}")
 LDFLAGS := -X ${GIT_VERSION_PATH}=${GIT_VERSION} -X ${GIT_COMMIT_PATH}=${GIT_COMMIT} -X ${BUILD_DATE_PATH}=${BUILD_DATE}
+GOLANGCI_LINT_VER = "1.24.0"
 
 export GO111MODULE=on
 
@@ -38,7 +39,7 @@ e2e-test: cli
 
 .PHONY: lint
 lint:
-ifeq (, $(shell which golangci-lint))
+ifneq (${GOLANGCI_LINT_VER}, "$(shell golangci-lint --version | cut -b 27-32)")
 	./hack/install-golangcilint.sh
 endif
 	golangci-lint run
