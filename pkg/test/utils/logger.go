@@ -27,9 +27,9 @@ type TestLogger struct {
 // NewTestLogger creates a new test logger.
 func NewTestLogger(test *testing.T, prefix string) *TestLogger {
 	return &TestLogger{
-		prefix:  prefix,
-		test:    test,
-		buffer:  []byte{},
+		prefix: prefix,
+		test:   test,
+		buffer: []byte{},
 	}
 }
 
