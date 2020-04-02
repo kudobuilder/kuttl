@@ -1,6 +1,7 @@
 package utils
 
 import (
+	"bytes"
 	"fmt"
 	"testing"
 	"time"
@@ -11,6 +12,7 @@ type Logger interface {
 	Log(args ...interface{})
 	Logf(format string, args ...interface{})
 	WithPrefix(string) Logger
+	Write(p []byte) (n int, err error)
 }
 
 // TestLogger implements the Logger interface to be compatible with the go test operator's
@@ -19,13 +21,15 @@ type Logger interface {
 type TestLogger struct {
 	prefix string
 	test   *testing.T
+	buffer []byte
 }
 
 // NewTestLogger creates a new test logger.
 func NewTestLogger(test *testing.T, prefix string) *TestLogger {
 	return &TestLogger{
-		prefix: prefix,
-		test:   test,
+		prefix:  prefix,
+		test:    test,
+		buffer:  []byte{},
 	}
 }
 
@@ -45,4 +49,19 @@ func (t *TestLogger) Logf(format string, args ...interface{}) {
 // WithPrefix returns a new TestLogger with the provided prefix appended to the current prefix.
 func (t *TestLogger) WithPrefix(prefix string) Logger {
 	return NewTestLogger(t.test, fmt.Sprintf("%s/%s", t.prefix, prefix))
+}
+
+// Write implements the io.Writer interface.
+// Logs each line written to it, buffers incomplete lines until the next Write() call.
+func (t *TestLogger) Write(p []byte) (n int, err error) {
+	t.buffer = append(t.buffer, p...)
+
+	splitBuf := bytes.Split(t.buffer, []byte{'\n'})
+	t.buffer = splitBuf[len(splitBuf)-1]
+
+	for _, line := range splitBuf[:len(splitBuf)-1] {
+		t.Log(string(line))
+	}
+
+	return len(p), nil
 }
