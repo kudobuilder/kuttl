@@ -360,7 +360,7 @@ func (s *Step) Check(namespace string) []error {
 	return testErrors
 }
 
-// Run runs a KUDO test step:
+// Run runs a KUTTL test step:
 // 1. Apply all desired objects to Kubernetes.
 // 2. Wait for all of the states defined in the test step's asserts to be true.'
 func (s *Step) Run(namespace string) []error {
@@ -373,11 +373,13 @@ func (s *Step) Run(namespace string) []error {
 	testErrors := []error{}
 
 	if s.Step != nil {
-		if errors := testutils.RunCommands(s.Logger, namespace, "", s.Step.Commands, s.Dir); errors != nil {
-			testErrors = append(testErrors, errors...)
+		for _, command := range s.Step.Commands {
+			if command.Background {
+				s.Logger.Log("background commands are not allowed for steps and will be run in foreground")
+				command.Background = false
+			}
 		}
-
-		if errors := testutils.RunKubectlCommands(s.Logger, namespace, s.Step.Kubectl, s.Dir); errors != nil {
+		if _, errors := testutils.RunCommands(s.Logger, namespace, "", s.Step.Commands, s.Dir); errors != nil {
 			testErrors = append(testErrors, errors...)
 		}
 	}

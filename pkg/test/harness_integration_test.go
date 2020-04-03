@@ -14,7 +14,6 @@ func TestHarnessRunIntegration(t *testing.T) {
 			TestDirs: []string{
 				"./test_data/",
 			},
-			StartKUDO:         false,
 			StartControlPlane: true,
 		},
 		T: t,

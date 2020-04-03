@@ -5,7 +5,8 @@ hack/code-gen
 hack/controller-gen
 test/.git-credentials
 reports/
-config/manager_image_patch.yaml-e
+kuttl.yaml
+
 
 ### mac
 .DS_Store

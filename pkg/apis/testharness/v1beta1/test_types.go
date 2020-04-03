@@ -33,8 +33,6 @@ type TestSuite struct {
 	KINDNodeCache bool `json:"kindNodeCache"`
 	// Containers to load to each KIND node prior to running the tests.
 	KINDContainers []string `json:"kindContainers"`
-	// Whether or not to start the KUDO controller for the tests.
-	StartKUDO bool `json:"startKUDO"`
 	// If set, do not delete the resources after running the tests (implies SkipClusterDelete).
 	SkipDelete bool `json:"skipDelete"`
 	// If set, do not delete the mocked control plane or kind cluster.
@@ -47,8 +45,6 @@ type TestSuite struct {
 	Parallel int `json:"parallel"`
 	// The directory to output artifacts to (current working directory if not specified).
 	ArtifactsDir string `json:"artifactsDir"`
-	// Kubectl commands to run before running any tests.
-	Kubectl []string `json:"kubectl"`
 	// Commands to run prior to running the tests.
 	Commands []Command `json:"commands"`
 }
@@ -69,9 +65,6 @@ type TestStep struct {
 
 	// Indicates that this is a unit test - safe to run without a real Kubernetes cluster.
 	UnitTest bool `json:"unitTest"`
-
-	// Kubectl commands to run at the start of the test
-	Kubectl []string `json:"kubectl"`
 
 	// Commands to run prior at the beginning of the test step.
 	Commands []Command `json:"commands"`
@@ -104,8 +97,10 @@ type Command struct {
 	Command string `json:"command"`
 	// If set, the `--namespace` flag will be appended to the command with the namespace to use.
 	Namespaced bool `json:"namespaced"`
-	// If set, failures will be ignored.
+	// If set, exit failures (`exec.ExitError`) will be ignored. `exec.Error` are NOT ignored.
 	IgnoreFailure bool `json:"ignoreFailure"`
+	// If set, the command is run in the background.
+	Background bool `json:"background"`
 }
 
 // DefaultKINDContext defines the default kind context to use.

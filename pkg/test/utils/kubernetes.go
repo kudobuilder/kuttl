@@ -60,6 +60,21 @@ import (
 // ensure that we only add to the scheme once.
 var schemeLock sync.Once
 
+// APIServerDefaultArgs are copied from the internal controller-runtime pkg/internal/testing/integration/internal/apiserver.go
+// sadly, we can't import them anymore since it is an internal package
+var APIServerDefaultArgs = []string{
+	"--advertise-address=127.0.0.1",
+	"--etcd-servers={{ if .EtcdURL }}{{ .EtcdURL.String }}{{ end }}",
+	"--cert-dir={{ .CertDir }}",
+	"--insecure-port={{ if .URL }}{{ .URL.Port }}{{ end }}",
+	"--insecure-bind-address={{ if .URL }}{{ .URL.Hostname }}{{ end }}",
+	"--secure-port={{ if .SecurePort }}{{ .SecurePort }}{{ end }}",
+	"--admission-control=AlwaysAdmit",
+	"--service-cluster-ip-range=10.0.0.0/24",
+}
+
+//TODO (kensipe): need to consider options around AlwaysAdmin https://github.com/kudobuilder/kudo/pull/1420/files#r391449597
+
 // IsJSONSyntaxError returns true if the error is a JSON syntax error.
 func IsJSONSyntaxError(err error) bool {
 	_, ok := err.(*ejson.SyntaxError)
@@ -753,7 +768,7 @@ func CreateOrUpdate(ctx context.Context, cl client.Client, obj runtime.Object, r
 				return err
 			}
 
-			err = cl.Patch(ctx, actual, client.ConstantPatch(types.MergePatchType, expectedBytes))
+			err = cl.Patch(ctx, actual, client.RawPatch(types.MergePatchType, expectedBytes))
 			updated = true
 		} else if k8serrors.IsNotFound(err) {
 			err = cl.Create(ctx, obj)
@@ -872,7 +887,7 @@ type TestEnvironment struct {
 // suitable for use in tests.
 func StartTestEnvironment() (env TestEnvironment, err error) {
 	env.Environment = &envtest.Environment{
-		KubeAPIServerFlags: append(envtest.DefaultKubeAPIServerFlags, "--advertise-address={{ if .URL }}{{ .URL.Hostname }}{{ end }}"),
+		KubeAPIServerFlags: append(APIServerDefaultArgs, "--advertise-address={{ if .URL }}{{ .URL.Hostname }}{{ end }}"),
 	}
 
 	// Retry up to three times for the test environment to start up in case there is a port collision (#510).
@@ -933,78 +948,83 @@ func GetArgs(ctx context.Context, command string, cmd harness.Command, namespace
 
 // RunCommand runs a command with args.
 // args gets split on spaces (respecting quoted strings).
-func RunCommand(ctx context.Context, namespace string, command string, cmd harness.Command, cwd string, stdout io.Writer, stderr io.Writer) error {
+// if the command is run in the background a reference to the process is returned for later cleanup
+func RunCommand(ctx context.Context, namespace string, command string, cmd harness.Command, cwd string, stdout io.Writer, stderr io.Writer) (*exec.Cmd, error) {
 	actualDir, err := os.Getwd()
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	builtCmd, err := GetArgs(ctx, command, cmd, namespace)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	builtCmd.Dir = cwd
-	builtCmd.Stdout = stdout
-	builtCmd.Stderr = stderr
+	if !cmd.Background {
+		builtCmd.Stdout = stdout
+		builtCmd.Stderr = stderr
+	}
 	builtCmd.Env = []string{
 		fmt.Sprintf("KUBECONFIG=%s/kubeconfig", actualDir),
 		fmt.Sprintf("PATH=%s/bin/:%s", actualDir, os.Getenv("PATH")),
 	}
 
-	err = builtCmd.Run()
+	// process started and exited with error
+	var exerr *exec.ExitError
+	err = builtCmd.Start()
 	if err != nil {
-		if _, ok := err.(*exec.ExitError); ok && cmd.IgnoreFailure {
-			return nil
+		if errors.As(err, &exerr) && cmd.IgnoreFailure {
+			return nil, nil
 		}
+		return nil, err
 	}
 
-	return err
+	if cmd.Background {
+		return builtCmd, nil
+	}
+
+	err = builtCmd.Wait()
+	if errors.As(err, &exerr) && cmd.IgnoreFailure {
+		return nil, nil
+	}
+	return nil, err
 }
 
 // RunCommands runs a set of commands, returning any errors.
 // If `command` is set, then `command` will be the command that is invoked (if a command specifies it already, it will not be prepended again).
-func RunCommands(logger Logger, namespace string, command string, commands []harness.Command, workdir string) []error {
+// commands running in the background are returned
+func RunCommands(logger Logger, namespace string, command string, commands []harness.Command, workdir string) ([]*exec.Cmd, []error) {
 	errs := []error{}
+	bgs := []*exec.Cmd{}
 
 	if commands == nil {
-		return nil
+		return nil, nil
 	}
 
 	for _, cmd := range commands {
 		stdout := &bytes.Buffer{}
 		stderr := &bytes.Buffer{}
 
-		logger.Logf("Running command: %s %s", command, cmd)
+		logger.Logf("running command: %s %s", command, cmd)
 
-		err := RunCommand(context.TODO(), namespace, command, cmd, workdir, stdout, stderr)
+		bg, err := RunCommand(context.TODO(), namespace, command, cmd, workdir, stdout, stderr)
 		if err != nil {
 			errs = append(errs, err)
 		}
-
-		logger.Log(stderr.String())
-		logger.Log(stdout.String())
+		if bg != nil {
+			bgs = append(bgs, bg)
+		} else {
+			logger.Log(stderr.String())
+			logger.Log(stdout.String())
+		}
 	}
 
-	if len(errs) == 0 {
-		return nil
+	if len(bgs) > 0 {
+		logger.Log("background processes", bgs)
 	}
-
-	return errs
-}
-
-// RunKubectlCommands runs a set of kubectl commands, returning any errors.
-func RunKubectlCommands(logger Logger, namespace string, commands []string, workdir string) []error {
-	apiCommands := []harness.Command{}
-
-	for _, cmd := range commands {
-		apiCommands = append(apiCommands, harness.Command{
-			Command:    cmd,
-			Namespaced: true,
-		})
-	}
-
-	return RunCommands(logger, namespace, "kubectl", apiCommands, workdir)
+	// handling of errs and bg processes external to this function
+	return bgs, errs
 }
 
 // Kubeconfig converts a rest.Config into a YAML kubeconfig and writes it to w

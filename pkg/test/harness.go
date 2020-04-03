@@ -7,6 +7,7 @@ import (
 	"io/ioutil"
 	"math/rand"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"sync"
 	"testing"
@@ -43,6 +44,8 @@ type Harness struct {
 	kubeConfigPath string
 	clientLock     sync.Mutex
 	configLock     sync.Mutex
+	stopping       bool
+	bgProcesses    []*exec.Cmd
 }
 
 // LoadTests loads all of the tests in a given directory.
@@ -60,7 +63,7 @@ func (h *Harness) LoadTests(dir string) ([]*Case, error) {
 	tests := []*Case{}
 
 	timeout := h.GetTimeout()
-	h.T.Logf("Going to run test suite with timeout of %d seconds for each step", timeout)
+	h.T.Logf("going to run test suite with timeout of %d seconds for each step", timeout)
 
 	for _, file := range files {
 		if !file.IsDir() {
@@ -207,13 +210,13 @@ func (h *Harness) Config() (*rest.Config, error) {
 	var err error
 
 	if h.TestSuite.StartControlPlane {
-		h.T.Log("Running tests with a mocked control plane (kube-apiserver and etcd).")
+		h.T.Log("running tests with a mocked control plane (kube-apiserver and etcd).")
 		h.config, err = h.RunTestEnv()
 	} else if h.TestSuite.StartKIND {
-		h.T.Log("Running tests with KIND.")
+		h.T.Log("running tests with KIND.")
 		h.config, err = h.RunKIND()
 	} else {
-		h.T.Log("Running tests using configured kubeconfig.")
+		h.T.Log("running tests using configured kubeconfig.")
 		h.config, err = config.GetConfig()
 	}
 
@@ -280,9 +283,12 @@ func (h *Harness) DockerClient() (testutils.DockerClient, error) {
 	return h.docker, err
 }
 
-// RunTests should be called from within a Go test (t) and launches all of the KUDO integration
+// RunTests should be called from within a Go test (t) and launches all of the KUTTL integration
 // tests at dir.
 func (h *Harness) RunTests() {
+	// cleanup after running tests
+	defer h.Stop()
+	h.T.Log("running tests")
 	tests := []*Case{}
 
 	for _, testDir := range h.TestSuite.TestDirs {
@@ -311,61 +317,70 @@ func (h *Harness) RunTests() {
 			})
 		}
 	})
+	h.T.Log("run tests finished")
 }
 
-// Run the test harness - start KUDO and the control plane and install the operators, if necessary
-// and then run the tests.
+// Run the test harness - start the control plane and then run the tests.
 func (h *Harness) Run() {
-	rand.Seed(time.Now().UTC().UnixNano())
+	h.Setup()
+	h.RunTests()
+}
 
-	defer h.Stop()
+// Setup spins up the test env based on configuration
+// It can be used to start env which can than be modified prior to running tests, otherwise use Run().
+func (h *Harness) Setup() {
+	rand.Seed(time.Now().UTC().UnixNano())
+	h.T.Log("starting setup")
 
 	cl, err := h.Client(false)
 	if err != nil {
-		h.T.Fatal(err)
+		h.T.Log("fatal error getting client")
+		h.fatal(err)
 	}
 
 	dClient, err := h.DiscoveryClient()
 	if err != nil {
-		h.T.Fatal(err)
+		h.T.Log("fatal error getting discovery client")
+		h.fatal(err)
 	}
 
 	// Install CRDs
 	crdKind := testutils.NewResource("apiextensions.k8s.io/v1beta1", "CustomResourceDefinition", "", "")
 	crds, err := testutils.InstallManifests(context.TODO(), cl, dClient, h.TestSuite.CRDDir, crdKind)
 	if err != nil {
-		h.T.Fatal(err)
+		h.T.Log("fatal error installing crds")
+		h.fatal(err)
 	}
 
 	if err := testutils.WaitForCRDs(dClient, crds); err != nil {
-		h.T.Fatal(err)
+		h.T.Log("fatal error waiting for crds")
+		h.fatal(err)
 	}
 
 	// Create a new client to bust the client's CRD cache.
 	cl, err = h.Client(true)
 	if err != nil {
-		h.T.Fatal(err)
+		h.T.Log("fatal error getting client after crd update")
+		h.fatal(err)
 	}
 
 	// Install required manifests.
 	for _, manifestDir := range h.TestSuite.ManifestDirs {
 		if _, err := testutils.InstallManifests(context.TODO(), cl, dClient, manifestDir); err != nil {
-			h.T.Fatal(err)
+			h.T.Log("fatal error installing manifests")
+			h.fatal(err)
 		}
 	}
-
-	if err := testutils.RunCommands(h.GetLogger(), "default", "", h.TestSuite.Commands, ""); err != nil {
-		h.T.Fatal(err)
+	bgs, errs := testutils.RunCommands(h.GetLogger(), "default", "", h.TestSuite.Commands, "")
+	// assign any background processes first for cleanup in case of any errors
+	h.bgProcesses = append(h.bgProcesses, bgs...)
+	if len(errs) > 0 {
+		h.T.Log("fatal error running commands")
+		h.fatal(errs)
 	}
-
-	if err := testutils.RunKubectlCommands(h.GetLogger(), "default", h.TestSuite.Kubectl, ""); err != nil {
-		h.T.Fatal(err)
-	}
-
-	h.RunTests()
 }
 
-// Stop the test environment and KUDO, clean up the harness.
+// Stop the test environment and clean up the harness.
 func (h *Harness) Stop() {
 	if h.managerStopCh != nil {
 		close(h.managerStopCh)
@@ -379,6 +394,23 @@ func (h *Harness) Stop() {
 
 		if err := h.kind.CollectLogs(logDir); err != nil {
 			h.T.Log("error collecting kind cluster logs", err)
+		}
+	}
+
+	if h.bgProcesses != nil {
+		for _, p := range h.bgProcesses {
+			h.T.Logf("killing process %q", p)
+			err := p.Process.Kill()
+			if err != nil {
+				h.T.Logf("bg process: %q kill error %v", p, err)
+			}
+			ps, err := p.Process.Wait()
+			if err != nil {
+				h.T.Logf("bg process: %q kill wait error %v", p, err)
+			}
+			if ps != nil {
+				h.T.Logf("bg process: %q exit code %v", p, ps.ExitCode())
+			}
 		}
 	}
 
@@ -413,6 +445,18 @@ func (h *Harness) Stop() {
 
 		h.kind = nil
 	}
+}
+
+// wraps Test.Fatal in order to clean up harness
+// fatal should NOT be used with a go routine, it is not thread safe
+func (h *Harness) fatal(args ...interface{}) {
+	// clean up on fatal in setup
+	if !h.stopping {
+		// stopping prevents reentry into h.Stop
+		h.stopping = true
+		h.Stop()
+	}
+	h.T.Fatal(args...)
 }
 
 func (h *Harness) explicitPath() string {

@@ -6,7 +6,7 @@ import (
 	"time"
 )
 
-// Logger is an interface used by the KUDO test operator to provide logging of tests.
+// Logger is an interface used by the KUTTL test operator to provide logging of tests.
 type Logger interface {
 	Log(args ...interface{})
 	Logf(format string, args ...interface{})
