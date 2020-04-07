@@ -5,12 +5,12 @@ title: KUTTL as a Library
 authors:
   - "@mpereira"
   - "@jbarrick-mesosphere"
+  - "@kensipe"
 owners:
-  - "@mpereira"
   - "@jbarrick-mesosphere"
 editor: "@kensipe"
 creation-date: 2020-02-13
-last-updated: 2020-02-25
+last-updated: 2020-04-07
 status: provisional
 ---
 
@@ -53,7 +53,7 @@ Rather than building an entirely new library, we will unify the library and test
 * Err on the side of flexibility
 * Err on the side of returning errors instead of panicking/Fatalf/etc.
 * Cohesive logging output (parameters, formatting, etc.)
-* Separation of concerns between domains (KUDO, Operators, Kubernetes, etc.)
+* Separation of concerns between domains (Operators, Kubernetes, etc.)
 
 ## Proposal
 
@@ -126,66 +126,8 @@ func CreateNamespace(namespaceName string) error
 func DeleteNamespace(namespaceName string) error
 ```
 
-### kudo/kudo.go
+### operators
 
-The kudo package should provide conveniences for interacting with the KUDO "system" and KUDO operators.
+Kuttl needs a package in order to provide conveniences for interacting with operators and webhooks.
 
-* Partial CRUD functionality for instances (get)
-* Convenience function for getting the "instance aggregated status" from an instance
-* Install operator from directory
-* Uninstall operator
-
-```
-package kudo
-
-import (
-  "github.com/kudobuilder/kudo/pkg/apis/kudo/v1alpha1"
-  kubectl "github.com/mesosphere/kudo-cassandra-operator/tests/utils/kubectl"
-)
-
-func Init(kubectlOptions *kubectl.KubectlOptions) error
-
-func GetInstance(
-  namespaceName string,
-  instanceName string,
-) (*v1alpha1.Instance, error)
-
-func GetInstanceAggregatedStatus(
-  namespaceName string,
-  instanceName string,
-) (*v1alpha1.ExecutionStatus, error)
-
-func WaitForOperatorDeployComplete(
-  namespaceName string,
-  instanceName string,
-) error
-
-func InstallOperatorFromDirectory(
-  directory string,
-  namespaceName string,
-  instanceName string,
-  parameters []string,
-) error
-
-func UninstallOperator(
-  operatorName string,
-  namespaceName string,
-  instanceName string,
-) error
-
-func UpdateInstanceParameters(
-  namespaceName string,
-  instanceName string,
-  parameters map[string]string,
-) error
-
-func Exec(
-  namespaceName string,
-  instanceName string,
-  podName string,
-  containerName string,
-  command string,
-  arguments string,
-  environment string[],
-) error
-```
+* Partial CRUD functionality for CRs / CRDs (get)
