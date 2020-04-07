@@ -18,11 +18,12 @@ This KEP proposes a scheme for making test steps, asserts, and manifests composa
 
 ## Table of Contents
 
-* [Summary](#summary)
-  * [Motivation](#motivation)
-     * [Goals](#goals)
-  * [Proposal](#proposal)
-     * [Test Case file structure](#test-case-file-structure)
+ * [Summary](#summary)
+ * [Motivation](#motivation)
+    * [Goals](#goals)
+ * [Proposal](#proposal)
+    * [Testing Life-cycle](#testing-life-cycle)
+    * [Test Case file structure](#test-case-file-structure)
 
 ## Summary
 
