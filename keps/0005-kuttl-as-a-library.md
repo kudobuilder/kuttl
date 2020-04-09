@@ -19,10 +19,14 @@ status: provisional
 ## Table of Contents
 
 * [Summary](#summary)
-    * [Goals](#goals)
-    * [Non-Goals](#non-goals)
+   * [Goals](#goals)
+   * [Non-Goals](#non-goals)
+   * [Principles](#principles)
 * [Proposal](#proposal)
-
+   * [cmd/cmd.go](#cmdcmdgo)
+   * [kubectl/kubectl.go](#kubectlkubectlgo)
+   * [k8s/k8s.go](#k8sk8sgo)
+   * [operators](#operators)
 
 ## Summary
 
