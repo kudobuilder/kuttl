@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"strings"
 	"testing"
 	"time"
 
@@ -133,7 +134,7 @@ func TestRunCommand(t *testing.T) {
 	assert.NoError(t, err)
 	assert.NotNil(t, cmd)
 	// no stdout for background processes
-	assert.Empty(t, stdout)
+	assert.Empty(t, strings.TrimSpace(stdout.String()))
 }
 
 func TestRunCommandIgnoreErrors(t *testing.T) {
