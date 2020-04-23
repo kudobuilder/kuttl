@@ -4,15 +4,12 @@ import (
 	"context"
 	"fmt"
 	"io"
-	"syscall"
 	"testing"
 
 	dockertypes "github.com/docker/docker/api/types"
 	volumetypes "github.com/docker/docker/api/types/volume"
 	"github.com/stretchr/testify/assert"
 	kindConfig "sigs.k8s.io/kind/pkg/apis/config/v1alpha3"
-
-	"github.com/kudobuilder/kuttl/pkg/apis/testharness/v1beta1"
 )
 
 func TestGetTimeout(t *testing.T) {
@@ -83,28 +80,4 @@ func TestAddNodeCaches(t *testing.T) {
 	assert.Equal(t, "/var/lib/containerd", kindCfg.Nodes[0].ExtraMounts[0].ContainerPath)
 	assert.Equal(t, "/var/lib/docker/data/kind-0", kindCfg.Nodes[0].ExtraMounts[0].HostPath)
 	assert.Equal(t, "/var/lib/docker/data/kind-1", kindCfg.Nodes[1].ExtraMounts[0].HostPath)
-}
-
-func TestRunBackgroundCommands(t *testing.T) {
-	h := Harness{
-		T: t,
-	}
-	h.TestSuite.StartControlPlane = true
-	commands := []v1beta1.Command{{
-		Command:    "sleep 1000000",
-		Background: true,
-	}}
-	h.TestSuite.Commands = commands
-
-	h.Setup()
-	defer h.Stop()
-
-	// setup creates bg processes
-	assert.Equal(t, 1, len(h.bgProcesses))
-	// process is alive
-	assert.NoError(t, h.bgProcesses[0].Process.Signal(syscall.Signal(0)))
-
-	// cleans up bg processes
-	h.Stop()
-	assert.Error(t, h.bgProcesses[0].Process.Signal(syscall.Signal(0)))
 }
