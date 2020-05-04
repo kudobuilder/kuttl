@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"io/ioutil"
+	"os"
 	"testing"
 	"time"
 
@@ -250,6 +251,7 @@ func TestGetKubectlArgs(t *testing.T) {
 		testName  string
 		namespace string
 		args      string
+		env       map[string]string
 		expected  []string
 	}{
 		{
@@ -397,6 +399,15 @@ func TestGetKubectlArgs(t *testing.T) {
 			},
 		},
 		{
+			testName:  "os ENV are expanded",
+			namespace: "default",
+			args:      "kuttl $TEST_FOO ${TEST_FOO}",
+			env:       map[string]string{"TEST_FOO": "test"},
+			expected: []string{
+				"kubectl", "kuttl", "test", "test", "--namespace", "default",
+			},
+		},
+		{
 			testName:  "kubectl is not pre-pended if it is already present",
 			namespace: "default",
 			args:      "kubectl kuttl test",
@@ -408,6 +419,17 @@ func TestGetKubectlArgs(t *testing.T) {
 		test := test
 
 		t.Run(test.testName, func(t *testing.T) {
+
+			if test.env != nil || len(test.env) > 0 {
+				for key, value := range test.env {
+					os.Setenv(key, value)
+				}
+				defer func() {
+					for key := range test.env {
+						os.Unsetenv(key)
+					}
+				}()
+			}
 			cmd, err := GetArgs(context.TODO(), "kubectl", harness.Command{
 				Command:    test.args,
 				Namespaced: true,
