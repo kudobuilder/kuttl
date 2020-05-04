@@ -966,10 +966,9 @@ func RunCommand(ctx context.Context, namespace string, command string, cmd harne
 	builtCmd.Dir = cwd
 	builtCmd.Stdout = stdout
 	builtCmd.Stderr = stderr
-	builtCmd.Env = []string{
-		fmt.Sprintf("KUBECONFIG=%s/kubeconfig", actualDir),
-		fmt.Sprintf("PATH=%s/bin/:%s", actualDir, os.Getenv("PATH")),
-	}
+	builtCmd.Env = os.Environ()
+	builtCmd.Env = append(builtCmd.Env, fmt.Sprintf("KUBECONFIG=%s/kubeconfig", actualDir))
+	builtCmd.Env = append(builtCmd.Env, fmt.Sprintf("PATH=%s/bin/:%s", actualDir, os.Getenv("PATH")))
 
 	// process started and exited with error
 	var exerr *exec.ExitError
