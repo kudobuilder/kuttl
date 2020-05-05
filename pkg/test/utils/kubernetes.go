@@ -912,16 +912,19 @@ func StartTestEnvironment() (env TestEnvironment, err error) {
 }
 
 // GetArgs parses a command line string into its arguments and appends a namespace if it is not already set.
+// provides OS expansion of defined ENV VARs inside args to commands.  The expansion is limited to what is defined on the OS
+// and not variables defined for kuttl tests
 func GetArgs(ctx context.Context, command string, cmd harness.Command, namespace string) (*exec.Cmd, error) {
 	argSlice := []string{}
 
-	argSplit, err := shlex.Split(cmd.Command)
+	c := os.ExpandEnv(cmd.Command)
+	argSplit, err := shlex.Split(c)
 	if err != nil {
 		return nil, err
 	}
 
 	if command != "" && argSplit[0] != command {
-		argSlice = append(argSlice, command)
+		argSlice = append(argSlice, os.ExpandEnv(command))
 	}
 
 	argSlice = append(argSlice, argSplit...)
@@ -963,10 +966,9 @@ func RunCommand(ctx context.Context, namespace string, command string, cmd harne
 	builtCmd.Dir = cwd
 	builtCmd.Stdout = stdout
 	builtCmd.Stderr = stderr
-	builtCmd.Env = []string{
-		fmt.Sprintf("KUBECONFIG=%s/kubeconfig", actualDir),
-		fmt.Sprintf("PATH=%s/bin/:%s", actualDir, os.Getenv("PATH")),
-	}
+	builtCmd.Env = os.Environ()
+	builtCmd.Env = append(builtCmd.Env, fmt.Sprintf("KUBECONFIG=%s/kubeconfig", actualDir))
+	builtCmd.Env = append(builtCmd.Env, fmt.Sprintf("PATH=%s/bin/:%s", actualDir, os.Getenv("PATH")))
 
 	// process started and exited with error
 	var exerr *exec.ExitError
