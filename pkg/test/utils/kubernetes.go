@@ -44,6 +44,7 @@ import (
 	fakediscovery "k8s.io/client-go/discovery/fake"
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/kubernetes/scheme"
+	_ "k8s.io/client-go/plugin/pkg/client/auth" // package needed for auth providers like GCP
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/restmapper"
 	coretesting "k8s.io/client-go/testing"
