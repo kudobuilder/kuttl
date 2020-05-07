@@ -72,6 +72,7 @@ var APIServerDefaultArgs = []string{
 	"--secure-port={{ if .SecurePort }}{{ .SecurePort }}{{ end }}",
 	"--disable-admission-plugins=ServiceAccount,NamespaceLifecycle",
 	"--service-cluster-ip-range=10.0.0.0/24",
+	"--advertise-address={{ if .URL }}{{ .URL.Hostname }}{{ end }}",
 }
 
 //TODO (kensipe): need to consider options around AlwaysAdmin https://github.com/kudobuilder/kudo/pull/1420/files#r391449597
@@ -886,9 +887,9 @@ type TestEnvironment struct {
 
 // StartTestEnvironment is a wrapper for controller-runtime's envtest that creates a Kubernetes API server and etcd
 // suitable for use in tests.
-func StartTestEnvironment() (env TestEnvironment, err error) {
+func StartTestEnvironment(KubeAPIServerFlags []string) (env TestEnvironment, err error) {
 	env.Environment = &envtest.Environment{
-		KubeAPIServerFlags: append(APIServerDefaultArgs, "--advertise-address={{ if .URL }}{{ .URL.Hostname }}{{ end }}"),
+		KubeAPIServerFlags: KubeAPIServerFlags,
 	}
 
 	env.Config, err = env.Environment.Start()
