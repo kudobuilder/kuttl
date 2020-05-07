@@ -12,11 +12,11 @@ require (
 	github.com/dustinkirkland/golang-petname v0.0.0-20191129215211-8e5a1ed0cff0
 	github.com/gogo/protobuf v1.3.1 // indirect
 	github.com/google/shlex v0.0.0-20191202100458-e7afc7fbc510
+	github.com/gophercloud/gophercloud v0.2.0 // indirect
 	github.com/gorilla/context v1.1.1 // indirect
 	github.com/gorilla/mux v1.6.2 // indirect
 	github.com/imdario/mergo v0.3.7 // indirect
 	github.com/konsorten/go-windows-terminal-sequences v1.0.2 // indirect
-	github.com/kudobuilder/kudo v0.11.1 // indirect
 	github.com/mattn/go-colorable v0.1.4 // indirect
 	github.com/morikuni/aec v1.0.0 // indirect
 	github.com/opencontainers/go-digest v1.0.0-rc1 // indirect
