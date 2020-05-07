@@ -9,6 +9,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strings"
 	"sync"
 	"testing"
 	"time"
@@ -191,7 +192,9 @@ func (h *Harness) RunTestEnv() (*rest.Config, error) {
 		return nil, err
 	}
 
-	h.T.Log("started test environment (kube-apiserver and etcd) in", time.Since(started))
+	h.T.Logf("started test environment (kube-apiserver and etcd) in %v, with following options:\n%s",
+		time.Since(started),
+		strings.Join(testenv.Environment.KubeAPIServerFlags, "\n"))
 	h.env = testenv.Environment
 
 	return testenv.Config, nil

@@ -70,7 +70,7 @@ var APIServerDefaultArgs = []string{
 	"--insecure-port={{ if .URL }}{{ .URL.Port }}{{ end }}",
 	"--insecure-bind-address={{ if .URL }}{{ .URL.Hostname }}{{ end }}",
 	"--secure-port={{ if .SecurePort }}{{ .SecurePort }}{{ end }}",
-	"--admission-control=AlwaysAdmit",
+	"--disable-admission-plugins=ServiceAccount,NamespaceLifecycle",
 	"--service-cluster-ip-range=10.0.0.0/24",
 }
 
@@ -891,13 +891,7 @@ func StartTestEnvironment() (env TestEnvironment, err error) {
 		KubeAPIServerFlags: append(APIServerDefaultArgs, "--advertise-address={{ if .URL }}{{ .URL.Hostname }}{{ end }}"),
 	}
 
-	// Retry up to three times for the test environment to start up in case there is a port collision (#510).
-	for i := 0; i < 3; i++ {
-		env.Config, err = env.Environment.Start()
-		if err == nil {
-			break
-		}
-	}
+	env.Config, err = env.Environment.Start()
 
 	if err != nil {
 		return
@@ -1004,7 +998,7 @@ func RunCommands(logger Logger, namespace string, command string, commands []har
 	}
 
 	for _, cmd := range commands {
-		logger.Logf("running command: %s %s", command, cmd)
+		logger.Logf("running command: %s %q", command, cmd.Command)
 
 		bg, err := RunCommand(context.TODO(), namespace, command, cmd, workdir, logger, logger)
 		if err != nil {
