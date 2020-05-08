@@ -114,12 +114,14 @@ func (h *Harness) RunKIND() (*rest.Config, error) {
 		h.kind = &kind
 
 		if h.kind.IsRunning() {
+			h.T.Logf("KIND is already running, using existing cluster")
 			return clientcmd.BuildConfigFromFlags("", h.explicitPath())
 		}
 
 		kindCfg := &kindConfig.Cluster{}
 
 		if h.TestSuite.KINDConfig != "" {
+			h.T.Logf("Loading KIND config from %s", h.TestSuite.KINDConfig)
 			var err error
 			kindCfg, err = loadKindConfig(h.TestSuite.KINDConfig)
 			if err != nil {
@@ -137,11 +139,12 @@ func (h *Harness) RunKIND() (*rest.Config, error) {
 
 		h.addNodeCaches(dockerClient, kindCfg)
 
+		h.T.Log("Starting KIND cluster")
 		if err := h.kind.Run(kindCfg); err != nil {
 			return nil, err
 		}
 
-		if err := h.kind.AddContainers(dockerClient, h.TestSuite.KINDContainers); err != nil {
+		if err := h.kind.AddContainers(dockerClient, h.TestSuite.KINDContainers, h.T); err != nil {
 			return nil, err
 		}
 	}
