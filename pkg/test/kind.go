@@ -2,6 +2,7 @@ package test
 
 import (
 	"context"
+	"testing"
 
 	"sigs.k8s.io/kind/pkg/apis/config/v1alpha3"
 	"sigs.k8s.io/kind/pkg/cluster"
@@ -55,10 +56,12 @@ func (k *kind) IsRunning() bool {
 
 // AddContainers loads the named Docker containers into a KIND cluster.
 // The cluster must be running for this to work.
-func (k *kind) AddContainers(docker testutils.DockerClient, containers []string) error {
+func (k *kind) AddContainers(docker testutils.DockerClient, containers []string, t *testing.T) error {
 	if !k.IsRunning() {
 		panic("KIND cluster isn't running")
 	}
+
+	t.Logf("Adding Containers to KIND...\n")
 
 	nodes, err := k.Provider.ListNodes(k.context)
 	if err != nil {
@@ -67,6 +70,7 @@ func (k *kind) AddContainers(docker testutils.DockerClient, containers []string)
 
 	for _, node := range nodes {
 		for _, container := range containers {
+			t.Logf("Add image %s to node %s\n", container, node.String())
 			if err := loadContainer(docker, node, container); err != nil {
 				return err
 			}
