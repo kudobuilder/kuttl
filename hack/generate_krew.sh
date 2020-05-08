@@ -33,9 +33,6 @@ function generate_platform {
     uri: https://github.com/kudobuilder/kuttl/releases/download/v${VERSION}/kuttl_${VERSION}_${1}_${ARCH}.tar.gz
     sha256: "${sha}"
     bin: "${3}"
-    files:
-    - from: "*"
-      to: "."
 EOF
 }
 
