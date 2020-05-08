@@ -183,7 +183,7 @@ For more detailed documentation, visit: https://kudo.dev/docs/testing`,
 	testCmd.Flags().StringSliceVar(&manifestDirs, "manifest-dir", []string{}, "One or more directories containing manifests to apply before running the tests.")
 	testCmd.Flags().StringVar(&testToRun, "test", "", "If set, the specific test case to run.")
 	testCmd.Flags().BoolVar(&startControlPlane, "start-control-plane", false, "Start a local Kubernetes control plane for the tests (requires etcd and kube-apiserver binaries, cannot be used with --start-kind).")
-	testCmd.Flags().StringVar(&mockControllerFile, "control-plane-config", "", "Path to file to load controller-runtime APIServer configuration arguments (only usedful when --startControlPlane).")
+	testCmd.Flags().StringVar(&mockControllerFile, "control-plane-config", "", "Path to file to load controller-runtime APIServer configuration arguments (only useful when --startControlPlane).")
 	testCmd.Flags().BoolVar(&startKIND, "start-kind", false, "Start a KIND cluster for the tests (cannot be used with --start-control-plane).")
 	testCmd.Flags().StringVar(&kindConfig, "kind-config", "", "Specify the KIND configuration file path (implies --start-kind, cannot be used with --start-control-plane).")
 	testCmd.Flags().StringVar(&kindContext, "kind-context", "", "Specify the KIND context name to use (default: kind).")
