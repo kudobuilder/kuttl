@@ -65,7 +65,7 @@ func TestAddContainers(t *testing.T) {
 		t.Errorf("failed to close image pull output: %v", err)
 	}
 
-	if err := kind.AddContainers(docker, []string{testImage}); err != nil {
+	if err := kind.AddContainers(docker, []string{testImage}, t); err != nil {
 		t.Errorf("failed to add container to KIND cluster: %v", err)
 	}
 
