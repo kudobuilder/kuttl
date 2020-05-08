@@ -968,6 +968,7 @@ func RunCommand(ctx context.Context, namespace string, command string, cmd harne
 	builtCmd.Stdout = stdout
 	builtCmd.Stderr = stderr
 	builtCmd.Env = os.Environ()
+	builtCmd.Env = append(builtCmd.Env, fmt.Sprintf("NAMESPACE=%s", namespace))
 	builtCmd.Env = append(builtCmd.Env, fmt.Sprintf("KUBECONFIG=%s/kubeconfig", actualDir))
 	builtCmd.Env = append(builtCmd.Env, fmt.Sprintf("PATH=%s/bin/:%s", actualDir, os.Getenv("PATH")))
 
