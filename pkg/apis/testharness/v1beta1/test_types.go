@@ -22,6 +22,9 @@ type TestSuite struct {
 	TestDirs []string `json:"testDirs"`
 	// Whether or not to start a local etcd and kubernetes API server for the tests.
 	StartControlPlane bool `json:"startControlPlane"`
+	// ControlPlaneArgs defaults to APIServerDefaultArgs from controller-runtime pkg/internal/testing/integration/internal/apiserver.go
+	// this allows for control over the args, however these are not serialized from a TestSuite.yaml
+	ControlPlaneArgs []string
 	// Whether or not to start a local kind cluster for the tests.
 	StartKIND bool `json:"startKIND"`
 	// Path to the KIND configuration file to use.
