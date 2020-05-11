@@ -1007,6 +1007,9 @@ func RunCommands(logger Logger, namespace string, command string, commands []har
 		}
 		if bg != nil {
 			bgs = append(bgs, bg)
+		} else {
+			// We only need to flush if this is not a background command
+			logger.Flush()
 		}
 	}
 

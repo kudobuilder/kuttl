@@ -13,6 +13,7 @@ type Logger interface {
 	Logf(format string, args ...interface{})
 	WithPrefix(string) Logger
 	Write(p []byte) (n int, err error)
+	Flush()
 }
 
 // TestLogger implements the Logger interface to be compatible with the go test operator's
@@ -64,4 +65,11 @@ func (t *TestLogger) Write(p []byte) (n int, err error) {
 	}
 
 	return len(p), nil
+}
+
+func (t *TestLogger) Flush() {
+	if len(t.buffer) != 0 {
+		t.Log(string(t.buffer))
+		t.buffer = []byte{}
+	}
 }
