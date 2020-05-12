@@ -966,7 +966,7 @@ func RunCommand(ctx context.Context, namespace string, command string, cmd harne
 		return nil, err
 	}
 
-	kudoENV := make(map[string]string, 0)
+	kudoENV := make(map[string]string)
 	kudoENV["NAMESPACE"] = namespace
 	kudoENV["KUBECONFIG"] = fmt.Sprintf("%s/kubeconfig", actualDir)
 	kudoENV["PATH"] = fmt.Sprintf("%s/bin/:%s", actualDir, os.Getenv("PATH"))
