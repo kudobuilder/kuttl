@@ -420,7 +420,7 @@ func (h *Harness) Stop() {
 		}
 	}
 
-	if h.TestSuite.SkipClusterDelete || h.TestSuite.SkipDelete {
+	if h.TestSuite.SkipClusterDelete {
 		cwd, _ := os.Getwd()
 		kubeconfig := filepath.Join(cwd, "kubeconfig")
 
