@@ -20,3 +20,5 @@ RUN  apt-get install -y kubectl
 COPY --from=builder /go/src/kuttl/bin/kubectl-kuttl /usr/bin/kubectl-kuttl
 
 WORKDIR /opt/project
+
+ENV KUBECONFIG=kubeconfig
