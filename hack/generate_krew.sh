@@ -33,9 +33,6 @@ function generate_platform {
     uri: https://github.com/kudobuilder/kuttl/releases/download/v${VERSION}/kuttl_${VERSION}_${1}_${ARCH}.tar.gz
     sha256: "${sha}"
     bin: "${3}"
-    files:
-    - from: "*"
-      to: "."
 EOF
 }
 
@@ -50,13 +47,13 @@ metadata:
 spec:
   version: "v${VERSION}"
 
-  shortDescription: Declaratively build, install, and run operators using KUTTL.
-  homepage: https://kudo.dev/
+  shortDescription: Declaratively run and test operators
+  homepage: https://kuttl.dev/
   description: |
     The KUbernetes Test TooL (KUTTL) is a highly productive test
     toolkit for testing operators on Kubernetes.
   caveats: |
-    See the documentation for more information: https://kudo.dev/docs/
+    See the documentation for more information: https://kuttl.dev/
 
   platforms:
 EOF
