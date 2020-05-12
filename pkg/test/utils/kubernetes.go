@@ -320,7 +320,7 @@ func Namespaced(dClient discovery.DiscoveryInterface, obj runtime.Object, namesp
 
 	resource, err := GetAPIResource(dClient, obj.GetObjectKind().GroupVersionKind())
 	if k8serrors.IsNotFound(err) {
-		return  "", "", fmt.Errorf("gvk: %v used in test not found in cluster", obj.GetObjectKind().GroupVersionKind())
+		return "", "", fmt.Errorf("gvk: %v used in test not found in cluster", obj.GetObjectKind().GroupVersionKind())
 	}
 
 	if err != nil {
