@@ -321,7 +321,7 @@ func Namespaced(dClient discovery.DiscoveryInterface, obj runtime.Object, namesp
 	resource, err := GetAPIResource(dClient, obj.GetObjectKind().GroupVersionKind())
 	if err != nil {
 
-		return "", "", err
+		return "", "", fmt.Errorf("retrieving API resource for %v failed: %v", obj.GetObjectKind().GroupVersionKind(), err)
 	}
 
 	if !resource.Namespaced {
