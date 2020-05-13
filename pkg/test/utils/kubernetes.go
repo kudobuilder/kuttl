@@ -910,16 +910,23 @@ func StartTestEnvironment(KubeAPIServerFlags []string) (env TestEnvironment, err
 // GetArgs parses a command line string into its arguments and appends a namespace if it is not already set.
 // provides OS expansion of defined ENV VARs inside args to commands.  The expansion is limited to what is defined on the OS
 // and not variables defined for kuttl tests
-func GetArgs(ctx context.Context, command string, cmd harness.Command, namespace string) (*exec.Cmd, error) {
+func GetArgs(ctx context.Context, command string, cmd harness.Command, namespace string, env map[string]string) (*exec.Cmd, error) {
 	argSlice := []string{}
 
 	c := os.ExpandEnv(cmd.Command)
+	c = os.Expand(c, func(s string) string {
+		return env[s]
+	})
 	argSplit, err := shlex.Split(c)
 	if err != nil {
 		return nil, err
 	}
 
 	if command != "" && argSplit[0] != command {
+		command = os.Expand(command, func(s string) string {
+			return env[s]
+		})
+
 		argSlice = append(argSlice, os.ExpandEnv(command))
 	}
 
@@ -954,7 +961,12 @@ func RunCommand(ctx context.Context, namespace string, command string, cmd harne
 		return nil, err
 	}
 
-	builtCmd, err := GetArgs(ctx, command, cmd, namespace)
+	kudoENV := make(map[string]string)
+	kudoENV["NAMESPACE"] = namespace
+	kudoENV["KUBECONFIG"] = fmt.Sprintf("%s/kubeconfig", actualDir)
+	kudoENV["PATH"] = fmt.Sprintf("%s/bin/:%s", actualDir, os.Getenv("PATH"))
+
+	builtCmd, err := GetArgs(ctx, command, cmd, namespace, kudoENV)
 	if err != nil {
 		return nil, err
 	}
@@ -963,8 +975,9 @@ func RunCommand(ctx context.Context, namespace string, command string, cmd harne
 	builtCmd.Stdout = stdout
 	builtCmd.Stderr = stderr
 	builtCmd.Env = os.Environ()
-	builtCmd.Env = append(builtCmd.Env, fmt.Sprintf("KUBECONFIG=%s/kubeconfig", actualDir))
-	builtCmd.Env = append(builtCmd.Env, fmt.Sprintf("PATH=%s/bin/:%s", actualDir, os.Getenv("PATH")))
+	for key, value := range kudoENV {
+		builtCmd.Env = append(builtCmd.Env, fmt.Sprintf("%s=%s", key, value))
+	}
 
 	// process started and exited with error
 	var exerr *exec.ExitError

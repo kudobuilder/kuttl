@@ -433,7 +433,7 @@ func TestGetKubectlArgs(t *testing.T) {
 			cmd, err := GetArgs(context.TODO(), "kubectl", harness.Command{
 				Command:    test.args,
 				Namespaced: true,
-			}, test.namespace)
+			}, test.namespace, nil)
 			assert.Nil(t, err)
 			assert.Equal(t, test.expected, cmd.Args)
 		})
