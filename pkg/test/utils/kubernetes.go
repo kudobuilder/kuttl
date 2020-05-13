@@ -910,7 +910,7 @@ func StartTestEnvironment(KubeAPIServerFlags []string) (env TestEnvironment, err
 // GetArgs parses a command line string into its arguments and appends a namespace if it is not already set.
 // provides OS expansion of defined ENV VARs inside args to commands.  The expansion is limited to what is defined on the OS
 // and not variables defined for kuttl tests
-func GetArgs(ctx context.Context, command string, cmd harness.Command, namespace string, env map[string]string) (*exec.Cmd, error) {
+func GetArgs(ctx context.Context, cmd harness.Command, namespace string, env map[string]string) (*exec.Cmd, error) {
 	argSlice := []string{}
 
 	c := os.ExpandEnv(cmd.Command)
@@ -920,14 +920,6 @@ func GetArgs(ctx context.Context, command string, cmd harness.Command, namespace
 	argSplit, err := shlex.Split(c)
 	if err != nil {
 		return nil, err
-	}
-
-	if command != "" && argSplit[0] != command {
-		command = os.Expand(command, func(s string) string {
-			return env[s]
-		})
-
-		argSlice = append(argSlice, os.ExpandEnv(command))
 	}
 
 	argSlice = append(argSlice, argSplit...)
@@ -955,7 +947,7 @@ func GetArgs(ctx context.Context, command string, cmd harness.Command, namespace
 // RunCommand runs a command with args.
 // args gets split on spaces (respecting quoted strings).
 // if the command is run in the background a reference to the process is returned for later cleanup
-func RunCommand(ctx context.Context, namespace string, command string, cmd harness.Command, cwd string, stdout io.Writer, stderr io.Writer) (*exec.Cmd, error) {
+func RunCommand(ctx context.Context, namespace string, cmd harness.Command, cwd string, stdout io.Writer, stderr io.Writer) (*exec.Cmd, error) {
 	actualDir, err := os.Getwd()
 	if err != nil {
 		return nil, err
@@ -966,7 +958,7 @@ func RunCommand(ctx context.Context, namespace string, command string, cmd harne
 	kudoENV["KUBECONFIG"] = fmt.Sprintf("%s/kubeconfig", actualDir)
 	kudoENV["PATH"] = fmt.Sprintf("%s/bin/:%s", actualDir, os.Getenv("PATH"))
 
-	builtCmd, err := GetArgs(ctx, command, cmd, namespace, kudoENV)
+	builtCmd, err := GetArgs(ctx, cmd, namespace, kudoENV)
 	if err != nil {
 		return nil, err
 	}
@@ -1003,7 +995,7 @@ func RunCommand(ctx context.Context, namespace string, command string, cmd harne
 // RunCommands runs a set of commands, returning any errors.
 // If `command` is set, then `command` will be the command that is invoked (if a command specifies it already, it will not be prepended again).
 // commands running in the background are returned
-func RunCommands(logger Logger, namespace string, command string, commands []harness.Command, workdir string) ([]*exec.Cmd, []error) {
+func RunCommands(logger Logger, namespace string, commands []harness.Command, workdir string) ([]*exec.Cmd, []error) {
 	errs := []error{}
 	bgs := []*exec.Cmd{}
 
@@ -1012,9 +1004,9 @@ func RunCommands(logger Logger, namespace string, command string, commands []har
 	}
 
 	for _, cmd := range commands {
-		logger.Logf("running command: %s %q", command, cmd.Command)
+		logger.Logf("running command: %s", cmd)
 
-		bg, err := RunCommand(context.TODO(), namespace, command, cmd, workdir, logger, logger)
+		bg, err := RunCommand(context.TODO(), namespace, cmd, workdir, logger, logger)
 		if err != nil {
 			errs = append(errs, err)
 		}

@@ -257,7 +257,7 @@ func TestGetKubectlArgs(t *testing.T) {
 		{
 			testName:  "namespace long, combined already set at end is not modified",
 			namespace: "default",
-			args:      "kuttl test --namespace=test-canary",
+			args:      "kubectl kuttl test --namespace=test-canary",
 			expected: []string{
 				"kubectl", "kuttl", "test", "--namespace=test-canary",
 			},
@@ -265,7 +265,7 @@ func TestGetKubectlArgs(t *testing.T) {
 		{
 			testName:  "namespace long already set at end is not modified",
 			namespace: "default",
-			args:      "kuttl test --namespace test-canary",
+			args:      "kubectl kuttl test --namespace test-canary",
 			expected: []string{
 				"kubectl", "kuttl", "test", "--namespace", "test-canary",
 			},
@@ -273,7 +273,7 @@ func TestGetKubectlArgs(t *testing.T) {
 		{
 			testName:  "namespace short, combined already set at end is not modified",
 			namespace: "default",
-			args:      "kuttl test -n=test-canary",
+			args:      "kubectl kuttl test -n=test-canary",
 			expected: []string{
 				"kubectl", "kuttl", "test", "-n=test-canary",
 			},
@@ -281,47 +281,15 @@ func TestGetKubectlArgs(t *testing.T) {
 		{
 			testName:  "namespace short already set at end is not modified",
 			namespace: "default",
-			args:      "kuttl test -n test-canary",
+			args:      "kubectl kuttl test -n test-canary",
 			expected: []string{
 				"kubectl", "kuttl", "test", "-n", "test-canary",
 			},
 		},
 		{
-			testName:  "namespace long, combined already set at beginning is not modified",
-			namespace: "default",
-			args:      "--namespace=test-canary kuttl test",
-			expected: []string{
-				"kubectl", "--namespace=test-canary", "kuttl", "test",
-			},
-		},
-		{
-			testName:  "namespace long already set at beginning is not modified",
-			namespace: "default",
-			args:      "--namespace test-canary kuttl test",
-			expected: []string{
-				"kubectl", "--namespace", "test-canary", "kuttl", "test",
-			},
-		},
-		{
-			testName:  "namespace short, combined already set at beginning is not modified",
-			namespace: "default",
-			args:      "-n=test-canary kuttl test",
-			expected: []string{
-				"kubectl", "-n=test-canary", "kuttl", "test",
-			},
-		},
-		{
-			testName:  "namespace short already set at beginning is not modified",
-			namespace: "default",
-			args:      "-n test-canary kuttl test",
-			expected: []string{
-				"kubectl", "-n", "test-canary", "kuttl", "test",
-			},
-		},
-		{
 			testName:  "namespace long, combined already set in middle is not modified",
 			namespace: "default",
-			args:      "kuttl --namespace=test-canary test",
+			args:      "kubectl kuttl --namespace=test-canary test",
 			expected: []string{
 				"kubectl", "kuttl", "--namespace=test-canary", "test",
 			},
@@ -329,7 +297,7 @@ func TestGetKubectlArgs(t *testing.T) {
 		{
 			testName:  "namespace long already set in middle is not modified",
 			namespace: "default",
-			args:      "kuttl --namespace test-canary test",
+			args:      "kubectl kuttl --namespace test-canary test",
 			expected: []string{
 				"kubectl", "kuttl", "--namespace", "test-canary", "test",
 			},
@@ -337,7 +305,7 @@ func TestGetKubectlArgs(t *testing.T) {
 		{
 			testName:  "namespace short, combined already set in middle is not modified",
 			namespace: "default",
-			args:      "kuttl -n=test-canary test",
+			args:      "kubectl kuttl -n=test-canary test",
 			expected: []string{
 				"kubectl", "kuttl", "-n=test-canary", "test",
 			},
@@ -345,7 +313,7 @@ func TestGetKubectlArgs(t *testing.T) {
 		{
 			testName:  "namespace short already set in middle is not modified",
 			namespace: "default",
-			args:      "kuttl -n test-canary test",
+			args:      "kubectl kuttl -n test-canary test",
 			expected: []string{
 				"kubectl", "kuttl", "-n", "test-canary", "test",
 			},
@@ -353,7 +321,7 @@ func TestGetKubectlArgs(t *testing.T) {
 		{
 			testName:  "namespace not set is appended",
 			namespace: "default",
-			args:      "kuttl test",
+			args:      "kubectl kuttl test",
 			expected: []string{
 				"kubectl", "kuttl", "test", "--namespace", "default",
 			},
@@ -361,7 +329,7 @@ func TestGetKubectlArgs(t *testing.T) {
 		{
 			testName:  "unknown arguments do not break parsing with namespace is not set",
 			namespace: "default",
-			args:      "kuttl test --config kuttl-test.yaml",
+			args:      "kubectl kuttl test --config kuttl-test.yaml",
 			expected: []string{
 				"kubectl", "kuttl", "test", "--config", "kuttl-test.yaml", "--namespace", "default",
 			},
@@ -369,7 +337,7 @@ func TestGetKubectlArgs(t *testing.T) {
 		{
 			testName:  "unknown arguments do not break parsing if namespace is set at beginning",
 			namespace: "default",
-			args:      "--namespace=test-canary kuttl test --config kuttl-test.yaml",
+			args:      "kubectl --namespace=test-canary kuttl test --config kuttl-test.yaml",
 			expected: []string{
 				"kubectl", "--namespace=test-canary", "kuttl", "test", "--config", "kuttl-test.yaml",
 			},
@@ -377,7 +345,7 @@ func TestGetKubectlArgs(t *testing.T) {
 		{
 			testName:  "unknown arguments do not break parsing if namespace is set at middle",
 			namespace: "default",
-			args:      "kuttl --namespace=test-canary test --config kuttl-test.yaml",
+			args:      "kubectl kuttl --namespace=test-canary test --config kuttl-test.yaml",
 			expected: []string{
 				"kubectl", "kuttl", "--namespace=test-canary", "test", "--config", "kuttl-test.yaml",
 			},
@@ -385,7 +353,7 @@ func TestGetKubectlArgs(t *testing.T) {
 		{
 			testName:  "unknown arguments do not break parsing if namespace is set at end",
 			namespace: "default",
-			args:      "kuttl test --config kuttl-test.yaml --namespace=test-canary",
+			args:      "kubectl kuttl test --config kuttl-test.yaml --namespace=test-canary",
 			expected: []string{
 				"kubectl", "kuttl", "test", "--config", "kuttl-test.yaml", "--namespace=test-canary",
 			},
@@ -393,7 +361,7 @@ func TestGetKubectlArgs(t *testing.T) {
 		{
 			testName:  "quotes are respected when parsing",
 			namespace: "default",
-			args:      "kuttl \"test quoted\"",
+			args:      "kubectl kuttl \"test quoted\"",
 			expected: []string{
 				"kubectl", "kuttl", "test quoted", "--namespace", "default",
 			},
@@ -401,7 +369,7 @@ func TestGetKubectlArgs(t *testing.T) {
 		{
 			testName:  "os ENV are expanded",
 			namespace: "default",
-			args:      "kuttl $TEST_FOO ${TEST_FOO}",
+			args:      "kubectl kuttl $TEST_FOO ${TEST_FOO}",
 			env:       map[string]string{"TEST_FOO": "test"},
 			expected: []string{
 				"kubectl", "kuttl", "test", "test", "--namespace", "default",
@@ -430,7 +398,7 @@ func TestGetKubectlArgs(t *testing.T) {
 					}
 				}()
 			}
-			cmd, err := GetArgs(context.TODO(), "kubectl", harness.Command{
+			cmd, err := GetArgs(context.TODO(), harness.Command{
 				Command:    test.args,
 				Namespaced: true,
 			}, test.namespace, nil)
