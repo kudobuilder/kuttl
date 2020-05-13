@@ -340,49 +340,42 @@ func (h *Harness) Setup() {
 
 	cl, err := h.Client(false)
 	if err != nil {
-		h.T.Log("fatal error getting client")
-		h.fatal(err)
+		h.fatal(fmt.Errorf("fatal error getting client: %v", err))
 	}
 
 	dClient, err := h.DiscoveryClient()
 	if err != nil {
-		h.T.Log("fatal error getting discovery client")
-		h.fatal(err)
+		h.fatal(fmt.Errorf("fatal error getting discovery client: %v", err))
 	}
 
 	// Install CRDs
 	crdKind := testutils.NewResource("apiextensions.k8s.io/v1beta1", "CustomResourceDefinition", "", "")
 	crds, err := testutils.InstallManifests(context.TODO(), cl, dClient, h.TestSuite.CRDDir, crdKind)
 	if err != nil {
-		h.T.Log("fatal error installing crds")
-		h.fatal(err)
+		h.fatal(fmt.Errorf("fatal error installing crds: %v", err))
 	}
 
 	if err := testutils.WaitForCRDs(dClient, crds); err != nil {
-		h.T.Log("fatal error waiting for crds")
-		h.fatal(err)
+		h.fatal(fmt.Errorf("fatal error waiting for crds: %v", err))
 	}
 
 	// Create a new client to bust the client's CRD cache.
 	cl, err = h.Client(true)
 	if err != nil {
-		h.T.Log("fatal error getting client after crd update")
-		h.fatal(err)
+		h.fatal(fmt.Errorf("fatal error getting client after crd update: %v", err))
 	}
 
 	// Install required manifests.
 	for _, manifestDir := range h.TestSuite.ManifestDirs {
 		if _, err := testutils.InstallManifests(context.TODO(), cl, dClient, manifestDir); err != nil {
-			h.T.Log("fatal error installing manifests")
-			h.fatal(err)
+			h.fatal(fmt.Errorf("fatal error installing manifests: %v", err))
 		}
 	}
 	bgs, errs := testutils.RunCommands(h.GetLogger(), "default", "", h.TestSuite.Commands, "")
 	// assign any background processes first for cleanup in case of any errors
 	h.bgProcesses = append(h.bgProcesses, bgs...)
 	if len(errs) > 0 {
-		h.T.Log("fatal error running commands")
-		h.fatal(errs)
+		h.fatal(fmt.Errorf("fatal error running commands: %v", errs))
 	}
 }
 
