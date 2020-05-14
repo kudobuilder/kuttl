@@ -71,6 +71,11 @@ cli:
 cli-clean:
 	rm -f bin/${CLI}
 
+.PHONY: docker
+# build docker image
+docker:
+	docker build . -t kuttl
+
 # Install CLI
 cli-install:
 	go install -ldflags "${LDFLAGS}" ./cmd/kubectl-kuttl
