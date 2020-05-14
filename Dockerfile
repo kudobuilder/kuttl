@@ -25,7 +25,7 @@ RUN go get -d -v ./...
 RUN make cli
 
 # release image with kubectl + kuttl
-FROM golang:1.14
+FROM debian:buster
 
 RUN apt-get update && apt-get install -y curl wget gnupg2 apt-transport-https vim
 RUN curl -s https://packages.cloud.google.com/apt/doc/apt-key.gpg | apt-key add -
