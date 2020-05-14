@@ -371,7 +371,7 @@ func (h *Harness) Setup() {
 			h.fatal(fmt.Errorf("fatal error installing manifests: %v", err))
 		}
 	}
-	bgs, errs := testutils.RunCommands(h.GetLogger(), "default", "", h.TestSuite.Commands, "")
+	bgs, errs := testutils.RunCommands(h.GetLogger(), "default", h.TestSuite.Commands, "")
 	// assign any background processes first for cleanup in case of any errors
 	h.bgProcesses = append(h.bgProcesses, bgs...)
 	if len(errs) > 0 {

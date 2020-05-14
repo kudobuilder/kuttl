@@ -120,7 +120,7 @@ func TestRunCommand(t *testing.T) {
 	}
 
 	// assert foreground cmd returns nil
-	cmd, err := RunCommand(context.TODO(), "", "", hcmd, "", stdout, stderr)
+	cmd, err := RunCommand(context.TODO(), "", hcmd, "", stdout, stderr)
 	assert.NoError(t, err)
 	assert.Nil(t, cmd)
 	// foreground processes should have stdout
@@ -130,7 +130,7 @@ func TestRunCommand(t *testing.T) {
 	stdout = &bytes.Buffer{}
 
 	// assert background cmd returns process
-	cmd, err = RunCommand(context.TODO(), "", "", hcmd, "", stdout, stderr)
+	cmd, err = RunCommand(context.TODO(), "", hcmd, "", stdout, stderr)
 	assert.NoError(t, err)
 	assert.NotNil(t, cmd)
 	// no stdout for background processes
@@ -146,12 +146,12 @@ func TestRunCommandIgnoreErrors(t *testing.T) {
 	}
 
 	// assert foreground cmd returns nil
-	cmd, err := RunCommand(context.TODO(), "", "", hcmd, "", stdout, stderr)
+	cmd, err := RunCommand(context.TODO(), "", hcmd, "", stdout, stderr)
 	assert.NoError(t, err)
 	assert.Nil(t, cmd)
 
 	hcmd.IgnoreFailure = false
-	cmd, err = RunCommand(context.TODO(), "", "", hcmd, "", stdout, stderr)
+	cmd, err = RunCommand(context.TODO(), "", hcmd, "", stdout, stderr)
 	assert.Error(t, err)
 	assert.Nil(t, cmd)
 
@@ -160,7 +160,7 @@ func TestRunCommandIgnoreErrors(t *testing.T) {
 		Command:       "bad-command",
 		IgnoreFailure: true,
 	}
-	cmd, err = RunCommand(context.TODO(), "", "", hcmd, "", stdout, stderr)
+	cmd, err = RunCommand(context.TODO(), "", hcmd, "", stdout, stderr)
 	assert.Error(t, err)
 	assert.Nil(t, cmd)
 }
