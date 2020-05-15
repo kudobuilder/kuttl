@@ -14,6 +14,8 @@ import (
 	"github.com/thoas/go-funk"
 	"sigs.k8s.io/kind/pkg/apis/config/v1alpha3"
 	"sigs.k8s.io/kind/pkg/cluster/nodes"
+
+	testutils "github.com/kudobuilder/kuttl/pkg/test/utils"
 )
 
 const (
@@ -26,7 +28,7 @@ const (
 func TestAddContainers(t *testing.T) {
 	ctx := context.Background()
 
-	kind := newKind(kindTestContext, "kubeconfig")
+	kind := newKind(kindTestContext, "kubeconfig", testutils.NewTestLogger(t, ""))
 
 	config := v1alpha3.Cluster{}
 
