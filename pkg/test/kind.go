@@ -35,6 +35,7 @@ func (k *kind) Run(config *v1alpha3.Cluster) error {
 		k.context,
 		cluster.CreateWithV1Alpha3Config(config),
 		cluster.CreateWithKubeconfigPath(k.explicitPath),
+		cluster.CreateWithRetain(true),
 	)
 }
 
