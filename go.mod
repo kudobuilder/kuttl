@@ -10,7 +10,6 @@ require (
 	github.com/docker/docker v1.4.2-0.20190916154449-92cc603036dd
 	github.com/docker/go-connections v0.4.0 // indirect
 	github.com/dustinkirkland/golang-petname v0.0.0-20191129215211-8e5a1ed0cff0
-	github.com/gogo/protobuf v1.3.1 // indirect
 	github.com/google/shlex v0.0.0-20191202100458-e7afc7fbc510
 	github.com/gophercloud/gophercloud v0.2.0 // indirect
 	github.com/gorilla/context v1.1.1 // indirect
@@ -29,14 +28,14 @@ require (
 	golang.org/x/net v0.0.0-20191209160850-c0dbc17a3553 // indirect
 	golang.org/x/tools v0.0.0-20191025023517-2077df36852e // indirect
 	gopkg.in/yaml.v2 v2.2.8
-	k8s.io/api v0.17.3
-	k8s.io/apiextensions-apiserver v0.17.2
-	k8s.io/apimachinery v0.17.3
-	k8s.io/client-go v0.17.3
-	k8s.io/code-generator v0.17.3
-	sigs.k8s.io/controller-runtime v0.5.1
-	sigs.k8s.io/controller-tools v0.2.6
-	sigs.k8s.io/kind v0.7.0
+	k8s.io/api v0.18.2
+	k8s.io/apiextensions-apiserver v0.18.2
+	k8s.io/apimachinery v0.18.2
+	k8s.io/client-go v0.18.2
+	k8s.io/code-generator v0.18.2
+	sigs.k8s.io/controller-runtime v0.6.0
+	sigs.k8s.io/controller-tools v0.3.0
+	sigs.k8s.io/kind v0.8.1
 )
 
 replace k8s.io/code-generator v0.17.3 => github.com/kudobuilder/code-generator v0.17.4-beta.0.0.20200316162450-cc91a9201457

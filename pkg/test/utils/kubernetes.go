@@ -249,7 +249,7 @@ func (r *RetryClient) Watch(ctx context.Context, obj runtime.Object) (watch.Inte
 		return nil, err
 	}
 
-	return r.dynamic.Resource(mapping.Resource).Watch(metav1.SingleObject(metav1.ObjectMeta{
+	return r.dynamic.Resource(mapping.Resource).Watch(context.TODO(), metav1.SingleObject(metav1.ObjectMeta{
 		Name:      meta.GetName(),
 		Namespace: meta.GetNamespace(),
 	}))
