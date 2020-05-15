@@ -22,10 +22,10 @@ require (
 	github.com/opencontainers/go-digest v1.0.0-rc1 // indirect
 	github.com/opencontainers/image-spec v1.0.1 // indirect
 	github.com/pmezard/go-difflib v1.0.0
-	github.com/spf13/cobra v0.0.5
+	github.com/spf13/cobra v1.0.0
 	github.com/spf13/pflag v1.0.5
-	github.com/stretchr/testify v1.4.0
-	github.com/thoas/go-funk v0.5.0
+	github.com/stretchr/testify v1.5.1
+	github.com/thoas/go-funk v0.6.0
 	golang.org/x/net v0.0.0-20191209160850-c0dbc17a3553 // indirect
 	golang.org/x/tools v0.0.0-20191025023517-2077df36852e // indirect
 	gopkg.in/yaml.v2 v2.2.8
@@ -36,7 +36,7 @@ require (
 	k8s.io/code-generator v0.17.3
 	sigs.k8s.io/controller-runtime v0.5.1
 	sigs.k8s.io/controller-tools v0.2.6
-	sigs.k8s.io/kind v0.6.1
+	sigs.k8s.io/kind v0.7.0
 )
 
 replace k8s.io/code-generator v0.17.3 => github.com/kudobuilder/code-generator v0.17.4-beta.0.0.20200316162450-cc91a9201457
