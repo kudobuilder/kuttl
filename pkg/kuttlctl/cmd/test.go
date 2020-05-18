@@ -72,7 +72,7 @@ For more detailed documentation, visit: https://kudo.dev/docs/testing`,
 				if _, err := os.Stat("kuttl-test.yaml"); err == nil {
 					configPath = "kuttl-test.yaml"
 				} else {
-					return errors.New("kuttl-test.yaml not found, provide either --config or arguments indicating the tests to load")
+					log.Println("running without a 'kuttl-test.yaml' configuration")
 				}
 			}
 
