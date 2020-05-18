@@ -63,6 +63,11 @@ type TestStep struct {
 
 	// +kubebuilder:validation:Format:=int64
 	Index int `json:"index,omitempty"`
+
+	// files or directories to apply at the beginning of the test step. Useful to reuse a number of applies across tests / test steps.
+	// all relative paths are relative to the CWD of kuttl.  This has the same behavior as indexed manifest file.
+	Apply []string `json:"apply,omitempty"`
+
 	// Objects to delete at the beginning of the test step.
 	Delete []ObjectReference `json:"delete,omitempty"`
 
