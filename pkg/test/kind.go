@@ -8,7 +8,6 @@ import (
 	"sigs.k8s.io/kind/pkg/cluster"
 	"sigs.k8s.io/kind/pkg/cluster/nodes"
 	"sigs.k8s.io/kind/pkg/cluster/nodeutils"
-	"sigs.k8s.io/kind/pkg/log"
 
 	testutils "github.com/kudobuilder/kuttl/pkg/test/utils"
 )
@@ -18,42 +17,6 @@ type kind struct {
 	Provider     *cluster.Provider
 	context      string
 	explicitPath string
-}
-
-type kindLogger struct {
-	l testutils.Logger
-}
-
-func (k kindLogger) Info(message string) {
-	k.l.Log(message)
-}
-
-func (k kindLogger) Infof(format string, args ...interface{}) {
-	k.l.Logf(format, args...)
-}
-
-func (k kindLogger) Enabled() bool {
-	return true
-}
-
-func (k kindLogger) Warn(message string) {
-	k.l.Log(message)
-}
-
-func (k kindLogger) Warnf(format string, args ...interface{}) {
-	k.l.Logf(format, args...)
-}
-
-func (k kindLogger) Error(message string) {
-	k.l.Log(message)
-}
-
-func (k kindLogger) Errorf(format string, args ...interface{}) {
-	k.l.Logf(format, args...)
-}
-
-func (k kindLogger) V(level log.Level) log.InfoLogger {
-	return k
 }
 
 func newKind(kindContext string, explicitPath string, logger testutils.Logger) kind {

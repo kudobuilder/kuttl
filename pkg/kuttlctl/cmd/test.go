@@ -193,6 +193,10 @@ For more detailed documentation, visit: https://kudo.dev/docs/testing`,
 	// The default value here is only used for the help message. The default is actually enforced in RunTests.
 	testCmd.Flags().IntVar(&parallel, "parallel", 8, "The maximum number of tests to run at once.")
 
+	// This cannot be a global flag because pkg/test/utils.RunTests calls flag.Parse which barfs on unknown top-level flags.
+	// Putting it here at least does not advertise it on a level where using it is impossible.
+	test.SetFlags(testCmd.Flags())
+
 	return testCmd
 }
 
