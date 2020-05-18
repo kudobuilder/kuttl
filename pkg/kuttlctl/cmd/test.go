@@ -9,6 +9,7 @@ import (
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
 	harness "github.com/kudobuilder/kuttl/pkg/apis/testharness/v1beta1"
 	"github.com/kudobuilder/kuttl/pkg/test"
@@ -87,7 +88,13 @@ For more detailed documentation, visit: https://kudo.dev/docs/testing`,
 					kind := obj.GetObjectKind().GroupVersionKind().Kind
 
 					if kind == "TestSuite" {
-						options = *obj.(*harness.TestSuite)
+						switch ts := obj.(type) {
+						case *harness.TestSuite:
+							options = *ts
+						case *unstructured.Unstructured:
+							log.Println(fmt.Errorf("bad configuration in file %q", configPath))
+						}
+
 					} else {
 						log.Println(fmt.Errorf("unknown object type: %s", kind))
 					}
