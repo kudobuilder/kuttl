@@ -907,16 +907,39 @@ func StartTestEnvironment(KubeAPIServerFlags []string) (env TestEnvironment, err
 	return
 }
 
-// GetArgs parses a command line string into its arguments and appends a namespace if it is not already set.
 // provides OS expansion of defined ENV VARs inside args to commands.  The expansion is limited to what is defined on the OS
-// and not variables defined for kuttl tests
+// and the variables passed into to the env parameter. To escape a dollar sign, pass in two dollar signs.
+func ExpandEnv(c string, env map[string]string) string {
+	// expand $$ -> $
+	fullEnv := map[string]string{
+		"$": "$",
+	}
+
+	// add all OS environment variables to the map
+	for _, envVar := range os.Environ() {
+		splitVar := strings.SplitN(envVar, "=", 2)
+		if len(splitVar) != 2 {
+			continue
+		}
+		fullEnv[splitVar[0]] = splitVar[1]
+	}
+
+	// add env parameter variables to map
+	for k, v := range env {
+		fullEnv[k] = v
+	}
+
+	return os.Expand(c, func(s string) string {
+		return fullEnv[s]
+	})
+}
+
+// GetArgs parses a command line string into its arguments and appends a namespace if it is not already set.
 func GetArgs(ctx context.Context, cmd harness.Command, namespace string, env map[string]string) (*exec.Cmd, error) {
 	argSlice := []string{}
 
-	c := os.ExpandEnv(cmd.Command)
-	c = os.Expand(c, func(s string) string {
-		return env[s]
-	})
+	c := ExpandEnv(cmd.Command, env)
+
 	argSplit, err := shlex.Split(c)
 	if err != nil {
 		return nil, err

@@ -407,3 +407,10 @@ func TestGetKubectlArgs(t *testing.T) {
 		})
 	}
 }
+
+func TestExpandEnv(t *testing.T) {
+	os.Setenv("KUTTL_TEST_123", "hello")
+	assert.Equal(t, "hello $  world", ExpandEnv("$KUTTL_TEST_123 $$ $DOES_NOT_EXIST_1234 ${EXPAND_ME}", map[string]string{
+		"EXPAND_ME": "world",
+	}))
+}
