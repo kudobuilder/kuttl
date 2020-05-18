@@ -146,7 +146,9 @@ For more detailed documentation, visit: https://kudo.dev/docs/testing`,
 				options.ArtifactsDir = artifactsDir
 			}
 
-			options.Timeout = timeout
+			if isSet(flags, "timeout") {
+						options.Timeout = timeout
+			}
 
 			if len(args) != 0 {
 				options.TestDirs = args
