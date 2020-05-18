@@ -48,6 +48,7 @@ func newTestCmd() *cobra.Command {
 	parallel := 0
 	artifactsDir := ""
 	mockControllerFile := ""
+	timeout := 30
 
 	options := harness.TestSuite{}
 
@@ -145,6 +146,8 @@ For more detailed documentation, visit: https://kudo.dev/docs/testing`,
 				options.ArtifactsDir = artifactsDir
 			}
 
+			options.Timeout = timeout
+
 			if len(args) != 0 {
 				options.TestDirs = args
 			}
@@ -192,6 +195,7 @@ For more detailed documentation, visit: https://kudo.dev/docs/testing`,
 	testCmd.Flags().BoolVar(&skipClusterDelete, "skip-cluster-delete", false, "If set, do not delete the mocked control plane or kind cluster.")
 	// The default value here is only used for the help message. The default is actually enforced in RunTests.
 	testCmd.Flags().IntVar(&parallel, "parallel", 8, "The maximum number of tests to run at once.")
+	testCmd.Flags().IntVar(&timeout, "timeout", 30, "The timeout to use as default for TestSuite configuration.")
 
 	return testCmd
 }
