@@ -54,7 +54,7 @@ type TestSuite struct {
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 
-// TestStep settings to apply to a test step.
+// TestStep settings to apply to a test step.go
 type TestStep struct {
 	// The type meta object, should always be a GVK of kudo.dev/v1beta1/TestStep.
 	metav1.TypeMeta `json:",inline"`
@@ -63,6 +63,11 @@ type TestStep struct {
 
 	// +kubebuilder:validation:Format:=int64
 	Index int `json:"index,omitempty"`
+
+	// files or directories to apply in the test step. Useful to reuse a number of applies across tests / test steps.
+	// all relative paths are relative to the folder the TestStep is defined in.
+	Apply []string `json:"apply,omitempty"`
+
 	// Objects to delete at the beginning of the test step.
 	Delete []ObjectReference `json:"delete,omitempty"`
 

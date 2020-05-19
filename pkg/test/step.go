@@ -16,6 +16,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	harness "github.com/kudobuilder/kuttl/pkg/apis/testharness/v1beta1"
+	kfile "github.com/kudobuilder/kuttl/pkg/file"
 	testutils "github.com/kudobuilder/kuttl/pkg/test/utils"
 )
 
@@ -470,6 +471,21 @@ func (s *Step) LoadYAML(file string) error {
 			}
 		} else {
 			apply = append(apply, obj)
+		}
+	}
+
+	// process provided steps configured TestStep kind
+	if s.Step != nil {
+		for _, applyPath := range s.Step.Apply {
+			paths, err := kfile.FromPath(filepath.Join(s.Dir, applyPath), "*.yaml")
+			if err != nil {
+				return fmt.Errorf("step %q %w", s.Name, err)
+			}
+			applies, err := kfile.ToRuntimeObjects(paths)
+			if err != nil {
+				return fmt.Errorf("step %q %w", s.Name, err)
+			}
+			apply = append(apply, applies...)
 		}
 	}
 
