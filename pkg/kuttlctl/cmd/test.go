@@ -147,7 +147,7 @@ For more detailed documentation, visit: https://kudo.dev/docs/testing`,
 			}
 
 			if isSet(flags, "timeout") {
-						options.Timeout = timeout
+				options.Timeout = timeout
 			}
 
 			if len(args) != 0 {
