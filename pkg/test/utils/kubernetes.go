@@ -962,7 +962,7 @@ func GetArgs(ctx context.Context, cmd harness.Command, namespace string, env map
 	}
 
 	//nolint:gosec // We're running a user provided command. This is insecure by definition
-	builtCmd := exec.Command(argSlice[0])
+	builtCmd := exec.CommandContext(ctx, argSlice[0])
 	builtCmd.Args = argSlice
 	return builtCmd, nil
 }
@@ -970,7 +970,7 @@ func GetArgs(ctx context.Context, cmd harness.Command, namespace string, env map
 // RunCommand runs a command with args.
 // args gets split on spaces (respecting quoted strings).
 // if the command is run in the background a reference to the process is returned for later cleanup
-func RunCommand(ctx context.Context, namespace string, cmd harness.Command, cwd string, stdout io.Writer, stderr io.Writer) (*exec.Cmd, error) {
+func RunCommand(ctx context.Context, namespace string, cmd harness.Command, cwd string, stdout io.Writer, stderr io.Writer, timeout int) (*exec.Cmd, error) {
 	actualDir, err := os.Getwd()
 	if err != nil {
 		return nil, err
@@ -981,7 +981,15 @@ func RunCommand(ctx context.Context, namespace string, cmd harness.Command, cwd 
 	kudoENV["KUBECONFIG"] = fmt.Sprintf("%s/kubeconfig", actualDir)
 	kudoENV["PATH"] = fmt.Sprintf("%s/bin/:%s", actualDir, os.Getenv("PATH"))
 
-	builtCmd, err := GetArgs(ctx, cmd, namespace, kudoENV)
+	// command context is provided context or a cancel context but only from cmds that are not background
+	cmdCtx := ctx
+	if timeout > 0 && !cmd.Background {
+		var cancel context.CancelFunc
+		cmdCtx, cancel = context.WithTimeout(ctx, time.Duration(timeout)*time.Second)
+		defer cancel()
+	}
+
+	builtCmd, err := GetArgs(cmdCtx, cmd, namespace, kudoENV)
 	if err != nil {
 		return nil, err
 	}
@@ -1012,13 +1020,16 @@ func RunCommand(ctx context.Context, namespace string, cmd harness.Command, cwd 
 	if errors.As(err, &exerr) && cmd.IgnoreFailure {
 		return nil, nil
 	}
+	if errors.Is(cmdCtx.Err(), context.DeadlineExceeded) {
+		return nil, fmt.Errorf("command %q exceeded %v sec timeout", cmd.Command, timeout)
+	}
 	return nil, err
 }
 
 // RunCommands runs a set of commands, returning any errors.
 // If `command` is set, then `command` will be the command that is invoked (if a command specifies it already, it will not be prepended again).
 // commands running in the background are returned
-func RunCommands(logger Logger, namespace string, commands []harness.Command, workdir string) ([]*exec.Cmd, []error) {
+func RunCommands(logger Logger, namespace string, commands []harness.Command, workdir string, timeout int) ([]*exec.Cmd, []error) {
 	errs := []error{}
 	bgs := []*exec.Cmd{}
 
@@ -1029,7 +1040,7 @@ func RunCommands(logger Logger, namespace string, commands []harness.Command, wo
 	for _, cmd := range commands {
 		logger.Logf("running command: %q", cmd.Command)
 
-		bg, err := RunCommand(context.TODO(), namespace, cmd, workdir, logger, logger)
+		bg, err := RunCommand(context.Background(), namespace, cmd, workdir, logger, logger, timeout)
 		if err != nil {
 			errs = append(errs, err)
 		}
