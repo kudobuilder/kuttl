@@ -27,8 +27,13 @@ func ToRuntimeObjects(paths []string) ([]runtime.Object, error) {
 }
 
 // From a file or dir path returns an array of flat file paths
-func FromPath(path string) ([]string, error) {
+// pattern is a filepath.Match pattern to limit files to a pattern
+func FromPath(path, pattern string) ([]string, error) {
 	files := []string{}
+
+	if pattern == "" {
+		pattern = "*"
+	}
 
 	fi, err := os.Stat(path)
 	if err != nil {
@@ -40,7 +45,11 @@ func FromPath(path string) ([]string, error) {
 			return nil, err
 		}
 		for _, fileInfo := range fileInfos {
-			if !fileInfo.IsDir() {
+			match, err := filepath.Match(pattern, fileInfo.Name())
+			if err != nil {
+				return nil, err
+			}
+			if !fileInfo.IsDir() && match {
 				files = append(files, filepath.Join(path, fileInfo.Name()))
 			}
 		}

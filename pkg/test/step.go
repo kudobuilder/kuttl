@@ -477,7 +477,7 @@ func (s *Step) LoadYAML(file string) error {
 	// process provided steps configured TestStep kind
 	if s.Step != nil {
 		for _, applyPath := range s.Step.Apply {
-			paths, err := kfile.FromPath(filepath.Join(s.Dir, applyPath))
+			paths, err := kfile.FromPath(filepath.Join(s.Dir, applyPath), "*.yaml")
 			if err != nil {
 				return fmt.Errorf("step %q %w", s.Name, err)
 			}

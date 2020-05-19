@@ -8,13 +8,45 @@ import (
 
 func TestFromPath(t *testing.T) {
 
-	paths, err := FromPath("testdata/path")
-	assert.NoError(t, err)
-	assert.Equal(t, 2, len(paths))
-	assert.Equal(t, "testdata/path/test1.yaml", paths[0])
+	tests := []struct {
+		name     string
+		path     string
+		pattern  string
+		expected []string
+		wantErr  bool
+	}{
+		{
+			name:     `good path no extension`,
+			path:     "testdata/path",
+			pattern:  "",
+			expected: []string{"testdata/path/skip.txt", "testdata/path/test1.yaml", "testdata/path/test2.yaml"},
+			wantErr:  false,
+		},
+		{
+			name:     `good path yaml extension`,
+			path:     "testdata/path",
+			pattern:  "*.yaml",
+			expected: []string{"testdata/path/test1.yaml", "testdata/path/test2.yaml"},
+			wantErr:  false,
+		},
+		{
+			name:     `bad path`,
+			path:     "testdata/badpath",
+			pattern:  "",
+			expected: []string{},
+			wantErr:  true,
+		},
+	}
 
-	_, err = FromPath("testdata/badpath")
-	assert.Error(t, err, "file mode issue with stat testdata/badpath: no such file or directory")
+	for _, tt := range tests {
+		tt := tt
+		t.Run(tt.name, func(t *testing.T) {
+
+			paths, err := FromPath(tt.path, tt.pattern)
+			assert.Equal(t, tt.wantErr, err != nil, "expected error %v, but got %v", tt.wantErr, err)
+			assert.ElementsMatch(t, paths, tt.expected)
+		})
+	}
 }
 
 func TestToRuntimeObjects(t *testing.T) {
