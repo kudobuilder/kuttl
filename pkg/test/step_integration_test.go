@@ -341,3 +341,16 @@ func TestCheckedTypeAssertions(t *testing.T) {
 		})
 	}
 }
+
+func TestTwoTestStepping(t *testing.T) {
+	apply := []runtime.Object{}
+	step := &Step{
+		Name:            "twostepping",
+		Index:           0,
+		Apply:           apply,
+		Step: &harness.TestStep{},
+	}
+
+	err := step.LoadYAML("step_integration_test_data/01-apply.yaml")
+	assert.Error(t, err, "more than 1 TestStep not allowed in step \"twostepping\"")
+}
