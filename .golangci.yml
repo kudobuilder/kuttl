@@ -9,7 +9,6 @@ linters:
     - scopelint
     - unconvert
     - unparam
-    - interfacer
     - nakedret
     - gocyclo
     - dupl
