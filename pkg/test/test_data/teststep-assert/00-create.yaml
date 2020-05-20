@@ -1,0 +1,24 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: hello2
+spec:
+  containers:
+    - image: alpine
+      name: test
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: hello
+spec:
+  containers:
+    - image: alpine
+      name: test
+---
+# using assert from TestStep from multiple folder locations
+apiVersion: kudo.dev/v1beta1
+kind: TestStep
+assert:
+  - hello1-assert.yaml
+  - hello2/hello2-assert.yaml
