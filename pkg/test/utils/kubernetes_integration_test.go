@@ -142,7 +142,7 @@ func TestRunCommand(t *testing.T) {
 	hcmd.Command = "sleep 42"
 
 	// assert foreground cmd times out
-	cmd, err = RunCommand(context.TODO(), "", hcmd, "", stdout, stderr, 2)
+	cmd, err = RunCommand(context.TODO(), "", hcmd, "", stdout, stderr, logger, 2)
 	assert.Error(t, err)
 	assert.True(t, strings.Contains(err.Error(), "timeout"))
 	assert.Nil(t, cmd)
@@ -153,7 +153,7 @@ func TestRunCommand(t *testing.T) {
 	hcmd.Timeout = 2
 
 	// assert foreground cmd times out with command timeout
-	cmd, err = RunCommand(context.TODO(), "", hcmd, "", stdout, stderr, 0)
+	cmd, err = RunCommand(context.TODO(), "", hcmd, "", stdout, stderr, logger, 0)
 	assert.Error(t, err)
 	assert.True(t, strings.Contains(err.Error(), "timeout"))
 	assert.Nil(t, cmd)
