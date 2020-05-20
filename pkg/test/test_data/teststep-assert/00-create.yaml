@@ -16,7 +16,7 @@ spec:
     - image: alpine
       name: test
 ---
-# using apply from TestStep from multiple folder locations
+# using assert from TestStep from multiple folder locations
 apiVersion: kudo.dev/v1beta1
 kind: TestStep
 assert:
