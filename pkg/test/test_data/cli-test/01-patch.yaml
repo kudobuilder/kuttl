@@ -2,6 +2,6 @@ apiVersion: kudo.dev/v1beta1
 kind: TestStep
 commands:
 - command: kubectl label pod cli-test-pod test=true
-  namespaced: true
+  timeout: 500
 - command: kubectl command is bad
   ignoreFailure: true
