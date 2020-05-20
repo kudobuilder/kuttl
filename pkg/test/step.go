@@ -497,10 +497,10 @@ func (s *Step) LoadYAML(file string) error {
 				return fmt.Errorf("step %q assert %w", s.Name, err)
 			}
 			assert, err := kfile.ToRuntimeObjects(paths)
-			asserts = append(asserts, assert...)
 			if err != nil {
 				return fmt.Errorf("step %q assert %w", s.Name, err)
 			}
+			asserts = append(asserts, assert...)
 		}
 	}
 
