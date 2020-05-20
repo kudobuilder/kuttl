@@ -380,7 +380,7 @@ func (s *Step) Run(namespace string) []error {
 				command.Background = false
 			}
 		}
-		if _, errors := testutils.RunCommands(s.Logger, namespace, s.Step.Commands, s.Dir); errors != nil {
+		if _, errors := testutils.RunCommands(s.Logger, namespace, s.Step.Commands, s.Dir, s.Timeout); errors != nil {
 			testErrors = append(testErrors, errors...)
 		}
 	}
