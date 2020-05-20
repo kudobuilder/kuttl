@@ -19,8 +19,9 @@ type kind struct {
 	explicitPath string
 }
 
-func newKind(kindContext string, explicitPath string) kind {
-	provider := cluster.NewProvider()
+func newKind(kindContext string, explicitPath string, logger testutils.Logger) kind {
+
+	provider := cluster.NewProvider(cluster.ProviderWithLogger(&kindLogger{logger}))
 
 	return kind{
 		Provider:     provider,
@@ -35,6 +36,7 @@ func (k *kind) Run(config *v1alpha3.Cluster) error {
 		k.context,
 		cluster.CreateWithV1Alpha3Config(config),
 		cluster.CreateWithKubeconfigPath(k.explicitPath),
+		cluster.CreateWithRetain(true),
 	)
 }
 

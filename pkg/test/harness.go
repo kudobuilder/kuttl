@@ -111,7 +111,7 @@ func (h *Harness) RunKIND() (*rest.Config, error) {
 			return nil, err
 		}
 
-		kind := newKind(h.TestSuite.KINDContext, h.explicitPath())
+		kind := newKind(h.TestSuite.KINDContext, h.explicitPath(), h.GetLogger())
 		h.kind = &kind
 
 		if h.kind.IsRunning() {
