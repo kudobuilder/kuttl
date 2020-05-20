@@ -967,7 +967,7 @@ func GetArgs(ctx context.Context, cmd harness.Command, namespace string, env map
 	return builtCmd, nil
 }
 
-// To keep interafacer linter happy.
+// To keep interfacer linter happy.
 type Logfer interface {
 	Logf(format string, args ...interface{})
 }
