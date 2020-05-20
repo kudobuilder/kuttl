@@ -1,0 +1,8 @@
+apiVersion: kudo.dev/v1beta1
+kind: TestStep
+delete:
+  - apiVersion: v1
+    kind: Pod
+error:
+  - hello1-error.yaml
+  - hello2/hello2-error.yaml

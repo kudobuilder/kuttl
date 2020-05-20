@@ -491,6 +491,7 @@ func (s *Step) LoadYAML(file string) error {
 			}
 			applies = append(applies, apply...)
 		}
+		// process configured step asserts
 		for _, assertPath := range s.Step.Assert {
 			paths, err := kfile.FromPath(filepath.Join(s.Dir, assertPath), "*.yaml")
 			if err != nil {
@@ -501,6 +502,18 @@ func (s *Step) LoadYAML(file string) error {
 				return fmt.Errorf("step %q assert %w", s.Name, err)
 			}
 			asserts = append(asserts, assert...)
+		}
+		// process configured errors
+		for _, errorPath := range s.Step.Error {
+			paths, err := kfile.FromPath(filepath.Join(s.Dir, errorPath), "*.yaml")
+			if err != nil {
+				return fmt.Errorf("step %q error %w", s.Name, err)
+			}
+			errObjs, err := kfile.ToRuntimeObjects(paths)
+			if err != nil {
+				return fmt.Errorf("step %q error %w", s.Name, err)
+			}
+			s.Errors = append(s.Errors, errObjs...)
 		}
 	}
 
