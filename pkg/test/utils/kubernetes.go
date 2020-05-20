@@ -967,6 +967,11 @@ func GetArgs(ctx context.Context, cmd harness.Command, namespace string, env map
 	return builtCmd, nil
 }
 
+// To keep interafacer linter happy.
+type Logfer interface {
+	Logf(format string, args ...interface{})
+}
+
 // RunCommand runs a command with args.
 // args gets split on spaces (respecting quoted strings).
 // if the command is run in the background a reference to the process is returned for later cleanup
