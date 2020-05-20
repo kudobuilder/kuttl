@@ -334,10 +334,35 @@ func TestCheckedTypeAssertions(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			step := Step{}
-			path := fmt.Sprintf("step_integration_test_data/00-%s.yaml", test.name)
+			path := fmt.Sprintf("step_integration_test_data/error_detect/00-%s.yaml", test.name)
 			assert.EqualError(t, step.LoadYAML(path),
 				fmt.Sprintf("failed to load %s object from %s: it contains an object of type *unstructured.Unstructured",
 					test.typeName, path))
 		})
 	}
 }
+
+func TestTwoTestStepping(t *testing.T) {
+	apply := []runtime.Object{}
+	step := &Step{
+		Name:            "twostepping",
+		Index:           0,
+		Apply:           apply,
+	}
+
+	// 2 apply files in 1 step
+	err := step.LoadYAML("step_integration_test_data/two_step/00-step1.yaml")
+	assert.NoError(t, err)
+	err = step.LoadYAML("step_integration_test_data/two_step/00-step2.yaml")
+	assert.Error(t, err, "more than 1 TestStep not allowed in step \"twostepping\"")
+
+	// 2 teststeps in 1 file in 1 step
+	step = &Step{
+		Name:            "twostepping",
+		Index:           0,
+		Apply:           apply,
+	}
+	err = step.LoadYAML("step_integration_test_data/two_step/01-step1.yaml")
+	assert.Error(t, err, "more than 1 TestStep not allowed in step \"twostepping\"")
+}
+

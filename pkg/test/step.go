@@ -461,6 +461,9 @@ func (s *Step) LoadYAML(file string) error {
 	for _, obj := range s.Apply {
 		if obj.GetObjectKind().GroupVersionKind().Kind == "TestStep" {
 			if testStep, ok := obj.(*harness.TestStep); ok {
+				if s.Step != nil {
+					return fmt.Errorf("more than 1 TestStep not allowed in step %q", s.Name)
+				}
 				s.Step = testStep
 			} else {
 				return fmt.Errorf("failed to load TestStep object from %s: it contains an object of type %T", file, obj)
