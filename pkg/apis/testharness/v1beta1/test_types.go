@@ -64,9 +64,11 @@ type TestStep struct {
 	// +kubebuilder:validation:Format:=int64
 	Index int `json:"index,omitempty"`
 
-	// files or directories to apply in the test step. Useful to reuse a number of applies across tests / test steps.
+	// Apply and Assert lists of files or directories to use in the test step.
+	// Useful to reuse a number of applies across tests / test steps.
 	// all relative paths are relative to the folder the TestStep is defined in.
 	Apply []string `json:"apply,omitempty"`
+	Assert []string `json:"assert,omitempty"`
 
 	// Objects to delete at the beginning of the test step.
 	Delete []ObjectReference `json:"delete,omitempty"`

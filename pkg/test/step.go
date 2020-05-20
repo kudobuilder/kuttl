@@ -456,7 +456,7 @@ func (s *Step) LoadYAML(file string) error {
 		}
 	}
 
-	apply := []runtime.Object{}
+	applies := []runtime.Object{}
 
 	for _, obj := range s.Apply {
 		if obj.GetObjectKind().GroupVersionKind().Kind == "TestStep" {
@@ -473,26 +473,38 @@ func (s *Step) LoadYAML(file string) error {
 				s.Name = s.Step.Name
 			}
 		} else {
-			apply = append(apply, obj)
+			applies = append(applies, obj)
 		}
 	}
 
 	// process provided steps configured TestStep kind
 	if s.Step != nil {
+		// process configured step applies
 		for _, applyPath := range s.Step.Apply {
 			paths, err := kfile.FromPath(filepath.Join(s.Dir, applyPath), "*.yaml")
 			if err != nil {
-				return fmt.Errorf("step %q %w", s.Name, err)
+				return fmt.Errorf("step %q apply %w", s.Name, err)
 			}
-			applies, err := kfile.ToRuntimeObjects(paths)
+			apply, err := kfile.ToRuntimeObjects(paths)
 			if err != nil {
-				return fmt.Errorf("step %q %w", s.Name, err)
+				return fmt.Errorf("step %q apply %w", s.Name, err)
 			}
-			apply = append(apply, applies...)
+			applies = append(applies, apply...)
+		}
+		for _, assertPath := range s.Step.Assert {
+			paths, err := kfile.FromPath(filepath.Join(s.Dir, assertPath), "*.yaml")
+			if err != nil {
+				return fmt.Errorf("step %q assert %w", s.Name, err)
+			}
+			assert, err := kfile.ToRuntimeObjects(paths)
+			asserts = append(asserts, assert...)
+			if err != nil {
+				return fmt.Errorf("step %q assert %w", s.Name, err)
+			}
 		}
 	}
 
-	s.Apply = apply
+	s.Apply = applies
 	s.Asserts = asserts
 	return nil
 }
