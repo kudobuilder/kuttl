@@ -69,7 +69,7 @@ type TestStep struct {
 	// all relative paths are relative to the folder the TestStep is defined in.
 	Apply  []string `json:"apply,omitempty"`
 	Assert []string `json:"assert,omitempty"`
-	Error []string `json:"error,omitempty"`
+	Error  []string `json:"error,omitempty"`
 
 	// Objects to delete at the beginning of the test step.
 	Delete []ObjectReference `json:"delete,omitempty"`
