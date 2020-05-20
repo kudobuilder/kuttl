@@ -970,7 +970,7 @@ func GetArgs(ctx context.Context, cmd harness.Command, namespace string, env map
 // RunCommand runs a command with args.
 // args gets split on spaces (respecting quoted strings).
 // if the command is run in the background a reference to the process is returned for later cleanup
-func RunCommand(ctx context.Context, namespace string, cmd harness.Command, cwd string, stdout io.Writer, stderr io.Writer, timeout int) (*exec.Cmd, error) {
+func RunCommand(ctx context.Context, namespace string, cmd harness.Command, cwd string, stdout io.Writer, stderr io.Writer, logger Logger, timeout int) (*exec.Cmd, error) {
 	actualDir, err := os.Getwd()
 	if err != nil {
 		return nil, err
@@ -1007,6 +1007,8 @@ func RunCommand(ctx context.Context, namespace string, cmd harness.Command, cwd 
 	if err != nil {
 		return nil, err
 	}
+
+	logger.Logf("running command: %v", builtCmd.Args)
 
 	builtCmd.Dir = cwd
 	builtCmd.Stdout = stdout
