@@ -146,6 +146,17 @@ func TestRunCommand(t *testing.T) {
 	assert.True(t, strings.Contains(err.Error(), "timeout"))
 	assert.Nil(t, cmd)
 
+	stdout = &bytes.Buffer{}
+	hcmd.Background = false
+	hcmd.Command = "sleep 42"
+	hcmd.Timeout = 2
+
+	// assert foreground cmd times out with command timeout
+	cmd, err = RunCommand(context.TODO(), "", hcmd, "", stdout, stderr, 0)
+	assert.Error(t, err)
+	assert.True(t, strings.Contains(err.Error(), "timeout"))
+	assert.Nil(t, cmd)
+
 }
 
 func TestRunCommandIgnoreErrors(t *testing.T) {

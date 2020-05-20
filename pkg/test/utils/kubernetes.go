@@ -981,6 +981,20 @@ func RunCommand(ctx context.Context, namespace string, cmd harness.Command, cwd 
 	kudoENV["KUBECONFIG"] = fmt.Sprintf("%s/kubeconfig", actualDir)
 	kudoENV["PATH"] = fmt.Sprintf("%s/bin/:%s", actualDir, os.Getenv("PATH"))
 
+	// by default testsuite timeout is the command timeout
+	// 0 is allowed for testsuite which means forever (or no timeout)
+	// cmd.timeout defaults to 0 and is NOT and explicit override to mean forever.
+	// using a negative value for cmd.timeout is an override of testsuite.timeout to mean forever
+	// if testsuite.timeout is set,  set cmd.timeout = -1 (means no timeout), 0 (default) means using testsuite.timeout, and anything else is an override of time.
+	// if testsuite.timeout = 0, cmd.timeout -1 and 0 means forever
+	if cmd.Timeout < 0 {
+		// negative is always forever
+		timeout = 0
+	}
+	if cmd.Timeout > 0 {
+		timeout = cmd.Timeout
+	}
+
 	// command context is provided context or a cancel context but only from cmds that are not background
 	cmdCtx := ctx
 	if timeout > 0 && !cmd.Background {
