@@ -119,8 +119,9 @@ func TestRunCommand(t *testing.T) {
 		Command: "echo 'hello'",
 	}
 
+	logger := NewTestLogger(t, "")
 	// assert foreground cmd returns nil
-	cmd, err := RunCommand(context.TODO(), "", hcmd, "", stdout, stderr, 0)
+	cmd, err := RunCommand(context.TODO(), "", hcmd, "", stdout, stderr, logger, 0)
 	assert.NoError(t, err)
 	assert.Nil(t, cmd)
 	// foreground processes should have stdout
@@ -130,7 +131,7 @@ func TestRunCommand(t *testing.T) {
 	stdout = &bytes.Buffer{}
 
 	// assert background cmd returns process
-	cmd, err = RunCommand(context.TODO(), "", hcmd, "", stdout, stderr, 0)
+	cmd, err = RunCommand(context.TODO(), "", hcmd, "", stdout, stderr, logger, 0)
 	assert.NoError(t, err)
 	assert.NotNil(t, cmd)
 	// no stdout for background processes
@@ -141,7 +142,7 @@ func TestRunCommand(t *testing.T) {
 	hcmd.Command = "sleep 42"
 
 	// assert foreground cmd times out
-	cmd, err = RunCommand(context.TODO(), "", hcmd, "", stdout, stderr, 2)
+	cmd, err = RunCommand(context.TODO(), "", hcmd, "", stdout, stderr, logger, 2)
 	assert.Error(t, err)
 	assert.True(t, strings.Contains(err.Error(), "timeout"))
 	assert.Nil(t, cmd)
@@ -152,7 +153,7 @@ func TestRunCommand(t *testing.T) {
 	hcmd.Timeout = 2
 
 	// assert foreground cmd times out with command timeout
-	cmd, err = RunCommand(context.TODO(), "", hcmd, "", stdout, stderr, 0)
+	cmd, err = RunCommand(context.TODO(), "", hcmd, "", stdout, stderr, logger, 0)
 	assert.Error(t, err)
 	assert.True(t, strings.Contains(err.Error(), "timeout"))
 	assert.Nil(t, cmd)
@@ -167,13 +168,14 @@ func TestRunCommandIgnoreErrors(t *testing.T) {
 		IgnoreFailure: true,
 	}
 
+	logger := NewTestLogger(t, "")
 	// assert foreground cmd returns nil
-	cmd, err := RunCommand(context.TODO(), "", hcmd, "", stdout, stderr, 0)
+	cmd, err := RunCommand(context.TODO(), "", hcmd, "", stdout, stderr, logger, 0)
 	assert.NoError(t, err)
 	assert.Nil(t, cmd)
 
 	hcmd.IgnoreFailure = false
-	cmd, err = RunCommand(context.TODO(), "", hcmd, "", stdout, stderr, 0)
+	cmd, err = RunCommand(context.TODO(), "", hcmd, "", stdout, stderr, logger, 0)
 	assert.Error(t, err)
 	assert.Nil(t, cmd)
 
@@ -182,7 +184,7 @@ func TestRunCommandIgnoreErrors(t *testing.T) {
 		Command:       "bad-command",
 		IgnoreFailure: true,
 	}
-	cmd, err = RunCommand(context.TODO(), "", hcmd, "", stdout, stderr, 0)
+	cmd, err = RunCommand(context.TODO(), "", hcmd, "", stdout, stderr, logger, 0)
 	assert.Error(t, err)
 	assert.Nil(t, cmd)
 }
