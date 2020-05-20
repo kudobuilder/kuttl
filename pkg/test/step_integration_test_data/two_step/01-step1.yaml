@@ -1,0 +1,8 @@
+apiVersion: kudo.dev/v1beta1
+kind: TestStep
+timeout: 30
+
+----
+apiVersion: kudo.dev/v1beta1
+kind: TestStep
+timeout: 30
