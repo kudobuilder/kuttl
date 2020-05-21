@@ -938,6 +938,17 @@ func ExpandEnv(c string, env map[string]string) string {
 func GetArgs(ctx context.Context, cmd harness.Command, namespace string, env map[string]string) (*exec.Cmd, error) {
 	argSlice := []string{}
 
+	if cmd.Command != "" && cmd.Script != "" {
+		return nil, errors.New("command and script can not be set in the same configuration")
+	}
+	if cmd.Command == "" && cmd.Script == "" {
+		return nil, errors.New("command or script must be configured")
+	}
+
+	if cmd.Script != "" {
+		builtCmd := exec.CommandContext(ctx, "sh", "-c", cmd.Script)
+		return builtCmd, nil
+	}
 	c := ExpandEnv(cmd.Command, env)
 
 	argSplit, err := shlex.Split(c)
