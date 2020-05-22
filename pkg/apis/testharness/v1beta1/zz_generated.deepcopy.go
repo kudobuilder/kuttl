@@ -92,6 +92,21 @@ func (in *TestStep) DeepCopyInto(out *TestStep) {
 	*out = *in
 	out.TypeMeta = in.TypeMeta
 	in.ObjectMeta.DeepCopyInto(&out.ObjectMeta)
+	if in.Apply != nil {
+		in, out := &in.Apply, &out.Apply
+		*out = make([]string, len(*in))
+		copy(*out, *in)
+	}
+	if in.Assert != nil {
+		in, out := &in.Assert, &out.Assert
+		*out = make([]string, len(*in))
+		copy(*out, *in)
+	}
+	if in.Error != nil {
+		in, out := &in.Error, &out.Error
+		*out = make([]string, len(*in))
+		copy(*out, *in)
+	}
 	if in.Delete != nil {
 		in, out := &in.Delete, &out.Delete
 		*out = make([]ObjectReference, len(*in))
@@ -137,6 +152,11 @@ func (in *TestSuite) DeepCopyInto(out *TestSuite) {
 	}
 	if in.TestDirs != nil {
 		in, out := &in.TestDirs, &out.TestDirs
+		*out = make([]string, len(*in))
+		copy(*out, *in)
+	}
+	if in.ControlPlaneArgs != nil {
+		in, out := &in.ControlPlaneArgs, &out.ControlPlaneArgs
 		*out = make([]string, len(*in))
 		copy(*out, *in)
 	}
