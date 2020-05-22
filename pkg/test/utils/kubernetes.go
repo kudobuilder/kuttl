@@ -942,7 +942,10 @@ func GetArgs(ctx context.Context, cmd harness.Command, namespace string, env map
 		return nil, errors.New("command and script can not be set in the same configuration")
 	}
 	if cmd.Command == "" && cmd.Script == "" {
-		return nil, errors.New("command or script must be configured")
+		return nil, errors.New("command or script must be set")
+	}
+	if cmd.Script != "" && cmd.Namespaced {
+		return nil, errors.New("script can not used 'namespaced', use the $NAMESPACE environment variable instead")
 	}
 
 	if cmd.Script != "" {
