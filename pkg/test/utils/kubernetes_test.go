@@ -1,6 +1,7 @@
 package utils
 
 import (
+	"bytes"
 	"context"
 	"errors"
 	"io/ioutil"
@@ -413,4 +414,73 @@ func TestExpandEnv(t *testing.T) {
 	assert.Equal(t, "hello $  world", ExpandEnv("$KUTTL_TEST_123 $$ $DOES_NOT_EXIST_1234 ${EXPAND_ME}", map[string]string{
 		"EXPAND_ME": "world",
 	}))
+}
+
+func TestRunScript(t *testing.T) {
+	tests := []struct {
+		name           string
+		command        string
+		script         string
+		wantedErr      bool
+		expectedStdout bool
+	}{
+		{
+			name:           `no script and no command`,
+			command:        "",
+			script:         "",
+			wantedErr:      true,
+			expectedStdout: false,
+		},
+		{
+			name:           `script AND command`,
+			command:        "echo 'hello'",
+			script:         "for i in {1..5}; do echo $NAMESPACE; done",
+			wantedErr:      true,
+			expectedStdout: false,
+		},
+		// failure for script command as a command (reason we need a script script option)
+		{
+			name:           `command has a failing script command`,
+			command:        "for i in {1..5}; do echo $NAMESPACE; done",
+			script:         "",
+			wantedErr:      true,
+			expectedStdout: false,
+		},
+		{
+			name:           `working script command`,
+			command:        "",
+			script:         "for i in {1..5}; do echo $NAMESPACE; done",
+			wantedErr:      false,
+			expectedStdout: true,
+		},
+	}
+
+	for _, tt := range tests {
+
+		tt := tt
+
+		t.Run(tt.name, func(t *testing.T) {
+			stdout := &bytes.Buffer{}
+			stderr := &bytes.Buffer{}
+			hcmd := harness.Command{
+				Command: tt.command,
+				Script:  tt.script,
+			}
+
+			logger := NewTestLogger(t, "")
+			// script runs with output
+			_, err := RunCommand(context.TODO(), "", hcmd, "", stdout, stderr, logger, 0)
+
+			if tt.wantedErr {
+				assert.Error(t, err)
+			} else {
+				assert.NoError(t, err)
+			}
+			if tt.expectedStdout {
+				assert.True(t, stdout.Len() > 0)
+			} else {
+				assert.True(t, stdout.Len() == 0)
+			}
+		})
+	}
 }

@@ -108,6 +108,10 @@ type Command struct {
 	Command string `json:"command"`
 	// If set, the `--namespace` flag will be appended to the command with the namespace to use.
 	Namespaced bool `json:"namespaced"`
+	// Ability to run a shell script from TestStep (without a script file)
+	// namespaced and command should not be used with script.  namespaced is ignored and command is an error.
+	// env expansion is depended upon the shell but ENV is passed to the runtime env.
+	Script string `json:"script"`
 	// If set, exit failures (`exec.ExitError`) will be ignored. `exec.Error` are NOT ignored.
 	IgnoreFailure bool `json:"ignoreFailure"`
 	// If set, the command is run in the background.
