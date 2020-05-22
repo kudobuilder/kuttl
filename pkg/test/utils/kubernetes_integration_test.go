@@ -189,7 +189,7 @@ func TestRunCommandIgnoreErrors(t *testing.T) {
 	assert.Nil(t, cmd)
 }
 
-func TestRunCommandIgnoreLog(t *testing.T) {
+func TestRunCommandSkipLogOutput(t *testing.T) {
 	stdout := &bytes.Buffer{}
 	stderr := &bytes.Buffer{}
 	hcmd := harness.Command{
@@ -203,7 +203,7 @@ func TestRunCommandIgnoreLog(t *testing.T) {
 	assert.Nil(t, cmd)
 	assert.True(t, stdout.Len() > 0)
 
-	hcmd.IgnoreLog = true
+	hcmd.SkipLogOutput = true
 	stdout = &bytes.Buffer{}
 	stderr = &bytes.Buffer{}
 	// test there is no stdout

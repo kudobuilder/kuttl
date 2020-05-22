@@ -1011,7 +1011,7 @@ func RunCommand(ctx context.Context, namespace string, cmd harness.Command, cwd 
 	logger.Logf("running command: %v", builtCmd.Args)
 
 	builtCmd.Dir = cwd
-	if !cmd.IgnoreLog {
+	if !cmd.SkipLogOutput {
 		builtCmd.Stdout = stdout
 		builtCmd.Stderr = stderr
 	}
