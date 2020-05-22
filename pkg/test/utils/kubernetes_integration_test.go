@@ -188,3 +188,27 @@ func TestRunCommandIgnoreErrors(t *testing.T) {
 	assert.Error(t, err)
 	assert.Nil(t, cmd)
 }
+
+func TestRunCommandSkipLogOutput(t *testing.T) {
+	stdout := &bytes.Buffer{}
+	stderr := &bytes.Buffer{}
+	hcmd := harness.Command{
+		Command: "echo 'test'",
+	}
+
+	logger := NewTestLogger(t, "")
+	// test there is a stdout
+	cmd, err := RunCommand(context.TODO(), "", hcmd, "", stdout, stderr, logger, 0)
+	assert.NoError(t, err)
+	assert.Nil(t, cmd)
+	assert.True(t, stdout.Len() > 0)
+
+	hcmd.SkipLogOutput = true
+	stdout = &bytes.Buffer{}
+	stderr = &bytes.Buffer{}
+	// test there is no stdout
+	cmd, err = RunCommand(context.TODO(), "", hcmd, "", stdout, stderr, logger, 0)
+	assert.NoError(t, err)
+	assert.Nil(t, cmd)
+	assert.True(t, stdout.Len() == 0)
+}
