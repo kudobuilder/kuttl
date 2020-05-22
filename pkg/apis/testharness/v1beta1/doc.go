@@ -16,6 +16,6 @@ limitations under the License.
 // Package v1beta1 contains API Schema definitions for the testharness API group
 // +k8s:openapi-gen=false
 // +k8s:deepcopy-gen=package
-// +groupName=kudo.dev
+// +groupName=kuttl.dev
 // +kubebuilder:skip
 package v1beta1
