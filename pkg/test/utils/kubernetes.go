@@ -1011,8 +1011,10 @@ func RunCommand(ctx context.Context, namespace string, cmd harness.Command, cwd 
 	logger.Logf("running command: %v", builtCmd.Args)
 
 	builtCmd.Dir = cwd
-	builtCmd.Stdout = stdout
-	builtCmd.Stderr = stderr
+	if !cmd.IgnoreLog {
+		builtCmd.Stdout = stdout
+		builtCmd.Stderr = stderr
+	}
 	builtCmd.Env = os.Environ()
 	for key, value := range kudoENV {
 		builtCmd.Env = append(builtCmd.Env, fmt.Sprintf("%s=%s", key, value))

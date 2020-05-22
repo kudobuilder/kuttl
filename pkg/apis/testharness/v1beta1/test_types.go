@@ -114,6 +114,8 @@ type Command struct {
 	Background bool `json:"background"`
 	// Override the TestSuite timeout for this command (in seconds).
 	Timeout int `json:"timeout"`
+	// If set, the command is NOT logged.  Useful to sensitive logs or to reduce noise.
+	IgnoreLog bool `json:"ignorelog"`
 }
 
 // DefaultKINDContext defines the default kind context to use.
