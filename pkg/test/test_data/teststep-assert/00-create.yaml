@@ -17,7 +17,7 @@ spec:
       name: test
 ---
 # using assert from TestStep from multiple folder locations
-apiVersion: kudo.dev/v1beta1
+apiVersion: kuttl.dev/v1beta1
 kind: TestStep
 assert:
   - hello1-assert.yaml

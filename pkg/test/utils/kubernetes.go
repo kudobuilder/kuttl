@@ -369,12 +369,14 @@ func ConvertUnstructured(in runtime.Object) (runtime.Object, error) {
 	kind := in.GetObjectKind().GroupVersionKind().Kind
 	group := in.GetObjectKind().GroupVersionKind().Group
 
+	// Deprecated: kudo.dev is deprecated.
 	kudoGroup := "kudo.dev"
-	if group == kudoGroup && kind == "TestStep" {
+	kuttlGroup := "kuttl.dev"
+	if (group == kudoGroup || group == kuttlGroup) && kind == "TestStep" {
 		converted = &harness.TestStep{}
-	} else if group == kudoGroup && kind == "TestAssert" {
+	} else if (group == kudoGroup || group == kuttlGroup) && kind == "TestAssert" {
 		converted = &harness.TestAssert{}
-	} else if group == kudoGroup && kind == "TestSuite" {
+	} else if (group == kudoGroup || group == kuttlGroup) && kind == "TestSuite" {
 		converted = &harness.TestSuite{}
 	} else {
 		return in, nil
