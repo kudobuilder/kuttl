@@ -255,7 +255,9 @@ func TestRun(t *testing.T) {
 		updateMethod func(*testing.T, client.Client)
 	}{
 		{
-			testName: "successful run", Step: Step{
+			"successful run",
+			false,
+			Step{
 				Apply: []runtime.Object{
 					testutils.NewPod("hello", ""),
 				},
@@ -263,9 +265,12 @@ func TestRun(t *testing.T) {
 					testutils.NewPod("hello", ""),
 				},
 			},
+			nil,
 		},
 		{
-			"failed run", true, Step{
+			"failed run",
+			true,
+			Step{
 				Apply: []runtime.Object{
 					testutils.NewPod("hello", ""),
 				},
@@ -274,10 +279,13 @@ func TestRun(t *testing.T) {
 						"phase": "Ready",
 					}),
 				},
-			}, nil,
+			},
+			nil,
 		},
 		{
-			"delayed run", false, Step{
+			"delayed run",
+			false,
+			Step{
 				Apply: []runtime.Object{
 					testutils.NewPod("hello", ""),
 				},
@@ -286,9 +294,13 @@ func TestRun(t *testing.T) {
 						"phase": "Ready",
 					}),
 				},
-			}, func(t *testing.T, client client.Client) {
+			},
+			func(t *testing.T, client client.Client) {
+				pod := testutils.NewPod("hello", testNamespace)
+				assert.Nil(t, client.Get(context.TODO(), testutils.ObjectKey(pod), pod))
+
 				// mock kubelet to set the pod status
-				assert.Nil(t, client.Update(context.TODO(), testutils.WithStatus(t, testutils.NewPod("hello", testNamespace), map[string]interface{}{
+				assert.Nil(t, client.Update(context.TODO(), testutils.WithStatus(t, pod, map[string]interface{}{
 					"phase": "Ready",
 				})))
 			},
