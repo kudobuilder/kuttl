@@ -99,7 +99,7 @@ The `kuttl.yaml` defined above will contain a new type which will consist of tes
 apiVersion: kuttl.dev/v1beta2
 kind: TestCollection
 
-before:
+beforeCollection:
   crdDir: path/to/folder/or/file
   manifestDirs:
     - path/to/folder/or/file
@@ -110,7 +110,7 @@ before:
   errors:
     - path/to/folder/or/file
 
-after:
+afterCollection:
   manifestDirs:
     - path/to/folder/or/file
   commands:
@@ -154,7 +154,7 @@ The `kuttl-testsuite.yaml` file to be defined with `kuttl.dev/v1beta2` with the 
 ```
 apiVersion: kuttl.dev/v1beta2
 kind: TestSuite
-before:
+beforeSuite:
   crdDir: path/to/folder/or/file
   manifestDirs:
     - path/to/folder/or/file
@@ -165,7 +165,7 @@ before:
   errors:
     - path/to/folder/or/file
 
-after:
+afterSuite:
   manifestDirs:
     - path/to/folder/or/file
   commands:
