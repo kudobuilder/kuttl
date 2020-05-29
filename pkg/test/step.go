@@ -17,6 +17,7 @@ import (
 
 	harness "github.com/kudobuilder/kuttl/pkg/apis/testharness/v1beta1"
 	kfile "github.com/kudobuilder/kuttl/pkg/file"
+	"github.com/kudobuilder/kuttl/pkg/http"
 	testutils "github.com/kudobuilder/kuttl/pkg/test/utils"
 )
 
@@ -415,14 +416,14 @@ func (s *Step) String() string {
 	return fmt.Sprintf("%d-%s", s.Index, s.Name)
 }
 
-// LoadYAML loads the resources from a YAML file for a test step:
+// LoadYAMLFromFile loads the resources from a YAML file for a test step:
 // * If the YAML file is called "assert", then it contains objects to
 //   add to the test step's list of assertions.
 // * If the YAML file is called "errors", then it contains objects that,
 //   if seen, mark a test immediately failed.
 // * All other YAML files are considered resources to create.
 func (s *Step) LoadYAML(file string) error {
-	objects, err := testutils.LoadYAML(file)
+	objects, err := testutils.LoadYAMLFromFile(file)
 	if err != nil {
 		return fmt.Errorf("loading %s: %s", file, err)
 	}
@@ -481,37 +482,25 @@ func (s *Step) LoadYAML(file string) error {
 	if s.Step != nil {
 		// process configured step applies
 		for _, applyPath := range s.Step.Apply {
-			paths, err := kfile.FromPath(filepath.Join(s.Dir, applyPath), "*.yaml")
+			apply, err := runtimeObjectsFromPath(s, applyPath)
 			if err != nil {
-				return fmt.Errorf("step %q apply %w", s.Name, err)
-			}
-			apply, err := kfile.ToRuntimeObjects(paths)
-			if err != nil {
-				return fmt.Errorf("step %q apply %w", s.Name, err)
+				return err
 			}
 			applies = append(applies, apply...)
 		}
 		// process configured step asserts
 		for _, assertPath := range s.Step.Assert {
-			paths, err := kfile.FromPath(filepath.Join(s.Dir, assertPath), "*.yaml")
+			assert, err := runtimeObjectsFromPath(s, assertPath)
 			if err != nil {
-				return fmt.Errorf("step %q assert %w", s.Name, err)
-			}
-			assert, err := kfile.ToRuntimeObjects(paths)
-			if err != nil {
-				return fmt.Errorf("step %q assert %w", s.Name, err)
+				return err
 			}
 			asserts = append(asserts, assert...)
 		}
 		// process configured errors
 		for _, errorPath := range s.Step.Error {
-			paths, err := kfile.FromPath(filepath.Join(s.Dir, errorPath), "*.yaml")
+			errObjs, err := runtimeObjectsFromPath(s, errorPath)
 			if err != nil {
-				return fmt.Errorf("step %q error %w", s.Name, err)
-			}
-			errObjs, err := kfile.ToRuntimeObjects(paths)
-			if err != nil {
-				return fmt.Errorf("step %q error %w", s.Name, err)
+				return err
 			}
 			s.Errors = append(s.Errors, errObjs...)
 		}
@@ -520,4 +509,25 @@ func (s *Step) LoadYAML(file string) error {
 	s.Apply = applies
 	s.Asserts = asserts
 	return nil
+}
+
+func runtimeObjectsFromPath(s *Step, path string) ([]runtime.Object, error) {
+	if http.IsURL(path) {
+		apply, err := http.ToRuntimeObjects(path)
+		if err != nil {
+			return nil, fmt.Errorf("step %q apply %w", s.Name, err)
+		}
+		return apply, nil
+	}
+
+	// it's a directory or file
+	paths, err := kfile.FromPath(filepath.Join(s.Dir, path), "*.yaml")
+	if err != nil {
+		return nil, fmt.Errorf("step %q apply %w", s.Name, err)
+	}
+	apply, err := kfile.ToRuntimeObjects(paths)
+	if err != nil {
+		return nil, fmt.Errorf("step %q apply %w", s.Name, err)
+	}
+	return apply, nil
 }

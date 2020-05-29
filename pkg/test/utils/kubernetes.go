@@ -454,15 +454,19 @@ func MarshalObjectJSON(o runtime.Object, w io.Writer) error {
 	return json.NewSerializer(json.DefaultMetaFactory, nil, nil, false).Encode(copied, w)
 }
 
-// LoadYAML loads all objects from a YAML file.
-func LoadYAML(path string) ([]runtime.Object, error) {
+// LoadYAMLFromFile loads all objects from a YAML file.
+func LoadYAMLFromFile(path string) ([]runtime.Object, error) {
 	opened, err := os.Open(path)
 	if err != nil {
 		return nil, err
 	}
 	defer opened.Close()
 
-	yamlReader := yaml.NewYAMLReader(bufio.NewReader(opened))
+	return LoadYAML(path, opened)
+}
+
+func LoadYAML(path string, r io.Reader) ([]runtime.Object, error) {
+	yamlReader := yaml.NewYAMLReader(bufio.NewReader(r))
 
 	objects := []runtime.Object{}
 
@@ -486,11 +490,18 @@ func LoadYAML(path string) ([]runtime.Object, error) {
 		if err != nil {
 			return nil, fmt.Errorf("error converting unstructured object %s (%s): %w", ResourceID(unstructuredObj), path, err)
 		}
+		// discovered reader will return empty objects if a number of lines are preceding a yaml separator (---)
+		// this detects that, logs and continues
+		if obj.GetObjectKind().GroupVersionKind().Kind == "" {
+			log.Println("object detected with no GVK Kind for path", path)
+		} else {
+			objects = append(objects, obj)
+		}
 
-		objects = append(objects, obj)
 	}
 
 	return objects, nil
+
 }
 
 // MatchesKind returns true if the Kubernetes kind of obj matches any of kinds.
@@ -532,7 +543,7 @@ func InstallManifests(ctx context.Context, client client.Client, dClient discove
 			return nil
 		}
 
-		objs, err := LoadYAML(path)
+		objs, err := LoadYAMLFromFile(path)
 		if err != nil {
 			return err
 		}
