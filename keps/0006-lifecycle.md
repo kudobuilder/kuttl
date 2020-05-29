@@ -32,6 +32,7 @@ status: provisional
       * [Example TestSuite Collection with Lifecycle hooks](#example-testsuite-collection-with-lifecycle-hooks)
 * [Alternatives](#alternatives)
     * [Proposal Maintain TestSuite for Collection and Suites](#proposal-maintain-testsuite-for-collection-and-suites)
+    * [Proposal for Lifecycle Structure](#proposal-for-lifecycle-structure)
 * [KEP History](#kep-history)
 
 ## Summary
@@ -180,10 +181,9 @@ timeout: 60
 
 ```
 
-
 ### Proposal: Component Lifecycle
 
-When a test harness is run (be default with no flags for single test runs), the test harness will analyze all configured TestSuites establishing a memory model for execution (without analyzing every test / testfile).  A change from the current KUTTL, KUTTL will run each TestSuite as a unit (in order to support additional lifecycle hooks detailed in the next section). The order of TestSuite execution will be determined by the order of configuation in the kuttl-test.yaml configuration file.  Each TestSuite will run the set of tests defined by that suite with no guarantees on order.  Each Test will have a series of test steps which will run in index order.
+When a test harness is run (by default with no flags for single test runs), the test harness will analyze all configured TestSuites establishing a memory model for execution (without analyzing every test / testfile). A change from the current KUTTL, KUTTL will run each TestSuite lifecycle hooks for the TestSuite and refine defaults as detailed in the next section. Today, all tests are in one array and are processed by their order in the array without regard to test suite. The order of TestSuite execution will be determined by the order of configuation in the kuttl.yaml configuration file.  Each TestSuite will run the set of tests defined by that suite with no guarantees on order.  Each Test will have a series of test steps which will run in index order.
 
 ### Proposal: Component Lifecycle hooks
 
@@ -200,6 +200,16 @@ The following phases will have the above hooks added as before and after conditi
 3. tests - the mechanism for lifecycle hooks already exists for test through the creative use of testsetups.  If a test needs to run an activity prior to the start of a test, it is possible to have a TestStep file with the defined activities as the first index files or "after" defined as the last indexed test step file.
 
 Based on this proposal, KUTTL will read a kuttl-test.yaml configuration at startup via a `--config` flag or in the CWD.  It will establish the collection of testsuites, define the default values (timeout) and run pre-testsuite-collection activities.  It will fetch the first testsuite (as an example `operators/kafka`) and determine if `operators/kafka/kuttl-test.yaml` file exists.  If it does, it will read this file (control plane or testdir information will be ignored), it will run pre-testsuite activities and establish new defaults (timeout).  KUTTL will then cycle through all the tests running each test in a non specified order.  At the conclusion of running all the tests of a testsuite, the post-testsuite activities will run.  Following this the next testsuite will be processed in the same way.
+
+The order of the lifecycle hooks is defined as:
+1. CRDS
+2. Manifests
+3. Commands
+4. Apply
+5. Delete
+
+This consist with the existing lifecycle management.  There is an alternative proposls for allowing flexity of order in the [Alternatives](#Alternatives).
+The only difference between CRD and Manifests is that the CRD file(s) must contain CRD types and there is a system wait for the CRD to be realized in the cluster.
 
 **note:** it could be extremely useful to have a list of pre and post activities that are shared across phases.
 
@@ -334,6 +344,65 @@ The cons include:
 3. It makes communication and documentation challenging
 4. Requires a deprecation cycle for movement to new structure, eventually breaking old tests.
 5. Potentially confusing time as both models are supported.
+
+### Proposal for Lifecycle Structure
+
+The current lifecycle structure is rigid from the perspective of order.  For instance CRDS are applied prior to commands.  The following is a proposal to allow any order of lifecycle activites.
+
+The current structure:
+```
+beforeCollection:
+  crdDir: path/to/folder/or/file
+  manifestDirs:
+    - path/to/folder/or/file
+  commands:
+    - sleep 2
+  assert:
+    - path/to/folder/or/file
+  errors:
+    - path/to/folder/or/file
+```
+
+to change to:
+
+```
+beforeCollection:
+  - type: crd
+    path: path/to/folder/or/file
+  - type: command
+    command: sleep 2
+    ignoreFailure: true
+```
+
+This would require the combination of a number of mutually exclusive fields (which exists today as well).
+
+We could support this with structure called `Task`
+```
+type Task struct {
+  
+  <!-- this would be crd, manifest, command, script, apply, assert, error, delete -->
+  Type string `json:"type"`
+
+  <!-- only useful for command type -->
+	Command string `json:"command"`
+	Namespaced bool `json:"namespaced"`
+	Background bool `json:"background"`
+	SkipLogOutput bool `json:"skipLogOutput"`
+	
+	Script string `json:"script"`
+
+	IgnoreFailure bool `json:"ignoreFailure"`
+
+	Timeout int `json:"timeout"`
+
+<!-- needed for apply, assert, error (would could add delete on a manifest -->
+  path string `json:"path"`
+
+<!-- needed for delete -->
+  objRef string `json:"objRef"`
+}
+```
+
 
 ## KEP History
 
