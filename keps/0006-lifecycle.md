@@ -25,9 +25,13 @@ status: provisional
       * [Flat TestSuites](#flat-testsuites)
 * [Proposal](#proposal)
     * [Proposal: Component Definition](#proposal-component-definition)
+    * [Proposal: Control Files](#proposal-control-files)
+    * [Proposal: Component Types](#proposal-component-types)
     * [Proposal: Component Lifecycle](#proposal-component-lifecycle)
     * [Proposal: Component Lifecycle hooks](#proposal-component-lifecycle-hooks)
       * [Example TestSuite Collection with Lifecycle hooks](#example-testsuite-collection-with-lifecycle-hooks)
+* [Alternatives](#alternatives)
+    * [Proposal Maintain TestSuite for Collection and Suites](#proposal-maintain-testsuite-for-collection-and-suites)
 * [KEP History](#kep-history)
 
 ## Summary
@@ -72,7 +76,7 @@ Today, KUTTL treats all configured testsuites (listed with `testDirs`) as 1 suit
 
 ![TestSuite Architecture](images/kuttl-testsuite.jpg)
 
-* **TestSuite Collection** - This is a collection of TestSuites, which could be 1 or more.  This traditionaly has been called a TestSuite.  The TestSuite Collection is configured with the test harness configuration file, `kuttl-test.yaml` by default. 
+* **TestSuite Collection** - This is a collection of TestSuites, which could be 1 or more.  This traditionaly has been called a TestSuite.  The TestSuite Collection is configured with the test harness configuration file, `kuttl.yaml` by default. 
 * **TestSuite** - Is a folder which contains a collection of Tests defined by sub-folders.
 * **Test** - Is a folder which contains a number of files which define the steps necessary to assert the correct of a test.  If a test folder has sub-folders they are not analyzed by KUTTL unless explicitly referenced through configuration or a teststep.
 * **TestStep** - Is the smallest component of a test, which are a collection of indexed files which govern their order of evaluation.  There are 4 basic types of TestStep files:
@@ -80,6 +84,102 @@ Today, KUTTL treats all configured testsuites (listed with `testDirs`) as 1 suit
    2. an assert file,
    3. an error file (used to assert the absence of a resource)
    4. a TestStep file which can run commands, update timeouts and delete resources. 
+
+### Proposal: Control Files
+
+`kuttl.yaml` is the file that defines the KUTTL test collection AND the KUTTL test harness configuration.  For a period of time, it will be redundant with the existing `kuttl-test.yaml`.  As is the fact with `kuttl-test.yaml` today, it will NOT be required.  When this file is missing, the standard KUTTL defaults will be in affect or the command-line flag overrides.
+
+`kuttl-testsuite.yaml` is the file that defines the KUTTL testsuite.  It is detected by KUTTL by residing at the base of a testsuite folder.  It is not required.  When present it will configure the set of tests that make up the testsuite with new defaults and will run a set of capabilities before and after a testsuite.
+
+### Proposal: Component Types
+
+The `kuttl.yaml` defined above will contain a new type which will consist of test harness control, testing defaults and collection of test suites. Based on this new type, it is proposed to establish a `kuttl.dev/v1beta2` GVK which will define the deprecation cycle.
+
+```
+apiVersion: kuttl.dev/v1beta2
+kind: TestCollection
+
+before:
+  crdDir: path/to/folder/or/file
+  manifestDirs:
+    - path/to/folder/or/file
+  commands:
+    - sleep 2
+  assert:
+    - path/to/folder/or/file
+  errors:
+    - path/to/folder/or/file
+
+after:
+  manifestDirs:
+    - path/to/folder/or/file
+  commands:
+    - sleep 2
+  assert:
+    - path/to/folder/or/file
+  errors:
+    - path/to/folder/or/file
+
+testDirs:
+  - path/to/testsuite
+
+<!-- test defaults -->
+timeout: 60
+
+<!-- test harness config -->
+skipDelete: false
+parallel: 4
+artifactsDir: path/to/artifact/folder
+
+<!-- control plane management -->
+controlPlane:
+  start: true
+  args:
+    - arg1
+  skipDelete: true
+
+kind:
+  start: true
+  config: path/to/kind/config
+  nodeCache: true
+  context: foo
+  containers:
+    - nginx
+  skipDelete: true
+
+```
+
+The `kuttl-testsuite.yaml` file to be defined with `kuttl.dev/v1beta2` with the following structure:
+
+```
+apiVersion: kuttl.dev/v1beta2
+kind: TestSuite
+before:
+  crdDir: path/to/folder/or/file
+  manifestDirs:
+    - path/to/folder/or/file
+  commands:
+    - sleep 2
+  assert:
+    - path/to/folder/or/file
+  errors:
+    - path/to/folder/or/file
+
+after:
+  manifestDirs:
+    - path/to/folder/or/file
+  commands:
+    - sleep 2
+  assert:
+    - path/to/folder/or/file
+  errors:
+    - path/to/folder/or/file
+
+<!-- test defaults -->
+timeout: 60
+
+```
+
 
 ### Proposal: Component Lifecycle
 
@@ -217,7 +317,25 @@ Here the concerns of before test setup (installing an operator and operator vers
 
 **note:** kuttl-test.yaml is not required for a testsuite.
 
+## Alternatives
+
+### Proposal Maintain TestSuite for Collection and Suites
+
+A proposal considered, is the use of `TestSuite` which currently defines the "TestCollection", for use to define "TestCollection" AND "TestSuite".  
+
+The pros include: 
+1. Aligns with legancy / current approach
+2. Reuses redundant structures for TestCollection and TestSuite
+3. No need for a deprecation cycle to move to new structure
+
+The cons include:
+1. Harness control in TestCollection is not need at TestSuite level, which means there are fields which would be ignored for the TestSuite, which is confusing.
+2. It can be confusing that the file name is the same in 2 locations, which have different affects depending on location.
+3. It makes communication and documentation challenging
+4. Requires a deprecation cycle for movement to new structure, eventually breaking old tests.
+5. Potentially confusing time as both models are supported.
 
 ## KEP History
 
 - 2020-05-27 - Initial draft. (@kensipe)
+- 2020-05-29 - Draft update. (@kensipe, @porridge, @nfnt)
