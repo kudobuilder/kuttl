@@ -6,6 +6,8 @@ hack/controller-gen
 test/.git-credentials
 reports/
 kuttl.yaml
+kuttl-report.json
+kuttl-report.xml
 
 
 ### mac

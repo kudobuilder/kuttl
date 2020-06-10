@@ -19,6 +19,7 @@ import (
 	"k8s.io/client-go/discovery"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
+	"github.com/kudobuilder/kuttl/pkg/report"
 	testutils "github.com/kudobuilder/kuttl/pkg/test/utils"
 )
 
@@ -121,9 +122,8 @@ func printEvents(events []eventsbeta1.Event, logger conversion.DebugLogger) {
 }
 
 // Run runs a test case including all of its steps.
-func (t *Case) Run(test *testing.T) {
+func (t *Case) Run(test *testing.T, tc *report.Testcase) {
 	test.Parallel()
-
 	ns := fmt.Sprintf("kudo-test-%s", petname.Generate(2, "-"))
 
 	if err := t.CreateNamespace(ns); err != nil {
@@ -142,6 +142,8 @@ func (t *Case) Run(test *testing.T) {
 		testStep.Client = t.Client
 		testStep.DiscoveryClient = t.DiscoveryClient
 		testStep.Logger = t.Logger.WithPrefix(testStep.String())
+		tc.Assertions += len(testStep.Asserts)
+		tc.Assertions += len(testStep.Errors)
 
 		if !t.SkipDelete {
 			defer func() {
@@ -152,11 +154,13 @@ func (t *Case) Run(test *testing.T) {
 		}
 
 		if errs := testStep.Run(ns); len(errs) > 0 {
+			caseErr := fmt.Errorf("failed in step %s", testStep.String())
+			tc.Failure = report.NewFailure(caseErr.Error(), errs)
+
 			for _, err := range errs {
 				test.Error(err)
 			}
-
-			test.Error(fmt.Errorf("failed in step %s", testStep.String()))
+			test.Error(caseErr)
 			break
 		}
 	}
