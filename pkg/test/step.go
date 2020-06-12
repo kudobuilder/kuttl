@@ -16,6 +16,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	harness "github.com/kudobuilder/kuttl/pkg/apis/testharness/v1beta1"
+	"github.com/kudobuilder/kuttl/pkg/env"
 	kfile "github.com/kudobuilder/kuttl/pkg/file"
 	"github.com/kudobuilder/kuttl/pkg/http"
 	testutils "github.com/kudobuilder/kuttl/pkg/test/utils"
@@ -482,7 +483,8 @@ func (s *Step) LoadYAML(file string) error {
 	if s.Step != nil {
 		// process configured step applies
 		for _, applyPath := range s.Step.Apply {
-			apply, err := runtimeObjectsFromPath(s, applyPath)
+			exApply := env.Expand(applyPath)
+			apply, err := runtimeObjectsFromPath(s, exApply)
 			if err != nil {
 				return err
 			}
@@ -490,7 +492,8 @@ func (s *Step) LoadYAML(file string) error {
 		}
 		// process configured step asserts
 		for _, assertPath := range s.Step.Assert {
-			assert, err := runtimeObjectsFromPath(s, assertPath)
+			exAssert := env.Expand(assertPath)
+			assert, err := runtimeObjectsFromPath(s, exAssert)
 			if err != nil {
 				return err
 			}
@@ -498,7 +501,8 @@ func (s *Step) LoadYAML(file string) error {
 		}
 		// process configured errors
 		for _, errorPath := range s.Step.Error {
-			errObjs, err := runtimeObjectsFromPath(s, errorPath)
+			exError := env.Expand(errorPath)
+			errObjs, err := runtimeObjectsFromPath(s, exError)
 			if err != nil {
 				return err
 			}
