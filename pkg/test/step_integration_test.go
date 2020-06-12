@@ -342,12 +342,26 @@ func TestCheckedTypeAssertions(t *testing.T) {
 	}
 }
 
+func TestApplyExpansion(t *testing.T) {
+	os.Setenv("TEST_FOO", "test")
+	defer func() {
+		os.Unsetenv("TEST_FOO")
+	}()
+
+	step := Step{Dir: "step_integration_test_data/assert_expand/"}
+	path := "step_integration_test_data/assert_expand/00-step1.yaml"
+	err := step.LoadYAML(path)
+	assert.NoError(t, err)
+	assert.Equal(t, 1, len(step.Apply))
+
+}
+
 func TestTwoTestStepping(t *testing.T) {
 	apply := []runtime.Object{}
 	step := &Step{
-		Name:            "twostepping",
-		Index:           0,
-		Apply:           apply,
+		Name:  "twostepping",
+		Index: 0,
+		Apply: apply,
 	}
 
 	// 2 apply files in 1 step
@@ -358,11 +372,10 @@ func TestTwoTestStepping(t *testing.T) {
 
 	// 2 teststeps in 1 file in 1 step
 	step = &Step{
-		Name:            "twostepping",
-		Index:           0,
-		Apply:           apply,
+		Name:  "twostepping",
+		Index: 0,
+		Apply: apply,
 	}
 	err = step.LoadYAML("step_integration_test_data/two_step/01-step1.yaml")
 	assert.Error(t, err, "more than 1 TestStep not allowed in step \"twostepping\"")
 }
-
