@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"strings"
 	"testing"
 
 	"github.com/spf13/cobra"
@@ -12,6 +13,7 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
 	harness "github.com/kudobuilder/kuttl/pkg/apis/testharness/v1beta1"
+	"github.com/kudobuilder/kuttl/pkg/report"
 	"github.com/kudobuilder/kuttl/pkg/test"
 	testutils "github.com/kudobuilder/kuttl/pkg/test/utils"
 )
@@ -50,6 +52,7 @@ func newTestCmd() *cobra.Command {
 	artifactsDir := ""
 	mockControllerFile := ""
 	timeout := 30
+	reportFormat := ""
 
 	options := harness.TestSuite{}
 
@@ -149,6 +152,11 @@ For more detailed documentation, visit: https://kudo.dev/docs/testing`,
 				options.Parallel = parallel
 			}
 
+			if isSet(flags, "report") {
+				var ftype = report.Type(strings.ToLower(reportFormat))
+				options.ReportFormat = reportType(ftype)
+			}
+
 			if isSet(flags, "artifacts-dir") {
 				options.ArtifactsDir = artifactsDir
 			}
@@ -205,12 +213,23 @@ For more detailed documentation, visit: https://kudo.dev/docs/testing`,
 	// The default value here is only used for the help message. The default is actually enforced in RunTests.
 	testCmd.Flags().IntVar(&parallel, "parallel", 8, "The maximum number of tests to run at once.")
 	testCmd.Flags().IntVar(&timeout, "timeout", 30, "The timeout to use as default for TestSuite configuration.")
-
+	testCmd.Flags().StringVar(&reportFormat, "report", "", "Specify JSON|XML for report.  Report location determined by --artfacts-dir.")
 	// This cannot be a global flag because pkg/test/utils.RunTests calls flag.Parse which barfs on unknown top-level flags.
 	// Putting it here at least does not advertise it on a level where using it is impossible.
 	test.SetFlags(testCmd.Flags())
 
 	return testCmd
+}
+
+func reportType(ftype report.Type) *report.Type {
+	switch ftype {
+	case report.JSON:
+		fallthrough
+	case report.XML:
+		return &ftype
+	default:
+		return nil
+	}
 }
 
 // isSet returns true if a flag is set on the command line.

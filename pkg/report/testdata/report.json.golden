@@ -1,0 +1,33 @@
+{
+   "name": "",
+   "tests": 9,
+   "failures": 1,
+   "time": "",
+   "properties": {
+     "property": [
+       {
+         "name": "go.version",
+         "value": "1.14"
+       }
+     ]
+   },
+   "testsuite": [
+     {
+       "tests": 9,
+       "failures": 1,
+       "time": "",
+       "name": "github.com/kubebuilder/kuttl/pkg/version",
+       "testcase": [
+         {
+           "classname": "pkg1.test.test_things",
+           "name": "test_params_func:2",
+           "time": "",
+           "failure": {
+             "text": "Traceback (most recent call last):\n  File \"nose2/plugins/loader/parameters.py\", line 162, in func\n    return obj(*argSet)\n  File \"nose2/tests/functional/support/scenario/tests_in_package/pkg1/test/test_things.py\", line 64, in test_params_func\n    assert a == 1\nAssertionError",
+             "message": "test failure"
+           }
+         }
+       ]
+     }
+   ]
+ }

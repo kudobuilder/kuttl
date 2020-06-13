@@ -3,6 +3,8 @@ package v1beta1
 import (
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
+	"github.com/kudobuilder/kuttl/pkg/report"
 )
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
@@ -50,6 +52,9 @@ type TestSuite struct {
 	ArtifactsDir string `json:"artifactsDir"`
 	// Commands to run prior to running the tests.
 	Commands []Command `json:"commands"`
+
+	// ReportFormat determines test report format (JSON|XML|nil) nil == no report
+	ReportFormat *report.Type
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object

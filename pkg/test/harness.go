@@ -26,6 +26,7 @@ import (
 	kindConfig "sigs.k8s.io/kind/pkg/apis/config/v1alpha3"
 
 	harness "github.com/kudobuilder/kuttl/pkg/apis/testharness/v1beta1"
+	"github.com/kudobuilder/kuttl/pkg/report"
 	testutils "github.com/kudobuilder/kuttl/pkg/test/utils"
 )
 
@@ -47,6 +48,7 @@ type Harness struct {
 	configLock     sync.Mutex
 	stopping       bool
 	bgProcesses    []*exec.Cmd
+	report         *report.Testsuites
 }
 
 // LoadTests loads all of the tests in a given directory.
@@ -61,7 +63,7 @@ func (h *Harness) LoadTests(dir string) ([]*Case, error) {
 		return nil, err
 	}
 
-	tests := []*Case{}
+	var tests []*Case
 
 	timeout := h.GetTimeout()
 	h.T.Logf("going to run test suite with timeout of %d seconds for each step", timeout)
@@ -295,34 +297,44 @@ func (h *Harness) RunTests() {
 	// cleanup after running tests
 	defer h.Stop()
 	h.T.Log("running tests")
-	tests := []*Case{}
 
+	//todo: testsuite + testsuites (extend case to have what we need (need testdir here)
+	// TestSuite is a TestSuiteCollection and should be renamed for v1beta2
+	realTestSuite := make(map[string][]*Case)
 	for _, testDir := range h.TestSuite.TestDirs {
 		tempTests, err := h.LoadTests(testDir)
 		if err != nil {
 			h.T.Fatal(err)
 		}
-		tests = append(tests, tempTests...)
+		// array of test cases tied to testsuite (by testdir)
+		realTestSuite[testDir] = tempTests
 	}
 
 	h.T.Run("harness", func(t *testing.T) {
-		for _, test := range tests {
-			test := test
+		for testDir, tests := range realTestSuite {
 
-			test.Client = h.Client
-			test.DiscoveryClient = h.DiscoveryClient
+			suite := h.report.NewSuite(testDir)
+			for _, test := range tests {
+				test := test
 
-			t.Run(test.Name, func(t *testing.T) {
-				test.Logger = testutils.NewTestLogger(t, test.Name)
+				test.Client = h.Client
+				test.DiscoveryClient = h.DiscoveryClient
 
-				if err := test.LoadTestSteps(); err != nil {
-					t.Fatal(err)
-				}
+				t.Run(test.Name, func(t *testing.T) {
+					test.Logger = testutils.NewTestLogger(t, test.Name)
 
-				test.Run(t)
-			})
+					if err := test.LoadTestSteps(); err != nil {
+						t.Fatal(err)
+					}
+
+					tc := report.NewCase(test.Name)
+					test.Run(t, tc)
+					suite.AddTestcase(tc)
+				})
+			}
 		}
 	})
+
 	h.T.Log("run tests finished")
 }
 
@@ -330,12 +342,14 @@ func (h *Harness) RunTests() {
 func (h *Harness) Run() {
 	h.Setup()
 	h.RunTests()
+	h.Report()
 }
 
 // Setup spins up the test env based on configuration
 // It can be used to start env which can than be modified prior to running tests, otherwise use Run().
 func (h *Harness) Setup() {
 	rand.Seed(time.Now().UTC().UnixNano())
+	h.report = report.NewSuiteCollection(h.TestSuite.Name)
 	h.T.Log("starting setup")
 
 	cl, err := h.Client(false)
@@ -460,6 +474,17 @@ func (h *Harness) fatal(args ...interface{}) {
 
 func (h *Harness) explicitPath() string {
 	return filepath.Join(h.kubeConfigPath, "kubeconfig")
+}
+
+// Report defines the report phase of the kuttl tests.  If report format is nil it is skipped.
+// otherwise it will provide a json or xml format report of tests in a junit format.
+func (h *Harness) Report() {
+	if h.TestSuite.ReportFormat == nil {
+		return
+	}
+	if err := h.report.Report(h.TestSuite.ArtifactsDir, *h.TestSuite.ReportFormat); err != nil {
+		h.fatal(fmt.Errorf("fatal error writing report: %v", err))
+	}
 }
 
 func loadKindConfig(path string) (*kindConfig.Cluster, error) {
