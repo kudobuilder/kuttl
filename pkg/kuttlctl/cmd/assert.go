@@ -40,10 +40,7 @@ func newAssertCmd() *cobra.Command {
 				return errors.New("one file argument is required")
 
 			}
-			if len(args) != 1 {
-				return errors.New("only one file argument is valid")
-			}
-			return test.Assert(args[0], namespace, timeout)
+			return test.Assert(namespace, timeout, args...)
 		},
 	}
 

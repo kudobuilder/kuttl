@@ -1,10 +1,12 @@
 package test
 
 import (
+	"errors"
 	"fmt"
 	"os"
 	"time"
 
+	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/discovery"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/config"
@@ -12,26 +14,32 @@ import (
 	testutils "github.com/kudobuilder/kuttl/pkg/test/utils"
 )
 
-// Assert
-func Assert(assertFile, namespace string, timeout int) error {
+// Assert checks all provided assert files against a namespace.  Upon assert failure, it prints the failures and returns an error
+func Assert(namespace string, timeout int, assertFiles ...string) error {
 
-	info, err := os.Stat(assertFile)
-	if os.IsNotExist(err) {
-		return fmt.Errorf("the file %q does not exist", assertFile)
+	var objects []runtime.Object
+
+	for _, file := range assertFiles {
+		info, err := os.Stat(file)
+		if os.IsNotExist(err) {
+			return fmt.Errorf("the file %q does not exist", file)
+		}
+		if info.IsDir() {
+			return fmt.Errorf("%q is a directory and not a file", file)
+		}
+
+		o, err := testutils.LoadYAMLFromFile(file)
+		if err != nil {
+			return err
+		}
+		objects = append(objects, o...)
 	}
-	if info.IsDir() {
-		return fmt.Errorf("%q is a directory and not a file", assertFile)
-	}
+
 	// feels like the wrong abstraction, need to do some refactoring
 	s := &Step{
 		Timeout:         0,
 		Client:          Client,
 		DiscoveryClient: DiscoveryClient,
-	}
-
-	objects, err := testutils.LoadYAMLFromFile(assertFile)
-	if err != nil {
-		return err
 	}
 
 	var testErrors []error
@@ -50,14 +58,14 @@ func Assert(assertFile, namespace string, timeout int) error {
 	}
 
 	if len(testErrors) == 0 {
-		fmt.Printf("%q in the %q namespace is valid\n", assertFile, namespace)
+		fmt.Printf("assert is valid\n")
 		return nil
 	}
 
 	for _, testError := range testErrors {
 		fmt.Println(testError)
 	}
-	return fmt.Errorf("%q in the %q namespace is not valid", assertFile, namespace)
+	return errors.New("asserts not valid")
 }
 
 func Client(forceNew bool) (client.Client, error) {
