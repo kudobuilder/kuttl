@@ -4,6 +4,8 @@ import (
 	"errors"
 
 	"github.com/spf13/cobra"
+
+	"github.com/kudobuilder/kuttl/pkg/test"
 )
 
 var (
@@ -26,7 +28,7 @@ func newErrorsCmd() *cobra.Command {
 				return errors.New("one file argument is required")
 
 			}
-			return nil
+			return test.Errors(namespace, timeout, args...)
 		},
 	}
 
