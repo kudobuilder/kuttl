@@ -226,6 +226,9 @@ func (h *Harness) Config() (*rest.Config, error) {
 	} else {
 		h.T.Log("running tests using configured kubeconfig.")
 		h.config, err = config.GetConfig()
+		if err == nil {
+			return h.config, nil
+		}
 	}
 
 	if err != nil {
