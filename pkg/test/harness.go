@@ -77,6 +77,7 @@ func (h *Harness) LoadTests(dir string) ([]*Case, error) {
 			Timeout:    timeout,
 			Steps:      []*Step{},
 			Name:       file.Name(),
+			Namespace:  h.TestSuite.Namespace,
 			Dir:        filepath.Join(dir, file.Name()),
 			SkipDelete: h.TestSuite.SkipDelete,
 		})

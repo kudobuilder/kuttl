@@ -33,6 +33,7 @@ type Case struct {
 	Dir        string
 	SkipDelete bool
 	Timeout    int
+	Namespace  string
 
 	Client          func(forceNew bool) (client.Client, error)
 	DiscoveryClient func() (discovery.DiscoveryInterface, error)
@@ -42,6 +43,11 @@ type Case struct {
 
 // DeleteNamespace deletes a namespace in Kubernetes after we are done using it.
 func (t *Case) DeleteNamespace(namespace string) error {
+	// if system defined namespace is "" we create and delete, otherwise don't
+	if t.Namespace != "" {
+		return nil
+	}
+
 	t.Logger.Log("Deleting namespace:", namespace)
 
 	cl, err := t.Client(false)
@@ -61,6 +67,10 @@ func (t *Case) DeleteNamespace(namespace string) error {
 
 // CreateNamespace creates a namespace in Kubernetes to use for a test.
 func (t *Case) CreateNamespace(namespace string) error {
+	// if system defined namespace is "" we create and delete, otherwise don't
+	if t.Namespace != "" {
+		return nil
+	}
 	t.Logger.Log("Creating namespace:", namespace)
 
 	cl, err := t.Client(false)
@@ -124,7 +134,10 @@ func printEvents(events []eventsbeta1.Event, logger conversion.DebugLogger) {
 // Run runs a test case including all of its steps.
 func (t *Case) Run(test *testing.T, tc *report.Testcase) {
 	test.Parallel()
-	ns := fmt.Sprintf("kudo-test-%s", petname.Generate(2, "-"))
+	ns := t.Namespace
+	if t.Namespace == "" {
+		ns = fmt.Sprintf("kudo-test-%s", petname.Generate(2, "-"))
+	}
 
 	if err := t.CreateNamespace(ns); err != nil {
 		test.Fatal(err)

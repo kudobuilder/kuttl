@@ -53,6 +53,7 @@ func newTestCmd() *cobra.Command {
 	mockControllerFile := ""
 	timeout := 30
 	reportFormat := ""
+	namespace := ""
 
 	options := harness.TestSuite{}
 
@@ -161,6 +162,10 @@ For more detailed documentation, visit: https://kudo.dev/docs/testing`,
 				options.ArtifactsDir = artifactsDir
 			}
 
+			if isSet(flags, "namespace") {
+				options.Namespace = namespace
+			}
+
 			if isSet(flags, "timeout") {
 				options.Timeout = timeout
 			}
@@ -214,6 +219,8 @@ For more detailed documentation, visit: https://kudo.dev/docs/testing`,
 	testCmd.Flags().IntVar(&parallel, "parallel", 8, "The maximum number of tests to run at once.")
 	testCmd.Flags().IntVar(&timeout, "timeout", 30, "The timeout to use as default for TestSuite configuration.")
 	testCmd.Flags().StringVar(&reportFormat, "report", "", "Specify JSON|XML for report.  Report location determined by --artfacts-dir.")
+	testCmd.Flags().StringVarP(&namespace, "namespace", "n", "", "Namespace to use for tests. Provided namespaces must exist prior to running tests.")
+
 	// This cannot be a global flag because pkg/test/utils.RunTests calls flag.Parse which barfs on unknown top-level flags.
 	// Putting it here at least does not advertise it on a level where using it is impossible.
 	test.SetFlags(testCmd.Flags())
