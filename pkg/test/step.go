@@ -484,27 +484,27 @@ func (s *Step) LoadYAML(file string) error {
 		// process configured step applies
 		for _, applyPath := range s.Step.Apply {
 			exApply := env.Expand(applyPath)
-			apply, err := runtimeObjectsFromPath(s, exApply)
+			apply, err := RuntimeObjectsFromPath(exApply, s.Dir)
 			if err != nil {
-				return err
+				return fmt.Errorf("step %q apply %w", s.Name, err)
 			}
 			applies = append(applies, apply...)
 		}
 		// process configured step asserts
 		for _, assertPath := range s.Step.Assert {
 			exAssert := env.Expand(assertPath)
-			assert, err := runtimeObjectsFromPath(s, exAssert)
+			assert, err := RuntimeObjectsFromPath(exAssert, s.Dir)
 			if err != nil {
-				return err
+				return fmt.Errorf("step %q apply %w", s.Name, err)
 			}
 			asserts = append(asserts, assert...)
 		}
 		// process configured errors
 		for _, errorPath := range s.Step.Error {
 			exError := env.Expand(errorPath)
-			errObjs, err := runtimeObjectsFromPath(s, exError)
+			errObjs, err := RuntimeObjectsFromPath(exError, s.Dir)
 			if err != nil {
-				return err
+				return fmt.Errorf("step %q apply %w", s.Name, err)
 			}
 			s.Errors = append(s.Errors, errObjs...)
 		}
@@ -515,23 +515,24 @@ func (s *Step) LoadYAML(file string) error {
 	return nil
 }
 
-func runtimeObjectsFromPath(s *Step, path string) ([]runtime.Object, error) {
+// RuntimeObjectsFromPath returns an array of runtime.Objects for files / urls provided
+func RuntimeObjectsFromPath(path, dir string) ([]runtime.Object, error) {
 	if http.IsURL(path) {
 		apply, err := http.ToRuntimeObjects(path)
 		if err != nil {
-			return nil, fmt.Errorf("step %q apply %w", s.Name, err)
+			return nil, err
 		}
 		return apply, nil
 	}
 
 	// it's a directory or file
-	paths, err := kfile.FromPath(filepath.Join(s.Dir, path), "*.yaml")
+	paths, err := kfile.FromPath(filepath.Join(dir, path), "*.yaml")
 	if err != nil {
-		return nil, fmt.Errorf("step %q apply %w", s.Name, err)
+		return nil, err
 	}
 	apply, err := kfile.ToRuntimeObjects(paths)
 	if err != nil {
-		return nil, fmt.Errorf("step %q apply %w", s.Name, err)
+		return nil, err
 	}
 	return apply, nil
 }

@@ -5,7 +5,6 @@ import (
 
 	"github.com/spf13/cobra"
 
-	harness "github.com/kudobuilder/kuttl/pkg/apis/testharness/v1beta1"
 	"github.com/kudobuilder/kuttl/pkg/test"
 )
 
@@ -19,22 +18,11 @@ func newAssertCmd() *cobra.Command {
 	timeout := 5
 	namespace := "default"
 
-	options := harness.TestSuite{}
-
 	assertCmd := &cobra.Command{
 		Use:     "assert",
 		Short:   "Asserts the declared state to be true.",
 		Long:    `Asserts the declared state provided as an argument to be true in the $KUBECONFIG cluster. Valid arguments are a YAML file, URL to a YAML file.`,
 		Example: assertExample,
-		PreRunE: func(cmd *cobra.Command, args []string) error {
-			flags := cmd.Flags()
-			options.TestDirs = args
-
-			if isSet(flags, "timeout") {
-				options.Timeout = timeout
-			}
-			return nil
-		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if len(args) == 0 {
 				return errors.New("one file argument is required")
