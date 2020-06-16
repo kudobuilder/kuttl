@@ -24,6 +24,7 @@ and serves as an API aggregation layer.
 		Version: version.Get().GitVersion,
 	}
 
+	cmd.AddCommand(newAssertCmd())
 	cmd.AddCommand(newTestCmd())
 	cmd.AddCommand(newVersionCmd())
 
