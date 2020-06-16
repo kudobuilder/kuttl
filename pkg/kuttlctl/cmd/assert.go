@@ -1,13 +1,12 @@
 package cmd
 
 import (
-	"testing"
+	"errors"
 
 	"github.com/spf13/cobra"
 
 	harness "github.com/kudobuilder/kuttl/pkg/apis/testharness/v1beta1"
 	"github.com/kudobuilder/kuttl/pkg/test"
-	testutils "github.com/kudobuilder/kuttl/pkg/test/utils"
 )
 
 var (
@@ -17,7 +16,9 @@ var (
 
 // newAssertCmd returns a new initialized instance of the assert sub command
 func newAssertCmd() *cobra.Command {
-	timeout := 30
+	timeout := 5
+	namespace := "default"
+
 	options := harness.TestSuite{}
 
 	assertCmd := &cobra.Command{
@@ -34,19 +35,20 @@ func newAssertCmd() *cobra.Command {
 			}
 			return nil
 		},
-		Run: func(cmd *cobra.Command, args []string) {
-			testutils.RunTests("kuttl", "assert-cmd", 1, func(t *testing.T) {
-				harness := test.Harness{
-					TestSuite: options,
-					T:         t,
-				}
-				//step.goL349
-				harness.Run()
-			})
+		RunE: func(cmd *cobra.Command, args []string) error {
+			if len(args) == 0 {
+				return errors.New("one file argument is required")
+
+			}
+			if len(args) != 1 {
+				return errors.New("only one file argument is valid")
+			}
+			return test.Assert(args[0], namespace, timeout)
 		},
 	}
 
-	assertCmd.Flags().IntVar(&timeout, "timeout", 30, "The timeout to use as default for TestSuite configuration.")
+	assertCmd.Flags().IntVar(&timeout, "timeout", 5, "The timeout to use as default for TestSuite configuration.")
+	assertCmd.Flags().StringVarP(&namespace, "namespace", "n", "default", "Namespace to use for test assert.")
 
 	return assertCmd
 }
