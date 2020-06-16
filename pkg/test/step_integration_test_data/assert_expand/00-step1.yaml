@@ -1,0 +1,5 @@
+apiVersion: kuttl.dev/v1beta1
+kind: TestStep
+timeout: 30
+apply:
+  - ${TEST_FOO}/test.yaml

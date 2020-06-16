@@ -56,6 +56,7 @@ import (
 
 	"github.com/kudobuilder/kuttl/pkg/apis"
 	harness "github.com/kudobuilder/kuttl/pkg/apis/testharness/v1beta1"
+	"github.com/kudobuilder/kuttl/pkg/env"
 )
 
 // ensure that we only add to the scheme once.
@@ -920,35 +921,8 @@ func StartTestEnvironment(KubeAPIServerFlags []string) (env TestEnvironment, err
 	return
 }
 
-// provides OS expansion of defined ENV VARs inside args to commands.  The expansion is limited to what is defined on the OS
-// and the variables passed into to the env parameter. To escape a dollar sign, pass in two dollar signs.
-func ExpandEnv(c string, env map[string]string) string {
-	// expand $$ -> $
-	fullEnv := map[string]string{
-		"$": "$",
-	}
-
-	// add all OS environment variables to the map
-	for _, envVar := range os.Environ() {
-		splitVar := strings.SplitN(envVar, "=", 2)
-		if len(splitVar) != 2 {
-			continue
-		}
-		fullEnv[splitVar[0]] = splitVar[1]
-	}
-
-	// add env parameter variables to map
-	for k, v := range env {
-		fullEnv[k] = v
-	}
-
-	return os.Expand(c, func(s string) string {
-		return fullEnv[s]
-	})
-}
-
 // GetArgs parses a command line string into its arguments and appends a namespace if it is not already set.
-func GetArgs(ctx context.Context, cmd harness.Command, namespace string, env map[string]string) (*exec.Cmd, error) {
+func GetArgs(ctx context.Context, cmd harness.Command, namespace string, envMap map[string]string) (*exec.Cmd, error) {
 	argSlice := []string{}
 
 	if cmd.Command != "" && cmd.Script != "" {
@@ -965,7 +939,7 @@ func GetArgs(ctx context.Context, cmd harness.Command, namespace string, env map
 		builtCmd := exec.CommandContext(ctx, "sh", "-c", cmd.Script)
 		return builtCmd, nil
 	}
-	c := ExpandEnv(cmd.Command, env)
+	c := env.ExpandWithMap(cmd.Command, envMap)
 
 	argSplit, err := shlex.Split(c)
 	if err != nil {
