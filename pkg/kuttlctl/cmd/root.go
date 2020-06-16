@@ -25,6 +25,7 @@ and serves as an API aggregation layer.
 	}
 
 	cmd.AddCommand(newAssertCmd())
+	cmd.AddCommand(newErrorsCmd())
 	cmd.AddCommand(newTestCmd())
 	cmd.AddCommand(newVersionCmd())
 
