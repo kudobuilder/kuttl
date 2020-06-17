@@ -486,7 +486,7 @@ func (s *Step) LoadYAML(file string) error {
 			exApply := env.Expand(applyPath)
 			apply, err := RuntimeObjectsFromPath(exApply, s.Dir)
 			if err != nil {
-				return fmt.Errorf("step %q apply %w", s.Name, err)
+				return fmt.Errorf("step %q apply path %s: %w", s.Name, exApply, err)
 			}
 			applies = append(applies, apply...)
 		}
@@ -495,7 +495,7 @@ func (s *Step) LoadYAML(file string) error {
 			exAssert := env.Expand(assertPath)
 			assert, err := RuntimeObjectsFromPath(exAssert, s.Dir)
 			if err != nil {
-				return fmt.Errorf("step %q apply %w", s.Name, err)
+				return fmt.Errorf("step %q assert path %s: %w", s.Name, exAssert, err)
 			}
 			asserts = append(asserts, assert...)
 		}
@@ -504,7 +504,7 @@ func (s *Step) LoadYAML(file string) error {
 			exError := env.Expand(errorPath)
 			errObjs, err := RuntimeObjectsFromPath(exError, s.Dir)
 			if err != nil {
-				return fmt.Errorf("step %q apply %w", s.Name, err)
+				return fmt.Errorf("step %q error path %s: %w", s.Name, exError, err)
 			}
 			s.Errors = append(s.Errors, errObjs...)
 		}
