@@ -3,7 +3,6 @@ package test
 import (
 	"errors"
 	"fmt"
-	"os"
 	"time"
 
 	"k8s.io/apimachinery/pkg/runtime"
@@ -20,15 +19,7 @@ func Assert(namespace string, timeout int, assertFiles ...string) error {
 	var objects []runtime.Object
 
 	for _, file := range assertFiles {
-		info, err := os.Stat(file)
-		if os.IsNotExist(err) {
-			return fmt.Errorf("the file %q does not exist", file)
-		}
-		if info.IsDir() {
-			return fmt.Errorf("%q is a directory and not a file", file)
-		}
-
-		o, err := testutils.LoadYAMLFromFile(file)
+		o, err := RuntimeObjectsFromPath(file, "")
 		if err != nil {
 			return err
 		}
