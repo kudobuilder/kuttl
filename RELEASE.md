@@ -2,22 +2,22 @@
 
 ## Development Processes
 
-### Master
+### Main
 
-The `HEAD` of `master` branch is considered the most active development, to which new features and bug fixes are applied. The expectation is that master will always build and pass tests.
+The `HEAD` of `main` branch is considered the most active development, to which new features and bug fixes are applied. The expectation is that main will always build and pass tests.
 Development is incremental. It is expected that pull-requests are either:
  - complete and fully integrated into code execution path, or
  - have a feature switch which must be enabled until code completion is reached.
 
-`HEAD` on master is expected to be in a state that it could be released.
-The next major release will be tagged and released from master.
-If the current released version is `v0.3.1` and the next major release is `v0.4.0`, then when it is deemed appropriate `v0.4.0` will be tagged off master, followed by a release.
-From that tag work will continue on master.
+`HEAD` on main is expected to be in a state that it could be released.
+The next major release will be tagged and released from main.
+If the current released version is `v0.3.1` and the next major release is `v0.4.0`, then when it is deemed appropriate `v0.4.0` will be tagged off main, followed by a release.
+From that tag work will continue on main.
 
 *If* it is necessary in the future to have a patch release for `v0.4.1`, a branch will be created off the `v0.4.0` tag with the nomenclature of `releases/{major.minor}`, in this example `releases/0.4`.
 Branches matching `releases/*` are protected branches in the repository.
 
-The `HEAD` of the release branches follows the same conventions as master.  It is expected that `HEAD` of the release branch is always in a releasable state. The purpose of the release branch is for bug fixes only.  New features should not be targeted to a release branch.
+The `HEAD` of the release branches follows the same conventions as main.  It is expected that `HEAD` of the release branch is always in a releasable state. The purpose of the release branch is for bug fixes only.  New features should not be targeted to a release branch.
 
 ### Documentation
 
@@ -30,7 +30,7 @@ corresponding PR(s) against the `kuttl` repo is/are merged.
 
 ### Bug Fixes
 
-Bug fixes are expected to be worked on and applied to `master`.
+Bug fixes are expected to be worked on and applied to `main`.
 
 If the fix is needed for a previously supported release version of KUTTL, then a backport is expected.
 The bug fix pull request is expected to be marked with a `backport` label.
@@ -74,8 +74,8 @@ This process will create a `dist` folder with all the build artifacts. The chang
 
 ### Cutting a Release Branch
 
-As outlined above, when it is necessary to create a new release branch, it is necessary to update the [circle-ci config](https://github.com/kudobuilder/kuttl/blob/master/.circle-ci/config.yml#L13) to test merges against the correct branch. It is necessary replace all references to `master` with the appropriate release branch.
+As outlined above, when it is necessary to create a new release branch, it is necessary to update the [circle-ci config](https://github.com/kudobuilder/kuttl/blob/main/.circle-ci/config.yml#L13) to test merges against the correct branch. It is necessary replace all references to `main` with the appropriate release branch.
 
 ### Cutting a Patch Release
 
-When cutting a patch release, for example `v0.3.3`, it is necessary to ensure that all bugs fixed on master after `v0.3.2` have landed on the release branch, `releases/0.3` in this case.
+When cutting a patch release, for example `v0.3.3`, it is necessary to ensure that all bugs fixed on main after `v0.3.2` have landed on the release branch, `releases/0.3` in this case.
