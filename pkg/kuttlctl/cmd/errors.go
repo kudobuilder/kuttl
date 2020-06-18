@@ -10,7 +10,7 @@ import (
 
 var (
 	errorsExample = `  # Asserts "errors" against a $KUBECONFIG cluster the values defined in the assert file.
-  kubectl kuttl errors <path/to/errorsfile.yaml>`
+  kubectl kuttl errors <path/to/errorsfile.yaml> <path/to/errorsfile.yaml>...`
 )
 
 // newErrorsCmd returns a new initialized instance of the errors sub command
