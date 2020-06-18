@@ -45,6 +45,7 @@ type Case struct {
 func (t *Case) DeleteNamespace(namespace string) error {
 	// if system defined namespace is "" we create and delete, otherwise don't
 	if t.Namespace != "" {
+		t.Logger.Log("Skipping deletion of user-supplied namespace:", namespace)
 		return nil
 	}
 
@@ -69,6 +70,7 @@ func (t *Case) DeleteNamespace(namespace string) error {
 func (t *Case) CreateNamespace(namespace string) error {
 	// if system defined namespace is "" we create and delete, otherwise don't
 	if t.Namespace != "" {
+		t.Logger.Log("Skipping creation of user-supplied namespace:", namespace)
 		return nil
 	}
 	t.Logger.Log("Creating namespace:", namespace)
