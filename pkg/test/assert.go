@@ -59,6 +59,54 @@ func Assert(namespace string, timeout int, assertFiles ...string) error {
 	return errors.New("asserts not valid")
 }
 
+// Errors checks all provided errors files against a namespace.  Upon assert failure, it prints the failures and returns an error
+func Errors(namespace string, timeout int, errorFiles ...string) error {
+
+	var objects []runtime.Object
+
+	for _, file := range errorFiles {
+		o, err := RuntimeObjectsFromPath(file, "")
+		if err != nil {
+			return err
+		}
+		objects = append(objects, o...)
+	}
+
+	// feels like the wrong abstraction, need to do some refactoring
+	s := &Step{
+		Timeout:         0,
+		Client:          Client,
+		DiscoveryClient: DiscoveryClient,
+	}
+
+	var testErrors []error
+	for i := 0; i < timeout; i++ {
+		// start fresh
+		testErrors = []error{}
+		for _, expected := range objects {
+			if err := s.CheckResourceAbsent(expected, namespace); err != nil {
+				testErrors = append(testErrors, err)
+			}
+		}
+
+		if len(testErrors) == 0 {
+			break
+		}
+
+		time.Sleep(time.Second)
+	}
+
+	if len(testErrors) == 0 {
+		fmt.Printf("error assert is valid\n")
+		return nil
+	}
+
+	for _, testError := range testErrors {
+		fmt.Println(testError)
+	}
+	return errors.New("error asserts not valid")
+}
+
 func Client(forceNew bool) (client.Client, error) {
 	cfg, err := config.GetConfig()
 	if err != nil {
