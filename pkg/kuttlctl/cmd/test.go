@@ -163,6 +163,9 @@ For more detailed documentation, visit: https://kudo.dev/docs/testing`,
 			}
 
 			if isSet(flags, "namespace") {
+				if strings.TrimSpace(namespace) == "" {
+					return errors.New(`setting namespace explicitly to "" or empty string is not supported`)
+				}
 				options.Namespace = namespace
 			}
 
