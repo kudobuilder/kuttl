@@ -403,12 +403,22 @@ func (s *Step) Run(namespace string) []error {
 		time.Sleep(time.Second)
 	}
 
+	// all is good
 	if len(testErrors) == 0 {
 		s.Logger.Log("test step completed", s.String())
-	} else {
-		s.Logger.Log("test step failed", s.String())
+		return testErrors
 	}
-
+	// test failure processing
+	s.Logger.Log("test step failed", s.String())
+	for _, collector := range s.Step.AssertionCollectors {
+		_, err := testutils.RunCommand(context.TODO(), namespace, *collector.Command(), s.Dir, s.Logger, s.Logger, s.Logger, s.Timeout)
+		if err != nil {
+			s.Logger.Log("post assert collector failure: %s", err)
+		}
+	}
+	if len(s.Step.AssertionCollectors) > 0 {
+		s.Logger.Flush()
+	}
 	return testErrors
 }
 

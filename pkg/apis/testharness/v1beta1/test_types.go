@@ -1,6 +1,8 @@
 package v1beta1
 
 import (
+	"fmt"
+
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
@@ -90,6 +92,8 @@ type TestStep struct {
 	// Commands to run prior at the beginning of the test step.
 	Commands []Command `json:"commands"`
 
+	// AssertionCollectors is a set of pod log collectors fired on an assert failure
+	AssertionCollectors []TestCollector `json:"assertionCollectors,omitempty"`
 	// Allowed environment labels
 	// Disallowed environment labels
 }
@@ -130,6 +134,33 @@ type Command struct {
 	Timeout int `json:"timeout"`
 	// If set, the output from the command is NOT logged.  Useful for sensitive logs or to reduce noise.
 	SkipLogOutput bool `json:"skipLogOutput"`
+}
+
+// TestCollector are post assert / error commands that allow for the collection of information sent to the test log
+type TestCollector struct {
+	//TODO (kensipe): switch to TestAssert file AND add labels
+	// The pod name to access logs.
+	Pod string `json:"pod"`
+	// namespace to use.
+	Namespace string `json:"namespace"`
+	// Container in pod to get logs from
+	Container string `json:"container"`
+}
+
+func (tc *TestCollector) Command() *Command {
+	c := fmt.Sprintf("kubectl logs %s", tc.Pod)
+	ns := tc.Namespace
+	if tc.Namespace == "" {
+		ns = "$NAMESPACE"
+	}
+	c = fmt.Sprintf("%s -n %s", c, ns)
+	if tc.Container != "" {
+		c = fmt.Sprintf("%s -c %s", c, tc.Container)
+	}
+	return &Command{
+		Command:       c,
+		IgnoreFailure: true,
+	}
 }
 
 // DefaultKINDContext defines the default kind context to use.
