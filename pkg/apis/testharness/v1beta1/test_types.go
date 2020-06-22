@@ -148,7 +148,7 @@ type TestCollector struct {
 }
 
 func (tc *TestCollector) Command() *Command {
-	c := fmt.Sprintf("kubectl logs %s", tc.Pod)
+	c := fmt.Sprintf("kubectl logs --prefix %s", tc.Pod)
 	ns := tc.Namespace
 	if tc.Namespace == "" {
 		ns = "$NAMESPACE"
