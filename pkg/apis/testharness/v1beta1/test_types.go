@@ -55,6 +55,11 @@ type TestSuite struct {
 
 	// ReportFormat determines test report format (JSON|XML|nil) nil == no report
 	ReportFormat *report.Type
+	// Namespace defines the namespace to use for tests
+	// The value "" means to auto-generate tests namespaces, these namespaces will be created and removed for each test
+	// Any other value is the name of the namespace to use.  This namespace will be created if it does not exist and will
+	// be removed it was created (unless --skipDelete is used).
+	Namespace string
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object

@@ -13,6 +13,7 @@ import (
 	petname "github.com/dustinkirkland/golang-petname"
 	corev1 "k8s.io/api/core/v1"
 	eventsbeta1 "k8s.io/api/events/v1beta1"
+	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/conversion"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -28,11 +29,12 @@ var testStepRegex = regexp.MustCompile(`^(\d+)-([^.]+)(.yaml)?$`)
 // Case contains all of the test steps and the Kubernetes client and other global configuration
 // for a test.
 type Case struct {
-	Steps      []*Step
-	Name       string
-	Dir        string
-	SkipDelete bool
-	Timeout    int
+	Steps              []*Step
+	Name               string
+	Dir                string
+	SkipDelete         bool
+	Timeout            int
+	PreferredNamespace string
 
 	Client          func(forceNew bool) (client.Client, error)
 	DiscoveryClient func() (discovery.DiscoveryInterface, error)
@@ -40,9 +42,19 @@ type Case struct {
 	Logger testutils.Logger
 }
 
+type namespace struct {
+	Name        string
+	AutoCreated bool
+}
+
 // DeleteNamespace deletes a namespace in Kubernetes after we are done using it.
-func (t *Case) DeleteNamespace(namespace string) error {
-	t.Logger.Log("Deleting namespace:", namespace)
+func (t *Case) DeleteNamespace(ns *namespace) error {
+	if !ns.AutoCreated {
+		t.Logger.Log("Skipping deletion of user-supplied namespace:", ns.Name)
+		return nil
+	}
+
+	t.Logger.Log("Deleting namespace:", ns.Name)
 
 	cl, err := t.Client(false)
 	if err != nil {
@@ -51,7 +63,7 @@ func (t *Case) DeleteNamespace(namespace string) error {
 
 	return cl.Delete(context.TODO(), &corev1.Namespace{
 		ObjectMeta: metav1.ObjectMeta{
-			Name: namespace,
+			Name: ns.Name,
 		},
 		TypeMeta: metav1.TypeMeta{
 			Kind: "Namespace",
@@ -60,8 +72,12 @@ func (t *Case) DeleteNamespace(namespace string) error {
 }
 
 // CreateNamespace creates a namespace in Kubernetes to use for a test.
-func (t *Case) CreateNamespace(namespace string) error {
-	t.Logger.Log("Creating namespace:", namespace)
+func (t *Case) CreateNamespace(ns *namespace) error {
+	if !ns.AutoCreated {
+		t.Logger.Log("Skipping creation of user-supplied namespace:", ns.Name)
+		return nil
+	}
+	t.Logger.Log("Creating namespace:", ns.Name)
 
 	cl, err := t.Client(false)
 	if err != nil {
@@ -70,12 +86,27 @@ func (t *Case) CreateNamespace(namespace string) error {
 
 	return cl.Create(context.TODO(), &corev1.Namespace{
 		ObjectMeta: metav1.ObjectMeta{
-			Name: namespace,
+			Name: ns.Name,
 		},
 		TypeMeta: metav1.TypeMeta{
 			Kind: "Namespace",
 		},
 	})
+}
+
+// NamespaceExists gets namespace and returns true if it exists
+func (t *Case) NamespaceExists(namespace string) (bool, error) {
+
+	cl, err := t.Client(false)
+	if err != nil {
+		return false, err
+	}
+	ns := &corev1.Namespace{}
+	err = cl.Get(context.TODO(), client.ObjectKey{Name: namespace}, ns)
+	if err != nil && !errors.IsNotFound(err) {
+		return false, err
+	}
+	return ns.Name == namespace, nil
 }
 
 // byFirstTimestamp sorts a slice of events by first timestamp, using their involvedObject's name as a tie breaker.
@@ -124,7 +155,11 @@ func printEvents(events []eventsbeta1.Event, logger conversion.DebugLogger) {
 // Run runs a test case including all of its steps.
 func (t *Case) Run(test *testing.T, tc *report.Testcase) {
 	test.Parallel()
-	ns := fmt.Sprintf("kudo-test-%s", petname.Generate(2, "-"))
+
+	ns, err := t.determineNamespace()
+	if err != nil {
+		test.Fatal(err)
+	}
 
 	if err := t.CreateNamespace(ns); err != nil {
 		test.Fatal(err)
@@ -147,13 +182,13 @@ func (t *Case) Run(test *testing.T, tc *report.Testcase) {
 
 		if !t.SkipDelete {
 			defer func() {
-				if err := testStep.Clean(ns); err != nil {
+				if err := testStep.Clean(ns.Name); err != nil {
 					test.Error(err)
 				}
 			}()
 		}
 
-		if errs := testStep.Run(ns); len(errs) > 0 {
+		if errs := testStep.Run(ns.Name); len(errs) > 0 {
 			caseErr := fmt.Errorf("failed in step %s", testStep.String())
 			tc.Failure = report.NewFailure(caseErr.Error(), errs)
 
@@ -165,7 +200,25 @@ func (t *Case) Run(test *testing.T, tc *report.Testcase) {
 		}
 	}
 
-	t.CollectEvents(ns)
+	t.CollectEvents(ns.Name)
+}
+
+func (t *Case) determineNamespace() (*namespace, error) {
+	ns := &namespace{
+		Name:        t.PreferredNamespace,
+		AutoCreated: false,
+	}
+	if t.PreferredNamespace == "" {
+		ns.Name = fmt.Sprintf("kudo-test-%s", petname.Generate(2, "-"))
+		ns.AutoCreated = true
+	} else {
+		exists, err := t.NamespaceExists(t.PreferredNamespace)
+		if err != nil {
+			return nil, err
+		}
+		ns.AutoCreated = !exists
+	}
+	return ns, nil
 }
 
 // CollectTestStepFiles collects a map of test steps and their associated files
