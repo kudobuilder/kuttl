@@ -208,7 +208,6 @@ func (t *Case) determineNamespace() (*namespace, error) {
 		Name:        t.Namespace,
 		AutoCreated: false,
 	}
-	//ns := t.Namespace
 	if t.Namespace == "" {
 		ns.Name = fmt.Sprintf("kudo-test-%s", petname.Generate(2, "-"))
 		ns.AutoCreated = true
