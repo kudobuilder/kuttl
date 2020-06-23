@@ -71,6 +71,10 @@ cli:
 cli-clean:
 	rm -f bin/${CLI}
 
+.PHONY: clean
+clean: cli-clean
+	rm -rf kind-logs-*
+
 .PHONY: docker
 # build docker image
 docker:
