@@ -237,6 +237,17 @@ func (h *Harness) Config() (*rest.Config, error) {
 		return h.config, err
 	}
 
+	// if not the mocked control plane
+	if !h.TestSuite.StartControlPlane {
+		// newly started cluster aren't ready until default service account is ready
+		// fixes: error looking up service account <namespace>/default: serviceaccount "default" not found
+		// no need for this with "inCluster" as we are self evident of it's existence.
+		err = testutils.WaitForSA(h.config, "default", "default")
+		if err != nil {
+			return h.config, err
+		}
+	}
+
 	// The creation of the "kubeconfig" is necessary for out of cluster execution of kubectl
 	f, err := os.Create("kubeconfig")
 	if err != nil {
