@@ -227,8 +227,8 @@ func (h *Harness) Config() (*rest.Config, error) {
 	} else {
 		h.T.Log("running tests using configured kubeconfig.")
 		h.config, err = config.GetConfig()
-		inK, _ := testutils.InClusterConfig()
-		if err == nil && inK {
+		inCluster, _ := testutils.InClusterConfig()
+		if err == nil && inCluster {
 			return h.config, nil
 		}
 	}
