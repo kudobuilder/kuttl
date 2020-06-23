@@ -172,5 +172,23 @@ func (tc *TestCollector) Command() *Command {
 	}
 }
 
+func (tc *TestCollector) String() string {
+	named := false
+	var b strings.Builder
+	b.WriteString("[")
+	if len(tc.Pod) > 0 {
+		named = true
+		fmt.Fprintf(&b, "pod==%s", tc.Pod)
+	}
+	if len(tc.Selector) > 0 {
+		if named {
+			b.WriteString(", ")
+		}
+		fmt.Fprintf(&b, "label: %s", tc.Selector)
+	}
+	b.WriteString("]")
+	return b.String()
+}
+
 // DefaultKINDContext defines the default kind context to use.
 const DefaultKINDContext = "kind"
