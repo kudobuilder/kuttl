@@ -227,7 +227,8 @@ func (h *Harness) Config() (*rest.Config, error) {
 	} else {
 		h.T.Log("running tests using configured kubeconfig.")
 		h.config, err = config.GetConfig()
-		if err == nil {
+		inCluster, _ := testutils.InClusterConfig()
+		if err == nil && inCluster {
 			return h.config, nil
 		}
 	}
@@ -236,6 +237,7 @@ func (h *Harness) Config() (*rest.Config, error) {
 		return h.config, err
 	}
 
+	// The creation of the "kubeconfig" is necessary for out of cluster execution of kubectl
 	f, err := os.Create("kubeconfig")
 	if err != nil {
 		return h.config, err
