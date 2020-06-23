@@ -15,7 +15,7 @@ GOLANGCI_LINT_VER = "1.23.8"
 export GO111MODULE=on
 
 .PHONY: all
-all: test
+all: lint test integration-test
 
 # Run unit tests
 .PHONY: test

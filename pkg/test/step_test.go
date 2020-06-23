@@ -10,6 +10,7 @@ import (
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/discovery"
 	"k8s.io/client-go/kubernetes/scheme"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -287,8 +288,11 @@ func TestRun(t *testing.T) {
 					}),
 				},
 			}, func(t *testing.T, client client.Client) {
+				pod := testutils.NewPod("hello", testNamespace)
+				assert.Nil(t, client.Get(context.TODO(), types.NamespacedName{Namespace: testNamespace, Name: "hello"}, pod))
+
 				// mock kubelet to set the pod status
-				assert.Nil(t, client.Update(context.TODO(), testutils.WithStatus(t, testutils.NewPod("hello", testNamespace), map[string]interface{}{
+				assert.Nil(t, client.Update(context.TODO(), testutils.WithStatus(t, pod, map[string]interface{}{
 					"phase": "Ready",
 				})))
 			},
