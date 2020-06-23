@@ -2,6 +2,7 @@ package v1beta1
 
 import (
 	"fmt"
+	"strings"
 
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -92,8 +93,6 @@ type TestStep struct {
 	// Commands to run prior at the beginning of the test step.
 	Commands []Command `json:"commands"`
 
-	// AssertionCollectors is a set of pod log collectors fired on an assert failure
-	AssertionCollectors []TestCollector `json:"assertionCollectors,omitempty"`
 	// Allowed environment labels
 	// Disallowed environment labels
 }
@@ -106,6 +105,8 @@ type TestAssert struct {
 	metav1.TypeMeta `json:",inline"`
 	// Override the default timeout of 30 seconds (in seconds).
 	Timeout int `json:"timeout"`
+	// Collectors is a set of pod log collectors fired on an assert failure
+	Collectors []TestCollector `json:"collectors,omitempty"`
 }
 
 // ObjectReference is a Kubernetes object reference with added labels to allow referencing
@@ -138,27 +139,35 @@ type Command struct {
 
 // TestCollector are post assert / error commands that allow for the collection of information sent to the test log
 type TestCollector struct {
-	//TODO (kensipe): switch to TestAssert file AND add labels
 	// The pod name to access logs.
 	Pod string `json:"pod"`
 	// namespace to use.
 	Namespace string `json:"namespace"`
 	// Container in pod to get logs from
 	Container string `json:"container"`
+	// Selector is a label query to select pod
+	Selector string `json:"selector"`
 }
 
 func (tc *TestCollector) Command() *Command {
-	c := fmt.Sprintf("kubectl logs --prefix %s", tc.Pod)
+	var b strings.Builder
+	b.WriteString("kubectl logs --prefix")
+	if len(tc.Pod) > 0 {
+		fmt.Fprintf(&b, " %s", tc.Pod)
+	}
+	if len(tc.Selector) > 0 {
+		fmt.Fprintf(&b, " -l %s", tc.Selector)
+	}
 	ns := tc.Namespace
-	if tc.Namespace == "" {
+	if len(tc.Namespace) == 0 {
 		ns = "$NAMESPACE"
 	}
-	c = fmt.Sprintf("%s -n %s", c, ns)
-	if tc.Container != "" {
-		c = fmt.Sprintf("%s -c %s", c, tc.Container)
+	fmt.Fprintf(&b, " -n %s", ns)
+	if len(tc.Container) != 0 {
+		fmt.Fprintf(&b, " -c %s", tc.Container)
 	}
 	return &Command{
-		Command:       c,
+		Command:       b.String(),
 		IgnoreFailure: true,
 	}
 }
