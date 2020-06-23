@@ -1,6 +1,9 @@
 package v1beta1
 
 import (
+	"fmt"
+	"strings"
+
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
@@ -102,6 +105,8 @@ type TestAssert struct {
 	metav1.TypeMeta `json:",inline"`
 	// Override the default timeout of 30 seconds (in seconds).
 	Timeout int `json:"timeout"`
+	// Collectors is a set of pod log collectors fired on an assert failure
+	Collectors []TestCollector `json:"collectors,omitempty"`
 }
 
 // ObjectReference is a Kubernetes object reference with added labels to allow referencing
@@ -130,6 +135,62 @@ type Command struct {
 	Timeout int `json:"timeout"`
 	// If set, the output from the command is NOT logged.  Useful for sensitive logs or to reduce noise.
 	SkipLogOutput bool `json:"skipLogOutput"`
+}
+
+// TestCollector are post assert / error commands that allow for the collection of information sent to the test log.
+// At least one of `pod` or `selector` is required.
+type TestCollector struct {
+	// The pod name to access logs.
+	Pod string `json:"pod"`
+	// namespace to use. The current test namespace will be used by default.
+	Namespace string `json:"namespace"`
+	// Container in pod to get logs from else --all-containers is used.
+	Container string `json:"container"`
+	// Selector is a label query to select pod.
+	Selector string `json:"selector"`
+}
+
+func (tc *TestCollector) Command() *Command {
+	var b strings.Builder
+	b.WriteString("kubectl logs --prefix")
+	if len(tc.Pod) > 0 {
+		fmt.Fprintf(&b, " %s", tc.Pod)
+	}
+	if len(tc.Selector) > 0 {
+		fmt.Fprintf(&b, " -l %s", tc.Selector)
+	}
+	ns := tc.Namespace
+	if len(tc.Namespace) == 0 {
+		ns = "$NAMESPACE"
+	}
+	fmt.Fprintf(&b, " -n %s", ns)
+	if len(tc.Container) > 0 {
+		fmt.Fprintf(&b, " -c %s", tc.Container)
+	} else {
+		b.WriteString(" --all-containers")
+	}
+	return &Command{
+		Command:       b.String(),
+		IgnoreFailure: true,
+	}
+}
+
+func (tc *TestCollector) String() string {
+	named := false
+	var b strings.Builder
+	b.WriteString("[")
+	if len(tc.Pod) > 0 {
+		named = true
+		fmt.Fprintf(&b, "pod==%s", tc.Pod)
+	}
+	if len(tc.Selector) > 0 {
+		if named {
+			b.WriteString(", ")
+		}
+		fmt.Fprintf(&b, "label: %s", tc.Selector)
+	}
+	b.WriteString("]")
+	return b.String()
 }
 
 // DefaultKINDContext defines the default kind context to use.
