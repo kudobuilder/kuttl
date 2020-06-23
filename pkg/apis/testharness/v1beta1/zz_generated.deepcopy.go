@@ -19,6 +19,7 @@ limitations under the License.
 package v1beta1
 
 import (
+	report "github.com/kudobuilder/kuttl/pkg/report"
 	runtime "k8s.io/apimachinery/pkg/runtime"
 )
 
@@ -169,6 +170,11 @@ func (in *TestSuite) DeepCopyInto(out *TestSuite) {
 		in, out := &in.Commands, &out.Commands
 		*out = make([]Command, len(*in))
 		copy(*out, *in)
+	}
+	if in.ReportFormat != nil {
+		in, out := &in.ReportFormat, &out.ReportFormat
+		*out = new(report.Type)
+		**out = **in
 	}
 	return
 }
