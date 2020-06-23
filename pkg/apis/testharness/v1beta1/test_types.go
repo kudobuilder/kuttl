@@ -137,15 +137,16 @@ type Command struct {
 	SkipLogOutput bool `json:"skipLogOutput"`
 }
 
-// TestCollector are post assert / error commands that allow for the collection of information sent to the test log
+// TestCollector are post assert / error commands that allow for the collection of information sent to the test log.
+// At least one of `pod` or `selector` is required.
 type TestCollector struct {
 	// The pod name to access logs.
 	Pod string `json:"pod"`
-	// namespace to use.
+	// namespace to use. The current test namespace will be used by default.
 	Namespace string `json:"namespace"`
-	// Container in pod to get logs from
+	// Container in pod to get logs from else --all-containers is used.
 	Container string `json:"container"`
-	// Selector is a label query to select pod
+	// Selector is a label query to select pod.
 	Selector string `json:"selector"`
 }
 
@@ -163,8 +164,10 @@ func (tc *TestCollector) Command() *Command {
 		ns = "$NAMESPACE"
 	}
 	fmt.Fprintf(&b, " -n %s", ns)
-	if len(tc.Container) != 0 {
+	if len(tc.Container) > 0 {
 		fmt.Fprintf(&b, " -c %s", tc.Container)
+	} else {
+		b.WriteString(" --all-containers")
 	}
 	return &Command{
 		Command:       b.String(),
