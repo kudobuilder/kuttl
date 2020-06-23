@@ -3,8 +3,6 @@ package v1beta1
 import (
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-
-	"github.com/kudobuilder/kuttl/pkg/report"
 )
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
@@ -54,7 +52,8 @@ type TestSuite struct {
 	Commands []Command `json:"commands"`
 
 	// ReportFormat determines test report format (JSON|XML|nil) nil == no report
-	ReportFormat *report.Type
+	// maps to report.Type, however we don't want generated.deepcopy to have reference to it.
+	ReportFormat string
 	// Namespace defines the namespace to use for tests
 	// The value "" means to auto-generate tests namespaces, these namespaces will be created and removed for each test
 	// Any other value is the name of the namespace to use.  This namespace will be created if it does not exist and will
