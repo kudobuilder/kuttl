@@ -8,6 +8,7 @@ import (
 	"math/rand"
 	"os"
 	"os/exec"
+	"os/signal"
 	"path/filepath"
 	"strings"
 	"sync"
@@ -357,6 +358,17 @@ func (h *Harness) RunTests() {
 
 // Run the test harness - start the control plane and then run the tests.
 func (h *Harness) Run() {
+
+	// capture ctrl+c and provide clean up
+	go func() {
+		sigchan := make(chan os.Signal, 1)
+		signal.Notify(sigchan, os.Interrupt)
+		sig := <-sigchan
+		h.Stop()
+		h.T.Log("failed with", sig)
+		os.Exit(-1)
+	}()
+
 	h.Setup()
 	h.RunTests()
 	h.Report()
@@ -412,6 +424,7 @@ func (h *Harness) Setup() {
 
 // Stop the test environment and clean up the harness.
 func (h *Harness) Stop() {
+	h.T.Log("cleaning up")
 	if h.managerStopCh != nil {
 		close(h.managerStopCh)
 		h.managerStopCh = nil
