@@ -5,6 +5,7 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"k8s.io/apimachinery/pkg/runtime"
 
@@ -58,4 +59,9 @@ func FromPath(path, pattern string) ([]string, error) {
 	}
 
 	return files, nil
+}
+
+// TrimExt removes the ext of a file path, foo.tar == foo
+func TrimExt(path string) string {
+	return strings.TrimSuffix(path, filepath.Ext(path))
 }

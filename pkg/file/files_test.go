@@ -60,3 +60,25 @@ func TestToRuntimeObjects(t *testing.T) {
 	_, err = ToRuntimeObjects(files)
 	assert.Error(t, err, "file \"testdata/path/test2.yaml\" load yaml error")
 }
+
+func TestTrimExt(t *testing.T) {
+	tests := []struct {
+		name     string
+		path     string
+		expected string
+	}{
+		{name: "standard tar", path: "foo.tar", expected: "foo"},
+		{name: "tar in path", path: "in/a/path/foo.tar", expected: "in/a/path/foo"},
+		{name: "tgz in path", path: "in/a/path/foo.tgz", expected: "in/a/path/foo"},
+		{name: "non-supported tar.gz", path: "in/a/path/foo.tar.gz", expected: "in/a/path/foo.tar"}, // we don't support this file format
+	}
+
+	for _, tt := range tests {
+		tt := tt
+		t.Run(tt.name, func(t *testing.T) {
+
+			path := TrimExt(tt.path)
+			assert.Equal(t, path, tt.expected)
+		})
+	}
+}
