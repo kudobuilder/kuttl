@@ -231,14 +231,14 @@ For more detailed documentation, visit: https://kudo.dev/docs/testing`,
 	return testCmd
 }
 
-func reportType(ftype report.Type) *report.Type {
+func reportType(ftype report.Type) string {
 	switch ftype {
 	case report.JSON:
 		fallthrough
 	case report.XML:
-		return &ftype
+		return string(ftype)
 	default:
-		return nil
+		return ""
 	}
 }
 
