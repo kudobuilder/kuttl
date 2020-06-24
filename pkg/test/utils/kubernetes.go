@@ -1057,7 +1057,6 @@ func RunCommands(logger Logger, namespace string, commands []harness.Command, wo
 	}
 
 	for _, cmd := range commands {
-		logger.Logf("running command: %q", cmd.Command)
 
 		bg, err := RunCommand(context.Background(), namespace, cmd, workdir, logger, logger, logger, timeout)
 		if err != nil {
