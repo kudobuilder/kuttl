@@ -843,6 +843,34 @@ func WaitForDelete(c *RetryClient, objs []runtime.Object) error {
 	})
 }
 
+// WaitForSA waits for a service account to be present
+func WaitForSA(config *rest.Config, name, namespace string) error {
+
+	c, err := NewRetryClient(config, client.Options{
+		Scheme: Scheme(),
+	})
+	if err != nil {
+		return err
+	}
+
+	obj := &corev1.ServiceAccount{}
+
+	key := client.ObjectKey{
+		Namespace: namespace,
+		Name:      name,
+	}
+	return wait.PollImmediate(500*time.Millisecond, 60*time.Second, func() (done bool, err error) {
+		err = c.Get(context.TODO(), key, obj)
+		if k8serrors.IsNotFound(err) {
+			return false, nil
+		}
+		if err != nil {
+			return false, err
+		}
+		return true, nil
+	})
+}
+
 // WaitForCRDs waits for the provided CRD types to be available in the Kubernetes API.
 func WaitForCRDs(dClient discovery.DiscoveryInterface, crds []runtime.Object) error {
 	waitingFor := []schema.GroupVersionKind{}
