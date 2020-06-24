@@ -239,9 +239,9 @@ func (h *Harness) Config() (*rest.Config, error) {
 
 	// if not the mocked control plane
 	if !h.TestSuite.StartControlPlane {
-		// newly started cluster aren't ready until default service account is ready
+		// newly started clusters aren't ready until default service account is ready
 		// fixes: error looking up service account <namespace>/default: serviceaccount "default" not found
-		// no need for this with "inCluster" as we are self evident of it's existence.
+		// we avoid this with "inCluster" as the cluster must be already be up since we're running on it
 		err = testutils.WaitForSA(h.config, "default", "default")
 		if err != nil {
 			return h.config, err
