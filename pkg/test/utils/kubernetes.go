@@ -1002,7 +1002,7 @@ func GetArgs(ctx context.Context, cmd harness.Command, namespace string, envMap 
 func RunCommand(ctx context.Context, namespace string, cmd harness.Command, cwd string, stdout io.Writer, stderr io.Writer, logger Logger, timeout int) (*exec.Cmd, error) {
 	actualDir, err := os.Getwd()
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("command %q with %w", cmd.Command, err)
 	}
 
 	kudoENV := make(map[string]string)
@@ -1034,7 +1034,7 @@ func RunCommand(ctx context.Context, namespace string, cmd harness.Command, cwd 
 
 	builtCmd, err := GetArgs(cmdCtx, cmd, namespace, kudoENV)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("processing command %q with %w", cmd.Command, err)
 	}
 
 	logger.Logf("running command: %v", builtCmd.Args)
@@ -1085,7 +1085,6 @@ func RunCommands(logger Logger, namespace string, commands []harness.Command, wo
 	}
 
 	for _, cmd := range commands {
-		logger.Logf("running command: %q", cmd.Command)
 
 		bg, err := RunCommand(context.Background(), namespace, cmd, workdir, logger, logger, logger, timeout)
 		if err != nil {
