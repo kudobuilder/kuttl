@@ -17,6 +17,8 @@ func UntarInPlace(path string) error {
 	if err != nil {
 		return err
 	}
+	defer file.Close()
+	
 	compressed := filepath.Ext(path) == ".tgz"
 	return UnTar(folder, file, compressed)
 }
