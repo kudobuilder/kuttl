@@ -162,7 +162,7 @@ func (h *Harness) RunKIND() (*rest.Config, error) {
 // initTempPath creates the temp folder if needed.
 // various parts of system may need it, starting with kind, or working with tar test suites
 func (h *Harness) initTempPath() (err error) {
-	if len(h.tempPath) == 0 {
+	if h.tempPath == "" {
 		h.tempPath, err = ioutil.TempDir("", "kuttl")
 		h.T.Log("temp folder created", h.tempPath)
 	}
@@ -382,7 +382,12 @@ func (h *Harness) testPreProcessing() []string {
 			}
 			client := http.NewClient()
 			h.T.Logf("downloading %s", dir)
-			filePath, err := client.DownloadFile(dir, h.tempPath)
+			// fresh temp dir created for each download to prevent overwriting
+			folder, err := ioutil.TempDir(h.tempPath, filepath.Base(dir))
+			if err != nil {
+				h.T.Fatal(err)
+			}
+			filePath, err := client.DownloadFile(dir, folder)
 			if err != nil {
 				h.T.Fatal(err)
 			}

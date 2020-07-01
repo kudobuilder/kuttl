@@ -72,6 +72,15 @@ func (c *Client) Download(url string, path string) error {
 	}
 	defer resp.Body.Close()
 
+	_, err = os.Stat(path)
+	if err == nil || os.IsExist(err) {
+		return os.ErrExist
+	}
+	// captures errors other than does not exist
+	if err != nil && !os.IsNotExist(err) {
+		return err
+	}
+
 	// Create the file with .tmp extension, so that we won't overwrite a
 	// file until it's downloaded fully
 	out, err := os.Create(path + ".tmp")
