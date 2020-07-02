@@ -410,6 +410,9 @@ func (s *Step) Run(namespace string) []error {
 	}
 	// test failure processing
 	s.Logger.Log("test step failed", s.String())
+	if s.Assert == nil {
+		return testErrors
+	}
 	for _, collector := range s.Assert.Collectors {
 		s.Logger.Logf("collecting log output for %s", collector.String())
 		_, err := testutils.RunCommand(context.TODO(), namespace, *collector.Command(), s.Dir, s.Logger, s.Logger, s.Logger, s.Timeout)

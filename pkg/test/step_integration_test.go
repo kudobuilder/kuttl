@@ -379,3 +379,54 @@ func TestTwoTestStepping(t *testing.T) {
 	err = step.LoadYAML("step_integration_test_data/two_step/01-step1.yaml")
 	assert.Error(t, err, "more than 1 TestStep not allowed in step \"twostepping\"")
 }
+
+// intentional testing that a test failure captures the test errors and does not have a segfault
+// driving by issue: https://github.com/kudobuilder/kuttl/issues/154
+func TestStepFailure(t *testing.T) {
+	// an assert without setup
+	var expected runtime.Object = &unstructured.Unstructured{
+		Object: map[string]interface{}{
+			"apiVersion": "v1",
+			"kind":       "Pod",
+			"metadata": map[string]interface{}{
+				"labels": map[string]interface{}{
+					"app": "nginx",
+				},
+			},
+			"spec": map[string]interface{}{
+				"containers": []interface{}{
+					map[string]interface{}{
+						"image": "nginx:1.7.9",
+						"name":  "nginx",
+					},
+				},
+			},
+		},
+	}
+
+	namespace := fmt.Sprintf("kudo-test-%s", petname.Generate(2, "-"))
+
+	err := testenv.Client.Create(context.TODO(), testutils.NewResource("v1", "Namespace", namespace, ""))
+	if !k8serrors.IsAlreadyExists(err) {
+		// we are ignoring already exists here because in tests we by default use retry client so this can happen
+		assert.Nil(t, err)
+	}
+
+	//for _, actual := range test.actual {
+	//	_, _, err := testutils.Namespaced(testenv.DiscoveryClient, actual, namespace)
+	//	assert.Nil(t, err)
+	//
+	//	assert.Nil(t, testenv.Client.Create(context.TODO(), actual))
+	//}
+	asserts := []runtime.Object{expected}
+	step := Step{
+		Logger:          testutils.NewTestLogger(t, ""),
+		Client:          func(bool) (client.Client, error) { return testenv.Client, nil },
+		DiscoveryClient: func() (discovery.DiscoveryInterface, error) { return testenv.DiscoveryClient, nil },
+		Asserts:         asserts,
+		Timeout:         1,
+	}
+
+	errs := step.Run(namespace)
+	assert.Equal(t, len(errs), 1)
+}
