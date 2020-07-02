@@ -17,7 +17,7 @@ import (
 
 	volumetypes "github.com/docker/docker/api/types/volume"
 	docker "github.com/docker/docker/client"
-	yaml "gopkg.in/yaml.v2"
+	"gopkg.in/yaml.v2"
 	"k8s.io/client-go/discovery"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
@@ -27,6 +27,8 @@ import (
 	kindConfig "sigs.k8s.io/kind/pkg/apis/config/v1alpha3"
 
 	harness "github.com/kudobuilder/kuttl/pkg/apis/testharness/v1beta1"
+	"github.com/kudobuilder/kuttl/pkg/file"
+	"github.com/kudobuilder/kuttl/pkg/http"
 	"github.com/kudobuilder/kuttl/pkg/report"
 	testutils "github.com/kudobuilder/kuttl/pkg/test/utils"
 )
@@ -36,20 +38,20 @@ type Harness struct {
 	TestSuite harness.TestSuite
 	T         *testing.T
 
-	logger         testutils.Logger
-	managerStopCh  chan struct{}
-	config         *rest.Config
-	docker         testutils.DockerClient
-	client         client.Client
-	dclient        discovery.DiscoveryInterface
-	env            *envtest.Environment
-	kind           *kind
-	kubeConfigPath string
-	clientLock     sync.Mutex
-	configLock     sync.Mutex
-	stopping       bool
-	bgProcesses    []*exec.Cmd
-	report         *report.Testsuites
+	logger        testutils.Logger
+	managerStopCh chan struct{}
+	config        *rest.Config
+	docker        testutils.DockerClient
+	client        client.Client
+	dclient       discovery.DiscoveryInterface
+	env           *envtest.Environment
+	kind          *kind
+	tempPath      string
+	clientLock    sync.Mutex
+	configLock    sync.Mutex
+	stopping      bool
+	bgProcesses   []*exec.Cmd
+	report        *report.Testsuites
 }
 
 // LoadTests loads all of the tests in a given directory.
@@ -110,17 +112,17 @@ func (h *Harness) RunKIND() (*rest.Config, error) {
 	if h.kind == nil {
 		var err error
 
-		h.kubeConfigPath, err = ioutil.TempDir("", "kudo")
+		err = h.initTempPath()
 		if err != nil {
 			return nil, err
 		}
 
-		kind := newKind(h.TestSuite.KINDContext, h.explicitPath(), h.GetLogger())
+		kind := newKind(h.TestSuite.KINDContext, h.kubeconfigPath(), h.GetLogger())
 		h.kind = &kind
 
 		if h.kind.IsRunning() {
 			h.T.Logf("KIND is already running, using existing cluster")
-			return clientcmd.BuildConfigFromFlags("", h.explicitPath())
+			return clientcmd.BuildConfigFromFlags("", h.kubeconfigPath())
 		}
 
 		kindCfg := &kindConfig.Cluster{}
@@ -154,7 +156,17 @@ func (h *Harness) RunKIND() (*rest.Config, error) {
 		}
 	}
 
-	return clientcmd.BuildConfigFromFlags("", h.explicitPath())
+	return clientcmd.BuildConfigFromFlags("", h.kubeconfigPath())
+}
+
+// initTempPath creates the temp folder if needed.
+// various parts of system may need it, starting with kind, or working with tar test suites
+func (h *Harness) initTempPath() (err error) {
+	if h.tempPath == "" {
+		h.tempPath, err = ioutil.TempDir("", "kuttl")
+		h.T.Log("temp folder created", h.tempPath)
+	}
+	return err
 }
 
 func (h *Harness) addNodeCaches(dockerClient testutils.DockerClient, kindCfg *kindConfig.Cluster) {
@@ -316,10 +328,12 @@ func (h *Harness) RunTests() {
 	defer h.Stop()
 	h.T.Log("running tests")
 
+	testDirs := h.testPreProcessing()
+
 	//todo: testsuite + testsuites (extend case to have what we need (need testdir here)
 	// TestSuite is a TestSuiteCollection and should be renamed for v1beta2
 	realTestSuite := make(map[string][]*Case)
-	for _, testDir := range h.TestSuite.TestDirs {
+	for _, testDir := range testDirs {
 		tempTests, err := h.LoadTests(testDir)
 		if err != nil {
 			h.T.Fatal(err)
@@ -354,6 +368,39 @@ func (h *Harness) RunTests() {
 	})
 
 	h.T.Log("run tests finished")
+}
+
+// testPreProcessing provides preprocessing bring all tests suites local if there are any refers to URLs
+func (h *Harness) testPreProcessing() []string {
+	testDirs := []string{}
+	// preprocessing step
+	for _, dir := range h.TestSuite.TestDirs {
+		if http.IsURL(dir) {
+			err := h.initTempPath()
+			if err != nil {
+				h.T.Fatal(err)
+			}
+			client := http.NewClient()
+			h.T.Logf("downloading %s", dir)
+			// fresh temp dir created for each download to prevent overwriting
+			folder, err := ioutil.TempDir(h.tempPath, filepath.Base(dir))
+			if err != nil {
+				h.T.Fatal(err)
+			}
+			filePath, err := client.DownloadFile(dir, folder)
+			if err != nil {
+				h.T.Fatal(err)
+			}
+			err = file.UntarInPlace(filePath)
+			if err != nil {
+				h.T.Fatal(err)
+			}
+			testDirs = append(testDirs, file.TrimExt(filePath))
+		} else {
+			testDirs = append(testDirs, dir)
+		}
+	}
+	return testDirs
 }
 
 // Run the test harness - start the control plane and then run the tests.
@@ -476,14 +523,15 @@ func (h *Harness) Stop() {
 		h.env = nil
 	}
 
+	h.T.Logf("removing temp folder: %q", h.tempPath)
+	if err := os.RemoveAll(h.tempPath); err != nil {
+		h.T.Log("error removing temporary directory", err)
+	}
+
 	if h.kind != nil {
 		h.T.Log("tearing down kind cluster")
 		if err := h.kind.Stop(); err != nil {
 			h.T.Log("error tearing down kind cluster", err)
-		}
-
-		if err := os.RemoveAll(h.kubeConfigPath); err != nil {
-			h.T.Log("error removing temporary directory", err)
 		}
 
 		h.kind = nil
@@ -502,8 +550,8 @@ func (h *Harness) fatal(args ...interface{}) {
 	h.T.Fatal(args...)
 }
 
-func (h *Harness) explicitPath() string {
-	return filepath.Join(h.kubeConfigPath, "kubeconfig")
+func (h *Harness) kubeconfigPath() string {
+	return filepath.Join(h.tempPath, "kubeconfig")
 }
 
 // Report defines the report phase of the kuttl tests.  If report format is nil it is skipped.

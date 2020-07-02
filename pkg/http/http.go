@@ -3,8 +3,6 @@ package http
 import (
 	"bytes"
 	"fmt"
-	"io"
-	coreHTTP "net/http"
 	"net/url"
 
 	"k8s.io/apimachinery/pkg/runtime"
@@ -39,19 +37,6 @@ func ToRuntimeObjects(urlPath string) ([]runtime.Object, error) {
 
 // Read returns a buffer for the file at the url
 func Read(urlPath string) (*bytes.Buffer, error) {
-
-	response, err := coreHTTP.Get(urlPath) // nolint:gosec
-	if err != nil {
-		return nil, err
-	}
-	if response != nil {
-		defer response.Body.Close()
-	}
-	var buf bytes.Buffer
-	_, err = io.Copy(&buf, response.Body)
-	if err != nil {
-		return nil, err
-	}
-
-	return &buf, nil
+	client := NewClient()
+	return client.GetByteBuffer(urlPath)
 }
