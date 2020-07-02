@@ -107,7 +107,7 @@ For more detailed documentation, visit: https://kudo.dev/docs/testing`,
 			}
 
 			// Override configuration file options with any command line flags if they are set.
-
+			options.ReportName = "kuttl-test"
 			if isSet(flags, "crd-dir") {
 				options.CRDDir = crdDir
 			}

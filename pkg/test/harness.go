@@ -560,7 +560,7 @@ func (h *Harness) Report() {
 	if len(h.TestSuite.ReportFormat) == 0 {
 		return
 	}
-	if err := h.report.Report(h.TestSuite.ArtifactsDir, report.Type(h.TestSuite.ReportFormat)); err != nil {
+	if err := h.report.Report(h.TestSuite.ArtifactsDir, h.TestSuite.ReportName, report.Type(h.TestSuite.ReportFormat)); err != nil {
 		h.fatal(fmt.Errorf("fatal error writing report: %v", err))
 	}
 }

@@ -3,6 +3,7 @@ package report
 import (
 	"encoding/json"
 	"encoding/xml"
+	"fmt"
 	"io/ioutil"
 	"path/filepath"
 	"time"
@@ -208,7 +209,7 @@ func latestEnd(start time.Time, testcases []*Testcase) time.Time {
 }
 
 // Report prints a report for TestSuites to the directory.  ftype == json | xml
-func (ts *Testsuites) Report(dir string, ftype Type) error {
+func (ts *Testsuites) Report(dir, name string, ftype Type) error {
 	ts.Close()
 	// don't print if there is nothing
 	if len(ts.Testsuite) == 0 {
@@ -216,11 +217,11 @@ func (ts *Testsuites) Report(dir string, ftype Type) error {
 	}
 	switch ftype {
 	case XML:
-		return writeXMLReport(dir, ts)
+		return writeXMLReport(dir, name, ts)
 	case JSON:
 		fallthrough
 	default:
-		return writeJSONReport(dir, ts)
+		return writeJSONReport(dir, name, ts)
 	}
 }
 
@@ -231,8 +232,9 @@ func (ts *Testsuites) NewSuite(name string) *Testsuite {
 	return suite
 }
 
-func writeXMLReport(dir string, ts *Testsuites) error {
-	file := filepath.Join(dir, "kuttl-report.xml")
+func writeXMLReport(dir, name string, ts *Testsuites) error {
+
+	file := filepath.Join(dir, fmt.Sprintf("%s.xml", name))
 	xDoc, err := xml.MarshalIndent(ts, " ", "  ")
 	if err != nil {
 		return err
@@ -241,8 +243,8 @@ func writeXMLReport(dir string, ts *Testsuites) error {
 	return ioutil.WriteFile(file, []byte(xmlStr), 0644)
 }
 
-func writeJSONReport(dir string, ts *Testsuites) error {
-	file := filepath.Join(dir, "kuttl-report.json")
+func writeJSONReport(dir, name string, ts *Testsuites) error {
+	file := filepath.Join(dir, fmt.Sprintf("%s.json", name))
 	jDoc, err := json.MarshalIndent(ts, " ", "  ")
 	if err != nil {
 		return err

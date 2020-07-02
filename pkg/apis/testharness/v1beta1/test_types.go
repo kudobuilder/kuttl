@@ -57,6 +57,9 @@ type TestSuite struct {
 	// ReportFormat determines test report format (JSON|XML|nil) nil == no report
 	// maps to report.Type, however we don't want generated.deepcopy to have reference to it.
 	ReportFormat string
+
+	// ReportName defines the name of report to create.  It defaults to "kuttl-test" and is not used unless ReportFormat is defined.
+	ReportName string
 	// Namespace defines the namespace to use for tests
 	// The value "" means to auto-generate tests namespaces, these namespaces will be created and removed for each test
 	// Any other value is the name of the namespace to use.  This namespace will be created if it does not exist and will
