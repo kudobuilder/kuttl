@@ -140,7 +140,7 @@ func (ts *Testsuite) AddTestcase(testcase *Testcase) {
 	// this is needed to calc elapse time of testsuite in a async work
 	testcase.end = time.Now()
 	elapsed := time.Since(testcase.start)
-	testcase.Time = elapsed.String()
+	testcase.Time = fmt.Sprintf("%.3f", elapsed.Seconds())
 	testcase.Classname = filepath.Base(ts.Name)
 
 	ts.Testcase = append(ts.Testcase, testcase)
@@ -185,12 +185,12 @@ func (ts *Testsuites) AddProperty(property Property) {
 // Close closes the report and does all end stat calculations
 func (ts *Testsuites) Close() {
 	elapsed := time.Since(ts.start)
-	ts.Time = elapsed.String()
+	ts.Time = fmt.Sprintf("%.3f", elapsed.Seconds())
 
 	// async work makes this necessary (stats for each testsuite)
 	for _, testsuite := range ts.Testsuite {
 		elapsed = latestEnd(testsuite.start, testsuite.Testcase).Sub(testsuite.start)
-		testsuite.Time = elapsed.String()
+		testsuite.Time = fmt.Sprintf("%.3f", elapsed.Seconds())
 
 		ts.Tests += testsuite.Tests
 		ts.Failures += testsuite.Failures
