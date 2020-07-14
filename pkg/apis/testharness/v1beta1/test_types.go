@@ -54,7 +54,7 @@ type TestSuite struct {
 	Commands []Command `json:"commands"`
 
 	// Commands to run in the reporting phase after finishing the tests but before shutdown of the cluster.
-	ReportCommands []Command `json:"postCommands"`
+	ReportCommands []Command `json:"reportCommands"`
 
 	// ReportFormat determines test report format (JSON|XML|nil) nil == no report
 	ReportFormat *report.Type

@@ -340,6 +340,16 @@ func (h *Harness) RunTests() {
 	})
 
 	h.T.Log("run tests finished")
+
+	logger := h.GetLogger()
+	logger.Log("running %n report commands", len(h.TestSuite.ReportCommands))
+	if len(h.TestSuite.ReportCommands) != 0 {
+		testutils.ClearBackgroundFlags(h.GetLogger(), h.TestSuite.ReportCommands, "report")
+		if _, errs := testutils.RunCommands(h.GetLogger(), "default", h.TestSuite.ReportCommands, "", h.TestSuite.Timeout); len(errs) != 0 {
+			h.fatal(fmt.Errorf("fatal error running post commands: %v", errs))
+		}
+	}
+
 }
 
 // Run the test harness - start the control plane and then run the tests.
@@ -483,13 +493,6 @@ func (h *Harness) explicitPath() string {
 // Report defines the report phase of the kuttl tests.  If report format is nil it is skipped.
 // otherwise it will provide a json or xml format report of tests in a junit format.
 func (h *Harness) Report() {
-	if len(h.TestSuite.ReportCommands) != 0 {
-		testutils.ClearBackgroundFlags(h.GetLogger(), h.TestSuite.ReportCommands, "report")
-		if _, errs := testutils.RunCommands(h.GetLogger(), "default", h.TestSuite.ReportCommands, "", h.TestSuite.Timeout); errs != nil {
-			h.fatal(fmt.Errorf("fatal error running post commands: %v", errs))
-		}
-	}
-
 	if h.TestSuite.ReportFormat == nil {
 		return
 	}
