@@ -376,12 +376,7 @@ func (s *Step) Run(namespace string) []error {
 	testErrors := []error{}
 
 	if s.Step != nil {
-		for _, command := range s.Step.Commands {
-			if command.Background {
-				s.Logger.Log("background commands are not allowed for steps and will be run in foreground")
-				command.Background = false
-			}
-		}
+		testutils.ClearBackgroundFlags(s.Logger, s.Step.Commands, "steps")
 		if _, errors := testutils.RunCommands(s.Logger, namespace, s.Step.Commands, s.Dir, s.Timeout); errors != nil {
 			testErrors = append(testErrors, errors...)
 		}

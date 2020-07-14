@@ -1045,6 +1045,16 @@ func RunCommand(ctx context.Context, namespace string, cmd harness.Command, cwd 
 	return nil, err
 }
 
+// ClearBackgroundFlags sets the 'Background' flag of the passed in commands to false and logs a message
+func ClearBackgroundFlags(logger Logger, commands []harness.Command, phaseName string) {
+	for _, command := range commands {
+		if command.Background {
+			logger.Logf("background commands are not allowed for %s and %s will be run in foreground", phaseName, command.Command)
+			command.Background = false
+		}
+	}
+}
+
 // RunCommands runs a set of commands, returning any errors.
 // If `command` is set, then `command` will be the command that is invoked (if a command specifies it already, it will not be prepended again).
 // commands running in the background are returned
