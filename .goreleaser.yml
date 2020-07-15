@@ -38,7 +38,7 @@ archives:
     format: binary
 brews:
   - name: kuttl-cli
-    github:
+    tap:
       owner: kudobuilder
       name: homebrew-tap
     commit_author:
