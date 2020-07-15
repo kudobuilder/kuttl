@@ -20,6 +20,8 @@ builds:
       - 386
       - amd64
       - arm
+      - ppc64le
+      - s390x
 archives:
   - id: kubectl-kuttl-tarball
     builds:
