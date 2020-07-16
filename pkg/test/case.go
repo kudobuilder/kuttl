@@ -135,6 +135,7 @@ func (t *Case) Run(test *testing.T, tc *report.Testcase) {
 		if err := t.CreateNamespace(ns); err != nil {
 			test.Fatal(err)
 		}
+		t.Namespace = ns
 	}
 
 	if !t.SkipDelete {
@@ -248,6 +249,7 @@ func (t *Case) LoadTestSteps() error {
 		if err := t.CreateNamespace(ns); err != nil {
 			return err
 		}
+		t.Namespace = ns
 	}
 
 	testStepFiles, err := t.CollectTestStepFiles()
