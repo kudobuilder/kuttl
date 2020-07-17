@@ -59,6 +59,7 @@ type Harness struct {
 	report               *report.Testsuites
 	SuiteCustomTests     map[string]map[string]CustomTest
 	NamespaceAnnotations map[string]string
+	InCluster            bool
 }
 
 // LoadTests loads all of the tests in a given directory.
@@ -227,7 +228,10 @@ func (h *Harness) Config() (*rest.Config, error) {
 
 	var err error
 
-	if h.TestSuite.StartControlPlane {
+	if h.InCluster {
+		h.T.Log("running tests by fetching the incluster config (running in a Pod).")
+		h.config, err = rest.InClusterConfig()
+	} else if h.TestSuite.StartControlPlane {
 		h.T.Log("running tests with a mocked control plane (kube-apiserver and etcd).")
 		h.config, err = h.RunTestEnv()
 	} else if h.TestSuite.StartKIND {
