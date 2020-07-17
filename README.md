@@ -8,33 +8,32 @@ KUbernetes Test TooL (KUTTL) provides a declarative approach to test Kubernetes 
 
 KUTTL is designed for testing operators, however it can declaratively test any kubernetes objects.
 
+> This is a customized versions of Kuttl. Layer5 has modified Kuttl to support more features that complement the use cases of Layer5.
+
 ## Getting Started
 
 Please refer to the [getting started guide](https://kuttl.dev/docs/) documentation.
 
-## Resources
+## Additional features
 
-Initially Built under the KUDO project, we continue to use that channel for KUTTL.
+### InCluster kubeConfig
 
-* Slack Channel: [#kudo](https://kubernetes.slack.com/archives/CG3HTFCMV)
-* Google Group: [kudobuilder@googlegroups.com](https://groups.google.com/forum/#!forum/kudobuilder)
+Kuttl was meant to be used as a CLI tool, thus it takes kubeConfig from the ENV and loads it. But we would want to run some test in the cluster so that we have access all kubernetes resources. 
+Enabling the InCluster field in the harness object will force kuttl to pull out the KubeConfig as an InCluster config from inside the Pod.
+### Custom handler injection in TestSteps
 
-## Community Meetings
+Developers can pass functions to Kuttl and pass the TestStep name so that Kuttl will run this function at the end of the TestStep. It is useful for cases where we might want custom tests other than the `asserts` and `errors` by Kuttl.
 
-We have open community meetings every 2nd and 4th Wednesday of the month at 9:00 a.m. PST. (17:00 UTC)
+### Result Collection
 
-* Agenda and Notes: https://docs.google.com/document/d/1UqgtCMUHSsOohZYF8K7zX8WcErttuMSx7NbvksIbZgg
-* Zoom Meeting: https://d2iq.zoom.us/j/443128842
+Each TestCase returns a result object that lists the TestSteps that succeeded and failed.
 
+### YAML Namespace injection
 
-## Community, Events, Discussion, Contribution, and Support
+In the YAML files passed to Kuttl, if one uses the placeholder `<NAMESPACE>`, then while loading the tests Kuttl will replace it with the name of the kubernetes namespace in which the tests will be run.
 
-Learn more on how to engage with the KUDO community on the [community page](https://kudo.dev/community/).
+### Namespace Annotations
 
-## Contributions
+The developer can provide a list of annotations to Kuttl which will be used by Kuttl to annotate the namespace while its creation.
 
-Please read the [contributing guide](https://github.com/kudobuilder/kuttl/blob/master/CONTRIBUTING.md) for details around:
-
-1. Code of Conduct
-1. Code Culture
-1. Details on how to contribute
+> For an example of how to use it, look into the SMI conformance project by Layer5.
