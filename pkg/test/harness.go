@@ -143,6 +143,7 @@ func (h *Harness) RunKIND() (*rest.Config, error) {
 			}
 		}
 
+
 		dockerClient, err := h.DockerClient()
 		if err != nil {
 			return nil, err
@@ -355,10 +356,11 @@ func (h *Harness) RunTests() {
 }
 
 // Run the test harness - start the control plane and then run the tests.
-func (h *Harness) Run() {
+func (h *Harness) Run() *report.Testsuites {
 	h.Setup()
 	h.RunTests()
 	h.Report()
+	return h.report
 }
 
 // Setup spins up the test env based on configuration
