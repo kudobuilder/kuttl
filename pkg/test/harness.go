@@ -43,21 +43,22 @@ type Harness struct {
 	TestSuite harness.TestSuite
 	T         *testing.T
 
-	logger           testutils.Logger
-	managerStopCh    chan struct{}
-	config           *rest.Config
-	docker           testutils.DockerClient
-	client           client.Client
-	dclient          discovery.DiscoveryInterface
-	env              *envtest.Environment
-	kind             *kind
-	kubeConfigPath   string
-	clientLock       sync.Mutex
-	configLock       sync.Mutex
-	stopping         bool
-	bgProcesses      []*exec.Cmd
-	report           *report.Testsuites
-	SuiteCustomTests map[string]map[string]CustomTest
+	logger               testutils.Logger
+	managerStopCh        chan struct{}
+	config               *rest.Config
+	docker               testutils.DockerClient
+	client               client.Client
+	dclient              discovery.DiscoveryInterface
+	env                  *envtest.Environment
+	kind                 *kind
+	kubeConfigPath       string
+	clientLock           sync.Mutex
+	configLock           sync.Mutex
+	stopping             bool
+	bgProcesses          []*exec.Cmd
+	report               *report.Testsuites
+	SuiteCustomTests     map[string]map[string]CustomTest
+	NamespaceAnnotations map[string]string
 }
 
 // LoadTests loads all of the tests in a given directory.
@@ -333,7 +334,7 @@ func (h *Harness) RunTests() {
 				t.Run(test.Name, func(t *testing.T) {
 					test.Logger = testutils.NewTestLogger(t, test.Name)
 
-					if err := test.LoadTestSteps(); err != nil {
+					if err := test.LoadTestSteps(h.NamespaceAnnotations); err != nil {
 						t.Fatal(err)
 					}
 

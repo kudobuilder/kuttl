@@ -62,7 +62,7 @@ func (t *Case) DeleteNamespace(namespace string) error {
 }
 
 // CreateNamespace creates a namespace in Kubernetes to use for a test.
-func (t *Case) CreateNamespace(namespace string) error {
+func (t *Case) CreateNamespace(namespace string, annotations map[string]string) error {
 	t.Logger.Log("Creating namespace:", namespace)
 
 	cl, err := t.Client(false)
@@ -72,7 +72,8 @@ func (t *Case) CreateNamespace(namespace string) error {
 
 	return cl.Create(context.TODO(), &corev1.Namespace{
 		ObjectMeta: metav1.ObjectMeta{
-			Name: namespace,
+			Name:        namespace,
+			Annotations: annotations,
 		},
 		TypeMeta: metav1.TypeMeta{
 			Kind: "Namespace",
@@ -130,12 +131,7 @@ func (t *Case) Run(test *testing.T, tc *report.Testcase) {
 	ns := t.Namespace
 
 	if ns == "" {
-		ns = fmt.Sprintf("kudo-test-%s", petname.Generate(2, "-"))
-
-		if err := t.CreateNamespace(ns); err != nil {
-			test.Fatal(err)
-		}
-		t.Namespace = ns
+		test.Fatal("Namespace does not exist")
 	}
 
 	if !t.SkipDelete {
@@ -239,14 +235,14 @@ func (t *Case) CollectTestStepFiles() (map[int64][]string, error) {
 }
 
 // LoadTestSteps loads all of the test steps for a test case.
-func (t *Case) LoadTestSteps() error {
+func (t *Case) LoadTestSteps(annotations map[string]string) error {
 
 	ns := t.Namespace
 
 	if ns == "" {
 		ns = fmt.Sprintf("kudo-test-%s", petname.Generate(2, "-"))
 
-		if err := t.CreateNamespace(ns); err != nil {
+		if err := t.CreateNamespace(ns, annotations); err != nil {
 			return err
 		}
 		t.Namespace = ns
