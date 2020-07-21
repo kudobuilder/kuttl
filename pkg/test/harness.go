@@ -329,14 +329,11 @@ func (h *Harness) RunTests() {
 					}
 
 					tc := report.NewCase(test.Name)
-					test.Run(t, tc)
-					testHandler := h.TestHandlers[test.Name]
-					if testHandler != nil {
-						testHandler(t)
-					}
+					test.Run(t, tc, h.TestHandlers[test.Name])
 					suite.AddTestcase(tc)
 				})
 			}
+
 		}
 	})
 
