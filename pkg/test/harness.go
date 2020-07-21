@@ -49,6 +49,7 @@ type Harness struct {
 	stopping       bool
 	bgProcesses    []*exec.Cmd
 	report         *report.Testsuites
+	TestHandlers   map[string]func(t *testing.T)
 }
 
 // LoadTests loads all of the tests in a given directory.
@@ -329,6 +330,10 @@ func (h *Harness) RunTests() {
 
 					tc := report.NewCase(test.Name)
 					test.Run(t, tc)
+					testHandler := h.TestHandlers[test.Name]
+					if testHandler != nil {
+						testHandler(t)
+					}
 					suite.AddTestcase(tc)
 				})
 			}
