@@ -58,6 +58,9 @@ import (
 	harness "github.com/kudobuilder/kuttl/pkg/apis/testharness/v1beta1"
 )
 
+// This token will be replaced with the actual namespace name in the yaml string
+const NAMESPACE_TOKEN = "<NAMESPACE>"
+
 // ensure that we only add to the scheme once.
 var schemeLock sync.Once
 
@@ -455,23 +458,34 @@ func MarshalObjectJSON(o runtime.Object, w io.Writer) error {
 }
 
 // LoadYAMLFromFile loads all objects from a YAML file.
-func LoadYAMLFromFile(path string) ([]runtime.Object, error) {
+func LoadYAMLFromFile(path string, namespace string) ([]runtime.Object, error) {
 	opened, err := os.Open(path)
 	if err != nil {
 		return nil, err
 	}
 	defer opened.Close()
 
-	return LoadYAML(path, opened)
+	return LoadYAML(path, opened, namespace)
 }
 
-func LoadYAML(path string, r io.Reader) ([]runtime.Object, error) {
+func LoadYAML(path string, r io.Reader, namespace string) ([]runtime.Object, error) {
 	yamlReader := yaml.NewYAMLReader(bufio.NewReader(r))
 
 	objects := []runtime.Object{}
 
 	for {
 		data, err := yamlReader.Read()
+
+		/*
+			The following code snippet updates the yaml files such that the NAMESPACE_TOKEN's value
+			is replaced with the namespace variable. This has affect only when the caller function
+			passes a  namespace
+		*/
+		if namespace != "" {
+			dataStr := string(data)
+			data = []byte(strings.ReplaceAll(dataStr, NAMESPACE_TOKEN, namespace))
+		}
+
 		if err != nil {
 			if err == io.EOF {
 				break
@@ -543,7 +557,7 @@ func InstallManifests(ctx context.Context, client client.Client, dClient discove
 			return nil
 		}
 
-		objs, err := LoadYAMLFromFile(path)
+		objs, err := LoadYAMLFromFile(path, "")
 		if err != nil {
 			return err
 		}

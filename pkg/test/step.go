@@ -422,8 +422,8 @@ func (s *Step) String() string {
 // * If the YAML file is called "errors", then it contains objects that,
 //   if seen, mark a test immediately failed.
 // * All other YAML files are considered resources to create.
-func (s *Step) LoadYAML(file string) error {
-	objects, err := testutils.LoadYAMLFromFile(file)
+func (s *Step) LoadYAML(file string, namespace string) error {
+	objects, err := testutils.LoadYAMLFromFile(file, namespace)
 	if err != nil {
 		return fmt.Errorf("loading %s: %s", file, err)
 	}

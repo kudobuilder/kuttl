@@ -28,7 +28,7 @@ func ToRuntimeObjects(urlPath string) ([]runtime.Object, error) {
 		return nil, err
 	}
 
-	objs, err := testutils.LoadYAML(urlPath, buf)
+	objs, err := testutils.LoadYAML(urlPath, buf, "")
 	if err != nil {
 		return nil, fmt.Errorf("url %q load yaml error", urlPath)
 	}
