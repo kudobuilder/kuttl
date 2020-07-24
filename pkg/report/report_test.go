@@ -67,10 +67,10 @@ AssertionError`,
 
 	if *updateGolden {
 		t.Logf("updating golden files %s and %s", goldenXML, goldenJSON)
-		if err := ioutil.WriteFile(xmlFile, []byte(xout), 0644); err != nil {
+		if err := ioutil.WriteFile(xmlFile, []byte(xout), 0600); err != nil {
 			t.Fatalf("failed to update golden file: %s", err)
 		}
-		if err := ioutil.WriteFile(jsonFile, []byte(jout), 0644); err != nil {
+		if err := ioutil.WriteFile(jsonFile, []byte(jout), 0600); err != nil {
 			t.Fatalf("failed to update golden file: %s", err)
 		}
 	}

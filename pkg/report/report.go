@@ -240,7 +240,7 @@ func writeXMLReport(dir, name string, ts *Testsuites) error {
 		return err
 	}
 	xmlStr := string(xDoc)
-	return ioutil.WriteFile(file, []byte(xmlStr), 0644)
+	return ioutil.WriteFile(file, []byte(xmlStr), 0600)
 }
 
 func writeJSONReport(dir, name string, ts *Testsuites) error {
@@ -250,5 +250,5 @@ func writeJSONReport(dir, name string, ts *Testsuites) error {
 		return err
 	}
 
-	return ioutil.WriteFile(file, jDoc, 0644)
+	return ioutil.WriteFile(file, jDoc, 0600)
 }

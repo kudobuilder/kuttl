@@ -153,7 +153,7 @@ spec:
   containers:
   - name: nginx
     image: nginx:1.7.9
-`), 0644)
+`), 0600)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -222,7 +222,7 @@ apiVersion: apiextensions.k8s.io/v1beta1
 kind: CustomResourceDefinition
 metadata:
   name: hello
-`), 0644)
+`), 0600)
 	if err != nil {
 		t.Fatal(err)
 	}

@@ -964,6 +964,7 @@ func GetArgs(ctx context.Context, cmd harness.Command, namespace string, envMap 
 	}
 
 	if cmd.Script != "" {
+		// #nosec G204 sec is challenged by a variable being used by exec, but that is by design
 		builtCmd := exec.CommandContext(ctx, "sh", "-c", cmd.Script)
 		return builtCmd, nil
 	}
