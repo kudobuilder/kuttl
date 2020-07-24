@@ -3,7 +3,7 @@ module github.com/kudobuilder/kuttl
 go 1.13
 
 require (
-	github.com/Masterminds/semver v1.5.0
+	github.com/Masterminds/semver/v3 v3.1.0
 	github.com/Microsoft/go-winio v0.4.14 // indirect
 	github.com/containerd/containerd v1.2.9 // indirect
 	github.com/docker/distribution v2.7.1+incompatible // indirect
@@ -15,7 +15,6 @@ require (
 	github.com/gophercloud/gophercloud v0.2.0 // indirect
 	github.com/gorilla/context v1.1.1 // indirect
 	github.com/gorilla/mux v1.6.2 // indirect
-	github.com/imdario/mergo v0.3.7 // indirect
 	github.com/konsorten/go-windows-terminal-sequences v1.0.2 // indirect
 	github.com/mattn/go-colorable v0.1.4 // indirect
 	github.com/morikuni/aec v1.0.0 // indirect
@@ -24,17 +23,16 @@ require (
 	github.com/pmezard/go-difflib v1.0.0
 	github.com/spf13/cobra v1.0.0
 	github.com/spf13/pflag v1.0.5
-	github.com/stretchr/testify v1.5.1
-	github.com/thoas/go-funk v0.6.0
-	golang.org/x/net v0.0.0-20191209160850-c0dbc17a3553 // indirect
+	github.com/stretchr/testify v1.6.1
+	github.com/thoas/go-funk v0.7.0
 	golang.org/x/tools v0.0.0-20191025023517-2077df36852e // indirect
-	gopkg.in/yaml.v2 v2.2.8
-	k8s.io/api v0.18.4
-	k8s.io/apiextensions-apiserver v0.18.4
-	k8s.io/apimachinery v0.18.4
-	k8s.io/client-go v0.18.4
-	k8s.io/code-generator v0.18.4
-	sigs.k8s.io/controller-runtime v0.6.0
+	gopkg.in/yaml.v2 v2.3.0
+	k8s.io/api v0.18.6
+	k8s.io/apiextensions-apiserver v0.18.6
+	k8s.io/apimachinery v0.18.6
+	k8s.io/client-go v0.18.6
+	k8s.io/code-generator v0.18.6
+	sigs.k8s.io/controller-runtime v0.6.1
 	sigs.k8s.io/controller-tools v0.3.0
 	sigs.k8s.io/kind v0.8.1
 )
