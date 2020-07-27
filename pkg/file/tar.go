@@ -74,7 +74,7 @@ func UnTar(dest string, r io.Reader, compressed bool) (err error) {
 				return err
 			}
 
-			if _, err := io.Copy(f, tr); err != nil {
+			if _, err := io.CopyBuffer(f, tr, nil); err != nil {
 				return err
 			}
 

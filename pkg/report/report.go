@@ -240,6 +240,7 @@ func writeXMLReport(dir, name string, ts *Testsuites) error {
 		return err
 	}
 	xmlStr := string(xDoc)
+	//nolint:gosec
 	return ioutil.WriteFile(file, []byte(xmlStr), 0644)
 }
 
@@ -250,5 +251,6 @@ func writeJSONReport(dir, name string, ts *Testsuites) error {
 		return err
 	}
 
+	//nolint:gosec
 	return ioutil.WriteFile(file, jDoc, 0644)
 }
