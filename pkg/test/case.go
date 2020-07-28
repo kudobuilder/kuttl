@@ -192,10 +192,10 @@ func (t *Case) Run(test *testing.T, tc *report.Testcase) {
 			caseErr := fmt.Errorf("failed in step %s", testStep.String())
 			tc.Failure = report.NewFailure(caseErr.Error(), errs)
 
+			test.Error(caseErr)
 			for _, err := range errs {
 				test.Error(err)
 			}
-			test.Error(caseErr)
 			break
 		}
 	}

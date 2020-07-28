@@ -767,8 +767,7 @@ func CreateOrUpdate(ctx context.Context, cl client.Client, obj runtime.Object, r
 	if retryOnError {
 		validators = append(validators, k8serrors.IsConflict)
 	}
-
-	return updated, Retry(ctx, func(ctx context.Context) error {
+	err = Retry(ctx, func(ctx context.Context) error {
 		expected := orig.DeepCopyObject()
 		actual := orig.DeepCopyObject()
 
@@ -792,6 +791,10 @@ func CreateOrUpdate(ctx context.Context, cl client.Client, obj runtime.Object, r
 		}
 		return err
 	}, validators...)
+	if errors.Is(ctx.Err(), context.DeadlineExceeded) {
+		err = errors.New("create/update timeout exceeded")
+	}
+	return updated, err
 }
 
 // SetAnnotation sets the given key and value in the object's annotations, returning a copy.
