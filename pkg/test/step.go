@@ -414,9 +414,8 @@ func (s *Step) Run(namespace string) []error {
 		return testErrors
 	}
 	for _, collector := range s.Assert.Collectors {
-		collector.Validate()
 		s.Logger.Logf("collecting log output for %s", collector.String())
-		if !collector.Valid || collector.Command() == nil {
+		if collector.Command() == nil {
 			s.Logger.Log("skipping invalid assertion collector")
 			continue
 		}

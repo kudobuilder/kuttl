@@ -1,6 +1,7 @@
 package v1beta1
 
 import (
+	"errors"
 	"fmt"
 	"strings"
 )
@@ -11,52 +12,47 @@ const (
 	command = "command"
 )
 
-// Validate checks user input and updates type if not provided
+// validate checks user input and updates type if not provided
 // It is expected to be called prior to any other call
-func (tc *TestCollector) Validate() {
+func (tc *TestCollector) validate() error {
 	cleanType(tc)
 	switch tc.Type {
 	case command:
-		validateCmd(tc)
+		return validateCmd(tc)
 	case pod:
-		validPod(tc)
+		return validPod(tc)
 	case events:
-		validEvents(tc)
+		return validEvents(tc)
 	default:
-		tc.InvalidReason = fmt.Sprintf("collector type %q unknown", tc.Type)
+		return fmt.Errorf("collector type %q unknown", tc.Type)
 	}
 }
 
-func validEvents(tc *TestCollector) {
+func validEvents(tc *TestCollector) error {
 	if tc.Cmd != "" || tc.Selector != "" || tc.Container != "" {
-		tc.InvalidReason = "event collector can not have a selector, container or command"
-		return
+		return errors.New("event collector can not have a selector, container or command")
 	}
-	tc.Valid = true
+	return nil
 }
 
-func validPod(tc *TestCollector) {
+func validPod(tc *TestCollector) error {
 	if tc.Cmd != "" {
-		tc.InvalidReason = "pod collector can NOT have a command"
-		return
+		return errors.New("pod collector can NOT have a command")
 	}
 	if tc.Pod == "" && tc.Selector == "" {
-		tc.InvalidReason = "pod collector requires a pod or selector"
-		return
+		return errors.New("pod collector requires a pod or selector")
 	}
-	tc.Valid = true
+	return nil
 }
 
-func validateCmd(tc *TestCollector) {
+func validateCmd(tc *TestCollector) error {
 	if tc.Cmd == "" {
-		tc.InvalidReason = "command collector requires a command"
-		return
+		return errors.New("command collector requires a command")
 	}
 	if tc.Pod != "" || tc.Namespace != "" || tc.Container != "" || tc.Selector != "" {
-		tc.InvalidReason = "command collectors can NOT have pod, namespace, container or selectors"
-		return
+		return errors.New("command collectors can NOT have pod, namespace, container or selectors")
 	}
-	tc.Valid = true
+	return nil
 }
 
 // determines and cleans collector type
@@ -75,6 +71,10 @@ func cleanType(tc *TestCollector) {
 
 // Command provides the command to exec to perform the collection
 func (tc *TestCollector) Command() *Command {
+	err := tc.validate()
+	if err != nil {
+		return nil
+	}
 	switch tc.Type {
 	case pod:
 		return podCommand(tc)
@@ -133,12 +133,11 @@ func podCommand(tc *TestCollector) *Command {
 
 // String provides defaults of the type of collector
 func (tc *TestCollector) String() string {
-	if !tc.Valid {
-		return fmt.Sprintf("[collector invalid: %s]", tc.InvalidReason)
+	err := tc.validate()
+	if err != nil {
+		return fmt.Sprintf("[collector invalid: %s]", err.Error())
 	}
-	if !(tc.Type == pod || tc.Type == events || tc.Type == command) {
-		return fmt.Sprintf("unexpected collector type: %q", tc.Type)
-	}
+
 	var b strings.Builder
 	b.WriteString("[")
 	details := []string{}

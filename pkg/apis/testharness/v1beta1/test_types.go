@@ -155,9 +155,7 @@ type TestCollector struct {
 	// Selector is a label query to select pod.
 	Selector string `json:"selector,omitempty"`
 	// Cmd is a command to run for collection.  It requires an empty Type or Type=command
-	Cmd           string `json:"command,omitempty"`
-	Valid         bool
-	InvalidReason string
+	Cmd string `json:"command,omitempty"`
 }
 
 // DefaultKINDContext defines the default kind context to use.
