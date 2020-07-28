@@ -415,6 +415,10 @@ func (s *Step) Run(namespace string) []error {
 	}
 	for _, collector := range s.Assert.Collectors {
 		s.Logger.Logf("collecting log output for %s", collector.String())
+		if collector.Command() == nil {
+			s.Logger.Log("skipping invalid assertion collector")
+			continue
+		}
 		_, err := testutils.RunCommand(context.TODO(), namespace, *collector.Command(), s.Dir, s.Logger, s.Logger, s.Logger, s.Timeout)
 		if err != nil {
 			s.Logger.Log("post assert collector failure: %s", err)

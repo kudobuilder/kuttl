@@ -1,9 +1,6 @@
 package v1beta1
 
 import (
-	"fmt"
-	"strings"
-
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -108,7 +105,7 @@ type TestAssert struct {
 	// Override the default timeout of 30 seconds (in seconds).
 	Timeout int `json:"timeout"`
 	// Collectors is a set of pod log collectors fired on an assert failure
-	Collectors []TestCollector `json:"collectors,omitempty"`
+	Collectors []*TestCollector `json:"collectors,omitempty"`
 }
 
 // ObjectReference is a Kubernetes object reference with added labels to allow referencing
@@ -140,59 +137,25 @@ type Command struct {
 }
 
 // TestCollector are post assert / error commands that allow for the collection of information sent to the test log.
-// At least one of `pod` or `selector` is required.
+// Type can be pod, command or event.  For backward compatibility, pod is default and doesn't need to be specified
+// For pod, At least one of `pod` or `selector` is required.
+// For command, Command must be specified and Type can be == "command" but no other fields are valid
+// For event, Type must be == "events" and Namespace and Name can be specified, if no ns or name, the default events are provided.  If no name, than all events for that ns are provided.
 type TestCollector struct {
+	// Type is a collector type which is pod, command or events
+	// command is default type if command field is not empty
+	// misconfiguration will lead to warning message in the logs
+	Type string `json:"type,omitempty"`
 	// The pod name to access logs.
-	Pod string `json:"pod"`
+	Pod string `json:"pod,omitempty"`
 	// namespace to use. The current test namespace will be used by default.
-	Namespace string `json:"namespace"`
+	Namespace string `json:"namespace,omitempty"`
 	// Container in pod to get logs from else --all-containers is used.
-	Container string `json:"container"`
+	Container string `json:"container,omitempty"`
 	// Selector is a label query to select pod.
-	Selector string `json:"selector"`
-}
-
-func (tc *TestCollector) Command() *Command {
-	var b strings.Builder
-	b.WriteString("kubectl logs --prefix")
-	if len(tc.Pod) > 0 {
-		fmt.Fprintf(&b, " %s", tc.Pod)
-	}
-	if len(tc.Selector) > 0 {
-		fmt.Fprintf(&b, " -l %s", tc.Selector)
-	}
-	ns := tc.Namespace
-	if len(tc.Namespace) == 0 {
-		ns = "$NAMESPACE"
-	}
-	fmt.Fprintf(&b, " -n %s", ns)
-	if len(tc.Container) > 0 {
-		fmt.Fprintf(&b, " -c %s", tc.Container)
-	} else {
-		b.WriteString(" --all-containers")
-	}
-	return &Command{
-		Command:       b.String(),
-		IgnoreFailure: true,
-	}
-}
-
-func (tc *TestCollector) String() string {
-	named := false
-	var b strings.Builder
-	b.WriteString("[")
-	if len(tc.Pod) > 0 {
-		named = true
-		fmt.Fprintf(&b, "pod==%s", tc.Pod)
-	}
-	if len(tc.Selector) > 0 {
-		if named {
-			b.WriteString(", ")
-		}
-		fmt.Fprintf(&b, "label: %s", tc.Selector)
-	}
-	b.WriteString("]")
-	return b.String()
+	Selector string `json:"selector,omitempty"`
+	// Cmd is a command to run for collection.  It requires an empty Type or Type=command
+	Cmd string `json:"command,omitempty"`
 }
 
 // DefaultKINDContext defines the default kind context to use.
