@@ -37,6 +37,7 @@ var (
 )
 
 // newTestCmd creates the test command for the CLI
+// nolint:gocyclo
 func newTestCmd() *cobra.Command {
 	configPath := ""
 	crdDir := ""
@@ -54,6 +55,7 @@ func newTestCmd() *cobra.Command {
 	timeout := 30
 	reportFormat := ""
 	namespace := ""
+	suppress := []string{}
 
 	options := harness.TestSuite{}
 
@@ -169,6 +171,12 @@ For more detailed documentation, visit: https://kudo.dev/docs/testing`,
 				options.Namespace = namespace
 			}
 
+			if isSet(flags, "suppress-log") {
+				for _, s := range suppress {
+					options.Suppress = append(options.Suppress, strings.ToLower(s))
+				}
+			}
+
 			if isSet(flags, "timeout") {
 				options.Timeout = timeout
 			}
@@ -223,7 +231,7 @@ For more detailed documentation, visit: https://kudo.dev/docs/testing`,
 	testCmd.Flags().IntVar(&timeout, "timeout", 30, "The timeout to use as default for TestSuite configuration.")
 	testCmd.Flags().StringVar(&reportFormat, "report", "", "Specify JSON|XML for report.  Report location determined by --artifacts-dir.")
 	testCmd.Flags().StringVarP(&namespace, "namespace", "n", "", "Namespace to use for tests. Provided namespaces must exist prior to running tests.")
-
+	testCmd.Flags().StringSliceVar(&suppress, "suppress-log", []string{}, "Suppress logging for these kinds of logs (events).")
 	// This cannot be a global flag because pkg/test/utils.RunTests calls flag.Parse which barfs on unknown top-level flags.
 	// Putting it here at least does not advertise it on a level where using it is impossible.
 	test.SetFlags(testCmd.Flags())

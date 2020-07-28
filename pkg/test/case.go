@@ -11,6 +11,7 @@ import (
 	"testing"
 
 	petname "github.com/dustinkirkland/golang-petname"
+	"github.com/thoas/go-funk"
 	corev1 "k8s.io/api/core/v1"
 	eventsbeta1 "k8s.io/api/events/v1beta1"
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -40,6 +41,8 @@ type Case struct {
 	DiscoveryClient func() (discovery.DiscoveryInterface, error)
 
 	Logger testutils.Logger
+	// Suppress is used to suppress logs
+	Suppress []string
 }
 
 type namespace struct {
@@ -200,7 +203,11 @@ func (t *Case) Run(test *testing.T, tc *report.Testcase) {
 		}
 	}
 
-	t.CollectEvents(ns.Name)
+	if funk.Contains(t.Suppress, "events") {
+		t.Logger.Logf("skipping event logging")
+	} else {
+		t.CollectEvents(ns.Name)
+	}
 }
 
 func (t *Case) determineNamespace() (*namespace, error) {
