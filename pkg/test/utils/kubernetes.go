@@ -1077,19 +1077,22 @@ func RunCommand(ctx context.Context, namespace string, cmd harness.Command, cwd 
 // RunCommands runs a set of commands, returning any errors.
 // If `command` is set, then `command` will be the command that is invoked (if a command specifies it already, it will not be prepended again).
 // commands running in the background are returned
-func RunCommands(logger Logger, namespace string, commands []harness.Command, workdir string, timeout int) ([]*exec.Cmd, []error) {
-	errs := []error{}
+func RunCommands(logger Logger, namespace string, commands []harness.Command, workdir string, timeout int) ([]*exec.Cmd, error) {
 	bgs := []*exec.Cmd{}
 
 	if commands == nil {
 		return nil, nil
 	}
 
-	for _, cmd := range commands {
+	for i, cmd := range commands {
 
 		bg, err := RunCommand(context.Background(), namespace, cmd, workdir, logger, logger, logger, timeout)
 		if err != nil {
-			errs = append(errs, err)
+			cmdListSize := len(commands)
+			if i+1 < cmdListSize {
+				logger.Logf("command failure, skipping %d additional commands", cmdListSize-i-1)
+			}
+			return bgs, err
 		}
 		if bg != nil {
 			bgs = append(bgs, bg)
@@ -1103,7 +1106,7 @@ func RunCommands(logger Logger, namespace string, commands []harness.Command, wo
 		logger.Log("background processes", bgs)
 	}
 	// handling of errs and bg processes external to this function
-	return bgs, errs
+	return bgs, nil
 }
 
 // Kubeconfig converts a rest.Config into a YAML kubeconfig and writes it to w
