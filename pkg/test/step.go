@@ -177,8 +177,7 @@ func (s *Step) Create(namespace string) []error {
 		ctx := context.Background()
 		if s.Timeout > 0 {
 			var cancel context.CancelFunc
-			//TODO (kensipe): fix time s.Timeout
-			ctx, cancel = context.WithTimeout(ctx, time.Duration(2)*time.Second)
+			ctx, cancel = context.WithTimeout(ctx, time.Duration(s.Timeout)*time.Second)
 			defer cancel()
 		}
 
