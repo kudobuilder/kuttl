@@ -142,6 +142,10 @@ type Command struct {
 // For command, Command must be specified and Type can be == "command" but no other fields are valid
 // For event, Type must be == "events" and Namespace and Name can be specified, if no ns or name, the default events are provided.  If no name, than all events for that ns are provided.
 type TestCollector struct {
+	// Type is a collector type which is pod, command or events
+	// command is default type if command field is not empty
+	// misconfiguration will lead to warning message in the logs
+	Type string `json:"type,omitempty"`
 	// The pod name to access logs.
 	Pod string `json:"pod,omitempty"`
 	// namespace to use. The current test namespace will be used by default.
@@ -150,10 +154,6 @@ type TestCollector struct {
 	Container string `json:"container,omitempty"`
 	// Selector is a label query to select pod.
 	Selector string `json:"selector,omitempty"`
-	// Type is a collector type which is pod, command or events
-	// command is default type if command field is not empty
-	// misconfiguration will lead to warning message in the logs
-	Type string `json:"type,omitempty"`
 	// Cmd is a command to run for collection.  It requires an empty Type or Type=command
 	Cmd           string `json:"command,omitempty"`
 	Valid         bool

@@ -134,10 +134,10 @@ func podCommand(tc *TestCollector) *Command {
 // String provides defaults of the type of collector
 func (tc *TestCollector) String() string {
 	if !tc.Valid {
-		return fmt.Sprintf("[collector invalid based on %s]", tc.InvalidReason)
+		return fmt.Sprintf("[collector invalid: %s]", tc.InvalidReason)
 	}
 	if !(tc.Type == pod || tc.Type == events || tc.Type == command) {
-		return "unexpected confirmation issue with collector"
+		return fmt.Sprintf("unexpected collector type: %q", tc.Type)
 	}
 	var b strings.Builder
 	b.WriteString("[")
