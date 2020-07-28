@@ -3,6 +3,7 @@ package test
 import (
 	"bytes"
 	"context"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"math/rand"
@@ -121,8 +122,12 @@ func (h *Harness) RunKIND() (*rest.Config, error) {
 		h.kind = &kind
 
 		if h.kind.IsRunning() {
-			h.T.Logf("KIND is already running, using existing cluster")
-			return clientcmd.BuildConfigFromFlags("", h.kubeconfigPath())
+			// we don't take over an existing kind cluster for --start-kind
+			// which means we do not stop that cluster.  User will either need to switch to existing cluster or stop it.
+			h.kind = nil
+			msg := "KIND is already running, unable to start"
+			h.T.Log(msg)
+			return nil, errors.New(msg)
 		}
 
 		kindCfg := &kindConfig.Cluster{}
