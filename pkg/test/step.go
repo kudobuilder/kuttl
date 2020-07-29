@@ -174,8 +174,14 @@ func (s *Step) Create(namespace string) []error {
 			errors = append(errors, err)
 			continue
 		}
+		ctx := context.Background()
+		if s.Timeout > 0 {
+			var cancel context.CancelFunc
+			ctx, cancel = context.WithTimeout(ctx, time.Duration(s.Timeout)*time.Second)
+			defer cancel()
+		}
 
-		if updated, err := testutils.CreateOrUpdate(context.TODO(), cl, obj, true); err != nil {
+		if updated, err := testutils.CreateOrUpdate(ctx, cl, obj, true); err != nil {
 			errors = append(errors, err)
 		} else {
 			action := "created"
