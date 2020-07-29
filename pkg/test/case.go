@@ -204,7 +204,7 @@ func (t *Case) Run(test *testing.T, tc *report.Testcase) {
 	}
 
 	if funk.Contains(t.Suppress, "events") {
-		t.Logger.Logf("skipping event logging")
+		t.Logger.Logf("skipping kubernetes event logging")
 	} else {
 		t.CollectEvents(ns.Name)
 	}
