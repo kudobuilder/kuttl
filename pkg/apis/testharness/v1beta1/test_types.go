@@ -62,6 +62,8 @@ type TestSuite struct {
 	// Any other value is the name of the namespace to use.  This namespace will be created if it does not exist and will
 	// be removed it was created (unless --skipDelete is used).
 	Namespace string
+	// Suppress is used to suppress logs
+	Suppress []string
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
