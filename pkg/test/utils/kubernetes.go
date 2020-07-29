@@ -1075,7 +1075,7 @@ func RunCommand(ctx context.Context, namespace string, cmd harness.Command, cwd 
 }
 
 // RunCommands runs a set of commands, returning any errors.
-// If `command` is set, then `command` will be the command that is invoked (if a command specifies it already, it will not be prepended again).
+// If any (non-background) command fails, the following commands are skipped
 // commands running in the background are returned
 func RunCommands(logger Logger, namespace string, commands []harness.Command, workdir string, timeout int) ([]*exec.Cmd, error) {
 	bgs := []*exec.Cmd{}
