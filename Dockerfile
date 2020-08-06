@@ -25,14 +25,15 @@ RUN go get -d -v ./...
 RUN make cli
 
 # release image with kubectl + kuttl
-FROM debian:buster
+FROM registry.access.redhat.com/ubi8/ubi-minimal:latest
 
-RUN apt-get update && apt-get install -y curl wget gnupg2 apt-transport-https vim
-RUN curl -s https://packages.cloud.google.com/apt/doc/apt-key.gpg | apt-key add -
+RUN microdnf install vim
+RUN echo 'alias vi=vim' >> ~/.bashrc
 
-RUN echo "deb https://apt.kubernetes.io/ kubernetes-xenial main" | tee -a /etc/apt/sources.list.d/kubernetes.list
-RUN apt-get update
-RUN  apt-get install -y kubectl
+#  kube 1.18
+RUN curl -LO https://storage.googleapis.com/kubernetes-release/release/v1.18.0/bin/linux/amd64/kubectl
+RUN chmod +x ./kubectl
+RUN mv ./kubectl /usr/local/bin/kubectl
 
 COPY --from=builder /go/src/kuttl/bin/kubectl-kuttl /usr/bin/kubectl-kuttl
 
