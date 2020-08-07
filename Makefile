@@ -14,12 +14,106 @@ GOLANGCI_LINT_VER = "1.29.0"
 
 export GO111MODULE=on
 
+.PHONY: help
+help: ## Show this help screen
+	@echo 'Usage: make <OPTIONS> ... <TARGETS>'
+	@echo ''
+	@echo 'Available targets are:'
+	@echo ''
+	@awk 'BEGIN {FS = ":.*##"; printf "\nUsage:\n  make \033[36m<target>\033[0m\n"} /^[a-zA-Z0-9_-]+:.*?##/ { printf "  \033[36m%-15s\033[0m %s\n", $$1, $$2 } /^##@/ { printf "\n\033[1m%s\033[0m\n", substr($$0, 5) } ' $(MAKEFILE_LIST)
+
+
+##############################
+# Development                #
+##############################
+
+##@ Development
+
+.PHONY: lint
+lint: ## Run golangci-lint
+ifneq (${GOLANGCI_LINT_VER}, "$(shell golangci-lint --version | cut -b 27-32)")
+	./hack/install-golangcilint.sh
+endif
+	golangci-lint run
+
+.PHONY: download
+download:  ## Downloads go dependencies
+	go mod download
+
+.PHONY: generate-clean
+generate-clean:
+	rm -rf hack/code-gen
+
+.PHONY: cli
+# Build CLI
+cli:  ## Builds CLI
+	go build -ldflags "${LDFLAGS}" -o bin/${CLI} ./cmd/kubectl-kuttl
+
+.PHONY: cli-clean
+# Clean CLI build
+cli-clean:
+	rm -f bin/${CLI}
+
+.PHONY: clean
+clean: cli-clean  ## Cleans CLI and kind logs
+	rm -rf kind-logs-*
+
+.PHONY: docker
+# build docker image
+docker:  ## Builds docker image
+	docker build . -t kuttl
+
+# Install CLI
+cli-install:  ## Installs kubectl-kuttl to GOBIN
+	go install -ldflags "${LDFLAGS}" ./cmd/kubectl-kuttl
+
+##############################
+# Generate Artifacts         #
+##############################
+
+##@ Generate
+
+.PHONY: generate
+# Generate code
+generate: ## Generates code 
+ifeq (, $(shell which controller-gen))
+	go get sigs.k8s.io/controller-tools/cmd/controller-gen@$$(go list -f '{{.Version}}' -m sigs.k8s.io/controller-tools)
+endif
+	controller-gen crd paths=./pkg/apis/... output:crd:dir=config/crds output:stdout
+	./hack/update_codegen.sh
+
+
+##############################
+# Reports                    #
+##############################
+
+##@ Reports
+
+.PHONY: todo
+# Show to-do items per file.
+todo: ## Shows todos from code
+	@grep \
+		--exclude-dir=hack \
+		--exclude=Makefile \
+		--exclude-dir=.git \
+		--exclude-dir=bin \
+		--text \
+		--color \
+		-nRo -E " *[^\.]TODO.*|SkipNow" .
+
+
+##############################
+# Tests                      #
+##############################
+
+##@ Tests
+
 .PHONY: all
-all: lint test integration-test
+all: lint test integration-test  ## Runs lint, unit and integration tests
 
 # Run unit tests
 .PHONY: test
-test:
+test: ## Runs unit tests
 ifdef _INTELLIJ_FORCE_SET_GOFLAGS
 # Run tests from a Goland terminal. Goland already set '-mod=readonly'
 	go test ./pkg/...  -v -coverprofile cover.out
@@ -29,69 +123,10 @@ endif
 
 .PHONY: integration-test
 # Run integration tests
-integration-test:
+integration-test:  ## Runs integration tests
 	./hack/run-integration-tests.sh
 
 # Run e2e tests
 .PHONY: e2e-test
 e2e-test: cli
 	./hack/run-e2e-tests.sh
-
-.PHONY: lint
-lint:
-ifneq (${GOLANGCI_LINT_VER}, "$(shell golangci-lint --version | cut -b 27-32)")
-	./hack/install-golangcilint.sh
-endif
-	golangci-lint run
-
-.PHONY: download
-download:
-	go mod download
-
-.PHONY: generate
-# Generate code
-generate:
-ifeq (, $(shell which controller-gen))
-	go get sigs.k8s.io/controller-tools/cmd/controller-gen@$$(go list -f '{{.Version}}' -m sigs.k8s.io/controller-tools)
-endif
-	controller-gen crd paths=./pkg/apis/... output:crd:dir=config/crds output:stdout
-	./hack/update_codegen.sh
-
-.PHONY: generate-clean
-generate-clean:
-	rm -rf hack/code-gen
-
-.PHONY: cli
-# Build CLI
-cli:
-	go build -ldflags "${LDFLAGS}" -o bin/${CLI} ./cmd/kubectl-kuttl
-
-.PHONY: cli-clean
-# Clean CLI build
-cli-clean:
-	rm -f bin/${CLI}
-
-.PHONY: clean
-clean: cli-clean
-	rm -rf kind-logs-*
-
-.PHONY: docker
-# build docker image
-docker:
-	docker build . -t kuttl
-
-# Install CLI
-cli-install:
-	go install -ldflags "${LDFLAGS}" ./cmd/kubectl-kuttl
-
-.PHONY: todo
-# Show to-do items per file.
-todo:
-	@grep \
-		--exclude-dir=hack \
-		--exclude=Makefile \
-		--exclude-dir=.git \
-		--exclude-dir=bin \
-		--text \
-		--color \
-		-nRo -E " *[^\.]TODO.*|SkipNow" .
