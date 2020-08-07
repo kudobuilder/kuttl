@@ -30,12 +30,13 @@ var testStepRegex = regexp.MustCompile(`^(\d+)-([^.]+)(.yaml)?$`)
 // Case contains all of the test steps and the Kubernetes client and other global configuration
 // for a test.
 type Case struct {
-	Steps              []*Step
-	Name               string
-	Dir                string
-	SkipDelete         bool
-	Timeout            int
-	PreferredNamespace string
+	Steps               []*Step
+	Name                string
+	Dir                 string
+	SkipDelete          bool
+	Timeout             int
+	PreferredNamespace  string
+	NamespaceAutoCreate bool
 
 	Client          func(forceNew bool) (client.Client, error)
 	DiscoveryClient func() (discovery.DiscoveryInterface, error)
@@ -213,18 +214,24 @@ func (t *Case) Run(test *testing.T, tc *report.Testcase) {
 func (t *Case) determineNamespace() (*namespace, error) {
 	ns := &namespace{
 		Name:        t.PreferredNamespace,
-		AutoCreated: false,
+		AutoCreated: t.NamespaceAutoCreate,
 	}
+	// no preferred ns, means we auto-create with petnames
 	if t.PreferredNamespace == "" {
 		ns.Name = fmt.Sprintf("kudo-test-%s", petname.Generate(2, "-"))
 		ns.AutoCreated = true
-	} else {
+		return ns, nil
+	}
+	// preferred ns, if auto-creating we see if we have to, otherwise no
+	// the check against namespaces doesn't happen if we NEVER auto-create
+	if ns.AutoCreated {
 		exists, err := t.NamespaceExists(t.PreferredNamespace)
 		if err != nil {
 			return nil, err
 		}
 		ns.AutoCreated = !exists
 	}
+
 	return ns, nil
 }
 
