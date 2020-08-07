@@ -31,11 +31,12 @@ help: ## Show this help screen
 
 .PHONY: lint
 lint: ## Run golangci-lint
-ifneq (${GOLANGCI_LINT_VER}, "$(shell golangci-lint --version | cut -b 27-32)")
-	./hack/install-golangcilint.sh
+ifneq (${GOLANGCI_LINT_VER}, "$(shell ./bin/golangci-lint --version 2>/dev/null | cut -b 27-32)")
+	@echo "golangci-lint missing or not version '${GOLANGCI_LINT_VER}', downloading..."
+	curl -sSfL "https://raw.githubusercontent.com/golangci/golangci-lint/v${GOLANGCI_LINT_VER}/install.sh" | sh -s -- -b ./bin "v${GOLANGCI_LINT_VER}"
 endif
-	golangci-lint run
-
+	./bin/golangci-lint --timeout 3m run
+	
 .PHONY: download
 download:  ## Downloads go dependencies
 	go mod download
