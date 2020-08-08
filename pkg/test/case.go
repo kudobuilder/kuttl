@@ -159,11 +159,7 @@ func printEvents(events []eventsbeta1.Event, logger conversion.DebugLogger) {
 func (t *Case) Run(test *testing.T, tc *report.Testcase) {
 	test.Parallel()
 
-	ns, err := t.determineNamespace()
-	if err != nil {
-		test.Fatal(err)
-	}
-
+	ns := t.determineNamespace()
 	if err := t.CreateNamespace(ns); err != nil {
 		test.Fatal(err)
 	}
@@ -210,7 +206,7 @@ func (t *Case) Run(test *testing.T, tc *report.Testcase) {
 	}
 }
 
-func (t *Case) determineNamespace() (*namespace, error) {
+func (t *Case) determineNamespace() *namespace {
 	ns := &namespace{
 		Name:        t.PreferredNamespace,
 		AutoCreated: false,
@@ -221,7 +217,7 @@ func (t *Case) determineNamespace() (*namespace, error) {
 		ns.AutoCreated = true
 	}
 	// if we have a preferred namespace, we do NOT auto-create
-	return ns, nil
+	return ns
 }
 
 // CollectTestStepFiles collects a map of test steps and their associated files
