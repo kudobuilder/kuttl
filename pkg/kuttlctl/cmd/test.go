@@ -55,7 +55,6 @@ func newTestCmd() *cobra.Command {
 	timeout := 30
 	reportFormat := ""
 	namespace := ""
-	nsAutocreate := true
 	suppress := []string{}
 
 	options := harness.TestSuite{}
@@ -171,14 +170,6 @@ For more detailed documentation, visit: https://kudo.dev/docs/testing`,
 				}
 				options.Namespace = namespace
 			}
-			// it is invalid to indicate namespace-autocreate == false without specifying the namespace
-			if isSet(flags, "namespace-autocreate") {
-				if !nsAutocreate && !isSet(flags, "namespace") {
-					return errors.New(`setting "namespace-autocreate=false" requires setting "namespace"`)
-				}
-			}
-			// default regardless of set or not, as the default is true (not false)
-			options.NamespaceAutoCreate = nsAutocreate
 
 			if isSet(flags, "suppress-log") {
 				for _, s := range suppress {
@@ -240,7 +231,6 @@ For more detailed documentation, visit: https://kudo.dev/docs/testing`,
 	testCmd.Flags().IntVar(&timeout, "timeout", 30, "The timeout to use as default for TestSuite configuration.")
 	testCmd.Flags().StringVar(&reportFormat, "report", "", "Specify JSON|XML for report.  Report location determined by --artifacts-dir.")
 	testCmd.Flags().StringVarP(&namespace, "namespace", "n", "", "Namespace to use for tests. Provided namespaces must exist prior to running tests.")
-	testCmd.Flags().BoolVar(&nsAutocreate, "namespace-autocreate", true, "Set to false to remove namespace auto-creation.")
 	testCmd.Flags().StringSliceVar(&suppress, "suppress-log", []string{}, "Suppress logging for these kinds of logs (events).")
 	// This cannot be a global flag because pkg/test/utils.RunTests calls flag.Parse which barfs on unknown top-level flags.
 	// Putting it here at least does not advertise it on a level where using it is impossible.
