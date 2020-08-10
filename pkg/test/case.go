@@ -159,11 +159,7 @@ func printEvents(events []eventsbeta1.Event, logger conversion.DebugLogger) {
 func (t *Case) Run(test *testing.T, tc *report.Testcase) {
 	test.Parallel()
 
-	ns, err := t.determineNamespace()
-	if err != nil {
-		test.Fatal(err)
-	}
-
+	ns := t.determineNamespace()
 	if err := t.CreateNamespace(ns); err != nil {
 		test.Fatal(err)
 	}
@@ -210,22 +206,18 @@ func (t *Case) Run(test *testing.T, tc *report.Testcase) {
 	}
 }
 
-func (t *Case) determineNamespace() (*namespace, error) {
+func (t *Case) determineNamespace() *namespace {
 	ns := &namespace{
 		Name:        t.PreferredNamespace,
 		AutoCreated: false,
 	}
+	// no preferred ns, means we auto-create with petnames
 	if t.PreferredNamespace == "" {
 		ns.Name = fmt.Sprintf("kudo-test-%s", petname.Generate(2, "-"))
 		ns.AutoCreated = true
-	} else {
-		exists, err := t.NamespaceExists(t.PreferredNamespace)
-		if err != nil {
-			return nil, err
-		}
-		ns.AutoCreated = !exists
 	}
-	return ns, nil
+	// if we have a preferred namespace, we do NOT auto-create
+	return ns
 }
 
 // CollectTestStepFiles collects a map of test steps and their associated files
