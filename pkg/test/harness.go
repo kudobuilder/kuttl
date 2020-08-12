@@ -246,7 +246,13 @@ func (h *Harness) Config() (*rest.Config, error) {
 	} else {
 		h.T.Log("running tests using configured kubeconfig.")
 		h.config, err = config.GetConfig()
-		inCluster, _ := testutils.InClusterConfig()
+		if err != nil {
+			return nil, err
+		}
+		inCluster, err := testutils.InClusterConfig()
+		if err != nil {
+			return nil, err
+		}
 		if err == nil && inCluster {
 			return h.config, nil
 		}
@@ -511,11 +517,14 @@ func (h *Harness) Stop() {
 	}
 
 	if h.TestSuite.SkipClusterDelete {
-		cwd, _ := os.Getwd()
+		cwd, err := os.Getwd()
+		if err != nil {
+			h.T.Logf("issue getting work directory %v", err)
+		}
 		kubeconfig := filepath.Join(cwd, "kubeconfig")
 
 		h.T.Log("skipping cluster tear down")
-		h.T.Log(fmt.Sprintf("to connect to the cluster, run: export KUBECONFIG=\"%s\"", kubeconfig))
+		h.T.Logf("to connect to the cluster, run: export KUBECONFIG=\"%s\"", kubeconfig)
 
 		return
 	}

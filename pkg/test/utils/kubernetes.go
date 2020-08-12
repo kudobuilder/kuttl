@@ -582,7 +582,7 @@ func InstallManifests(ctx context.Context, client client.Client, dClient discove
 
 // ObjectKey returns an instantiated ObjectKey for the provided object.
 func ObjectKey(obj runtime.Object) client.ObjectKey {
-	m, _ := meta.Accessor(obj)
+	m, _ := meta.Accessor(obj) //nolint:errcheck // runtime.Object don't have the error issues of interface{}
 	return client.ObjectKey{
 		Name:      m.GetName(),
 		Namespace: m.GetNamespace(),
@@ -648,7 +648,7 @@ func NewPod(name, namespace string) runtime.Object {
 func WithNamespace(obj runtime.Object, namespace string) runtime.Object {
 	obj = obj.DeepCopyObject()
 
-	m, _ := meta.Accessor(obj)
+	m, _ := meta.Accessor(obj) //nolint:errcheck // runtime.Object don't have the error issues of interface{}
 	m.SetNamespace(namespace)
 
 	return obj
@@ -706,7 +706,7 @@ func WithLabels(t *testing.T, obj runtime.Object, labels map[string]string) runt
 func WithAnnotations(obj runtime.Object, annotations map[string]string) runtime.Object {
 	obj = obj.DeepCopyObject()
 
-	m, _ := meta.Accessor(obj)
+	m, _ := meta.Accessor(obj) //nolint:errcheck // runtime.Object don't have the error issues of interface{}
 	m.SetAnnotations(annotations)
 
 	return obj
@@ -801,7 +801,7 @@ func CreateOrUpdate(ctx context.Context, cl client.Client, obj runtime.Object, r
 func SetAnnotation(obj runtime.Object, key, value string) runtime.Object {
 	obj = obj.DeepCopyObject()
 
-	meta, _ := meta.Accessor(obj)
+	meta, _ := meta.Accessor(obj) //nolint:errcheck // runtime.Object don't have the error issues of interface{}
 
 	annotations := meta.GetAnnotations()
 	if annotations == nil {
