@@ -550,9 +550,20 @@ func RuntimeObjectsFromPath(path, dir string) ([]runtime.Object, error) {
 	}
 
 	// it's a directory or file
-	paths, err := kfile.FromPath(filepath.Join(dir, path), "*.yaml")
-	if err != nil {
-		return nil, fmt.Errorf("failed to find YAML files in %s: %w", filepath.Join(dir, path), err)
+	var err error
+	var paths []string
+
+	// if it's an absolute path
+	if len(path) > 0 && path[0] == filepath.Separator {
+		paths, err = kfile.FromPath(path, "*.yaml")
+		if err != nil {
+			return nil, fmt.Errorf("failed to find YAML files in %s: %w", path, err)
+		}
+	} else {
+		paths, err = kfile.FromPath(filepath.Join(dir, path), "*.yaml")
+		if err != nil {
+			return nil, fmt.Errorf("failed to find YAML files in %s: %w", filepath.Join(dir, path), err)
+		}
 	}
 	apply, err := kfile.ToRuntimeObjects(paths)
 	if err != nil {
