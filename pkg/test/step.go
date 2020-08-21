@@ -553,8 +553,7 @@ func RuntimeObjectsFromPath(path, dir string) ([]runtime.Object, error) {
 	var err error
 	var paths []string
 
-	// if it's an absolute path
-	if len(path) > 0 && path[0] == filepath.Separator {
+	if filepath.IsAbs(path) {
 		paths, err = kfile.FromPath(path, "*.yaml")
 		if err != nil {
 			return nil, fmt.Errorf("failed to find YAML files in %s: %w", path, err)
