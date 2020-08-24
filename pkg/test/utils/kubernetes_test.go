@@ -128,7 +128,7 @@ func TestRetryWithNilFromFn(t *testing.T) {
 	}, IsJSONSyntaxError))
 }
 
-func TestRetryWithNilWithFn(t *testing.T) {
+func TestRetryWithNilInFn(t *testing.T) {
 	client := RetryClient{}
 	var list runtime.Object
 	assert.Equal(t, nil, Retry(context.TODO(), func(ctx context.Context) error {
