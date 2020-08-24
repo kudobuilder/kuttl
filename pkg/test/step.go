@@ -550,23 +550,22 @@ func RuntimeObjectsFromPath(path, dir string) ([]runtime.Object, error) {
 	}
 
 	// it's a directory or file
-	var err error
-	var paths []string
-
-	if filepath.IsAbs(path) {
-		paths, err = kfile.FromPath(path, "*.yaml")
-		if err != nil {
-			return nil, fmt.Errorf("failed to find YAML files in %s: %w", path, err)
-		}
-	} else {
-		paths, err = kfile.FromPath(filepath.Join(dir, path), "*.yaml")
-		if err != nil {
-			return nil, fmt.Errorf("failed to find YAML files in %s: %w", filepath.Join(dir, path), err)
-		}
+	cPath := cleanPath(path, dir)
+	paths, err := kfile.FromPath(cPath, "*.yaml")
+	if err != nil {
+		return nil, fmt.Errorf("failed to find YAML files in %s: %w", cPath, err)
 	}
 	apply, err := kfile.ToRuntimeObjects(paths)
 	if err != nil {
 		return nil, err
 	}
 	return apply, nil
+}
+
+// cleanPath returns either the abs path or the joined path
+func cleanPath(path, dir string) string {
+	if filepath.IsAbs(path) {
+		return path
+	}
+	return filepath.Join(dir, path)
 }
