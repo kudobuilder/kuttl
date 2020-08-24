@@ -108,7 +108,18 @@ func Retry(ctx context.Context, fn func(context.Context) error, errValidationFun
 		// we can use select to wait for both the function return and the context deadline.
 
 		go func() {
-			if err := fn(ctx); err != nil {
+			defer func() {
+				if r := recover(); r != nil {
+					log.Println("retry func has panicked and will be ignored")
+					doneCh <- struct{}{}
+				}
+			}()
+
+			if fn == nil {
+				// fn is passed in usually
+				log.Println("retry func is nil and will be ignored")
+				doneCh <- struct{}{}
+			} else if err := fn(ctx); err != nil {
 				errCh <- err
 			} else {
 				doneCh <- struct{}{}
