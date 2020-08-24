@@ -102,12 +102,19 @@ func Retry(ctx context.Context, fn func(context.Context) error, errValidationFun
 	errCh := make(chan error)
 	doneCh := make(chan struct{})
 
+	if fn == nil {
+		log.Println("retry func is nil and will be ignored")
+		return nil
+	}
+
 	// do { } while (err != nil): https://stackoverflow.com/a/32844744/10892393
 	for ok := true; ok; ok = lastErr != nil {
 		// run the function in a goroutine and close it once it is finished so that
 		// we can use select to wait for both the function return and the context deadline.
 
 		go func() {
+			// if the func we are calling panics, clean up and call it done
+			// the common case is when a shared refernence, like a client, is nil and is called in the function
 			defer func() {
 				if r := recover(); r != nil {
 					log.Println("retry func has panicked and will be ignored")
@@ -115,11 +122,7 @@ func Retry(ctx context.Context, fn func(context.Context) error, errValidationFun
 				}
 			}()
 
-			if fn == nil {
-				// fn is passed in usually
-				log.Println("retry func is nil and will be ignored")
-				doneCh <- struct{}{}
-			} else if err := fn(ctx); err != nil {
+			if err := fn(ctx); err != nil {
 				errCh <- err
 			} else {
 				doneCh <- struct{}{}
