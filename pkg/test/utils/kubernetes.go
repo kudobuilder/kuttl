@@ -117,8 +117,8 @@ func Retry(ctx context.Context, fn func(context.Context) error, errValidationFun
 			// the common case is when a shared refernence, like a client, is nil and is called in the function
 			defer func() {
 				if r := recover(); r != nil {
-					log.Println("retry func has panicked and will be ignored")
-					doneCh <- struct{}{}
+					//log.Println("retry func has panicked and will be ignored")
+					errCh <- errors.New("func passed to retry panicked.  expected if testsuite is shutting down")
 				}
 			}()
 
