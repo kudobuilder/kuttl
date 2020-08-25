@@ -118,6 +118,24 @@ func TestRetryWithUnexpectedError(t *testing.T) {
 	assert.Equal(t, 1, index)
 }
 
+func TestRetryWithNil(t *testing.T) {
+	assert.Equal(t, nil, Retry(context.TODO(), nil, IsJSONSyntaxError))
+}
+
+func TestRetryWithNilFromFn(t *testing.T) {
+	assert.Equal(t, nil, Retry(context.TODO(), func(ctx context.Context) error {
+		return nil
+	}, IsJSONSyntaxError))
+}
+
+func TestRetryWithNilInFn(t *testing.T) {
+	client := RetryClient{}
+	var list runtime.Object
+	assert.Error(t, Retry(context.TODO(), func(ctx context.Context) error {
+		return client.Client.List(ctx, list)
+	}, IsJSONSyntaxError))
+}
+
 func TestRetryWithTimeout(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
 	defer cancel()
