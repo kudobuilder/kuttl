@@ -114,7 +114,7 @@ func Retry(ctx context.Context, fn func(context.Context) error, errValidationFun
 
 		go func() {
 			// if the func we are calling panics, clean up and call it done
-			// the common case is when a shared refernence, like a client, is nil and is called in the function
+			// the common case is when a shared reference, like a client, is nil and is called in the function
 			defer func() {
 				if r := recover(); r != nil {
 					//log.Println("retry func has panicked and will be ignored")
