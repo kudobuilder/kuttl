@@ -27,7 +27,8 @@ import (
 	batchv1beta1 "k8s.io/api/batch/v1beta1"
 	corev1 "k8s.io/api/core/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
-	apiextensions "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1beta1"
+	apiextv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
+	apiextv1beta1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1beta1"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -299,8 +300,12 @@ func Scheme() *runtime.Scheme {
 			fmt.Printf("failed to add API resources to the scheme: %v", err)
 			os.Exit(-1)
 		}
-		if err := apiextensions.AddToScheme(scheme.Scheme); err != nil {
-			fmt.Printf("failed to add API extension resources to the scheme: %v", err)
+		if err := apiextv1.AddToScheme(scheme.Scheme); err != nil {
+			fmt.Printf("failed to add V1 API extension resources to the scheme: %v", err)
+			os.Exit(-1)
+		}
+		if err := apiextv1beta1.AddToScheme(scheme.Scheme); err != nil {
+			fmt.Printf("failed to add V1beta1 API extension resources to the scheme: %v", err)
 			os.Exit(-1)
 		}
 	})
@@ -760,7 +765,13 @@ func FakeDiscoveryClient() discovery.DiscoveryInterface {
 					},
 				},
 				{
-					GroupVersion: apiextensions.SchemeGroupVersion.String(),
+					GroupVersion: apiextv1.SchemeGroupVersion.String(),
+					APIResources: []metav1.APIResource{
+						{Name: "customresourcedefinitions", Namespaced: false, Kind: "CustomResourceDefinition"},
+					},
+				},
+				{
+					GroupVersion: apiextv1beta1.SchemeGroupVersion.String(),
 					APIResources: []metav1.APIResource{
 						{Name: "customresourcedefinitions", Namespaced: false, Kind: "CustomResourceDefinition"},
 					},
@@ -891,15 +902,24 @@ func WaitForSA(config *rest.Config, name, namespace string) error {
 // WaitForCRDs waits for the provided CRD types to be available in the Kubernetes API.
 func WaitForCRDs(dClient discovery.DiscoveryInterface, crds []runtime.Object) error {
 	waitingFor := []schema.GroupVersionKind{}
-	crdKind := NewResource("apiextensions.k8s.io/v1beta1", "CustomResourceDefinition", "", "")
+	crdV1Kind := NewResource("apiextensions.k8s.io/v1", "CustomResourceDefinition", "", "")
+	crdV1beta1Kind := NewResource("apiextensions.k8s.io/v1beta1", "CustomResourceDefinition", "", "")
 
 	for _, crdObj := range crds {
-		if !MatchesKind(crdObj, crdKind) {
-			return fmt.Errorf("the following passed object does not match %v: %v", crdKind, crdObj)
+		if !MatchesKind(crdObj, crdV1Kind, crdV1beta1Kind) {
+			return fmt.Errorf("the following passed object does not match %v: %v", crdV1Kind, crdObj)
 		}
 
 		switch crd := crdObj.(type) {
-		case *apiextensions.CustomResourceDefinition:
+		case *apiextv1.CustomResourceDefinition:
+			for _, version := range crd.Spec.Versions {
+				waitingFor = append(waitingFor, schema.GroupVersionKind{
+					Group:   crd.Spec.Group,
+					Version: version.Name,
+					Kind:    crd.Spec.Names.Kind,
+				})
+			}
+		case *apiextv1beta1.CustomResourceDefinition:
 			waitingFor = append(waitingFor, schema.GroupVersionKind{
 				Group:   crd.Spec.Group,
 				Version: crd.Spec.Version,
@@ -912,7 +932,7 @@ func WaitForCRDs(dClient discovery.DiscoveryInterface, crds []runtime.Object) er
 				Kind:    crd.Object["spec"].(map[string]interface{})["names"].(map[string]interface{})["kind"].(string),
 			})
 		default:
-			return fmt.Errorf("the folllowing passed object is not a CRD: %v", crdObj)
+			return fmt.Errorf("the following passed object is not a CRD: %v", crdObj)
 		}
 	}
 
