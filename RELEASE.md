@@ -71,6 +71,9 @@ The release process is:
 It is possible outside of the standard release process to build a "snapshot" release using the following command: `goreleaser release --skip-publish --snapshot --rm-dist`
 This process will create a `dist` folder with all the build artifacts. The changelog is not created unless a full release is executed. If you are looking to get a "similar" changelog, install [github-release-notes](https://github.com/buchanae/github-release-notes) and execute `github-release-notes -org kudobuilder -repo kuttl -since-latest-release`.
 
+### Docker Release
+
+The docker release is accomplished by `make docker-release`.  Details on what is required are provided in [Docker.md](DOCKER.md).
 
 ### Cutting a Release Branch
 
