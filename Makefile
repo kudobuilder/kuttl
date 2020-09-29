@@ -60,9 +60,15 @@ clean: cli-clean  ## Cleans CLI and kind logs
 	rm -rf kind-logs-*
 
 .PHONY: docker
-# build docker image
-docker:  ## Builds docker image
+# build a local docker image (specific to the local platform only)
+docker:  ## Builds docker image for architecture of the local env
 	docker build . -t kuttl
+
+.PHONY: docker-release
+# build and push a multi-arch docker image
+docker-release:  ## Build and push multi-arch docker images
+	./hack/docker-release.sh
+
 
 # Install CLI
 cli-install:  ## Installs kubectl-kuttl to GOBIN
