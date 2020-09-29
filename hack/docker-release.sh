@@ -17,12 +17,17 @@ echo "Releasing for version: $GIT_VERSION"
 docker buildx ls > /dev/null 2>&1
 RETVAL=$?
 if [[ ${RETVAL} != 0 ]]; then
-    echo "Invoking 'docker buildx ls' ends with non-zero exit code."
+    echo "Invoking 'docker buildx ls' ends with non-zero exit code. (✖╭╮✖)"
     echo "Updated docker with experimental options enabled is required."
     exit 1
 fi
 
 docker buildx build . -t "kudobuilder/kuttl:v$GIT_VERSION"  --platform linux/amd64,linux/arm64,linux/ppc64le --push
 
+RETVAL=$?
+if [[ ${RETVAL} != 0 ]]; then
+    echo "Invoking 'docker buildx build' ends with non-zero exit code. （╯°□°）╯ ┻━┻"
+    exit 1
+fi
+
 echo "docker build and push was successful! ヽ(•‿•)ノ"
-exit 0
