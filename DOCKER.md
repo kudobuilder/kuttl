@@ -1,13 +1,13 @@
 # Docker Releases
 
-There is strong interest in the community to support a number of architectures with docker images.  One driver is [Operator SDK scorecard](https://sdk.operatorframework.io/docs/advanced-topics/scorecard/scorecard/) which KUTTL provides additional test features.   The following architectures are needed to support scorecard:
+There is strong interest in the community to support a number of architectures with docker images.  One driver is [Operator SDK scorecard](https://sdk.operatorframework.io/docs/advanced-topics/scorecard/scorecard/) for which KUTTL provides additional test features.   The following architectures are needed to support scorecard:
 
 * linux/amd64
 * linux/arm64
 * linux/ppc64le
 * linux/s390x
 
-In order to support this, we are using the new and experimental docker [buildx](https://docs.docker.com/engine/reference/commandline/buildx/).  This allows for building and pushing of several architectures to the same docker repository allowing for the client platform to determine preferred architecture for it's pull request. 
+In order to support this, we are using the new and experimental docker [buildx](https://docs.docker.com/engine/reference/commandline/buildx/).  This allows for building and pushing of several architectures to the same docker repository allowing for the client platform to determine preferred architecture for its pull request. 
 
 In addition to using `buildx` there are two more requirements to make this work:
 
