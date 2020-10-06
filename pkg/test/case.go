@@ -150,9 +150,31 @@ func (t *Case) CollectEvents(namespace string) {
 
 func printEvents(events []eventsbeta1.Event, logger conversion.DebugLogger) {
 	for _, e := range events {
-		// time type reason kind message
-		logger.Logf("%s\t%s\t%s\t%s", e.ObjectMeta.CreationTimestamp, e.Type, e.Reason, e.Note)
+		// time type regarding action reason note reportingController related
+		logger.Logf("%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s",
+			e.ObjectMeta.CreationTimestamp,
+			e.Type,
+			shortString(&e.Regarding),
+			e.Action,
+			e.Reason,
+			e.Note,
+			e.ReportingController,
+			shortString(e.Related))
 	}
+}
+
+func shortString(obj *corev1.ObjectReference) string {
+	if obj == nil {
+		return ""
+	}
+	fieldRef := ""
+	if obj.FieldPath != "" {
+		fieldRef = "." + obj.FieldPath
+	}
+	return fmt.Sprintf("%s %s%s",
+		obj.GroupVersionKind().GroupKind().String(),
+		obj.Name,
+		fieldRef)
 }
 
 // Run runs a test case including all of its steps.
