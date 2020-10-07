@@ -156,6 +156,10 @@ type TestCollector struct {
 	Container string `json:"container,omitempty"`
 	// Selector is a label query to select pod.
 	Selector string `json:"selector,omitempty"`
+	// Tail is the number of last lines to collect from pods. If omitted or zero,
+	// then the default is 10 if you use a selector, or -1 (all) if you use a pod name.
+	// This matches default behavior of `kubectl logs`.
+	Tail int `json:"tail,omitempty"`
 	// Cmd is a command to run for collection.  It requires an empty Type or Type=command
 	Cmd string `json:"command,omitempty"`
 }

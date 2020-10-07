@@ -125,6 +125,14 @@ func podCommand(tc *TestCollector) *Command {
 	} else {
 		b.WriteString(" --all-containers")
 	}
+	if tc.Tail == 0 {
+		if len(tc.Selector) > 0 {
+			tc.Tail = 10
+		} else {
+			tc.Tail = -1
+		}
+	}
+	fmt.Fprintf(&b, " --tail=%d", tc.Tail)
 	return &Command{
 		Command:       b.String(),
 		IgnoreFailure: true,
