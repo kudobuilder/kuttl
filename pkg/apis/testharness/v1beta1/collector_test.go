@@ -4,7 +4,7 @@ import (
 	"strings"
 	"testing"
 
-	"gotest.tools/assert"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestTestCollector_String(t *testing.T) {
@@ -153,7 +153,7 @@ func TestPodCommand(t *testing.T) {
 		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			cmd := podCommand(&tt.tc)
-			assert.DeepEqual(t, cmd.Command, tt.cmd) // DeepEqual to get nice context diff on failure
+			assert.Equal(t, cmd.Command, tt.cmd)
 		})
 	}
 }
