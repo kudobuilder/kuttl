@@ -3,6 +3,8 @@ package v1beta1
 import (
 	"strings"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestTestCollector_String(t *testing.T) {
@@ -116,6 +118,42 @@ func TestTestCollector_String(t *testing.T) {
 			if !strings.Contains(got, tt.contains) {
 				t.Errorf("String() = %v, does not contain %v", got, tt.contains)
 			}
+		})
+	}
+}
+
+func TestPodCommand(t *testing.T) {
+	tests := []struct {
+		name string
+		tc   TestCollector
+		cmd  string
+	}{
+		{
+			name: "selector with default tail",
+			tc:   TestCollector{Type: pod, Selector: "x=y"},
+			cmd:  "kubectl logs --prefix -l x=y -n $NAMESPACE --all-containers --tail=10",
+		},
+		{
+			name: "pod name with default tail",
+			tc:   TestCollector{Type: pod, Pod: "foo"},
+			cmd:  "kubectl logs --prefix foo -n $NAMESPACE --all-containers --tail=-1",
+		},
+		{
+			name: "selector with set tail",
+			tc:   TestCollector{Type: pod, Selector: "x=y", Tail: 42},
+			cmd:  "kubectl logs --prefix -l x=y -n $NAMESPACE --all-containers --tail=42",
+		},
+		{
+			name: "pod name with set tail",
+			tc:   TestCollector{Type: pod, Pod: "foo", Tail: 42},
+			cmd:  "kubectl logs --prefix foo -n $NAMESPACE --all-containers --tail=42",
+		},
+	}
+	for _, tt := range tests {
+		tt := tt
+		t.Run(tt.name, func(t *testing.T) {
+			cmd := podCommand(&tt.tc)
+			assert.Equal(t, cmd.Command, tt.cmd)
 		})
 	}
 }
