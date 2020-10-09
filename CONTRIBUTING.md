@@ -42,15 +42,18 @@ You can find the full text of the DCO here: https://developercertificate.org/
 ### Build Instructions
 
 - Get the KUTTL repo: `git clone https://github.com/kudobuilder/kuttl.git`
-- `cd kudo`
-- `make all` to build manager as well as CLI
+- `cd kuttl`
+- `make cli` to build the CLI
 
-#### Testing new CLI
-You can build CLI locally via `make cli`. After running that command, CLI will be available in `bin/kubectl-kuttl` and you can invoke the command for example like this `bin/kubectl-kuttl version` (no need to install it as kubectl plugin).
+After running this command, CLI will be available in `bin/kubectl-kuttl` and you can invoke the command for example like this `bin/kubectl-kuttl version` (no need to install it as `kubectl` plugin).
 
 ### Testing
 
-See the [contributor's testing guide](https://github.com/kudobuilder/kudo/blob/main/test/README.md).
+Use `make all` to run all available tests.
+Run just `make` to see what individual targets are available.
+
+The project has settled on the [testify](https://github.com/stretchr/testify) library for testing purposes.
+Please use it for new tests as well if possible.
 
 ## Community, Discussion, and Support
 
