@@ -9,7 +9,6 @@ import (
 	"sort"
 	"strconv"
 	"testing"
-	"time"
 
 	petname "github.com/dustinkirkland/golang-petname"
 	"github.com/thoas/go-funk"
@@ -181,11 +180,6 @@ func shortString(obj *corev1.ObjectReference) string {
 // Run runs a test case including all of its steps.
 func (t *Case) Run(test *testing.T, tc *report.Testcase) {
 	test.Parallel()
-
-	t.Logger.Logf("Test Case Started at %s", time.Now().UTC().Format(time.RFC3339Nano))
-	defer func() {
-		t.Logger.Logf("Test Case Ended at %s", time.Now().UTC().Format(time.RFC3339Nano))
-	}()
 
 	ns := t.determineNamespace()
 	if err := t.CreateNamespace(ns); err != nil {
