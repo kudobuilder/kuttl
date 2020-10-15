@@ -25,7 +25,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/config"
 	"sigs.k8s.io/controller-runtime/pkg/envtest"
-	kindConfig "sigs.k8s.io/kind/pkg/apis/config/v1alpha3"
+	kindConfig "sigs.k8s.io/kind/pkg/apis/config/v1alpha4"
 
 	harness "github.com/kudobuilder/kuttl/pkg/apis/testharness/v1beta1"
 	"github.com/kudobuilder/kuttl/pkg/file"

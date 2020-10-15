@@ -32,5 +32,5 @@ require (
 	k8s.io/code-generator v0.19.2
 	sigs.k8s.io/controller-runtime v0.6.3
 	sigs.k8s.io/controller-tools v0.3.0
-	sigs.k8s.io/kind v0.8.1
+	sigs.k8s.io/kind v0.9.0
 )
