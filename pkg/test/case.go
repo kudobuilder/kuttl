@@ -9,6 +9,7 @@ import (
 	"sort"
 	"strconv"
 	"testing"
+	"time"
 
 	petname "github.com/dustinkirkland/golang-petname"
 	"github.com/thoas/go-funk"
@@ -64,7 +65,14 @@ func (t *Case) DeleteNamespace(ns *namespace) error {
 		return err
 	}
 
-	return cl.Delete(context.TODO(), &corev1.Namespace{
+	ctx := context.Background()
+	if t.Timeout > 0 {
+		var cancel context.CancelFunc
+		ctx, cancel = context.WithTimeout(ctx, time.Duration(t.Timeout)*time.Second)
+		defer cancel()
+	}
+
+	return cl.Delete(ctx, &corev1.Namespace{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: ns.Name,
 		},
@@ -87,7 +95,14 @@ func (t *Case) CreateNamespace(ns *namespace) error {
 		return err
 	}
 
-	return cl.Create(context.TODO(), &corev1.Namespace{
+	ctx := context.Background()
+	if t.Timeout > 0 {
+		var cancel context.CancelFunc
+		ctx, cancel = context.WithTimeout(ctx, time.Duration(t.Timeout)*time.Second)
+		defer cancel()
+	}
+
+	return cl.Create(ctx, &corev1.Namespace{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: ns.Name,
 		},
