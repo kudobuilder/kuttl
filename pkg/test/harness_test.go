@@ -9,7 +9,7 @@ import (
 	dockertypes "github.com/docker/docker/api/types"
 	volumetypes "github.com/docker/docker/api/types/volume"
 	"github.com/stretchr/testify/assert"
-	kindConfig "sigs.k8s.io/kind/pkg/apis/config/v1alpha3"
+	kindConfig "sigs.k8s.io/kind/pkg/apis/config/v1alpha4"
 )
 
 func TestGetTimeout(t *testing.T) {
