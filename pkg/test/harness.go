@@ -272,6 +272,7 @@ func (h *Harness) Config() (*rest.Config, error) {
 		if err != nil {
 			return h.config, err
 		}
+		h.T.Logf("Successful connection to cluster at: %s", h.config.Host)
 	}
 
 	// The creation of the "kubeconfig" is necessary for out of cluster execution of kubectl
@@ -351,6 +352,7 @@ func (h *Harness) RunTests() {
 		if err != nil {
 			h.T.Fatal(err)
 		}
+		h.T.Logf("testsuite: %s has %d tests", testDir, len(tempTests))
 		// array of test cases tied to testsuite (by testdir)
 		realTestSuite[testDir] = tempTests
 	}
