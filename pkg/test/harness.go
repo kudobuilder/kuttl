@@ -136,7 +136,7 @@ func (h *Harness) RunKIND() (*rest.Config, error) {
 		if h.TestSuite.KINDConfig != "" {
 			h.T.Logf("Loading KIND config from %s", h.TestSuite.KINDConfig)
 			var err error
-			kindCfg, err = loadKindConfig(h.TestSuite.KINDConfig)
+			kindCfg, err = h.loadKindConfig(h.TestSuite.KINDConfig)
 			if err != nil {
 				return nil, err
 			}
@@ -583,7 +583,7 @@ func (h *Harness) Report() {
 	}
 }
 
-func loadKindConfig(path string) (*kindConfig.Cluster, error) {
+func (h *Harness) loadKindConfig(path string) (*kindConfig.Cluster, error) {
 	raw, err := ioutil.ReadFile(path)
 	if err != nil {
 		return nil, err
@@ -597,6 +597,8 @@ func loadKindConfig(path string) (*kindConfig.Cluster, error) {
 	if err := decoder.Decode(cluster); err != nil {
 		return nil, err
 	}
-
+	if !IsMinVersion(cluster.APIVersion) {
+		h.T.Logf("Warning: %q in %s is not a supported version.\n", cluster.APIVersion, path)
+	}
 	return cluster, nil
 }

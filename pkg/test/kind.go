@@ -4,6 +4,7 @@ import (
 	"context"
 	"testing"
 
+	"k8s.io/apimachinery/pkg/version"
 	"sigs.k8s.io/kind/pkg/apis/config/v1alpha4"
 	"sigs.k8s.io/kind/pkg/cluster"
 	"sigs.k8s.io/kind/pkg/cluster/nodes"
@@ -105,4 +106,11 @@ func loadContainer(docker testutils.DockerClient, node nodes.Node, container str
 	}
 
 	return nil
+}
+
+// IsMinVersion checks if pass ver is the min required kind version
+func IsMinVersion(ver string) bool {
+	minVersion := "kind.sigs.k8s.io/v1alpha4"
+	comp := version.CompareKubeAwareVersionStrings(minVersion, ver)
+	return comp != -1
 }
