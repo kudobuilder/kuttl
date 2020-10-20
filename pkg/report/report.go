@@ -51,7 +51,7 @@ type Testcase struct {
 	// Classname is a junit thing, for kuttl it is the testsuite name.
 	Classname string `xml:"classname,attr" json:"classname"`
 	// Name is the name of the test (folder of test if not redefined by the TestStep).
-	Name      string `xml:"name,attr" json:"name"`
+	Name string `xml:"name,attr" json:"name"`
 	// Timestamp is the time when this Testcase started.
 	// This attribute is not in the mentioned XML schema (unlike Testsuite.Timestamp) but should be
 	// gracefully ignored by readers who do not expect it.
@@ -64,7 +64,7 @@ type Testcase struct {
 	Failure *Failure `xml:"failure" json:"failure,omitempty"`
 
 	// end is not reported.  It is used to calculate duration times for testcase and testsuite.
-	end   time.Time
+	end time.Time
 }
 
 // TestSuite is a collection of Testcase and is a summary of those details.
