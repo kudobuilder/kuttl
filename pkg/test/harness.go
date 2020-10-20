@@ -365,6 +365,10 @@ func (h *Harness) RunTests() {
 				test.DiscoveryClient = h.DiscoveryClient
 
 				t.Run(test.Name, func(t *testing.T) {
+					// testing.T.Parallel may block, so run it before we read time for our
+					// elapsed time calculations.
+					t.Parallel()
+
 					test.Logger = testutils.NewTestLogger(t, test.Name)
 
 					if err := test.LoadTestSteps(); err != nil {
