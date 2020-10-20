@@ -392,6 +392,9 @@ func ConvertUnstructured(in runtime.Object) (runtime.Object, error) {
 	// Deprecated: kudo.dev is deprecated.
 	kudoGroup := "kudo.dev"
 	kuttlGroup := "kuttl.dev"
+	if group == kudoGroup {
+		log.Print("WARNING: kudo.dev group has been deprecated and is schedule to be removed in KUTTL 0.8.0")
+	}
 	if (group == kudoGroup || group == kuttlGroup) && kind == "TestStep" {
 		converted = &harness.TestStep{}
 	} else if (group == kudoGroup || group == kuttlGroup) && kind == "TestAssert" {
@@ -1043,10 +1046,10 @@ func RunCommand(ctx context.Context, namespace string, cmd harness.Command, cwd 
 		return nil, fmt.Errorf("command %q with %w", cmd.Command, err)
 	}
 
-	kudoENV := make(map[string]string)
-	kudoENV["NAMESPACE"] = namespace
-	kudoENV["KUBECONFIG"] = fmt.Sprintf("%s/kubeconfig", actualDir)
-	kudoENV["PATH"] = fmt.Sprintf("%s/bin/:%s", actualDir, os.Getenv("PATH"))
+	kuttlENV := make(map[string]string)
+	kuttlENV["NAMESPACE"] = namespace
+	kuttlENV["KUBECONFIG"] = fmt.Sprintf("%s/kubeconfig", actualDir)
+	kuttlENV["PATH"] = fmt.Sprintf("%s/bin/:%s", actualDir, os.Getenv("PATH"))
 
 	// by default testsuite timeout is the command timeout
 	// 0 is allowed for testsuite which means forever (or no timeout)
@@ -1070,7 +1073,7 @@ func RunCommand(ctx context.Context, namespace string, cmd harness.Command, cwd 
 		defer cancel()
 	}
 
-	builtCmd, err := GetArgs(cmdCtx, cmd, namespace, kudoENV)
+	builtCmd, err := GetArgs(cmdCtx, cmd, namespace, kuttlENV)
 	if err != nil {
 		return nil, fmt.Errorf("processing command %q with %w", cmd.Command, err)
 	}
@@ -1083,7 +1086,7 @@ func RunCommand(ctx context.Context, namespace string, cmd harness.Command, cwd 
 		builtCmd.Stderr = stderr
 	}
 	builtCmd.Env = os.Environ()
-	for key, value := range kudoENV {
+	for key, value := range kuttlENV {
 		builtCmd.Env = append(builtCmd.Env, fmt.Sprintf("%s=%s", key, value))
 	}
 

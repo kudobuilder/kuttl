@@ -232,7 +232,7 @@ func TestCheckResourceIntegration(t *testing.T) {
 		},
 	} {
 		t.Run(test.testName, func(t *testing.T) {
-			namespace := fmt.Sprintf("kudo-test-%s", petname.Generate(2, "-"))
+			namespace := fmt.Sprintf("kuttl-test-%s", petname.Generate(2, "-"))
 
 			err := testenv.Client.Create(context.TODO(), testutils.NewResource("v1", "Namespace", namespace, ""))
 			if !k8serrors.IsAlreadyExists(err) {
@@ -404,7 +404,7 @@ func TestStepFailure(t *testing.T) {
 		},
 	}
 
-	namespace := fmt.Sprintf("kudo-test-%s", petname.Generate(2, "-"))
+	namespace := fmt.Sprintf("kuttl-test-%s", petname.Generate(2, "-"))
 
 	err := testenv.Client.Create(context.TODO(), testutils.NewResource("v1", "Namespace", namespace, ""))
 	if !k8serrors.IsAlreadyExists(err) {
