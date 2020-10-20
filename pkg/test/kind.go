@@ -4,7 +4,8 @@ import (
 	"context"
 	"testing"
 
-	"sigs.k8s.io/kind/pkg/apis/config/v1alpha3"
+	"k8s.io/apimachinery/pkg/version"
+	"sigs.k8s.io/kind/pkg/apis/config/v1alpha4"
 	"sigs.k8s.io/kind/pkg/cluster"
 	"sigs.k8s.io/kind/pkg/cluster/nodes"
 	"sigs.k8s.io/kind/pkg/cluster/nodeutils"
@@ -31,10 +32,10 @@ func newKind(kindContext string, explicitPath string, logger testutils.Logger) k
 }
 
 // Run starts a KIND cluster from a given configuration.
-func (k *kind) Run(config *v1alpha3.Cluster) error {
+func (k *kind) Run(config *v1alpha4.Cluster) error {
 	return k.Provider.Create(
 		k.context,
-		cluster.CreateWithV1Alpha3Config(config),
+		cluster.CreateWithV1Alpha4Config(config),
 		cluster.CreateWithKubeconfigPath(k.explicitPath),
 		cluster.CreateWithRetain(true),
 	)
@@ -105,4 +106,11 @@ func loadContainer(docker testutils.DockerClient, node nodes.Node, container str
 	}
 
 	return nil
+}
+
+// IsMinVersion checks if pass ver is the min required kind version
+func IsMinVersion(ver string) bool {
+	minVersion := "kind.sigs.k8s.io/v1alpha4"
+	comp := version.CompareKubeAwareVersionStrings(minVersion, ver)
+	return comp != -1
 }

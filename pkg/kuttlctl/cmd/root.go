@@ -18,6 +18,12 @@ and serves as an API aggregation layer.
 		Example: `  # Run integration tests against a Kubernetes cluster or mocked control plane.
   kubectl kuttl test
 
+  # Run kuttl tests with an xml report
+  kubectl kuttl test --report xml
+
+  # Test 1 assertion file against a cluster
+  kubectl kuttl assert ../01-assert.yaml
+
   # View kuttl version
   kubectl kuttl version
 `,

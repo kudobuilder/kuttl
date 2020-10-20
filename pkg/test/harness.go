@@ -25,7 +25,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/config"
 	"sigs.k8s.io/controller-runtime/pkg/envtest"
-	kindConfig "sigs.k8s.io/kind/pkg/apis/config/v1alpha3"
+	kindConfig "sigs.k8s.io/kind/pkg/apis/config/v1alpha4"
 
 	harness "github.com/kudobuilder/kuttl/pkg/apis/testharness/v1beta1"
 	"github.com/kudobuilder/kuttl/pkg/file"
@@ -136,7 +136,7 @@ func (h *Harness) RunKIND() (*rest.Config, error) {
 		if h.TestSuite.KINDConfig != "" {
 			h.T.Logf("Loading KIND config from %s", h.TestSuite.KINDConfig)
 			var err error
-			kindCfg, err = loadKindConfig(h.TestSuite.KINDConfig)
+			kindCfg, err = h.loadKindConfig(h.TestSuite.KINDConfig)
 			if err != nil {
 				return nil, err
 			}
@@ -246,6 +246,7 @@ func (h *Harness) Config() (*rest.Config, error) {
 	} else {
 		h.T.Log("running tests using configured kubeconfig.")
 		h.config, err = config.GetConfig()
+		h.config.WarningHandler = rest.NewWarningWriter(os.Stderr, rest.WarningWriterOptions{Deduplicate: true})
 		if err != nil {
 			return nil, err
 		}
@@ -253,7 +254,7 @@ func (h *Harness) Config() (*rest.Config, error) {
 		if err != nil {
 			return nil, err
 		}
-		if err == nil && inCluster {
+		if inCluster {
 			return h.config, nil
 		}
 	}
@@ -271,6 +272,7 @@ func (h *Harness) Config() (*rest.Config, error) {
 		if err != nil {
 			return h.config, err
 		}
+		h.T.Logf("Successful connection to cluster at: %s", h.config.Host)
 	}
 
 	// The creation of the "kubeconfig" is necessary for out of cluster execution of kubectl
@@ -350,6 +352,7 @@ func (h *Harness) RunTests() {
 		if err != nil {
 			h.T.Fatal(err)
 		}
+		h.T.Logf("testsuite: %s has %d tests", testDir, len(tempTests))
 		// array of test cases tied to testsuite (by testdir)
 		realTestSuite[testDir] = tempTests
 	}
@@ -584,7 +587,7 @@ func (h *Harness) Report() {
 	}
 }
 
-func loadKindConfig(path string) (*kindConfig.Cluster, error) {
+func (h *Harness) loadKindConfig(path string) (*kindConfig.Cluster, error) {
 	raw, err := ioutil.ReadFile(path)
 	if err != nil {
 		return nil, err
@@ -598,6 +601,8 @@ func loadKindConfig(path string) (*kindConfig.Cluster, error) {
 	if err := decoder.Decode(cluster); err != nil {
 		return nil, err
 	}
-
+	if !IsMinVersion(cluster.APIVersion) {
+		h.T.Logf("Warning: %q in %s is not a supported version.\n", cluster.APIVersion, path)
+	}
 	return cluster, nil
 }

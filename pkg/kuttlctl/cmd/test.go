@@ -33,6 +33,9 @@ var (
 
   Run a Kubernetes control plane and install manifests and CRDs for the running tests:
     kubectl kuttl test --start-control-plane  --crd-dir ./config/crds/ --manifests-dir ./test/manifests/ ./test/integration/
+
+  Run tests against an existing Kubernetes cluster with a JUnit XML file output:
+    kubectl kuttl test ./test/integration/ --report xml
 `
 )
 
