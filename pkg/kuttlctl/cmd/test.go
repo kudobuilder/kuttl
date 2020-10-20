@@ -71,7 +71,7 @@ The test operator supports connecting to an existing Kubernetes cluster or it ca
 It can also apply manifests before running the tests. If no arguments are provided, the test harness will attempt to
 load the test configuration from kuttl-test.yaml.
 
-For more detailed documentation, visit: https://kudo.dev/docs/testing`,
+For more detailed documentation, visit: https://kuttl.dev`,
 		Example: testExample,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			flags := cmd.Flags()
