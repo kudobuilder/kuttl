@@ -194,8 +194,6 @@ func shortString(obj *corev1.ObjectReference) string {
 
 // Run runs a test case including all of its steps.
 func (t *Case) Run(test *testing.T, tc *report.Testcase) {
-	test.Parallel()
-
 	ns := t.determineNamespace()
 	if err := t.CreateNamespace(ns); err != nil {
 		test.Fatal(err)
