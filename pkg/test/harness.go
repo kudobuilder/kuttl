@@ -19,6 +19,7 @@ import (
 	volumetypes "github.com/docker/docker/api/types/volume"
 	docker "github.com/docker/docker/client"
 	"gopkg.in/yaml.v2"
+	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/discovery"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
@@ -458,8 +459,11 @@ func (h *Harness) Setup() {
 	}
 
 	// Install CRDs
-	crdKind := testutils.NewResource("apiextensions.k8s.io/v1beta1", "CustomResourceDefinition", "", "")
-	crds, err := testutils.InstallManifests(context.TODO(), cl, dClient, h.TestSuite.CRDDir, crdKind)
+	crdKinds := []runtime.Object{
+		testutils.NewResource("apiextensions.k8s.io/v1", "CustomResourceDefinition", "", ""),
+		testutils.NewResource("apiextensions.k8s.io/v1beta1", "CustomResourceDefinition", "", ""),
+	}
+	crds, err := testutils.InstallManifests(context.TODO(), cl, dClient, h.TestSuite.CRDDir, crdKinds...)
 	if err != nil {
 		h.fatal(fmt.Errorf("fatal error installing crds: %v", err))
 	}
