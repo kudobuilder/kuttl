@@ -246,10 +246,10 @@ func (h *Harness) Config() (*rest.Config, error) {
 	} else {
 		h.T.Log("running tests using configured kubeconfig.")
 		h.config, err = config.GetConfig()
-		h.config.WarningHandler = rest.NewWarningWriter(os.Stderr, rest.WarningWriterOptions{Deduplicate: true})
 		if err != nil {
 			return nil, err
 		}
+		h.config.WarningHandler = rest.NewWarningWriter(os.Stderr, rest.WarningWriterOptions{Deduplicate: true})
 		inCluster, err := testutils.InClusterConfig()
 		if err != nil {
 			return nil, err
