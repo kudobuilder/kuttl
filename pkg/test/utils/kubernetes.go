@@ -969,9 +969,10 @@ type TestEnvironment struct {
 
 // StartTestEnvironment is a wrapper for controller-runtime's envtest that creates a Kubernetes API server and etcd
 // suitable for use in tests.
-func StartTestEnvironment(KubeAPIServerFlags []string) (env TestEnvironment, err error) {
+func StartTestEnvironment(KubeAPIServerFlags []string, attachControlPlaneOutput bool) (env TestEnvironment, err error) {
 	env.Environment = &envtest.Environment{
-		KubeAPIServerFlags: KubeAPIServerFlags,
+		KubeAPIServerFlags:       KubeAPIServerFlags,
+		AttachControlPlaneOutput: attachControlPlaneOutput,
 	}
 
 	env.Config, err = env.Environment.Start()

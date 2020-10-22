@@ -24,7 +24,10 @@ type TestSuite struct {
 	StartControlPlane bool `json:"startControlPlane"`
 	// ControlPlaneArgs defaults to APIServerDefaultArgs from controller-runtime pkg/internal/testing/integration/internal/apiserver.go
 	// this allows for control over the args, however these are not serialized from a TestSuite.yaml
-	ControlPlaneArgs []string
+	ControlPlaneArgs []string `json:"controlPlaneArgs"`
+	// AttachControlPlaneOutput if true, attaches control plane logs (api-server, etcd) into stdout. This is useful for debugging.
+	// defaults to false
+	AttachControlPlaneOutput bool `json:"attachControlPlaneOutput"`
 	// Whether or not to start a local kind cluster for the tests.
 	StartKIND bool `json:"startKIND"`
 	// Path to the KIND configuration file to use.

@@ -47,6 +47,7 @@ func newTestCmd() *cobra.Command {
 	manifestDirs := []string{}
 	testToRun := ""
 	startControlPlane := false
+	attachControlPlaneOutput := false
 	startKIND := false
 	kindConfig := ""
 	kindContext := ""
@@ -125,6 +126,10 @@ For more detailed documentation, visit: https://kuttl.dev`,
 				options.StartControlPlane = startControlPlane
 			}
 
+			if isSet(flags, "attach-control-plane-output") {
+				options.AttachControlPlaneOutput = attachControlPlaneOutput
+			}
+
 			if isSet(flags, "start-kind") {
 				options.StartKIND = startKIND
 			}
@@ -144,6 +149,11 @@ For more detailed documentation, visit: https://kuttl.dev`,
 
 			if options.StartControlPlane && options.StartKIND {
 				return errors.New("only one of --start-control-plane and --start-kind can be set")
+			}
+
+			// after control-plane && start=kind check
+			if options.AttachControlPlaneOutput && !options.StartControlPlane {
+				return errors.New("only use --attach-control-plane-output with --start-control-plane")
 			}
 
 			if isSet(flags, "skip-delete") {
@@ -222,6 +232,7 @@ For more detailed documentation, visit: https://kuttl.dev`,
 	testCmd.Flags().StringSliceVar(&manifestDirs, "manifest-dir", []string{}, "One or more directories containing manifests to apply before running the tests.")
 	testCmd.Flags().StringVar(&testToRun, "test", "", "If set, the specific test case to run.")
 	testCmd.Flags().BoolVar(&startControlPlane, "start-control-plane", false, "Start a local Kubernetes control plane for the tests (requires etcd and kube-apiserver binaries, cannot be used with --start-kind).")
+	testCmd.Flags().BoolVar(&attachControlPlaneOutput, "attach-control-plane-output", false, "Attaches control plane to stdout when using --start-control-plane.")
 	testCmd.Flags().StringVar(&mockControllerFile, "control-plane-config", "", "Path to file to load controller-runtime APIServer configuration arguments (only useful when --startControlPlane).")
 	testCmd.Flags().BoolVar(&startKIND, "start-kind", false, "Start a KIND cluster for the tests (cannot be used with --start-control-plane).")
 	testCmd.Flags().StringVar(&kindConfig, "kind-config", "", "Specify the KIND configuration file path (implies --start-kind, cannot be used with --start-control-plane).")
