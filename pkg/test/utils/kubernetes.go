@@ -1277,7 +1277,10 @@ func ExtractGVKFromCRD(crds []runtime.Object) ([]schema.GroupVersionKind, error)
 				Kind:    crd.Spec.Names.Kind,
 			})
 		case *unstructured.Unstructured:
-			spec := crd.Object["spec"].(map[string]interface{})
+			spec, err := crd.Object["spec"].(map[string]interface{})
+			if err {
+				return nil, fmt.Errorf("the following unstructured object does not cast to a map: %v", crdObj)
+			}
 			switch {
 			case v1Kind:
 				for _, ver := range spec["versions"].([]interface{}) {
