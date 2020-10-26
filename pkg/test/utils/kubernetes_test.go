@@ -501,7 +501,8 @@ func TestRunScript(t *testing.T) {
 }
 
 func TestExtractGVKFromCRD(t *testing.T) {
-	for _, test := range []struct {
+
+	tests := []struct {
 		name         string
 		inputCRDs    []runtime.Object
 		expectedGVKs []schema.GroupVersionKind
@@ -536,6 +537,7 @@ func TestExtractGVKFromCRD(t *testing.T) {
 					Kind:    "testresource3",
 				},
 			},
+			shouldError: true,
 		},
 		{
 			name: "Structured CRDs",
@@ -589,15 +591,19 @@ func TestExtractGVKFromCRD(t *testing.T) {
 			},
 			shouldError: true,
 		},
-	} {
-		t.Run(test.name, func(t *testing.T) {
-			gotGVKs, err := ExtractGVKFromCRD(test.inputCRDs)
-			if test.shouldError {
+	}
+	for _, tt := range tests {
+
+		tt := tt
+
+		t.Run(tt.name, func(t *testing.T) {
+			gotGVKs, err := ExtractGVKFromCRD(tt.inputCRDs)
+			if tt.shouldError {
 				assert.NotNil(t, err)
 				assert.Nil(t, gotGVKs)
 			} else {
 				assert.Nil(t, err)
-				assert.Equal(t, test.expectedGVKs, gotGVKs)
+				assert.Equal(t, tt.expectedGVKs, gotGVKs)
 			}
 		})
 	}
