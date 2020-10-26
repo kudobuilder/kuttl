@@ -573,6 +573,11 @@ func InstallManifests(ctx context.Context, client client.Client, dClient discove
 
 		for _, obj := range objs {
 			if len(kinds) > 0 && !MatchesKind(obj, kinds...) {
+				var expectedKinds []string
+				for _, k := range kinds {
+					expectedKinds = append(expectedKinds, k.GetObjectKind().GroupVersionKind().String())
+				}
+				log.Printf("Skipping resource %s because it does not match expected kinds: %s", obj.GetObjectKind().GroupVersionKind().String(), strings.Join(expectedKinds, ","))
 				continue
 			}
 
