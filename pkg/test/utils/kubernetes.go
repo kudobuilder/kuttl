@@ -571,13 +571,14 @@ func InstallManifests(ctx context.Context, client client.Client, dClient discove
 			return err
 		}
 
-		var expectedKinds []string
-		for _, k := range kinds {
-			expectedKinds = append(expectedKinds, k.GetObjectKind().GroupVersionKind().String())
-		}
-
 		for _, obj := range objs {
 			if len(kinds) > 0 && !MatchesKind(obj, kinds...) {
+				var expectedKinds []string
+				// it is expected that it is highly unlikely to be here (an unmatched kind)
+				// which is the justification for have a loop in a loop
+				for _, k := range kinds {
+					expectedKinds = append(expectedKinds, k.GetObjectKind().GroupVersionKind().String())
+				}
 				log.Printf("Skipping resource %s because it does not match expected kinds: %s", obj.GetObjectKind().GroupVersionKind().String(), strings.Join(expectedKinds, ","))
 				continue
 			}
