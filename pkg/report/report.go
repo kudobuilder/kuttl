@@ -102,8 +102,10 @@ type Testsuites struct {
 	Properties *Properties `xml:"properties" json:"properties,omitempty"`
 	// Testsuite is a collection of test suites.
 	Testsuite []*Testsuite `xml:"testsuite" json:"testsuite,omitempty"`
-
-	start time.Time
+	// Failure defines a failure in this Testsuites. Not part of the Junit XML report standard, however it is needed to
+	// communicate test infra failures, such as failed auth, or connection issues.
+	Failure *Failure `xml:"failure" json:"failure,omitempty"`
+	start   time.Time
 }
 
 // NewSuiteCollection returns the address of a newly created TestSuites
@@ -214,10 +216,7 @@ func latestEnd(start time.Time, testcases []*Testcase) time.Time {
 // Report prints a report for TestSuites to the directory.  ftype == json | xml
 func (ts *Testsuites) Report(dir, name string, ftype Type) error {
 	ts.Close()
-	// don't print if there is nothing
-	if len(ts.Testsuite) == 0 {
-		return nil
-	}
+	// if a report is requested it is always created
 	switch ftype {
 	case XML:
 		return writeXMLReport(dir, name, ts)
@@ -233,6 +232,13 @@ func (ts *Testsuites) NewSuite(name string) *Testsuite {
 	suite := NewSuite(name)
 	ts.AddTestSuite(suite)
 	return suite
+}
+
+// AddFailure adds a failure to the TestSuites collection for startup failures in the test harness
+func (ts *Testsuites) AddFailure(message string) {
+	ts.Failure = &Failure{
+		Message: message,
+	}
 }
 
 func writeXMLReport(dir, name string, ts *Testsuites) error {
