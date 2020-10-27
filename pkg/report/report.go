@@ -234,8 +234,8 @@ func (ts *Testsuites) NewSuite(name string) *Testsuite {
 	return suite
 }
 
-// AddFailure adds a failure to the TestSuites collection for startup failures in the test harness
-func (ts *Testsuites) AddFailure(message string) {
+// SetFailure adds a failure to the TestSuites collection for startup failures in the test harness
+func (ts *Testsuites) SetFailure(message string) {
 	ts.Failure = &Failure{
 		Message: message,
 	}

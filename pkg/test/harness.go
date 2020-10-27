@@ -569,7 +569,7 @@ func (h *Harness) Stop() {
 func (h *Harness) fatal(err error) {
 	// clean up on fatal in setup
 	if !h.stopping {
-		h.report.AddFailure(err.Error())
+		h.report.SetFailure(err.Error())
 		// stopping prevents reentry into h.Stop
 		h.stopping = true
 		h.Stop()
