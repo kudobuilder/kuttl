@@ -438,7 +438,6 @@ func (h *Harness) Run() {
 
 	h.Setup()
 	h.RunTests()
-	h.Report()
 }
 
 // Setup spins up the test env based on configuration
@@ -562,18 +561,20 @@ func (h *Harness) Stop() {
 
 		h.kind = nil
 	}
+	h.Report()
 }
 
 // wraps Test.Fatal in order to clean up harness
 // fatal should NOT be used with a go routine, it is not thread safe
-func (h *Harness) fatal(args ...interface{}) {
+func (h *Harness) fatal(err error) {
 	// clean up on fatal in setup
 	if !h.stopping {
+		h.report.SetFailure(err.Error())
 		// stopping prevents reentry into h.Stop
 		h.stopping = true
 		h.Stop()
 	}
-	h.T.Fatal(args...)
+	h.T.Fatal(err)
 }
 
 func (h *Harness) kubeconfigPath() string {

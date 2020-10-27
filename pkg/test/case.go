@@ -196,6 +196,7 @@ func shortString(obj *corev1.ObjectReference) string {
 func (t *Case) Run(test *testing.T, tc *report.Testcase) {
 	ns := t.determineNamespace()
 	if err := t.CreateNamespace(ns); err != nil {
+		tc.Failure = report.NewFailure(err.Error(), nil)
 		test.Fatal(err)
 	}
 
