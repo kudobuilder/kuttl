@@ -47,7 +47,8 @@ func IsSubset(expected, actual interface{}) error {
 		return nil
 	}
 
-	if reflect.TypeOf(expected).Kind() == reflect.Slice {
+	switch reflect.TypeOf(expected).Kind() {
+	case reflect.Slice:
 		if reflect.ValueOf(expected).Len() != reflect.ValueOf(actual).Len() {
 			return &SubsetError{
 				message: fmt.Sprintf("slice length mismatch: %d != %d", reflect.ValueOf(expected).Len(), reflect.ValueOf(actual).Len()),
@@ -59,7 +60,7 @@ func IsSubset(expected, actual interface{}) error {
 				return err
 			}
 		}
-	} else if reflect.TypeOf(expected).Kind() == reflect.Map {
+	case reflect.Map:
 		iter := reflect.ValueOf(expected).MapRange()
 
 		for iter.Next() {
@@ -81,7 +82,7 @@ func IsSubset(expected, actual interface{}) error {
 				return err
 			}
 		}
-	} else {
+	default:
 		return &SubsetError{
 			message: fmt.Sprintf("value mismatch, expected: %v != actual: %v", expected, actual),
 		}

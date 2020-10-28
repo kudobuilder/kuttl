@@ -77,7 +77,7 @@ var APIServerDefaultArgs = []string{
 	"--advertise-address={{ if .URL }}{{ .URL.Hostname }}{{ end }}",
 }
 
-//TODO (kensipe): need to consider options around AlwaysAdmin https://github.com/kudobuilder/kudo/pull/1420/files#r391449597
+// TODO (kensipe): need to consider options around AlwaysAdmin https://github.com/kudobuilder/kudo/pull/1420/files#r391449597
 
 // IsJSONSyntaxError returns true if the error is a JSON syntax error.
 func IsJSONSyntaxError(err error) bool {
@@ -118,7 +118,6 @@ func Retry(ctx context.Context, fn func(context.Context) error, errValidationFun
 			// the common case is when a shared reference, like a client, is nil and is called in the function
 			defer func() {
 				if r := recover(); r != nil {
-					//log.Println("retry func has panicked and will be ignored")
 					errCh <- errors.New("func passed to retry panicked.  expected if testsuite is shutting down")
 				}
 			}()
@@ -395,13 +394,14 @@ func ConvertUnstructured(in runtime.Object) (runtime.Object, error) {
 	if group == kudoGroup {
 		log.Print("WARNING: kudo.dev group has been deprecated and is schedule to be removed in KUTTL 0.8.0")
 	}
-	if (group == kudoGroup || group == kuttlGroup) && kind == "TestStep" {
+	switch {
+	case (group == kudoGroup || group == kuttlGroup) && kind == "TestStep":
 		converted = &harness.TestStep{}
-	} else if (group == kudoGroup || group == kuttlGroup) && kind == "TestAssert" {
+	case (group == kudoGroup || group == kuttlGroup) && kind == "TestAssert":
 		converted = &harness.TestAssert{}
-	} else if (group == kudoGroup || group == kuttlGroup) && kind == "TestSuite" {
+	case (group == kudoGroup || group == kuttlGroup) && kind == "TestSuite":
 		converted = &harness.TestSuite{}
-	} else {
+	default:
 		return in, nil
 	}
 
@@ -973,9 +973,9 @@ type TestEnvironment struct {
 
 // StartTestEnvironment is a wrapper for controller-runtime's envtest that creates a Kubernetes API server and etcd
 // suitable for use in tests.
-func StartTestEnvironment(KubeAPIServerFlags []string, attachControlPlaneOutput bool) (env TestEnvironment, err error) {
+func StartTestEnvironment(kubeAPIServerFlags []string, attachControlPlaneOutput bool) (env TestEnvironment, err error) {
 	env.Environment = &envtest.Environment{
-		KubeAPIServerFlags:       KubeAPIServerFlags,
+		KubeAPIServerFlags:       kubeAPIServerFlags,
 		AttachControlPlaneOutput: attachControlPlaneOutput,
 	}
 
