@@ -20,9 +20,9 @@ function generate_platform {
     local sha
     PLATFORM=`uname`
     if [ "$PLATFORM" == 'Darwin' ]; then
-       sha=$(curl -L https://github.com/kudobuilder/kuttl/releases/download/v"${VERSION}"/kuttl_"${VERSION}"_"${1}"_"${ARCH}".tar.gz | shasum -a 256 - | awk '{print $1}')
+      sha=$(curl -L https://github.com/kudobuilder/kuttl/releases/download/v"${VERSION}"/kuttl_"${VERSION}"_"${1}"_"${ARCH}".tar.gz | shasum -a 256 - | awk '{print $1}')
     else
-        sha=$(curl -L https://github.com/kudobuilder/kuttl/releases/download/v"${VERSION}"/kuttl_"${VERSION}"_"${1}"_"${ARCH}".tar.gz | sha256sum - | awk '{print $1}')
+      sha=$(curl -L https://github.com/kudobuilder/kuttl/releases/download/v"${VERSION}"/kuttl_"${VERSION}"_"${1}"_"${ARCH}".tar.gz | sha256sum - | awk '{print $1}')
     fi
 
     cat <<EOF
@@ -52,16 +52,12 @@ spec:
   description: |
     The KUbernetes Test TooL (KUTTL) is a highly productive test
     toolkit for testing operators on Kubernetes.
-  caveats: |
-    See the documentation for more information: https://kuttl.dev/
-
   platforms:
 EOF
 
 generate_platform linux amd64 ./kubectl-kuttl >> kuttl.yaml
 generate_platform linux 386 ./kubectl-kuttl >> kuttl.yaml
 generate_platform darwin amd64 ./kubectl-kuttl >> kuttl.yaml
-generate_platform darwin 386 ./kubectl-kuttl >> kuttl.yaml
 
 ### KUTTL is not currently built for Windows. Uncomment once it is.
 # generate_platform windows amd64 ./kubectl-kuttl.exe >> kuttl.yaml
