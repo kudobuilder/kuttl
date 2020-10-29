@@ -394,12 +394,15 @@ func ConvertUnstructured(in runtime.Object) (runtime.Object, error) {
 	if group == kudoGroup {
 		log.Print("WARNING: kudo.dev group has been deprecated and is schedule to be removed in KUTTL 0.8.0")
 	}
+	if !(group == kudoGroup || group == kuttlGroup) {
+		return in, nil
+	}
 	switch {
-	case (group == kudoGroup || group == kuttlGroup) && kind == "TestStep":
+	case kind == "TestStep":
 		converted = &harness.TestStep{}
-	case (group == kudoGroup || group == kuttlGroup) && kind == "TestAssert":
+	case kind == "TestAssert":
 		converted = &harness.TestAssert{}
-	case (group == kudoGroup || group == kuttlGroup) && kind == "TestSuite":
+	case kind == "TestSuite":
 		converted = &harness.TestSuite{}
 	default:
 		return in, nil
