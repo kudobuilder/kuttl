@@ -1,29 +1,36 @@
 linters:
   auto-fix: false
   enable:
+    - deadcode
+    - dupl
     - errcheck
+    - goconst
+    - gocritic
+    - gocyclo
+    - gofmt
     - goimports
     - golint
     - gosec
+    - gosimple
+    - ineffassign
+    - lll
     - misspell
+    - nakedret
     - scopelint
+    - staticcheck
+    - structcheck
+    - stylecheck
     - unconvert
     - unparam
-    - nakedret
-    - gocyclo
-    - dupl
-    - goconst
-    - lll
-    - stylecheck
-    - varcheck
-    - deadcode
-    - structcheck
-    - ineffassign
-    - goconst
-    - staticcheck
     - unused
-    - gosimple
+    - varcheck
 run:
+  skip-dirs:
+    - hack
+    - dist
+    - keps
+    - kind-*
+
 linters-settings:
   errcheck:
     check-type-assertions: true

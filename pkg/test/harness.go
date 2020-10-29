@@ -237,14 +237,14 @@ func (h *Harness) Config() (*rest.Config, error) {
 	}
 
 	var err error
-
-	if h.TestSuite.StartControlPlane {
+	switch {
+	case h.TestSuite.StartControlPlane:
 		h.T.Log("running tests with a mocked control plane (kube-apiserver and etcd).")
 		h.config, err = h.RunTestEnv()
-	} else if h.TestSuite.StartKIND {
+	case h.TestSuite.StartKIND:
 		h.T.Log("running tests with KIND.")
 		h.config, err = h.RunKIND()
-	} else {
+	default:
 		h.T.Log("running tests using configured kubeconfig.")
 		h.config, err = config.GetConfig()
 		if err != nil {
@@ -259,7 +259,6 @@ func (h *Harness) Config() (*rest.Config, error) {
 			return h.config, nil
 		}
 	}
-
 	if err != nil {
 		return h.config, err
 	}

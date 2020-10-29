@@ -39,7 +39,7 @@ func Get() Info {
 			gitVersion = "dev"
 		}
 		gitCommit = "dev"
-		//TODO (kensipe): add debug message!
+		// TODO (kensipe): add debug message!
 	}
 
 	return Info{
