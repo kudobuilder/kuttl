@@ -29,16 +29,16 @@ status: provisional
 
 ## Summary
 
-By asserting CLI commands, kuttl can support many additional test scenarios that examing the internal state of an operator.
+By asserting CLI commands, we can check operator state that isn't exposed through Kubernetes resources. This allow kuttl to support more test scenarios.
 
 ## Motivation
 
-Operators and custom resources can be used to deploy complex applications. For example, KUDO provides operators for Apache Cassandra and Apache Kafka. Deploying custom resources of these operators may not always result in changed Kubernetes resources but also in changes that aren't surfaced by Kubernetes resources but are internal to the operator. Asserting these changes only works through accessing service APIs or running commands and parsing their output. kuttl should provide tools to assert such output.
+The state of an operator is not always fully covered by Kubernetes objects. Some state may be expressed in stdout, logs or other tooling. kuttl should allow users to assert changes to this state. The simplest way to do this is by running commands or scripts that take care of asserting this state. E.g., by parsing log output. Such a command assertion can then either succeed or fail.
 
 ### Goals
 
 - Assert that commands examining the internal state of an operator succeed or fail
-- Keep eventual consistency when asserting commands
+- Assert commands in the same way Kubernetes objects are asserted
 
 ### Non-Goals
 
@@ -46,7 +46,7 @@ Operators and custom resources can be used to deploy complex applications. For e
 
 ## Proposal
 
-Introduce commands as part of `TestAssert`. These commands are run at a regular interval like resource assertions until they either succeed or a timeout of the assert is reached. If any of the commands fail, the assert is considered to have failed. A command's return value determines if a command failed or not.
+Introduce commands as part of `TestAssert`. These commands are run at a regular interval like resource assertions until all of them either succeed or the assertion timeout is reached. If any of the commands fail, the assert is considered to have failed. A command's return value determines if a command failed or not. I.e., command assertions behave in the same way as the existing resource assertions.
 
 As a start, complex commands that parse output can be described using shell environments. At a later stage we can implement additional tools to simplify common tasks. E.g. to search with a regular expression in command output.
 
@@ -62,7 +62,22 @@ An operator can be configured to encrypt it's API. To assert that the API endpoi
 
 ### Implementation Details
 
-Command assertions use most fields of the existing commands for `TestStep` and follow their behavior. The `ignoreFailure`, `background` and `timeout` fields are removed as they are not needed here.
+Command assertions use most fields of the existing commands for `TestStep` and follow their behavior. The `ignoreFailure`, `background` and `timeout` fields are removed as they are not needed here:
+
+```go
+type Command struct {
+  // The command and argument to run as a string.
+  Command string `json:"command"`
+  // If set, the `--namespace` flag will be appended to the command with the namespace to use.
+  Namespaced bool `json:"namespaced"`
+  // Ability to run a shell script from TestStep (without a script file)
+  // namespaced and command should not be used with script.  namespaced is ignored and command is an error.
+  // env expansion is depended upon the shell but ENV is passed to the runtime env.
+  Script string `json:"script"`
+  // If set, the output from the command is NOT logged.  Useful for sensitive logs or to reduce noise.
+  SkipLogOutput bool `json:"skipLogOutput"`
+}
+```
 
 An example that parses the logs of a pod:
 
@@ -72,6 +87,7 @@ type: TestAssert
 commands:
   - command: ./parse-logs.sh name-of-pod-0 string-to-search-for
     namespaced: true
+timeout: 60
 ```
 
 with `parse-logs.sh`:
@@ -85,6 +101,29 @@ SEARCH=$2
 NAMESPACE=$4
 
 kubectl logs -n ${NAMESPACE} ${POD} | grep ${SEARCH}
+```
+
+The commands are then asserted in the same way and in the same loop Kubernetes objects are asserted. I.e. the current `TestAssert` loop is changed to:
+
+```go
+var testErrors []error
+for i := 0; i < timeout; i++ {
+  // start fresh
+  testErrors = []error{}
+  for _, expected := range objects {
+    testErrors = append(testErrors, s.CheckResource(expected, namespace)...)
+  }
+
+  for _, command := range commands {
+    testErrors = append(testErrors, s.CheckCommand(command)...)
+  }
+
+  if len(testErrors) == 0 {
+    break
+  }
+
+  time.Sleep(time.Second)
+}
 ```
 
 ### Risks and Mitigations
