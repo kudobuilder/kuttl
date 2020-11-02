@@ -65,7 +65,7 @@ An operator can be configured to encrypt it's API. To assert that the API endpoi
 Command assertions use most fields of the existing commands for `TestStep` and follow their behavior. The `ignoreFailure`, `background` and `timeout` fields are removed as they are not needed here:
 
 ```go
-type Command struct {
+type TestAssertCommand struct {
   // The command and argument to run as a string.
   Command string `json:"command"`
   // If set, the `--namespace` flag will be appended to the command with the namespace to use.
@@ -125,6 +125,51 @@ for i := 0; i < timeout; i++ {
   time.Sleep(time.Second)
 }
 ```
+
+This loop needs to be refactored, as running these commands could be expensive:
+
+```go
+testErrors := checkAll(objects, commands, time.Duration(timeout)*time.Second, s, namespace)
+```
+
+with
+
+```go
+func checkAll(objects []runtime.Object, commands []harness.TestAssertCommand, timeout time.Duration, s *Step, namespace string) []error {
+  ctx, cancel := context.WithTimeout(context.TODO(), timeout)
+  defer cancel()
+
+  var testErrors []error
+  for {
+    testErrors = []error{}
+
+    for _, object := range objects {
+      testErrors = append(testErrors, s.CheckResource(ctx, object, namespace)...)
+    }
+
+    for _, command := range commands {
+      testErrors = append(testErrors, s.CheckCommand(ctx, command)...)
+    }
+
+    if len(testErrors) == 0 {
+      break
+    }
+
+    if ctx.Err() != nil {
+      // context timeout
+      break
+    }
+
+    time.Sleep(time.Second)
+  }
+
+  return testErrors
+}
+```
+
+In the future, additional fields may be added to `TestAssert` and `TestAssertCommand` to
+ * run commands before or after resources have been asserted
+ * indicate that a command is supposed to fail
 
 ### Risks and Mitigations
 
