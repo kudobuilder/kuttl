@@ -523,11 +523,6 @@ func TestExtractGVKFromCRD(t *testing.T) {
 				},
 				{
 					Group:   "test.net",
-					Version: "v1alpha2",
-					Kind:    "testresource",
-				},
-				{
-					Group:   "test.net",
 					Version: "v1beta1",
 					Kind:    "testresource2",
 				},
@@ -537,7 +532,7 @@ func TestExtractGVKFromCRD(t *testing.T) {
 					Kind:    "testresource3",
 				},
 			},
-			shouldError: true,
+			shouldError: false,
 		},
 		{
 			name: "Structured CRDs",
@@ -599,11 +594,14 @@ func TestExtractGVKFromCRD(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			gotGVKs, err := ExtractGVKFromCRD(tt.inputCRDs)
 			if tt.shouldError {
-				assert.NotNil(t, err)
-				assert.Nil(t, gotGVKs)
+				if err == nil {
+					t.Errorf("%s: expecting err to be not nil but got nil", tt.name)
+				}
 			} else {
-				assert.Nil(t, err)
-				assert.Equal(t, tt.expectedGVKs, gotGVKs)
+				result := assert.Equal(t, tt.expectedGVKs, gotGVKs)
+				if !result {
+					t.Errorf("Test %s failed", tt.name)
+				}
 			}
 		})
 	}

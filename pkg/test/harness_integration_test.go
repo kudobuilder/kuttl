@@ -18,6 +18,7 @@ func TestHarnessRunIntegration(t *testing.T) {
 				"./test_data/",
 			},
 			StartControlPlane: true,
+			CRDDir:            "./test_crds/",
 		},
 		T: t,
 	}

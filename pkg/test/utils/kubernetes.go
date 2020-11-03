@@ -679,8 +679,10 @@ func NewPod(name, namespace string) runtime.Object {
 // NewCRDv1 creates a new CRD object of version v1
 func NewCRDv1(t *testing.T, name, group, resourceKind string, resourceVersions []string) runtime.Object {
 	crdVersions := []interface{}{}
+	served := true
 	for _, v := range resourceVersions {
-		crdVersions = append(crdVersions, interface{}(map[string]interface{}{"name": interface{}(v)}))
+		crdVersions = append(crdVersions, interface{}(map[string]interface{}{"name": interface{}(v), "served": interface{}(served)}))
+		served = false
 	}
 	return WithSpec(t, NewResource("apiextensions.k8s.io/v1", "CustomResourceDefinition", name, ""), map[string]interface{}{
 		"versions": crdVersions,
@@ -1280,25 +1282,43 @@ func ExtractGVKFromCRD(crds []runtime.Object) ([]schema.GroupVersionKind, error)
 				Kind:    crd.Spec.Names.Kind,
 			})
 		case *unstructured.Unstructured:
-			spec, err := crd.Object["spec"].(map[string]interface{})
-			if err {
-				return nil, fmt.Errorf("the following unstructured object does not cast to a map: %v", crdObj)
+			// as a temporary fix until this whole method will be removed the code is inspired by controller-runtime implementation
+			// see https://github.com/kubernetes-sigs/controller-runtime/blame/f52b6180d515bca5f8faa551c3784fee5ce89a83/pkg/envtest/crd.go#L118
+			crdGroup, _, err := unstructured.NestedString(crd.Object, "spec", "group")
+			if err != nil {
+				return nil, fmt.Errorf("cannot read group of unstructured object. Error: %v. Object:%v", err, crdObj)
 			}
-			switch {
-			case v1Kind:
-				for _, ver := range spec["versions"].([]interface{}) {
-					gvks = append(gvks, schema.GroupVersionKind{
-						Group:   spec["group"].(string),
-						Version: ver.(map[string]interface{})["name"].(string),
-						Kind:    spec["names"].(map[string]interface{})["kind"].(string),
-					})
+			crdKind, _, err := unstructured.NestedString(crd.Object, "spec", "names", "kind")
+			if err != nil {
+				return nil, fmt.Errorf("cannot read group of unstructured object. Error: %v. Object:%v", err, crdObj)
+			}
+			crdVersion, _, err := unstructured.NestedString(crd.Object, "spec", "version")
+			if err != nil {
+				return nil, err
+			}
+			versions, found, err := unstructured.NestedSlice(crd.Object, "spec", "versions")
+			if err != nil {
+				return nil, err
+			}
+			if crdVersion != "" && !found {
+				gvks = append(gvks, schema.GroupVersionKind{Group: crdGroup, Version: crdVersion, Kind: crdKind})
+			}
+			for _, version := range versions {
+				versionMap, ok := version.(map[string]interface{})
+				if !ok {
+					continue
 				}
-			case v1Beta1Kind:
-				gvks = append(gvks, schema.GroupVersionKind{
-					Group:   spec["group"].(string),
-					Version: spec["version"].(string),
-					Kind:    spec["names"].(map[string]interface{})["kind"].(string),
-				})
+				served, _, err := unstructured.NestedBool(versionMap, "served")
+				if err != nil {
+					return nil, err
+				}
+				if served {
+					versionName, _, err := unstructured.NestedString(versionMap, "name")
+					if err != nil {
+						return nil, err
+					}
+					gvks = append(gvks, schema.GroupVersionKind{Group: crdGroup, Version: versionName, Kind: crdKind})
+				}
 			}
 		default:
 			return nil, fmt.Errorf("the following passed object is not a CRD: %v", crdObj)
