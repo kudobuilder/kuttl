@@ -676,32 +676,6 @@ func NewPod(name, namespace string) runtime.Object {
 	return NewResource("v1", "Pod", name, namespace)
 }
 
-// NewCRDv1 creates a new CRD object of version v1
-func NewCRDv1(t *testing.T, name, group, resourceKind string, resourceVersions []string) runtime.Object {
-	crdVersions := []interface{}{}
-	for _, v := range resourceVersions {
-		crdVersions = append(crdVersions, interface{}(map[string]interface{}{"name": interface{}(v)}))
-	}
-	return WithSpec(t, NewResource("apiextensions.k8s.io/v1", "CustomResourceDefinition", name, ""), map[string]interface{}{
-		"versions": crdVersions,
-		"group":    interface{}(group),
-		"names": interface{}(map[string]interface{}{
-			"kind": interface{}(resourceKind),
-		}),
-	})
-}
-
-// NewCRDv1beta1 creates a new CRD object of version v1beta1
-func NewCRDv1beta1(t *testing.T, name, group, resourceKind, resourceVersion string) runtime.Object {
-	return WithSpec(t, NewResource("apiextensions.k8s.io/v1beta1", "CustomResourceDefinition", name, ""), map[string]interface{}{
-		"version": resourceVersion,
-		"group":   interface{}(group),
-		"names": interface{}(map[string]interface{}{
-			"kind": interface{}(resourceKind),
-		}),
-	})
-}
-
 // WithNamespace naively applies the namespace to the object. Used mainly in tests, otherwise
 // use Namespaced.
 func WithNamespace(obj runtime.Object, namespace string) runtime.Object {
@@ -935,26 +909,6 @@ func WaitForSA(config *rest.Config, name, namespace string) error {
 		if err != nil {
 			return false, err
 		}
-		return true, nil
-	})
-}
-
-// WaitForCRDs waits for the provided CRD types to be available in the Kubernetes API.
-func WaitForCRDs(dClient discovery.DiscoveryInterface, crds []runtime.Object) error {
-	waitingFor, err := ExtractGVKFromCRD(crds)
-	if err != nil {
-		return err
-	}
-
-	return wait.PollImmediate(100*time.Millisecond, 10*time.Second, func() (done bool, err error) {
-		for _, resource := range waitingFor {
-			_, err := GetAPIResource(dClient, resource)
-			if err != nil {
-				fmt.Printf("Waiting for resource %s... \n", resource)
-				return false, nil
-			}
-		}
-
 		return true, nil
 	})
 }
@@ -1249,61 +1203,4 @@ func InClusterConfig() (bool, error) {
 		return false, nil
 	}
 	return false, err
-}
-
-// ExtractGVKFromCRD extracts GroupVersionKinds from the given CRDs
-func ExtractGVKFromCRD(crds []runtime.Object) ([]schema.GroupVersionKind, error) {
-	gvks := []schema.GroupVersionKind{}
-
-	crdV1Kind := NewResource("apiextensions.k8s.io/v1", "CustomResourceDefinition", "", "")
-	crdV1beta1Kind := NewResource("apiextensions.k8s.io/v1beta1", "CustomResourceDefinition", "", "")
-
-	for _, crdObj := range crds {
-		v1Kind, v1Beta1Kind := MatchesKind(crdObj, crdV1Kind), MatchesKind(crdObj, crdV1beta1Kind)
-		if !v1Kind && !v1Beta1Kind {
-			return nil, fmt.Errorf("the following passed object does not match %v or %v: %v", crdV1Kind, crdV1beta1Kind, crdObj)
-		}
-
-		switch crd := crdObj.(type) {
-		case *apiextv1.CustomResourceDefinition:
-			for _, version := range crd.Spec.Versions {
-				gvks = append(gvks, schema.GroupVersionKind{
-					Group:   crd.Spec.Group,
-					Version: version.Name,
-					Kind:    crd.Spec.Names.Kind,
-				})
-			}
-		case *apiextv1beta1.CustomResourceDefinition:
-			gvks = append(gvks, schema.GroupVersionKind{
-				Group:   crd.Spec.Group,
-				Version: crd.Spec.Version,
-				Kind:    crd.Spec.Names.Kind,
-			})
-		case *unstructured.Unstructured:
-			spec, err := crd.Object["spec"].(map[string]interface{})
-			if err {
-				return nil, fmt.Errorf("the following unstructured object does not cast to a map: %v", crdObj)
-			}
-			switch {
-			case v1Kind:
-				for _, ver := range spec["versions"].([]interface{}) {
-					gvks = append(gvks, schema.GroupVersionKind{
-						Group:   spec["group"].(string),
-						Version: ver.(map[string]interface{})["name"].(string),
-						Kind:    spec["names"].(map[string]interface{})["kind"].(string),
-					})
-				}
-			case v1Beta1Kind:
-				gvks = append(gvks, schema.GroupVersionKind{
-					Group:   spec["group"].(string),
-					Version: spec["version"].(string),
-					Kind:    spec["names"].(map[string]interface{})["kind"].(string),
-				})
-			}
-		default:
-			return nil, fmt.Errorf("the following passed object is not a CRD: %v", crdObj)
-		}
-	}
-
-	return gvks, nil
 }
