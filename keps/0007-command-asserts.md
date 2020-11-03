@@ -46,9 +46,11 @@ The state of an operator is not always fully covered by Kubernetes objects. Some
 
 ## Proposal
 
-Introduce commands as part of `TestAssert`. These commands are run at a regular interval like resource assertions until all of them either succeed or the assertion timeout is reached. If any of the commands fail, the assert is considered to have failed. A command's return value determines if a command failed or not. I.e., command assertions behave in the same way as the existing resource assertions.
+Introduce commands as part of `TestAssert`. These commands are run at a regular interval like resource assertions until all of them either succeed or the assertion timeout is reached. The error code of the command determine success or failure. If any of the commands fail, the assert is considered to have failed. A command's return value determines if a command failed or not. I.e., command assertions behave in the same way as the existing resource assertions.
 
 As a start, complex commands that parse output can be described using shell environments. At a later stage we can implement additional tools to simplify common tasks. E.g. to search with a regular expression in command output.
+
+As the commands run at a regular interval, their output won't be logged on every iteration. However, if a command fail, its output will be part of the failure message. If the assert runs into its timeout, this failure message will be logged. This behavior ensures that that failing commands are logged at most once. Later, additional fields can be added to provide finer control over command output logging.
 
 ### User Stories
 
