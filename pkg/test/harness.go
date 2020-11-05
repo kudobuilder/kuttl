@@ -466,7 +466,10 @@ func (h *Harness) Setup() {
 		h.fatal(fmt.Errorf("fatal error installing crds: %v", err))
 	}
 
-	if err := testutils.WaitForCRDs(dClient, crds); err != nil {
+	if err := envtest.WaitForCRDs(h.config, crds, envtest.CRDInstallOptions{
+		PollInterval: 100 * time.Millisecond,
+		MaxTime:      10 * time.Second,
+	}); err != nil {
 		h.fatal(fmt.Errorf("fatal error waiting for crds: %v", err))
 	}
 
