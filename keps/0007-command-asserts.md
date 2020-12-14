@@ -3,10 +3,12 @@ kep-number: 7
 short-desc: Assertions for CLI commands
 authors:
   - "@nfnt"
+  - "@kensipe"
 owners:
   - "@nfnt"
+  - "@kensipe"
 creation-date: 2020-10-28
-last-updated: 2020-10-28
+last-updated: 2020-12-14
 status: provisional
 ---
 
@@ -46,11 +48,20 @@ The state of an operator is not always fully covered by Kubernetes objects. Some
 
 ## Proposal
 
-Introduce commands as part of `TestAssert`. These commands are run at a regular interval like resource assertions until all of them either succeed or the assertion timeout is reached. The error code of the command determine success or failure. If any of the commands fail, the assert is considered to have failed. A command's return value determines if a command failed or not. I.e., command assertions behave in the same way as the existing resource assertions.
+Introduce commands as part of `TestAssert`. These commands are run at a regular interval like resource assertions until all of them either succeed or the assertion timeout is reached. The error code of the command determines success or failure, with error code 0 meaning success. If any of the commands fail, the assert is considered to have failed. A command's return value determines if a command failed or not. I.e., command assertions behave in the same way as the existing resource assertions.
 
 As a start, complex commands that parse output can be described using shell environments. At a later stage we can implement additional tools to simplify common tasks. E.g. to search with a regular expression in command output.
 
-As the commands run at a regular interval, their output won't be logged on every iteration. However, if a command fail, its output will be part of the failure message. If the assert runs into its timeout, this failure message will be logged. This behavior ensures that that failing commands are logged at most once. Later, additional fields can be added to provide finer control over command output logging.
+As the commands run at a regular interval, their output won't be logged on every iteration. However, if a command fail, its output will be part of the failure message, meaning the last failed command will be logged. If the assert runs into its timeout, this failure message will be logged. This behavior ensures that that failing commands are logged at most once. Later, additional fields can be added to provide finer control over command output logging.
+
+ENV variables avaible for scripts will be provided to the command environment.   The timeout will be provided to the command execution context and will limit the time of a single command.  Additionally the timeout will govern the totally timeout of all commands run repeatedly with a period of 1 sec between calls.  A list of commands will have the following behavior:
+
+* They will be run sequentially
+* A failure of a previous command will restart the loop of commands (meaning command 2 will not be executed unless command 1 succeeds)
+* The list of commands will be after the current declarative asserts and will not be called until the declarative asserts pass
+* If a command assert fails, the full suit of asserts are started again (declarative asserts must pass again)
+
+If it is desired that a command assert pass before running any declarative asserts, then it is necessary to have the declarative asserts in the preceeding step.
 
 ### User Stories
 
@@ -64,7 +75,7 @@ An operator can be configured to encrypt it's API. To assert that the API endpoi
 
 ### Implementation Details
 
-Command assertions use most fields of the existing commands for `TestStep` and follow their behavior. The `ignoreFailure`, `background` and `timeout` fields are removed as they are not needed here:
+Command assertions use most fields of the existing commands for `TestStep` and follow their behavior. The `ignoreFailure` and `background` fields are removed as they are not needed here:
 
 ```go
 type TestAssertCommand struct {
@@ -187,3 +198,4 @@ The `commands` field described in the [Implementation Details](#implementation-d
 ## Implementation History
 
 - 2020-10-28 - Initial draft (@nfnt)
+- 2020-12-14 - Updated draft (@kensipe)
