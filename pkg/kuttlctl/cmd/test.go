@@ -77,8 +77,6 @@ For more detailed documentation, visit: https://kuttl.dev`,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			flags := cmd.Flags()
 
-			options.TestDirs = args
-
 			// If a config is not set and kuttl-test.yaml exists, set configPath to kuttl-test.yaml.
 			if configPath == "" {
 				if _, err := os.Stat("kuttl-test.yaml"); err == nil {
@@ -195,6 +193,7 @@ For more detailed documentation, visit: https://kuttl.dev`,
 			}
 
 			if len(args) != 0 {
+				log.Println("kutt-test config testdirs is overridden with arg: ", args )
 				options.TestDirs = args
 			}
 
