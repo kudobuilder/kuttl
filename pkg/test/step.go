@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"path/filepath"
 	"regexp"
+	"strings"
 	"time"
 
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
@@ -22,7 +23,9 @@ import (
 	testutils "github.com/kudobuilder/kuttl/pkg/test/utils"
 )
 
-var fileNameRegex = regexp.MustCompile(`^(\d+-)?([^.]+)(.yaml)?$`)
+// fileNameRegex contains two capturing groups to determine whether a file has special
+// meaning (ex. assert) or contains an appliable object, and extra name elements.
+var fileNameRegex = regexp.MustCompile(`^(?:\d+-)?([^-\.]+)(-[^\.]+)?(?:\.yaml)?$`)
 
 // A Step contains the name of the test step, its index in the test,
 // and all of the test step's settings (including objects to apply and assert on).
@@ -453,19 +456,8 @@ func (s *Step) LoadYAML(file string) error {
 		return fmt.Errorf("loading %s: %s", file, err)
 	}
 
-	matches := fileNameRegex.FindStringSubmatch(filepath.Base(file))
-	fname := matches[2]
-
-	switch fname {
-	case "assert":
-		s.Asserts = append(s.Asserts, objects...)
-	case "errors":
-		s.Errors = append(s.Errors, objects...)
-	default:
-		if s.Name == "" {
-			s.Name = fname
-		}
-		s.Apply = append(s.Apply, objects...)
+	if err = s.populateObjectsByFileName(filepath.Base(file), objects); err != nil {
+		return fmt.Errorf("populating step: %v", err)
 	}
 
 	asserts := []runtime.Object{}
@@ -536,6 +528,34 @@ func (s *Step) LoadYAML(file string) error {
 
 	s.Apply = applies
 	s.Asserts = asserts
+	return nil
+}
+
+// populateObjectsByFileName populates s.Asserts, s.Errors, and/or s.Apply for files containing
+// "assert", "errors", or no special string, respectively.
+func (s *Step) populateObjectsByFileName(fileName string, objects []runtime.Object) error {
+	matches := fileNameRegex.FindStringSubmatch(fileName)
+	if len(matches) < 2 {
+		return fmt.Errorf("%s does not match file name regexp: %s", fileName, testStepRegex.String())
+	}
+
+	switch fname := strings.ToLower(matches[1]); fname {
+	case "assert":
+		s.Asserts = append(s.Asserts, objects...)
+	case "errors":
+		s.Errors = append(s.Errors, objects...)
+	default:
+		if s.Name == "" {
+			if len(matches) > 2 {
+				// The second matching group will already have a hyphen prefix.
+				s.Name = matches[1] + matches[2]
+			} else {
+				s.Name = matches[1]
+			}
+		}
+		s.Apply = append(s.Apply, objects...)
+	}
+
 	return nil
 }
 
