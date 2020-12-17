@@ -31,6 +31,6 @@ require (
 	k8s.io/client-go v0.19.2
 	k8s.io/code-generator v0.19.2
 	sigs.k8s.io/controller-runtime v0.6.3
-	sigs.k8s.io/controller-tools v0.4.0
+	sigs.k8s.io/controller-tools v0.4.1
 	sigs.k8s.io/kind v0.9.0
 )
