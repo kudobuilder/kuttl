@@ -185,8 +185,15 @@ For more detailed documentation, visit: https://kuttl.dev`,
 			}
 
 			if isSet(flags, "suppress-log") {
-				for _, s := range suppress {
-					options.Suppress = append(options.Suppress, strings.ToLower(s))
+				suppressSet := make(map[string]struct{})
+				for _, s := range append(options.Suppress, suppress...) {
+					suppressSet[strings.ToLower(s)] = struct{}{}
+				}
+				options.Suppress = make([]string, len(suppressSet))
+				i := 0
+				for s := range suppressSet {
+					options.Suppress[i] = s
+					i++
 				}
 			}
 
