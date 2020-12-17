@@ -193,7 +193,7 @@ For more detailed documentation, visit: https://kuttl.dev`,
 			}
 
 			if len(args) != 0 {
-				log.Println("kutt-test config testdirs is overridden with arg: ", args)
+				log.Println("kutt-test config testdirs is overridden with args: [", strings.Join(args, ", "), "]")
 				options.TestDirs = args
 			}
 
