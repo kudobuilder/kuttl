@@ -330,3 +330,37 @@ func TestRun(t *testing.T) {
 		})
 	}
 }
+
+func TestPopulateObjectsByFileName(t *testing.T) {
+	for _, tt := range []struct {
+		fileName                   string
+		isAssert, isError, isApply bool
+		name                       string
+		errExp                     bool
+	}{
+		{"00-assert.yaml", true, false, false, "", false},
+		{"00-errors.yaml", false, true, false, "", false},
+		{"00-foo.yaml", false, false, true, "foo", false},
+		{"123-assert.yaml", true, false, false, "", false},
+		{"123-errors.yaml", false, true, false, "", false},
+		{"123-foo.yaml", false, false, true, "foo", false},
+		{"00-assert-bar.yaml", true, false, false, "", false},
+		{"00-errors-bar.yaml", false, true, false, "", false},
+		{"00-foo-bar.yaml", false, false, true, "foo-bar", false},
+		{"00-foo-bar-baz.yaml", false, false, true, "foo-bar-baz", false},
+	} {
+		tt := tt
+
+		t.Run(tt.fileName, func(t *testing.T) {
+			step := &Step{}
+			err := step.populateObjectsByFileName(tt.fileName, []runtime.Object{testutils.NewPod("foo", "")})
+			assert.Nil(t, err)
+			assert.Equal(t, tt.isAssert, len(step.Asserts) != 0)
+			assert.Equal(t, tt.isError, len(step.Errors) != 0)
+			assert.Equal(t, tt.isApply, len(step.Apply) != 0)
+			if tt.isApply && len(step.Apply) != 0 {
+				assert.Equal(t, tt.name, step.Name)
+			}
+		})
+	}
+}

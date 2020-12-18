@@ -12,7 +12,7 @@ import (
 	"time"
 
 	petname "github.com/dustinkirkland/golang-petname"
-	"github.com/thoas/go-funk"
+	funk "github.com/thoas/go-funk"
 	corev1 "k8s.io/api/core/v1"
 	eventsbeta1 "k8s.io/api/events/v1beta1"
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -26,7 +26,8 @@ import (
 	testutils "github.com/kudobuilder/kuttl/pkg/test/utils"
 )
 
-var testStepRegex = regexp.MustCompile(`^(\d+)-([^.]+)(.yaml)?$`)
+// testStepRegex contains one capturing group to determine the index of a step file.
+var testStepRegex = regexp.MustCompile(`^(\d+)-(?:[^\.]+)(?:\.yaml)?$`)
 
 // Case contains all of the test steps and the Kubernetes client and other global configuration
 // for a test.
@@ -267,16 +268,13 @@ func (t *Case) CollectTestStepFiles() (map[int64][]string, error) {
 	}
 
 	for _, file := range files {
-		matches := testStepRegex.FindStringSubmatch(file.Name())
-
-		if len(matches) < 2 {
-			t.Logger.Log("Ignoring", file.Name(), "as it does not match file name regexp:", testStepRegex.String())
-			continue
-		}
-
-		index, err := strconv.ParseInt(matches[1], 10, 32)
+		index, err := getIndexFromFile(file.Name())
 		if err != nil {
 			return nil, err
+		}
+		if index < 0 {
+			t.Logger.Log("Ignoring", file.Name(), "as it does not match file name regexp:", testStepRegex.String())
+			continue
 		}
 
 		if testStepFiles[index] == nil {
@@ -302,6 +300,18 @@ func (t *Case) CollectTestStepFiles() (map[int64][]string, error) {
 	}
 
 	return testStepFiles, nil
+}
+
+// getIndexFromFile returns the index derived from fileName's prefix, ex. "01-foo.yaml" has index 1.
+// If an index isn't found, -1 is returned.
+func getIndexFromFile(fileName string) (int64, error) {
+	matches := testStepRegex.FindStringSubmatch(fileName)
+	if len(matches) != 2 {
+		return -1, nil
+	}
+
+	i, err := strconv.ParseInt(matches[1], 10, 32)
+	return i, err
 }
 
 // LoadTestSteps loads all of the test steps for a test case.
