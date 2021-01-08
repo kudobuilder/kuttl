@@ -1,0 +1,48 @@
+---
+kep-number: 8
+short-desc: This KEP describes how we will support more than one cluster under test
+title: KUTTL Mult-Cluster Support
+authors:
+  - "@jbarrick-mesosphere"
+owners:
+  - "@jbarrick-mesosphere"
+creation-date: 2021-01-08
+last-updated: 2021-01-08
+status: provisional
+---
+
+# KUTTL Multi-Cluster Support
+
+This KEP describes how we will support more than one cluster in KUTTL.
+
+## Table of Contents
+
+* [Summary](#summary)
+  * [Goals](#goals)
+* [Proposal](#proposal)
+* [Alternatives](#alternatives)
+
+## Summary
+
+When working with more than one cluster (for example, federated clusters), then it may be desirable to apply or assert on resources in multiple clusters. In my use-case, I want to ensure that federated resources are properly propagated to the target cluster.
+
+Currently, KUTTL only supports a single test cluster. This KEP describes how we can allow custom Kubernetes contexts per test step.
+
+### Goals
+
+* Support applying resources across more than one test cluster.
+* Support asserting on resources across more than one test cluster.
+
+## Proposal
+
+The proposal is to add a new setting to the `TestStep` object: `kubeconfig`. This setting would allow the user to specify an alternative kubeconfig path to use for a given test step.
+
+```
+apiVersion: kudo.dev/v1alpha1
+kind: TestStep
+kubeconfig: ./secondary-cluster.yaml
+```
+
+If the kubeconfig setting is not set, then the global Kubernetes client is used.
+
+Note that the `kubeconfig` setting on the `TestStep` would be unaffected by the global Kubernetes configuration, so the `--kubeconfig` flag, `$KUBECONFIG` environment variable, etc, will be ignored for these steps.
