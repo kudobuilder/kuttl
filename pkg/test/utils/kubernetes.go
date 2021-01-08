@@ -997,7 +997,7 @@ func GetArgs(ctx context.Context, cmd harness.Command, namespace string, envMap 
 // RunCommand runs a command with args.
 // args gets split on spaces (respecting quoted strings).
 // if the command is run in the background a reference to the process is returned for later cleanup
-func RunCommand(ctx context.Context, namespace string, cmd harness.Command, cwd string, stdout io.Writer, stderr io.Writer, logger Logger, timeout int) (*exec.Cmd, error) {
+func RunCommand(ctx context.Context, namespace string, cmd harness.Command, cwd string, stdout io.Writer, stderr io.Writer, logger Logger, timeout int, kubeconfigOverride string) (*exec.Cmd, error) {
 	actualDir, err := os.Getwd()
 	if err != nil {
 		return nil, fmt.Errorf("command %q with %w", cmd.Command, err)
@@ -1006,6 +1006,9 @@ func RunCommand(ctx context.Context, namespace string, cmd harness.Command, cwd 
 	kuttlENV := make(map[string]string)
 	kuttlENV["NAMESPACE"] = namespace
 	kuttlENV["KUBECONFIG"] = fmt.Sprintf("%s/kubeconfig", actualDir)
+	if kubeconfigOverride != "" {
+		kuttlENV["KUBECONFIG"] = filepath.Join(actualDir, kubeconfigOverride)
+	}
 	kuttlENV["PATH"] = fmt.Sprintf("%s/bin/:%s", actualDir, os.Getenv("PATH"))
 
 	// by default testsuite timeout is the command timeout
@@ -1074,7 +1077,7 @@ func RunCommand(ctx context.Context, namespace string, cmd harness.Command, cwd 
 // RunCommands runs a set of commands, returning any errors.
 // If any (non-background) command fails, the following commands are skipped
 // commands running in the background are returned
-func RunCommands(logger Logger, namespace string, commands []harness.Command, workdir string, timeout int) ([]*exec.Cmd, error) {
+func RunCommands(logger Logger, namespace string, commands []harness.Command, workdir string, timeout int, kubeconfigOverride string) ([]*exec.Cmd, error) {
 	bgs := []*exec.Cmd{}
 
 	if commands == nil {
@@ -1083,7 +1086,7 @@ func RunCommands(logger Logger, namespace string, commands []harness.Command, wo
 
 	for i, cmd := range commands {
 
-		bg, err := RunCommand(context.Background(), namespace, cmd, workdir, logger, logger, logger, timeout)
+		bg, err := RunCommand(context.Background(), namespace, cmd, workdir, logger, logger, logger, timeout, kubeconfigOverride)
 		if err != nil {
 			cmdListSize := len(commands)
 			if i+1 < cmdListSize {

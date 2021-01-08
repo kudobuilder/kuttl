@@ -44,6 +44,7 @@ type Step struct {
 
 	Timeout int
 
+	Kubeconfig      string
 	Client          func(forceNew bool) (client.Client, error)
 	DiscoveryClient func() (discovery.DiscoveryInterface, error)
 
@@ -391,7 +392,7 @@ func (s *Step) Run(namespace string) []error {
 				command.Background = false
 			}
 		}
-		if _, err := testutils.RunCommands(s.Logger, namespace, s.Step.Commands, s.Dir, s.Timeout); err != nil {
+		if _, err := testutils.RunCommands(s.Logger, namespace, s.Step.Commands, s.Dir, s.Timeout, s.Kubeconfig); err != nil {
 			testErrors = append(testErrors, err)
 		}
 	}
@@ -428,7 +429,7 @@ func (s *Step) Run(namespace string) []error {
 			s.Logger.Log("skipping invalid assertion collector")
 			continue
 		}
-		_, err := testutils.RunCommand(context.TODO(), namespace, *collector.Command(), s.Dir, s.Logger, s.Logger, s.Logger, s.Timeout)
+		_, err := testutils.RunCommand(context.TODO(), namespace, *collector.Command(), s.Dir, s.Logger, s.Logger, s.Logger, s.Timeout, s.Kubeconfig)
 		if err != nil {
 			s.Logger.Log("post assert collector failure: %s", err)
 		}
@@ -489,6 +490,9 @@ func (s *Step) LoadYAML(file string) error {
 			s.Step.Index = s.Index
 			if s.Step.Name != "" {
 				s.Name = s.Step.Name
+			}
+			if s.Step.Kubeconfig != "" {
+				s.Kubeconfig = s.Step.Kubeconfig
 			}
 		} else {
 			applies = append(applies, obj)
