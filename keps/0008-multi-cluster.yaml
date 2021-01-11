@@ -46,3 +46,5 @@ kubeconfig: ./secondary-cluster.yaml
 If the kubeconfig setting is not set, then the global Kubernetes client is used.
 
 Note that the `kubeconfig` setting on the `TestStep` would be unaffected by the global Kubernetes configuration, so the `--kubeconfig` flag, `$KUBECONFIG` environment variable, etc, will be ignored for these steps.
+
+A namespace is generated for each `TestCase` and this needs to be created in each cluster referenced by `TestSteps` within the `TestCase`. At the beginning of the `TestCase`, the generated namespace will be created in every cluster used in the `TestCase`. The namespaces will also be deleted at the end if `--skip-delete` is not set.
