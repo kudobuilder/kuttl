@@ -9,7 +9,7 @@ import (
 
 // TestSuite configures which tests should be loaded.
 type TestSuite struct {
-	// The type meta object, should always be a GVK of kudo.dev/v1beta1/TestSuite or kuttl.dev/v1beta1/TestSuite.
+	// The type meta object, should always be a GVK of kuttl.dev/v1beta1/TestSuite or kuttl.dev/v1beta1/TestSuite.
 	metav1.TypeMeta `json:",inline"`
 	// Set labels or the test suite name.
 	metav1.ObjectMeta `json:"metadata,omitempty"`
@@ -73,7 +73,7 @@ type TestSuite struct {
 
 // TestStep settings to apply to a test step.go
 type TestStep struct {
-	// The type meta object, should always be a GVK of kudo.dev/v1beta1/TestStep or kuttl.dev/v1beta1/TestStep.
+	// The type meta object, should always be a GVK of kuttl.dev/v1beta1/TestStep or kuttl.dev/v1beta1/TestStep.
 	metav1.TypeMeta `json:",inline"`
 	// Override the default metadata. Set labels or override the test step name.
 	metav1.ObjectMeta `json:"metadata,omitempty"`
@@ -105,7 +105,7 @@ type TestStep struct {
 
 // TestAssert represents the settings needed to verify the result of a test step.
 type TestAssert struct {
-	// The type meta object, should always be a GVK of  kudo.dev/v1beta1/TestAssert or kuttl.dev/v1beta1/TestAssert.
+	// The type meta object, should always be a GVK of  kuttl.dev/v1beta1/TestAssert or kuttl.dev/v1beta1/TestAssert.
 	metav1.TypeMeta `json:",inline"`
 	// Override the default timeout of 30 seconds (in seconds).
 	Timeout int `json:"timeout"`
