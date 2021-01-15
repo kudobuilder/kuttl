@@ -388,13 +388,8 @@ func ConvertUnstructured(in runtime.Object) (runtime.Object, error) {
 	kind := in.GetObjectKind().GroupVersionKind().Kind
 	group := in.GetObjectKind().GroupVersionKind().Group
 
-	// Deprecated: kudo.dev is deprecated.
-	kudoGroup := "kudo.dev"
 	kuttlGroup := "kuttl.dev"
-	if group == kudoGroup {
-		log.Print("WARNING: kudo.dev group has been deprecated and is schedule to be removed in KUTTL 0.8.0")
-	}
-	if !(group == kudoGroup || group == kuttlGroup) {
+	if group != kuttlGroup {
 		return in, nil
 	}
 	switch {

@@ -21,7 +21,7 @@ The `HEAD` of the release branches follows the same conventions as main.  It is 
 
 ### Documentation
 
-Pull request for documentation (in the `kudo.dev` repo) should be prepared and reviewed at
+Pull request for documentation (in the `kuttl.dev` repo) should be prepared and reviewed at
 the same time as the pull request for any user-visible (documentation-worthy) change.
 The description for the code change PR should link to the documentation PR (and vice-versa).
 
