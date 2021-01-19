@@ -45,6 +45,8 @@ kubeconfig: ./secondary-cluster.yaml
 
 If the kubeconfig setting is not set, then the global Kubernetes client is used.
 
+If the kubeconfig setting is set, then it will be used for all Kubernetes operations within the step: commands (the KUBECONFIG environment variable will be set to the kubeconfig setting, relative to the KUTTL CLI's working directory), applied resources, asserts, and errors. This means that a single step can only be configured to use a single kubeconfig, but multiple steps can be used if a test case needs to interact with more than one cluster. This allows, for example, a federated resource to be created in one step and then another step can be used to verify that it actually exists on the destination cluster.
+
 Note that the `kubeconfig` setting on the `TestStep` would be unaffected by the global Kubernetes configuration, so the `--kubeconfig` flag, `$KUBECONFIG` environment variable, etc, will be ignored for these steps.
 
 A namespace is generated for each `TestCase` and this needs to be created in each cluster referenced by `TestSteps` within the `TestCase`. At the beginning of the `TestCase`, the generated namespace will be created in every cluster used in the `TestCase`. The namespaces will also be deleted at the end if `--skip-delete` is not set.
