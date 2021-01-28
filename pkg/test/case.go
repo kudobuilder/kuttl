@@ -18,7 +18,6 @@ import (
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/conversion"
-	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/discovery"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
@@ -328,9 +327,9 @@ func (t *Case) LoadTestSteps() error {
 			Timeout: t.Timeout,
 			Index:   int(index),
 			Dir:     t.Dir,
-			Asserts: []runtime.Object{},
-			Apply:   []runtime.Object{},
-			Errors:  []runtime.Object{},
+			Asserts: []client.Object{},
+			Apply:   []client.Object{},
+			Errors:  []client.Object{},
 		}
 
 		for _, file := range files {

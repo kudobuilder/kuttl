@@ -6,6 +6,7 @@ import (
 	"errors"
 	"io/ioutil"
 	"os"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 	"testing"
 	"time"
 
@@ -129,10 +130,10 @@ func TestRetryWithNilFromFn(t *testing.T) {
 }
 
 func TestRetryWithNilInFn(t *testing.T) {
-	client := RetryClient{}
-	var list runtime.Object
+	c := RetryClient{}
+	var list client.ObjectList
 	assert.Error(t, Retry(context.TODO(), func(ctx context.Context) error {
-		return client.Client.List(ctx, list)
+		return c.Client.List(ctx, list)
 	}, IsJSONSyntaxError))
 }
 

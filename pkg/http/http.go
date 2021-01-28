@@ -4,8 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"net/url"
-
-	"k8s.io/apimachinery/pkg/runtime"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	testutils "github.com/kudobuilder/kuttl/pkg/test/utils"
 )
@@ -16,10 +15,10 @@ func IsURL(str string) bool {
 	return err == nil && u.Scheme != "" && u.Host != ""
 }
 
-// ToRuntimeObjects takes a url, pulls the file and returns  []runtime.Object
+// ToObjects takes a url, pulls the file and returns  []runtime.Object
 // url must be a full path to a manifest file.  that file can have multiple runtime objects.
-func ToRuntimeObjects(urlPath string) ([]runtime.Object, error) {
-	apply := []runtime.Object{}
+func ToObjects(urlPath string) ([]client.Object, error) {
+	apply := []client.Object{}
 
 	buf, err := Read(urlPath)
 	if err != nil {

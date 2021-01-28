@@ -38,9 +38,9 @@ type Step struct {
 	Step   *harness.TestStep
 	Assert *harness.TestAssert
 
-	Asserts []runtime.Object
-	Apply   []runtime.Object
-	Errors  []runtime.Object
+	Asserts []client.Object
+	Apply   []client.Object
+	Errors  []client.Object
 
 	Timeout int
 
@@ -88,7 +88,7 @@ func (s *Step) DeleteExisting(namespace string) error {
 		return err
 	}
 
-	toDelete := []runtime.Object{}
+	toDelete := []client.Object{}
 
 	if s.Step == nil {
 		return nil
@@ -133,12 +133,17 @@ func (s *Step) DeleteExisting(namespace string) error {
 			}
 		} else {
 			// Otherwise just append the object specified.
-			toDelete = append(toDelete, obj.DeepCopyObject())
+			toDelete = append(toDelete, obj.DeepCopy())
 		}
 	}
 
 	for _, obj := range toDelete {
-		err := cl.Delete(context.TODO(), obj.DeepCopyObject())
+		delete := &unstructured.Unstructured{}
+		delete.SetGroupVersionKind(obj.GetObjectKind().GroupVersionKind())
+		delete.SetName(obj.GetName())
+		delete.SetNamespace(obj.GetNamespace())
+
+		err := cl.Delete(context.TODO(), delete)
 		if err != nil && !k8serrors.IsNotFound(err) {
 			return err
 		}
@@ -147,7 +152,9 @@ func (s *Step) DeleteExisting(namespace string) error {
 	// Wait for resources to be deleted.
 	return wait.PollImmediate(100*time.Millisecond, time.Duration(s.GetTimeout())*time.Second, func() (done bool, err error) {
 		for _, obj := range toDelete {
-			err = cl.Get(context.TODO(), testutils.ObjectKey(obj), obj.DeepCopyObject())
+			actual := &unstructured.Unstructured{}
+			actual.SetGroupVersionKind(obj.GetObjectKind().GroupVersionKind())
+			err = cl.Get(context.TODO(), testutils.ObjectKey(obj), actual)
 			if err == nil || !k8serrors.IsNotFound(err) {
 				return false, err
 			}
@@ -460,11 +467,11 @@ func (s *Step) LoadYAML(file string) error {
 		return fmt.Errorf("populating step: %v", err)
 	}
 
-	asserts := []runtime.Object{}
+	asserts := []client.Object{}
 
 	for _, obj := range s.Asserts {
 		if obj.GetObjectKind().GroupVersionKind().Kind == "TestAssert" {
-			if testAssert, ok := obj.(*harness.TestAssert); ok {
+			if testAssert, ok := obj.DeepCopyObject().(*harness.TestAssert); ok {
 				s.Assert = testAssert
 			} else {
 				return fmt.Errorf("failed to load TestAssert object from %s: it contains an object of type %T", file, obj)
@@ -474,7 +481,7 @@ func (s *Step) LoadYAML(file string) error {
 		}
 	}
 
-	applies := []runtime.Object{}
+	applies := []client.Object{}
 
 	for _, obj := range s.Apply {
 		if obj.GetObjectKind().GroupVersionKind().Kind == "TestStep" {
@@ -500,7 +507,7 @@ func (s *Step) LoadYAML(file string) error {
 		// process configured step applies
 		for _, applyPath := range s.Step.Apply {
 			exApply := env.Expand(applyPath)
-			apply, err := RuntimeObjectsFromPath(exApply, s.Dir)
+			apply, err := ObjectsFromPath(exApply, s.Dir)
 			if err != nil {
 				return fmt.Errorf("step %q apply path %s: %w", s.Name, exApply, err)
 			}
@@ -509,7 +516,7 @@ func (s *Step) LoadYAML(file string) error {
 		// process configured step asserts
 		for _, assertPath := range s.Step.Assert {
 			exAssert := env.Expand(assertPath)
-			assert, err := RuntimeObjectsFromPath(exAssert, s.Dir)
+			assert, err := ObjectsFromPath(exAssert, s.Dir)
 			if err != nil {
 				return fmt.Errorf("step %q assert path %s: %w", s.Name, exAssert, err)
 			}
@@ -518,7 +525,7 @@ func (s *Step) LoadYAML(file string) error {
 		// process configured errors
 		for _, errorPath := range s.Step.Error {
 			exError := env.Expand(errorPath)
-			errObjs, err := RuntimeObjectsFromPath(exError, s.Dir)
+			errObjs, err := ObjectsFromPath(exError, s.Dir)
 			if err != nil {
 				return fmt.Errorf("step %q error path %s: %w", s.Name, exError, err)
 			}
@@ -533,7 +540,7 @@ func (s *Step) LoadYAML(file string) error {
 
 // populateObjectsByFileName populates s.Asserts, s.Errors, and/or s.Apply for files containing
 // "assert", "errors", or no special string, respectively.
-func (s *Step) populateObjectsByFileName(fileName string, objects []runtime.Object) error {
+func (s *Step) populateObjectsByFileName(fileName string, objects []client.Object) error {
 	matches := fileNameRegex.FindStringSubmatch(fileName)
 	if len(matches) < 2 {
 		return fmt.Errorf("%s does not match file name regexp: %s", fileName, testStepRegex.String())
@@ -559,10 +566,10 @@ func (s *Step) populateObjectsByFileName(fileName string, objects []runtime.Obje
 	return nil
 }
 
-// RuntimeObjectsFromPath returns an array of runtime.Objects for files / urls provided
-func RuntimeObjectsFromPath(path, dir string) ([]runtime.Object, error) {
+// ObjectsFromPath returns an array of runtime.Objects for files / urls provided
+func ObjectsFromPath(path, dir string) ([]client.Object, error) {
 	if http.IsURL(path) {
-		apply, err := http.ToRuntimeObjects(path)
+		apply, err := http.ToObjects(path)
 		if err != nil {
 			return nil, err
 		}
@@ -575,7 +582,7 @@ func RuntimeObjectsFromPath(path, dir string) ([]runtime.Object, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to find YAML files in %s: %w", cPath, err)
 	}
-	apply, err := kfile.ToRuntimeObjects(paths)
+	apply, err := kfile.ToObjects(paths)
 	if err != nil {
 		return nil, err
 	}

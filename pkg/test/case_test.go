@@ -1,16 +1,15 @@
 package test
 
 import (
+	"sigs.k8s.io/controller-runtime/pkg/client"
 	"testing"
 
+	harness "github.com/kudobuilder/kuttl/pkg/apis/testharness/v1beta1"
+	testutils "github.com/kudobuilder/kuttl/pkg/test/utils"
 	"github.com/stretchr/testify/assert"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
-	"k8s.io/apimachinery/pkg/runtime"
-
-	harness "github.com/kudobuilder/kuttl/pkg/apis/testharness/v1beta1"
-	testutils "github.com/kudobuilder/kuttl/pkg/test/utils"
 )
 
 // Verify the test state as loaded from disk.
@@ -36,7 +35,7 @@ func TestLoadTestSteps(t *testing.T) {
 						},
 						Index: 0,
 					},
-					Apply: []runtime.Object{
+					Apply: []client.Object{
 						testutils.WithSpec(t, testutils.NewPod("test", ""), map[string]interface{}{
 							"restartPolicy": "Never",
 							"containers": []map[string]interface{}{
@@ -47,12 +46,12 @@ func TestLoadTestSteps(t *testing.T) {
 							},
 						}),
 					},
-					Asserts: []runtime.Object{
+					Asserts: []client.Object{
 						testutils.WithStatus(t, testutils.NewPod("test", ""), map[string]interface{}{
 							"qosClass": "BestEffort",
 						}),
 					},
-					Errors: []runtime.Object{},
+					Errors: []client.Object{},
 				},
 				{
 					Name:  "test-assert",
@@ -80,7 +79,7 @@ func TestLoadTestSteps(t *testing.T) {
 						},
 						Timeout: 20,
 					},
-					Apply: []runtime.Object{
+					Apply: []client.Object{
 						testutils.WithSpec(t, testutils.NewPod("test2", ""), map[string]interface{}{
 							"restartPolicy": "Never",
 							"containers": []map[string]interface{}{
@@ -91,17 +90,17 @@ func TestLoadTestSteps(t *testing.T) {
 							},
 						}),
 					},
-					Asserts: []runtime.Object{
+					Asserts: []client.Object{
 						testutils.WithStatus(t, testutils.NewPod("test2", ""), map[string]interface{}{
 							"qosClass": "BestEffort",
 						}),
 					},
-					Errors: []runtime.Object{},
+					Errors: []client.Object{},
 				},
 				{
 					Name:  "pod",
 					Index: 2,
-					Apply: []runtime.Object{
+					Apply: []client.Object{
 						testutils.WithSpec(t, testutils.NewPod("test4", ""), map[string]interface{}{
 							"containers": []map[string]interface{}{
 								{
@@ -119,12 +118,12 @@ func TestLoadTestSteps(t *testing.T) {
 							},
 						}),
 					},
-					Asserts: []runtime.Object{
+					Asserts: []client.Object{
 						testutils.WithStatus(t, testutils.NewPod("test3", ""), map[string]interface{}{
 							"qosClass": "BestEffort",
 						}),
 					},
-					Errors: []runtime.Object{},
+					Errors: []client.Object{},
 				},
 				{
 					Name:  "name-overridden",
@@ -139,7 +138,7 @@ func TestLoadTestSteps(t *testing.T) {
 						},
 						Index: 3,
 					},
-					Apply: []runtime.Object{
+					Apply: []client.Object{
 						testutils.WithSpec(t, testutils.NewPod("test6", ""), map[string]interface{}{
 							"restartPolicy": "Never",
 							"containers": []map[string]interface{}{
@@ -159,12 +158,12 @@ func TestLoadTestSteps(t *testing.T) {
 							},
 						}),
 					},
-					Asserts: []runtime.Object{
+					Asserts: []client.Object{
 						testutils.WithSpec(t, testutils.NewPod("test5", ""), map[string]interface{}{
 							"restartPolicy": "Never",
 						}),
 					},
-					Errors: []runtime.Object{},
+					Errors: []client.Object{},
 				},
 			},
 		},
@@ -174,7 +173,7 @@ func TestLoadTestSteps(t *testing.T) {
 				{
 					Name:  "pod",
 					Index: 0,
-					Apply: []runtime.Object{
+					Apply: []client.Object{
 						&unstructured.Unstructured{
 							Object: map[string]interface{}{
 								"apiVersion": "v1",
@@ -196,7 +195,7 @@ func TestLoadTestSteps(t *testing.T) {
 							},
 						},
 					},
-					Asserts: []runtime.Object{
+					Asserts: []client.Object{
 						&unstructured.Unstructured{
 							Object: map[string]interface{}{
 								"apiVersion": "v1",
@@ -217,7 +216,7 @@ func TestLoadTestSteps(t *testing.T) {
 							},
 						},
 					},
-					Errors: []runtime.Object{},
+					Errors: []client.Object{},
 				},
 			},
 		},

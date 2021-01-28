@@ -51,13 +51,13 @@ func TestFromPath(t *testing.T) {
 
 func TestToRuntimeObjects(t *testing.T) {
 	files := []string{"testdata/path/test1.yaml"}
-	objs, err := ToRuntimeObjects(files)
+	objs, err := ToObjects(files)
 	assert.NoError(t, err)
 	assert.Equal(t, 1, len(objs))
 	assert.Equal(t, "Pod", objs[0].GetObjectKind().GroupVersionKind().Kind)
 
 	files = append(files, "testdata/path/test2.yaml")
-	_, err = ToRuntimeObjects(files)
+	_, err = ToObjects(files)
 	assert.Error(t, err, "file \"testdata/path/test2.yaml\" load yaml error")
 }
 

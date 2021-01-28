@@ -34,11 +34,11 @@ func TestStepClean(t *testing.T) {
 	pod2WithNamespace := testutils.NewPod("hello2", testNamespace)
 	pod2WithDiffNamespace := testutils.NewPod("hello2", "different-namespace")
 
-	cl := fake.NewFakeClientWithScheme(scheme.Scheme, pod, pod2WithNamespace, pod2WithDiffNamespace)
+	cl := fake.NewClientBuilder().WithObjects(pod, pod2WithNamespace, pod2WithDiffNamespace).WithScheme(scheme.Scheme).Build()
 
 	step := Step{
-		Apply: []runtime.Object{
-			pod.DeepCopyObject(), pod2WithDiffNamespace.DeepCopyObject(), testutils.NewPod("does-not-exist", ""),
+		Apply: []client.Object{
+			pod, pod2WithDiffNamespace, testutils.NewPod("does-not-exist", ""),
 		},
 		Client:          func(bool) (client.Client, error) { return cl, nil },
 		DiscoveryClient: func() (discovery.DiscoveryInterface, error) { return testutils.FakeDiscoveryClient(), nil },
@@ -68,8 +68,8 @@ func TestStepCreate(t *testing.T) {
 
 	step := Step{
 		Logger: testutils.NewTestLogger(t, ""),
-		Apply: []runtime.Object{
-			pod.DeepCopyObject(), podWithNamespace.DeepCopyObject(), clusterScopedResource, updateToApply,
+		Apply: []client.Object{
+			pod.DeepCopy(), podWithNamespace.DeepCopy(), clusterScopedResource, updateToApply,
 		},
 		Client:          func(bool) (client.Client, error) { return cl, nil },
 		DiscoveryClient: func() (discovery.DiscoveryInterface, error) { return testutils.FakeDiscoveryClient(), nil },
@@ -257,20 +257,20 @@ func TestRun(t *testing.T) {
 	}{
 		{
 			testName: "successful run", Step: Step{
-				Apply: []runtime.Object{
+				Apply: []client.Object{
 					testutils.NewPod("hello", ""),
 				},
-				Asserts: []runtime.Object{
+				Asserts: []client.Object{
 					testutils.NewPod("hello", ""),
 				},
 			},
 		},
 		{
 			"failed run", true, Step{
-				Apply: []runtime.Object{
+				Apply: []client.Object{
 					testutils.NewPod("hello", ""),
 				},
-				Asserts: []runtime.Object{
+				Asserts: []client.Object{
 					testutils.WithStatus(t, testutils.NewPod("hello", ""), map[string]interface{}{
 						"phase": "Ready",
 					}),
@@ -279,10 +279,10 @@ func TestRun(t *testing.T) {
 		},
 		{
 			"delayed run", false, Step{
-				Apply: []runtime.Object{
+				Apply: []client.Object{
 					testutils.NewPod("hello", ""),
 				},
-				Asserts: []runtime.Object{
+				Asserts: []client.Object{
 					testutils.WithStatus(t, testutils.NewPod("hello", ""), map[string]interface{}{
 						"phase": "Ready",
 					}),
@@ -353,7 +353,7 @@ func TestPopulateObjectsByFileName(t *testing.T) {
 
 		t.Run(tt.fileName, func(t *testing.T) {
 			step := &Step{}
-			err := step.populateObjectsByFileName(tt.fileName, []runtime.Object{testutils.NewPod("foo", "")})
+			err := step.populateObjectsByFileName(tt.fileName, []client.Object{testutils.NewPod("foo", "")})
 			assert.Nil(t, err)
 			assert.Equal(t, tt.isAssert, len(step.Asserts) != 0)
 			assert.Equal(t, tt.isError, len(step.Errors) != 0)
