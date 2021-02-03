@@ -713,7 +713,16 @@ func WithStatus(t *testing.T, obj *unstructured.Unstructured, status map[string]
 // WithKeyValue sets key in the provided object to value.
 func WithKeyValue(obj *unstructured.Unstructured, key string, value map[string]interface{}) (*unstructured.Unstructured, error) {
 	obj = obj.DeepCopy()
-	obj.Object[key] = value
+	// we need to convert to and from unstructured here so that the types in case_test match when comparing
+	content, err := runtime.DefaultUnstructuredConverter.ToUnstructured(obj)
+	if err != nil {
+		return nil, err
+	}
+	content[key] = value
+
+	if err := runtime.DefaultUnstructuredConverter.FromUnstructured(content, obj); err != nil {
+		return nil, err
+	}
 	return obj, nil
 }
 
