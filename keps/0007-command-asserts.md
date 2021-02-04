@@ -8,8 +8,8 @@ owners:
   - "@nfnt"
   - "@kensipe"
 creation-date: 2020-10-28
-last-updated: 2020-12-14
-status: provisional
+last-updated: 2021-02-04
+status: implementable
 ---
 
 # Assertions for CLI commands
@@ -199,3 +199,4 @@ The `commands` field described in the [Implementation Details](#implementation-d
 
 - 2020-10-28 - Initial draft (@nfnt)
 - 2020-12-14 - Updated draft (@kensipe)
+- 2021-02-04 - Move to implementable (@alenkacz)
