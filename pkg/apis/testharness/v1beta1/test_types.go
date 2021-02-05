@@ -111,6 +111,22 @@ type TestAssert struct {
 	Timeout int `json:"timeout"`
 	// Collectors is a set of pod log collectors fired on an assert failure
 	Collectors []*TestCollector `json:"collectors,omitempty"`
+	// Commands is a set of commands to be run as assertions for the current step
+	Commands []TestAssertCommand `json:"commands,omitempty"`
+}
+
+// TestAssertCommand an assertion based on the result of the execution of a command
+type TestAssertCommand struct {
+	// The command and argument to run as a string.
+	Command string `json:"command"`
+	// If set, the `--namespace` flag will be appended to the command with the namespace to use.
+	Namespaced bool `json:"namespaced"`
+	// Ability to run a shell script from TestStep (without a script file)
+	// namespaced and command should not be used with script.  namespaced is ignored and command is an error.
+	// env expansion is depended upon the shell but ENV is passed to the runtime env.
+	Script string `json:"script"`
+	// If set, the output from the command is NOT logged.  Useful for sensitive logs or to reduce noise.
+	SkipLogOutput bool `json:"skipLogOutput"`
 }
 
 // ObjectReference is a Kubernetes object reference with added labels to allow referencing

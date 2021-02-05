@@ -2,6 +2,7 @@ package test
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"path/filepath"
 	"regexp"
@@ -355,12 +356,26 @@ func (s *Step) CheckResourceAbsent(expected runtime.Object, namespace string) er
 	return nil
 }
 
+// CheckAssertCommands checks if the commands defined in TestAsserts have been run successfully
+// the errors returned can be a a failure of executing the command or the failure of the command executed.
+func (s *Step) CheckAssertCommands(ctx context.Context, namespace string, command []harness.TestAssertCommand, timeout int) []error {
+	testErrors := []error{}
+	if _, err := testutils.RunAssertCommands(ctx, s.Logger, namespace, command, "", timeout); err != nil {
+		testErrors = append(testErrors, err)
+	}
+	return testErrors
+}
+
 // Check checks if the resources defined in Asserts and Errors are in the correct state.
-func (s *Step) Check(namespace string) []error {
+func (s *Step) Check(namespace string, timeout int) []error {
 	testErrors := []error{}
 
 	for _, expected := range s.Asserts {
 		testErrors = append(testErrors, s.CheckResource(expected, namespace)...)
+	}
+
+	if s.Assert != nil {
+		testErrors = append(testErrors, s.CheckAssertCommands(context.TODO(), namespace, s.Assert.Commands, timeout)...)
 	}
 
 	for _, expected := range s.Errors {
@@ -391,7 +406,7 @@ func (s *Step) Run(namespace string) []error {
 				command.Background = false
 			}
 		}
-		if _, err := testutils.RunCommands(s.Logger, namespace, s.Step.Commands, s.Dir, s.Timeout); err != nil {
+		if _, err := testutils.RunCommands(context.TODO(), s.Logger, namespace, s.Step.Commands, s.Dir, s.Timeout); err != nil {
 			testErrors = append(testErrors, err)
 		}
 	}
@@ -402,13 +417,18 @@ func (s *Step) Run(namespace string) []error {
 		return testErrors
 	}
 
-	for i := 0; i < s.GetTimeout(); i++ {
-		testErrors = s.Check(namespace)
+	timeoutF := float64(s.GetTimeout())
+	start := time.Now()
+
+	for elapsed := 0.0; elapsed < timeoutF; elapsed = time.Since(start).Seconds() {
+		testErrors = s.Check(namespace, int(timeoutF-elapsed))
 
 		if len(testErrors) == 0 {
 			break
 		}
-
+		if hasTimeoutErr(testErrors) {
+			break
+		}
 		time.Sleep(time.Second)
 	}
 
@@ -444,7 +464,7 @@ func (s *Step) String() string {
 	return fmt.Sprintf("%d-%s", s.Index, s.Name)
 }
 
-// LoadYAMLFromFile loads the resources from a YAML file for a test step:
+// LoadYAML loads the resources from a YAML file for a test step:
 // * If the YAML file is called "assert", then it contains objects to
 //   add to the test step's list of assertions.
 // * If the YAML file is called "errors", then it contains objects that,
@@ -588,4 +608,13 @@ func cleanPath(path, dir string) string {
 		return path
 	}
 	return filepath.Join(dir, path)
+}
+
+func hasTimeoutErr(err []error) bool {
+	for i := range err {
+		if errors.Is(err[i], context.DeadlineExceeded) {
+			return true
+		}
+	}
+	return false
 }
