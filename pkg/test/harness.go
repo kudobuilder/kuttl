@@ -270,7 +270,17 @@ func (h *Harness) Config() (*rest.Config, error) {
 		// we avoid this with "inCluster" as the cluster must be already be up since we're running on it
 		err = testutils.WaitForSA(h.config, "default", "default")
 		if err != nil {
-			return h.config, err
+			// if there is a namespace provided but no "default"/"default" SA found, also check a SA in the provided NS
+			if h.TestSuite.Namespace != "" {
+				tempErr := testutils.WaitForSA(h.config, "default", h.TestSuite.Namespace)
+
+				// if it still does not have a SA then return the first "default"/"default" error
+				if tempErr != nil {
+					return h.config, err
+				}
+			} else {
+				return h.config, err
+			}
 		}
 		h.T.Logf("Successful connection to cluster at: %s", h.config.Host)
 	}
