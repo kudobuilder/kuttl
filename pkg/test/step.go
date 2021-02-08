@@ -356,11 +356,11 @@ func (s *Step) CheckResourceAbsent(expected runtime.Object, namespace string) er
 	return nil
 }
 
-// CheckAssertCommands checks if the commands defined in TestAsserts have been run successfully
+// CheckAssertCommands Runs the commands provided in `commands` and check if have been run successfully.
 // the errors returned can be a a failure of executing the command or the failure of the command executed.
-func (s *Step) CheckAssertCommands(ctx context.Context, namespace string, command []harness.TestAssertCommand, timeout int) []error {
+func (s *Step) CheckAssertCommands(ctx context.Context, namespace string, commands []harness.TestAssertCommand, timeout int) []error {
 	testErrors := []error{}
-	if _, err := testutils.RunAssertCommands(ctx, s.Logger, namespace, command, "", timeout); err != nil {
+	if _, err := testutils.RunAssertCommands(ctx, s.Logger, namespace, commands, "", timeout); err != nil {
 		testErrors = append(testErrors, err)
 	}
 	return testErrors

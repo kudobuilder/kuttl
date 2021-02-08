@@ -427,10 +427,10 @@ func TestStepFailure(t *testing.T) {
 }
 
 func TestAssertCommandsValidCommandRunsOk(t *testing.T) {
-	
+
 	step := &Step{
-		Name:  			"commandRun",
-		Index: 			0,
+		Name:            t.Name(),
+		Index:           0,
 		Logger:          testutils.NewTestLogger(t, ""),
 		Client:          func(bool) (client.Client, error) { return testenv.Client, nil },
 		DiscoveryClient: func() (discovery.DiscoveryInterface, error) { return testenv.DiscoveryClient, nil },
@@ -445,10 +445,10 @@ func TestAssertCommandsValidCommandRunsOk(t *testing.T) {
 }
 
 func TestAssertCommandsMultipleCommandRunsOk(t *testing.T) {
-	
+
 	step := &Step{
-		Name:  			"commandRun",
-		Index: 			0,
+		Name:            t.Name(),
+		Index:           0,
 		Logger:          testutils.NewTestLogger(t, ""),
 		Client:          func(bool) (client.Client, error) { return testenv.Client, nil },
 		DiscoveryClient: func() (discovery.DiscoveryInterface, error) { return testenv.DiscoveryClient, nil },
@@ -463,10 +463,10 @@ func TestAssertCommandsMultipleCommandRunsOk(t *testing.T) {
 }
 
 func TestAssertCommandsMissingCommandFails(t *testing.T) {
-	
+
 	step := &Step{
-		Name:  			"commandRun",
-		Index: 			0,
+		Name:            t.Name(),
+		Index:           0,
 		Logger:          testutils.NewTestLogger(t, ""),
 		Client:          func(bool) (client.Client, error) { return testenv.Client, nil },
 		DiscoveryClient: func() (discovery.DiscoveryInterface, error) { return testenv.DiscoveryClient, nil },
@@ -481,10 +481,10 @@ func TestAssertCommandsMissingCommandFails(t *testing.T) {
 }
 
 func TestAssertCommandsFailingCommandFails(t *testing.T) {
-	
+
 	step := &Step{
-		Name:  			"commandRun",
-		Index: 			0,
+		Name:            t.Name(),
+		Index:           0,
 		Logger:          testutils.NewTestLogger(t, ""),
 		Client:          func(bool) (client.Client, error) { return testenv.Client, nil },
 		DiscoveryClient: func() (discovery.DiscoveryInterface, error) { return testenv.DiscoveryClient, nil },
@@ -499,17 +499,17 @@ func TestAssertCommandsFailingCommandFails(t *testing.T) {
 }
 
 func TestAssertCommandsShouldTimeout(t *testing.T) {
-	
+
 	step := &Step{
-		Name:  			"commandRun",
-		Index: 			0,
+		Name:            t.Name(),
+		Index:           0,
 		Logger:          testutils.NewTestLogger(t, ""),
 		Client:          func(bool) (client.Client, error) { return testenv.Client, nil },
 		DiscoveryClient: func() (discovery.DiscoveryInterface, error) { return testenv.DiscoveryClient, nil },
 	}
 
-	// Load test that has an command that sleeps for 5 seconds, while the timeout for the step is 2, 
-	// so we should get back the error, and the test should run in less slightly more than 2 seconds.
+	// Load test that has an command that sleeps for 5 seconds, while the timeout for the step is 1,
+	// so we should get back the error, and the test should run in less slightly more than 1 seconds.
 	err := step.LoadYAML("step_integration_test_data/assert_commands/timingout_command/00-assert.yaml")
 	assert.NoError(t, err)
 
@@ -520,5 +520,3 @@ func TestAssertCommandsShouldTimeout(t *testing.T) {
 	assert.Less(t, duration, float64(5))
 	assert.Equal(t, len(errors), 1)
 }
-
-
