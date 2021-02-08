@@ -231,6 +231,7 @@ func TestCheckResourceIntegration(t *testing.T) {
 			shouldError: true,
 		},
 	} {
+		test := test
 		t.Run(test.testName, func(t *testing.T) {
 			namespace := fmt.Sprintf("kuttl-test-%s", petname.Generate(2, "-"))
 
@@ -239,7 +240,6 @@ func TestCheckResourceIntegration(t *testing.T) {
 				// we are ignoring already exists here because in tests we by default use retry client so this can happen
 				assert.Nil(t, err)
 			}
-
 			for _, actual := range test.actual {
 				_, _, err := testutils.Namespaced(testenv.DiscoveryClient, actual, namespace)
 				assert.Nil(t, err)
@@ -332,6 +332,7 @@ func TestCheckedTypeAssertions(t *testing.T) {
 		{"apply", "TestStep"},
 	}
 	for _, test := range tests {
+		test := test
 		t.Run(test.name, func(t *testing.T) {
 			step := Step{}
 			path := fmt.Sprintf("step_integration_test_data/error_detect/00-%s.yaml", test.name)
@@ -412,12 +413,6 @@ func TestStepFailure(t *testing.T) {
 		assert.Nil(t, err)
 	}
 
-	//for _, actual := range test.actual {
-	//	_, _, err := testutils.Namespaced(testenv.DiscoveryClient, actual, namespace)
-	//	assert.Nil(t, err)
-	//
-	//	assert.Nil(t, testenv.Client.Create(context.TODO(), actual))
-	//}
 	asserts := []runtime.Object{expected}
 	step := Step{
 		Logger:          testutils.NewTestLogger(t, ""),
