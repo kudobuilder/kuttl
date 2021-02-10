@@ -230,6 +230,7 @@ func TestCheckResourceIntegration(t *testing.T) {
 			shouldError: true,
 		},
 	} {
+		test := test
 		t.Run(test.testName, func(t *testing.T) {
 			namespace := fmt.Sprintf("kuttl-test-%s", petname.Generate(2, "-"))
 
@@ -238,7 +239,6 @@ func TestCheckResourceIntegration(t *testing.T) {
 				// we are ignoring already exists here because in tests we by default use retry client so this can happen
 				assert.Nil(t, err)
 			}
-
 			for _, actual := range test.actual {
 				_, _, err := testutils.Namespaced(testenv.DiscoveryClient, actual, namespace)
 				assert.Nil(t, err)
@@ -331,6 +331,7 @@ func TestCheckedTypeAssertions(t *testing.T) {
 		{"apply", "TestStep"},
 	}
 	for _, test := range tests {
+		test := test
 		t.Run(test.name, func(t *testing.T) {
 			step := Step{}
 			path := fmt.Sprintf("step_integration_test_data/error_detect/00-%s.yaml", test.name)
@@ -411,12 +412,6 @@ func TestStepFailure(t *testing.T) {
 		assert.Nil(t, err)
 	}
 
-	//for _, actual := range test.actual {
-	//	_, _, err := testutils.Namespaced(testenv.DiscoveryClient, actual, namespace)
-	//	assert.Nil(t, err)
-	//
-	//	assert.Nil(t, testenv.Client.Create(context.TODO(), actual))
-	//}
 	asserts := []client.Object{expected}
 	step := Step{
 		Logger:          testutils.NewTestLogger(t, ""),
@@ -428,4 +423,99 @@ func TestStepFailure(t *testing.T) {
 
 	errs := step.Run(namespace)
 	assert.Equal(t, len(errs), 1)
+}
+
+func TestAssertCommandsValidCommandRunsOk(t *testing.T) {
+
+	step := &Step{
+		Name:            t.Name(),
+		Index:           0,
+		Logger:          testutils.NewTestLogger(t, ""),
+		Client:          func(bool) (client.Client, error) { return testenv.Client, nil },
+		DiscoveryClient: func() (discovery.DiscoveryInterface, error) { return testenv.DiscoveryClient, nil },
+	}
+
+	// Load test that has an echo command, so it should run ok, and don't return any errors
+	err := step.LoadYAML("step_integration_test_data/assert_commands/valid_command/00-assert.yaml")
+	assert.NoError(t, err)
+
+	errors := step.Run("irrelevant")
+	assert.Equal(t, len(errors), 0)
+}
+
+func TestAssertCommandsMultipleCommandRunsOk(t *testing.T) {
+
+	step := &Step{
+		Name:            t.Name(),
+		Index:           0,
+		Logger:          testutils.NewTestLogger(t, ""),
+		Client:          func(bool) (client.Client, error) { return testenv.Client, nil },
+		DiscoveryClient: func() (discovery.DiscoveryInterface, error) { return testenv.DiscoveryClient, nil },
+	}
+
+	// Load test that has an echo command, so it should run ok, and don't return any errors
+	err := step.LoadYAML("step_integration_test_data/assert_commands/multiple_commands/00-assert.yaml")
+	assert.NoError(t, err)
+
+	errors := step.Run("irrelevant")
+	assert.Equal(t, len(errors), 0)
+}
+
+func TestAssertCommandsMissingCommandFails(t *testing.T) {
+
+	step := &Step{
+		Name:            t.Name(),
+		Index:           0,
+		Logger:          testutils.NewTestLogger(t, ""),
+		Client:          func(bool) (client.Client, error) { return testenv.Client, nil },
+		DiscoveryClient: func() (discovery.DiscoveryInterface, error) { return testenv.DiscoveryClient, nil },
+	}
+
+	// Load test that has an command that is not present (thiscommanddoesnotexist), so it should return an error
+	err := step.LoadYAML("step_integration_test_data/assert_commands/command_does_not_exist/00-assert.yaml")
+	assert.NoError(t, err)
+
+	errors := step.Run("irrelevant")
+	assert.Equal(t, len(errors), 1)
+}
+
+func TestAssertCommandsFailingCommandFails(t *testing.T) {
+
+	step := &Step{
+		Name:            t.Name(),
+		Index:           0,
+		Logger:          testutils.NewTestLogger(t, ""),
+		Client:          func(bool) (client.Client, error) { return testenv.Client, nil },
+		DiscoveryClient: func() (discovery.DiscoveryInterface, error) { return testenv.DiscoveryClient, nil },
+	}
+
+	// Load test that has an command that is present but will allways fail (false), so we should get back the error.
+	err := step.LoadYAML("step_integration_test_data/assert_commands/failing_comand/00-assert.yaml")
+	assert.NoError(t, err)
+
+	errors := step.Run("irrelevant")
+	assert.Equal(t, len(errors), 1)
+}
+
+func TestAssertCommandsShouldTimeout(t *testing.T) {
+
+	step := &Step{
+		Name:            t.Name(),
+		Index:           0,
+		Logger:          testutils.NewTestLogger(t, ""),
+		Client:          func(bool) (client.Client, error) { return testenv.Client, nil },
+		DiscoveryClient: func() (discovery.DiscoveryInterface, error) { return testenv.DiscoveryClient, nil },
+	}
+
+	// Load test that has an command that sleeps for 5 seconds, while the timeout for the step is 1,
+	// so we should get back the error, and the test should run in less slightly more than 1 seconds.
+	err := step.LoadYAML("step_integration_test_data/assert_commands/timingout_command/00-assert.yaml")
+	assert.NoError(t, err)
+
+	start := time.Now()
+	errors := step.Run("irrelevant")
+	duration := time.Since(start).Seconds()
+	assert.Greater(t, duration, float64(1))
+	assert.Less(t, duration, float64(5))
+	assert.Equal(t, len(errors), 1)
 }

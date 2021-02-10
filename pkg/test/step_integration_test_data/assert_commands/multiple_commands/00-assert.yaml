@@ -1,0 +1,6 @@
+apiVersion: kuttl.dev/v1beta1
+kind: TestAssert
+timeout: 2
+commands:
+  - command: echo "first command"
+  - command: echo "second command"

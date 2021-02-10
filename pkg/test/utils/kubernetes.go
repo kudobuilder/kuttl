@@ -1076,15 +1076,41 @@ func RunCommand(ctx context.Context, namespace string, cmd harness.Command, cwd 
 		return nil, nil
 	}
 	if errors.Is(cmdCtx.Err(), context.DeadlineExceeded) {
-		return nil, fmt.Errorf("command %q exceeded %v sec timeout", cmd.Command, timeout)
+		return nil, fmt.Errorf("command %q exceeded %v sec timeout, %w", cmd.Command, timeout, cmdCtx.Err())
 	}
 	return nil, err
+}
+
+// convertAssertCommand converts a set of TestAssertCommand to Commands so it all the existing functions can be used
+// that expect Commands data type.
+func convertAssertCommand(assertCommands []harness.TestAssertCommand, timeout int) (commands []harness.Command) {
+	commands = make([]harness.Command, 0, len(assertCommands))
+
+	for _, assertCommand := range assertCommands {
+		commands = append(commands, harness.Command{
+			Command:       assertCommand.Command,
+			Namespaced:    assertCommand.Namespaced,
+			Script:        assertCommand.Script,
+			SkipLogOutput: assertCommand.SkipLogOutput,
+			Timeout:       timeout,
+			// This fields will always be this constants for assertions
+			IgnoreFailure: false,
+			Background:    false,
+		})
+	}
+
+	return commands
+}
+
+// RunAssertCommands runs a set of commands specified as TestAssertCommand
+func RunAssertCommands(ctx context.Context, logger Logger, namespace string, commands []harness.TestAssertCommand, workdir string, timeout int) ([]*exec.Cmd, error) {
+	return RunCommands(ctx, logger, namespace, convertAssertCommand(commands, timeout), workdir, timeout)
 }
 
 // RunCommands runs a set of commands, returning any errors.
 // If any (non-background) command fails, the following commands are skipped
 // commands running in the background are returned
-func RunCommands(logger Logger, namespace string, commands []harness.Command, workdir string, timeout int) ([]*exec.Cmd, error) {
+func RunCommands(ctx context.Context, logger Logger, namespace string, commands []harness.Command, workdir string, timeout int) ([]*exec.Cmd, error) {
 	bgs := []*exec.Cmd{}
 
 	if commands == nil {
@@ -1093,7 +1119,7 @@ func RunCommands(logger Logger, namespace string, commands []harness.Command, wo
 
 	for i, cmd := range commands {
 
-		bg, err := RunCommand(context.Background(), namespace, cmd, workdir, logger, logger, logger, timeout)
+		bg, err := RunCommand(ctx, namespace, cmd, workdir, logger, logger, logger, timeout)
 		if err != nil {
 			cmdListSize := len(commands)
 			if i+1 < cmdListSize {

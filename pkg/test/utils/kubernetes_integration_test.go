@@ -97,17 +97,17 @@ func TestClientWatch(t *testing.T) {
 	event := <-eventCh
 	assert.Equal(t, watch.EventType("ADDED"), event.Type)
 	assert.Equal(t, gvk, event.Object.GetObjectKind().GroupVersionKind())
-	assert.Equal(t, client.ObjectKey{"default", "my-pod"}, ObjectKey(event.Object))
+	assert.Equal(t, client.ObjectKey{Namespace: "default", Name: "my-pod"}, ObjectKey(event.Object))
 
 	event = <-eventCh
 	assert.Equal(t, watch.EventType("MODIFIED"), event.Type)
 	assert.Equal(t, gvk, event.Object.GetObjectKind().GroupVersionKind())
-	assert.Equal(t, client.ObjectKey{"default", "my-pod"}, ObjectKey(event.Object))
+	assert.Equal(t, client.ObjectKey{Namespace: "default", Name: "my-pod"}, ObjectKey(event.Object))
 
 	event = <-eventCh
 	assert.Equal(t, watch.EventType("DELETED"), event.Type)
 	assert.Equal(t, gvk, event.Object.GetObjectKind().GroupVersionKind())
-	assert.Equal(t, client.ObjectKey{"default", "my-pod"}, ObjectKey(event.Object))
+	assert.Equal(t, client.ObjectKey{Namespace: "default", Name: "my-pod"}, ObjectKey(event.Object))
 
 	events.Stop()
 }
