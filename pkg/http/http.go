@@ -37,6 +37,6 @@ func ToObjects(urlPath string) ([]client.Object, error) {
 
 // Read returns a buffer for the file at the url
 func Read(urlPath string) (*bytes.Buffer, error) {
-	client := NewClient()
-	return client.GetByteBuffer(urlPath)
+	c := NewClient()
+	return c.GetByteBuffer(urlPath)
 }

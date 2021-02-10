@@ -684,12 +684,12 @@ func NewPod(name, namespace string) *unstructured.Unstructured {
 // WithNamespace naively applies the namespace to the object. Used mainly in tests, otherwise
 // use Namespaced.
 func WithNamespace(obj *unstructured.Unstructured, namespace string) *unstructured.Unstructured {
-	copy := obj.DeepCopy()
+	res := obj.DeepCopy()
 
-	m, _ := meta.Accessor(copy) //nolint:errcheck // runtime.Object don't have the error issues of interface{}
+	m, _ := meta.Accessor(res) //nolint:errcheck // runtime.Object don't have the error issues of interface{}
 	m.SetNamespace(namespace)
 
-	return copy
+	return res
 }
 
 // WithSpec applies the provided spec to the Kubernetes object.

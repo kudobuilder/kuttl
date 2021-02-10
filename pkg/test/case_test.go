@@ -3,15 +3,14 @@ package test
 import (
 	"testing"
 
-	"sigs.k8s.io/controller-runtime/pkg/client"
-
-	harness "github.com/kudobuilder/kuttl/pkg/apis/testharness/v1beta1"
-	testutils "github.com/kudobuilder/kuttl/pkg/test/utils"
-
 	"github.com/stretchr/testify/assert"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"sigs.k8s.io/controller-runtime/pkg/client"
+
+	harness "github.com/kudobuilder/kuttl/pkg/apis/testharness/v1beta1"
+	testutils "github.com/kudobuilder/kuttl/pkg/test/utils"
 )
 
 // Verify the test state as loaded from disk.
