@@ -727,8 +727,8 @@ func WithKeyValue(obj *unstructured.Unstructured, key string, value map[string]i
 }
 
 // WithLabels sets the labels on an object.
-func WithLabels(t *testing.T, obj runtime.Object, labels map[string]string) runtime.Object {
-	obj = obj.DeepCopyObject()
+func WithLabels(t *testing.T, obj *unstructured.Unstructured, labels map[string]string) *unstructured.Unstructured {
+	obj = obj.DeepCopy()
 
 	m, err := meta.Accessor(obj)
 	if err != nil {
@@ -815,7 +815,7 @@ func CreateOrUpdate(ctx context.Context, cl client.Client, obj client.Object, re
 		actual := &unstructured.Unstructured{}
 		actual.SetGroupVersionKind(obj.GetObjectKind().GroupVersionKind())
 
-		err := cl.Get(ctx, ObjectKey(actual), actual)
+		err := cl.Get(ctx, ObjectKey(expected), actual)
 		if err == nil {
 			if err = PatchObject(actual, expected); err != nil {
 				return err
@@ -842,17 +842,15 @@ func CreateOrUpdate(ctx context.Context, cl client.Client, obj client.Object, re
 }
 
 // SetAnnotation sets the given key and value in the object's annotations, returning a copy.
-func SetAnnotation(obj runtime.Object, key, value string) runtime.Object {
-	obj = obj.DeepCopyObject()
+func SetAnnotation(obj *unstructured.Unstructured, key, value string) *unstructured.Unstructured {
+	obj = obj.DeepCopy()
 
-	meta, _ := meta.Accessor(obj) //nolint:errcheck // runtime.Object don't have the error issues of interface{}
-
-	annotations := meta.GetAnnotations()
+	annotations := obj.GetAnnotations()
 	if annotations == nil {
 		annotations = map[string]string{}
 	}
 	annotations[key] = value
-	meta.SetAnnotations(annotations)
+	obj.SetAnnotations(annotations)
 
 	return obj
 }

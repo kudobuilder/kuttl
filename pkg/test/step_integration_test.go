@@ -16,7 +16,6 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
-	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/discovery"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
@@ -44,13 +43,13 @@ func TestCheckResourceIntegration(t *testing.T) {
 
 	for _, test := range []struct {
 		testName    string
-		actual      []runtime.Object
-		expected    runtime.Object
+		actual      []client.Object
+		expected    client.Object
 		shouldError bool
 	}{
 		{
 			testName: "match object by labels, first in list matches",
-			actual: []runtime.Object{
+			actual: []client.Object{
 				testutils.WithSpec(t, testutils.WithLabels(t, testutils.NewPod("labels-match-pod", ""), map[string]string{
 					"app": "nginx",
 				}), map[string]interface{}{
@@ -94,7 +93,7 @@ func TestCheckResourceIntegration(t *testing.T) {
 		},
 		{
 			testName: "match object by labels, last in list matches",
-			actual: []runtime.Object{
+			actual: []client.Object{
 				testutils.WithSpec(t, testutils.WithLabels(t, testutils.NewPod("last-in-list", ""), map[string]string{
 					"app": "not-match",
 				}), map[string]interface{}{
@@ -138,7 +137,7 @@ func TestCheckResourceIntegration(t *testing.T) {
 		},
 		{
 			testName: "match object by labels, does not exist",
-			actual: []runtime.Object{
+			actual: []client.Object{
 				testutils.WithSpec(t, testutils.WithLabels(t, testutils.NewPod("hello", ""), map[string]string{
 					"app": "NOT-A-MATCH",
 				}), map[string]interface{}{
@@ -173,7 +172,7 @@ func TestCheckResourceIntegration(t *testing.T) {
 		},
 		{
 			testName: "match object by labels, field mismatch",
-			actual: []runtime.Object{
+			actual: []client.Object{
 				testutils.WithSpec(t, testutils.WithLabels(t, testutils.NewPod("hello", ""), map[string]string{
 					"app": "nginx",
 				}), map[string]interface{}{
@@ -208,7 +207,7 @@ func TestCheckResourceIntegration(t *testing.T) {
 		},
 		{
 			testName: "step should fail if there are no objects of the same type in the namespace",
-			actual:   []runtime.Object{},
+			actual:   []client.Object{},
 			expected: &unstructured.Unstructured{
 				Object: map[string]interface{}{
 					"apiVersion": "v1",
@@ -357,7 +356,7 @@ func TestApplyExpansion(t *testing.T) {
 }
 
 func TestTwoTestStepping(t *testing.T) {
-	apply := []runtime.Object{}
+	apply := []client.Object{}
 	step := &Step{
 		Name:  "twostepping",
 		Index: 0,
@@ -384,7 +383,7 @@ func TestTwoTestStepping(t *testing.T) {
 // driving by issue: https://github.com/kudobuilder/kuttl/issues/154
 func TestStepFailure(t *testing.T) {
 	// an assert without setup
-	var expected runtime.Object = &unstructured.Unstructured{
+	var expected client.Object = &unstructured.Unstructured{
 		Object: map[string]interface{}{
 			"apiVersion": "v1",
 			"kind":       "Pod",
@@ -418,7 +417,7 @@ func TestStepFailure(t *testing.T) {
 	//
 	//	assert.Nil(t, testenv.Client.Create(context.TODO(), actual))
 	//}
-	asserts := []runtime.Object{expected}
+	asserts := []client.Object{expected}
 	step := Step{
 		Logger:          testutils.NewTestLogger(t, ""),
 		Client:          func(bool) (client.Client, error) { return testenv.Client, nil },
