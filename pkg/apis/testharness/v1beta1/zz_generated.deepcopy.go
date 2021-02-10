@@ -66,6 +66,7 @@ func (in *ObjectReference) DeepCopy() *ObjectReference {
 func (in *TestAssert) DeepCopyInto(out *TestAssert) {
 	*out = *in
 	out.TypeMeta = in.TypeMeta
+	in.ObjectMeta.DeepCopyInto(&out.ObjectMeta)
 	if in.Collectors != nil {
 		in, out := &in.Collectors, &out.Collectors
 		*out = make([]*TestCollector, len(*in))

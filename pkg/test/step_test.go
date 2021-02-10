@@ -64,7 +64,7 @@ func TestStepCreate(t *testing.T) {
 	}
 	updateToApply := testutils.WithSpec(t, podToUpdate, specToApply)
 
-	cl := fake.NewFakeClientWithScheme(scheme.Scheme, testutils.WithNamespace(podToUpdate, testNamespace))
+	cl := fake.NewClientBuilder().WithScheme(scheme.Scheme).WithRuntimeObjects(testutils.WithNamespace(podToUpdate, testNamespace)).Build()
 
 	step := Step{
 		Logger: testutils.NewTestLogger(t, ""),
@@ -96,7 +96,7 @@ func TestStepDeleteExisting(t *testing.T) {
 	podToDeleteDefaultNS := testutils.NewPod("also-delete-me", "default")
 	podToKeep := testutils.NewPod("keep-me", testNamespace)
 
-	cl := fake.NewFakeClientWithScheme(scheme.Scheme, podToDelete, podToKeep, podToDeleteDefaultNS)
+	cl := fake.NewClientBuilder().WithScheme(scheme.Scheme).WithRuntimeObjects(podToDelete, podToKeep, podToDeleteDefaultNS).Build()
 
 	step := Step{
 		Logger: testutils.NewTestLogger(t, ""),
@@ -181,7 +181,7 @@ func TestCheckResource(t *testing.T) {
 			step := Step{
 				Logger: testutils.NewTestLogger(t, ""),
 				Client: func(bool) (client.Client, error) {
-					return fake.NewFakeClientWithScheme(scheme.Scheme, test.actual), nil
+					return fake.NewClientBuilder().WithScheme(scheme.Scheme).WithRuntimeObjects(test.actual).Build(), nil
 				},
 				DiscoveryClient: func() (discovery.DiscoveryInterface, error) { return fakeDiscovery, nil },
 			}
@@ -232,7 +232,7 @@ func TestCheckResourceAbsent(t *testing.T) {
 			step := Step{
 				Logger: testutils.NewTestLogger(t, ""),
 				Client: func(bool) (client.Client, error) {
-					return fake.NewFakeClientWithScheme(scheme.Scheme, test.actual), nil
+					return fake.NewClientBuilder().WithScheme(scheme.Scheme).WithRuntimeObjects(test.actual).Build(), nil
 				},
 				DiscoveryClient: func() (discovery.DiscoveryInterface, error) { return fakeDiscovery, nil },
 			}
@@ -305,7 +305,7 @@ func TestRun(t *testing.T) {
 				Timeout: 1,
 			}
 
-			cl := fake.NewFakeClientWithScheme(scheme.Scheme)
+			cl := fake.NewClientBuilder().WithScheme(scheme.Scheme).Build()
 
 			test.Step.Client = func(bool) (client.Client, error) { return cl, nil }
 			test.Step.DiscoveryClient = func() (discovery.DiscoveryInterface, error) { return testutils.FakeDiscoveryClient(), nil }

@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"net/url"
+
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	testutils "github.com/kudobuilder/kuttl/pkg/test/utils"
