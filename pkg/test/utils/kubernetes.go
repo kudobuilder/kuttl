@@ -189,22 +189,32 @@ func NewRetryClient(cfg *rest.Config, opts client.Options) (*RetryClient, error)
 	return &RetryClient{Client: client, dynamic: dynamicClient, discovery: discovery}, err
 }
 
+// Scheme returns the scheme this client is using.
+func (r *RetryClient) Scheme() *runtime.Scheme {
+	return r.Client.Scheme()
+}
+
+// RESTMapper returns the rest mapper this client is using.
+func (r *RetryClient) RESTMapper() meta.RESTMapper {
+	return r.Client.RESTMapper()
+}
+
 // Create saves the object obj in the Kubernetes cluster.
-func (r *RetryClient) Create(ctx context.Context, obj runtime.Object, opts ...client.CreateOption) error {
+func (r *RetryClient) Create(ctx context.Context, obj client.Object, opts ...client.CreateOption) error {
 	return Retry(ctx, func(ctx context.Context) error {
 		return r.Client.Create(ctx, obj, opts...)
 	}, IsJSONSyntaxError)
 }
 
 // Delete deletes the given obj from Kubernetes cluster.
-func (r *RetryClient) Delete(ctx context.Context, obj runtime.Object, opts ...client.DeleteOption) error {
+func (r *RetryClient) Delete(ctx context.Context, obj client.Object, opts ...client.DeleteOption) error {
 	return Retry(ctx, func(ctx context.Context) error {
 		return r.Client.Delete(ctx, obj, opts...)
 	}, IsJSONSyntaxError)
 }
 
 // DeleteAllOf deletes the given obj from Kubernetes cluster.
-func (r *RetryClient) DeleteAllOf(ctx context.Context, obj runtime.Object, opts ...client.DeleteAllOfOption) error {
+func (r *RetryClient) DeleteAllOf(ctx context.Context, obj client.Object, opts ...client.DeleteAllOfOption) error {
 	return Retry(ctx, func(ctx context.Context) error {
 		return r.Client.DeleteAllOf(ctx, obj, opts...)
 	}, IsJSONSyntaxError)
@@ -212,7 +222,7 @@ func (r *RetryClient) DeleteAllOf(ctx context.Context, obj runtime.Object, opts 
 
 // Update updates the given obj in the Kubernetes cluster. obj must be a
 // struct pointer so that obj can be updated with the content returned by the Server.
-func (r *RetryClient) Update(ctx context.Context, obj runtime.Object, opts ...client.UpdateOption) error {
+func (r *RetryClient) Update(ctx context.Context, obj client.Object, opts ...client.UpdateOption) error {
 	return Retry(ctx, func(ctx context.Context) error {
 		return r.Client.Update(ctx, obj, opts...)
 	}, IsJSONSyntaxError)
@@ -220,7 +230,7 @@ func (r *RetryClient) Update(ctx context.Context, obj runtime.Object, opts ...cl
 
 // Patch patches the given obj in the Kubernetes cluster. obj must be a
 // struct pointer so that obj can be updated with the content returned by the Server.
-func (r *RetryClient) Patch(ctx context.Context, obj runtime.Object, patch client.Patch, opts ...client.PatchOption) error {
+func (r *RetryClient) Patch(ctx context.Context, obj client.Object, patch client.Patch, opts ...client.PatchOption) error {
 	return Retry(ctx, func(ctx context.Context) error {
 		return r.Client.Patch(ctx, obj, patch, opts...)
 	}, IsJSONSyntaxError)
@@ -229,7 +239,7 @@ func (r *RetryClient) Patch(ctx context.Context, obj runtime.Object, patch clien
 // Get retrieves an obj for the given object key from the Kubernetes Cluster.
 // obj must be a struct pointer so that obj can be updated with the response
 // returned by the Server.
-func (r *RetryClient) Get(ctx context.Context, key client.ObjectKey, obj runtime.Object) error {
+func (r *RetryClient) Get(ctx context.Context, key client.ObjectKey, obj client.Object) error {
 	return Retry(ctx, func(ctx context.Context) error {
 		return r.Client.Get(ctx, key, obj)
 	}, IsJSONSyntaxError)
@@ -238,7 +248,7 @@ func (r *RetryClient) Get(ctx context.Context, key client.ObjectKey, obj runtime
 // List retrieves list of objects for a given namespace and list options. On a
 // successful call, Items field in the list will be populated with the
 // result returned from the server.
-func (r *RetryClient) List(ctx context.Context, list runtime.Object, opts ...client.ListOption) error {
+func (r *RetryClient) List(ctx context.Context, list client.ObjectList, opts ...client.ListOption) error {
 	return Retry(ctx, func(ctx context.Context) error {
 		return r.Client.List(ctx, list, opts...)
 	}, IsJSONSyntaxError)
@@ -278,7 +288,7 @@ func (r *RetryClient) Status() client.StatusWriter {
 
 // Update updates the given obj in the Kubernetes cluster. obj must be a
 // struct pointer so that obj can be updated with the content returned by the Server.
-func (r *RetryStatusWriter) Update(ctx context.Context, obj runtime.Object, opts ...client.UpdateOption) error {
+func (r *RetryStatusWriter) Update(ctx context.Context, obj client.Object, opts ...client.UpdateOption) error {
 	return Retry(ctx, func(ctx context.Context) error {
 		return r.StatusWriter.Update(ctx, obj, opts...)
 	}, IsJSONSyntaxError)
@@ -286,7 +296,7 @@ func (r *RetryStatusWriter) Update(ctx context.Context, obj runtime.Object, opts
 
 // Patch patches the given obj in the Kubernetes cluster. obj must be a
 // struct pointer so that obj can be updated with the content returned by the Server.
-func (r *RetryStatusWriter) Patch(ctx context.Context, obj runtime.Object, patch client.Patch, opts ...client.PatchOption) error {
+func (r *RetryStatusWriter) Patch(ctx context.Context, obj client.Object, patch client.Patch, opts ...client.PatchOption) error {
 	return Retry(ctx, func(ctx context.Context) error {
 		return r.StatusWriter.Patch(ctx, obj, patch, opts...)
 	}, IsJSONSyntaxError)
@@ -377,13 +387,13 @@ func PrettyDiff(expected runtime.Object, actual runtime.Object) (string, error) 
 
 // ConvertUnstructured converts an unstructured object to the known struct. If the type is not known, then
 // the unstructured object is returned unmodified.
-func ConvertUnstructured(in runtime.Object) (runtime.Object, error) {
+func ConvertUnstructured(in client.Object) (client.Object, error) {
 	unstruct, err := runtime.DefaultUnstructuredConverter.ToUnstructured(in)
 	if err != nil {
 		return nil, fmt.Errorf("error converting %s to unstructured error: %w", ResourceID(in), err)
 	}
 
-	var converted runtime.Object
+	var converted client.Object
 
 	kind := in.GetObjectKind().GroupVersionKind().Kind
 	group := in.GetObjectKind().GroupVersionKind().Group
@@ -476,7 +486,7 @@ func MarshalObjectJSON(o runtime.Object, w io.Writer) error {
 }
 
 // LoadYAMLFromFile loads all objects from a YAML file.
-func LoadYAMLFromFile(path string) ([]runtime.Object, error) {
+func LoadYAMLFromFile(path string) ([]client.Object, error) {
 	opened, err := os.Open(path)
 	if err != nil {
 		return nil, err
@@ -487,10 +497,10 @@ func LoadYAMLFromFile(path string) ([]runtime.Object, error) {
 }
 
 // LoadYAML loads all objects from a reader
-func LoadYAML(path string, r io.Reader) ([]runtime.Object, error) {
+func LoadYAML(path string, r io.Reader) ([]client.Object, error) {
 	yamlReader := yaml.NewYAMLReader(bufio.NewReader(r))
 
-	objects := []runtime.Object{}
+	objects := []client.Object{}
 
 	for {
 		data, err := yamlReader.Read()
@@ -540,8 +550,8 @@ func MatchesKind(obj runtime.Object, kinds ...runtime.Object) bool {
 }
 
 // InstallManifests recurses over ManifestsDir to install all resources defined in YAML manifests.
-func InstallManifests(ctx context.Context, client client.Client, dClient discovery.DiscoveryInterface, manifestsDir string, kinds ...runtime.Object) ([]runtime.Object, error) {
-	objects := []runtime.Object{}
+func InstallManifests(ctx context.Context, c client.Client, dClient discovery.DiscoveryInterface, manifestsDir string, kinds ...runtime.Object) ([]client.Object, error) {
+	objects := []client.Object{}
 
 	if manifestsDir == "" {
 		return objects, nil
@@ -589,7 +599,7 @@ func InstallManifests(ctx context.Context, client client.Client, dClient discove
 				}
 			}
 
-			updated, err := CreateOrUpdate(ctx, client, obj, true)
+			updated, err := CreateOrUpdate(ctx, c, obj, true)
 			if err != nil {
 				return fmt.Errorf("error creating resource %s: %w", ResourceID(obj), err)
 			}
@@ -618,7 +628,7 @@ func ObjectKey(obj runtime.Object) client.ObjectKey {
 }
 
 // NewResource generates a Kubernetes object using the provided apiVersion, kind, name, and namespace.
-func NewResource(apiVersion, kind, name, namespace string) runtime.Object {
+func NewResource(apiVersion, kind, name, namespace string) *unstructured.Unstructured {
 	meta := map[string]interface{}{
 		"name": name,
 	}
@@ -667,23 +677,23 @@ func NewClusterRoleBinding(apiVersion, kind, name, namespace string, serviceAcco
 }
 
 // NewPod creates a new pod object.
-func NewPod(name, namespace string) runtime.Object {
+func NewPod(name, namespace string) *unstructured.Unstructured {
 	return NewResource("v1", "Pod", name, namespace)
 }
 
 // WithNamespace naively applies the namespace to the object. Used mainly in tests, otherwise
 // use Namespaced.
-func WithNamespace(obj runtime.Object, namespace string) runtime.Object {
-	obj = obj.DeepCopyObject()
+func WithNamespace(obj *unstructured.Unstructured, namespace string) *unstructured.Unstructured {
+	res := obj.DeepCopy()
 
-	m, _ := meta.Accessor(obj) //nolint:errcheck // runtime.Object don't have the error issues of interface{}
+	m, _ := meta.Accessor(res) //nolint:errcheck // runtime.Object don't have the error issues of interface{}
 	m.SetNamespace(namespace)
 
-	return obj
+	return res
 }
 
 // WithSpec applies the provided spec to the Kubernetes object.
-func WithSpec(t *testing.T, obj runtime.Object, spec map[string]interface{}) runtime.Object {
+func WithSpec(t *testing.T, obj *unstructured.Unstructured, spec map[string]interface{}) *unstructured.Unstructured {
 	res, err := WithKeyValue(obj, "spec", spec)
 	if err != nil {
 		t.Fatalf("failed to apply spec %v to object %v: %v", spec, obj, err)
@@ -692,7 +702,7 @@ func WithSpec(t *testing.T, obj runtime.Object, spec map[string]interface{}) run
 }
 
 // WithStatus applies the provided status to the Kubernetes object.
-func WithStatus(t *testing.T, obj runtime.Object, status map[string]interface{}) runtime.Object {
+func WithStatus(t *testing.T, obj *unstructured.Unstructured, status map[string]interface{}) *unstructured.Unstructured {
 	res, err := WithKeyValue(obj, "status", status)
 	if err != nil {
 		t.Fatalf("failed to apply status %v to object %v: %v", status, obj, err)
@@ -701,14 +711,13 @@ func WithStatus(t *testing.T, obj runtime.Object, status map[string]interface{})
 }
 
 // WithKeyValue sets key in the provided object to value.
-func WithKeyValue(obj runtime.Object, key string, value map[string]interface{}) (runtime.Object, error) {
-	obj = obj.DeepCopyObject()
-
+func WithKeyValue(obj *unstructured.Unstructured, key string, value map[string]interface{}) (*unstructured.Unstructured, error) {
+	obj = obj.DeepCopy()
+	// we need to convert to and from unstructured here so that the types in case_test match when comparing
 	content, err := runtime.DefaultUnstructuredConverter.ToUnstructured(obj)
 	if err != nil {
 		return nil, err
 	}
-
 	content[key] = value
 
 	if err := runtime.DefaultUnstructuredConverter.FromUnstructured(content, obj); err != nil {
@@ -718,8 +727,8 @@ func WithKeyValue(obj runtime.Object, key string, value map[string]interface{}) 
 }
 
 // WithLabels sets the labels on an object.
-func WithLabels(t *testing.T, obj runtime.Object, labels map[string]string) runtime.Object {
-	obj = obj.DeepCopyObject()
+func WithLabels(t *testing.T, obj *unstructured.Unstructured, labels map[string]string) *unstructured.Unstructured {
+	obj = obj.DeepCopy()
 
 	m, err := meta.Accessor(obj)
 	if err != nil {
@@ -793,7 +802,7 @@ func FakeDiscoveryClient() discovery.DiscoveryInterface {
 // CreateOrUpdate will create obj if it does not exist and update if it it does.
 // retryonerror indicates whether we retry in case of conflict
 // Returns true if the object was updated and false if it was created.
-func CreateOrUpdate(ctx context.Context, cl client.Client, obj runtime.Object, retryOnError bool) (updated bool, err error) {
+func CreateOrUpdate(ctx context.Context, cl client.Client, obj client.Object, retryOnError bool) (updated bool, err error) {
 	orig := obj.DeepCopyObject()
 
 	validators := []func(err error) bool{k8serrors.IsAlreadyExists}
@@ -803,9 +812,10 @@ func CreateOrUpdate(ctx context.Context, cl client.Client, obj runtime.Object, r
 	}
 	err = Retry(ctx, func(ctx context.Context) error {
 		expected := orig.DeepCopyObject()
-		actual := orig.DeepCopyObject()
+		actual := &unstructured.Unstructured{}
+		actual.SetGroupVersionKind(obj.GetObjectKind().GroupVersionKind())
 
-		err := cl.Get(ctx, ObjectKey(actual), actual)
+		err := cl.Get(ctx, ObjectKey(expected), actual)
 		if err == nil {
 			if err = PatchObject(actual, expected); err != nil {
 				return err
@@ -832,17 +842,15 @@ func CreateOrUpdate(ctx context.Context, cl client.Client, obj runtime.Object, r
 }
 
 // SetAnnotation sets the given key and value in the object's annotations, returning a copy.
-func SetAnnotation(obj runtime.Object, key, value string) runtime.Object {
-	obj = obj.DeepCopyObject()
+func SetAnnotation(obj *unstructured.Unstructured, key, value string) *unstructured.Unstructured {
+	obj = obj.DeepCopy()
 
-	meta, _ := meta.Accessor(obj) //nolint:errcheck // runtime.Object don't have the error issues of interface{}
-
-	annotations := meta.GetAnnotations()
+	annotations := obj.GetAnnotations()
 	if annotations == nil {
 		annotations = map[string]string{}
 	}
 	annotations[key] = value
-	meta.SetAnnotations(annotations)
+	obj.SetAnnotations(annotations)
 
 	return obj
 }
@@ -870,7 +878,9 @@ func WaitForDelete(c *RetryClient, objs []runtime.Object) error {
 	// Wait for resources to be deleted.
 	return wait.PollImmediate(100*time.Millisecond, 10*time.Second, func() (done bool, err error) {
 		for _, obj := range objs {
-			err = c.Get(context.TODO(), ObjectKey(obj), obj.DeepCopyObject())
+			actual := &unstructured.Unstructured{}
+			actual.SetGroupVersionKind(obj.GetObjectKind().GroupVersionKind())
+			err = c.Get(context.TODO(), ObjectKey(obj), actual)
 			if err == nil || !k8serrors.IsNotFound(err) {
 				return false, err
 			}

@@ -9,6 +9,8 @@ import (
 	"testing"
 	"time"
 
+	"sigs.k8s.io/controller-runtime/pkg/client"
+
 	"github.com/stretchr/testify/assert"
 	"k8s.io/apimachinery/pkg/api/meta"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -129,10 +131,10 @@ func TestRetryWithNilFromFn(t *testing.T) {
 }
 
 func TestRetryWithNilInFn(t *testing.T) {
-	client := RetryClient{}
-	var list runtime.Object
+	c := RetryClient{}
+	var list client.ObjectList
 	assert.Error(t, Retry(context.TODO(), func(ctx context.Context) error {
-		return client.Client.List(ctx, list)
+		return c.Client.List(ctx, list)
 	}, IsJSONSyntaxError))
 }
 

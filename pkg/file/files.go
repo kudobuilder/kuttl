@@ -7,14 +7,14 @@ import (
 	"path/filepath"
 	"strings"
 
-	"k8s.io/apimachinery/pkg/runtime"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	testutils "github.com/kudobuilder/kuttl/pkg/test/utils"
 )
 
 // from a list of paths, returns an array of runtime objects
-func ToRuntimeObjects(paths []string) ([]runtime.Object, error) {
-	apply := []runtime.Object{}
+func ToObjects(paths []string) ([]client.Object, error) {
+	apply := []client.Object{}
 
 	for _, path := range paths {
 		objs, err := testutils.LoadYAMLFromFile(path)

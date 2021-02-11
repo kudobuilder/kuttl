@@ -107,6 +107,8 @@ type TestStep struct {
 type TestAssert struct {
 	// The type meta object, should always be a GVK of  kuttl.dev/v1beta1/TestAssert or kuttl.dev/v1beta1/TestAssert.
 	metav1.TypeMeta `json:",inline"`
+	// Override the default metadata. Set labels or override the test step name.
+	metav1.ObjectMeta `json:"metadata,omitempty"`
 	// Override the default timeout of 30 seconds (in seconds).
 	Timeout int `json:"timeout"`
 	// Collectors is a set of pod log collectors fired on an assert failure
