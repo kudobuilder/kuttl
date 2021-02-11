@@ -53,7 +53,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/apiutil"
 	"sigs.k8s.io/controller-runtime/pkg/envtest"
-	"sigs.k8s.io/controller-runtime/pkg/manager"
 
 	"github.com/kudobuilder/kuttl/pkg/apis"
 	harness "github.com/kudobuilder/kuttl/pkg/apis/testharness/v1beta1"
@@ -1211,17 +1210,6 @@ func Kubeconfig(cfg *rest.Config, w io.Writer) error {
 			},
 		},
 	}, w)
-}
-
-// GetDiscoveryClient returns an instance of discovery client
-func GetDiscoveryClient(mgr manager.Manager) (*discovery.DiscoveryClient, error) {
-	// use manager rest config to create a discovery client
-	dc, err := discovery.NewDiscoveryClientForConfig(mgr.GetConfig())
-	if err != nil || dc == nil {
-		return nil, fmt.Errorf("failed to create a discovery client: %v", err)
-	}
-
-	return dc, nil
 }
 
 // InClusterConfig returns true if in cluster, false if not
