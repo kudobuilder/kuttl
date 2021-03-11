@@ -27,7 +27,7 @@ RUN make cli
 # release image with kubectl + kuttl
 FROM registry.access.redhat.com/ubi8/ubi-minimal:latest
 
-RUN microdnf install vim
+RUN microdnf install vim tar gzip
 RUN echo 'alias vi=vim' >> ~/.bashrc
 
 #  kube 1.18
