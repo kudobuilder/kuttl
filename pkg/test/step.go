@@ -519,7 +519,8 @@ func (s *Step) LoadYAML(file string) error {
 				s.Name = s.Step.Name
 			}
 			if s.Step.Kubeconfig != "" {
-				s.Kubeconfig = s.Step.Kubeconfig
+				exKubeconfig := env.Expand(s.Step.Kubeconfig)
+				s.Kubeconfig = cleanPath(exKubeconfig, s.Dir)
 			}
 		} else {
 			applies = append(applies, obj)
