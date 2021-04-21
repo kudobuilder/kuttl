@@ -66,6 +66,8 @@ func (testDeps) MatchString(pat, str string) (result bool, err error) {
 	return matchRe.MatchString(str), nil
 }
 
+func (testDeps) SetPanicOnExit0(bool) {}
+
 func (testDeps) StartCPUProfile(w io.Writer) error {
 	return pprof.StartCPUProfile(w)
 }
