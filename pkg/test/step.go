@@ -460,9 +460,7 @@ func (s *Step) Run(namespace string) []error {
 			s.Logger.Log("post assert collector failure: %s", err)
 		}
 	}
-	if len(s.Assert.Collectors) > 0 {
-		s.Logger.Flush()
-	}
+	s.Logger.Flush()
 	return testErrors
 }
 
