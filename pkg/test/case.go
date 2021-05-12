@@ -209,8 +209,8 @@ func (t *Case) Run(test *testing.T, tc *report.Testcase) {
 		clients[testStep.Kubeconfig] = cl
 	}
 
-	for _, client := range clients {
-		if err := t.CreateNamespace(client, ns); err != nil {
+	for _, c := range clients {
+		if err := t.CreateNamespace(c, ns); err != nil {
 			tc.Failure = report.NewFailure(err.Error(), nil)
 			test.Fatal(err)
 		}
@@ -218,8 +218,8 @@ func (t *Case) Run(test *testing.T, tc *report.Testcase) {
 
 	if !t.SkipDelete {
 		defer func() {
-			for _, client := range clients {
-				if err := t.DeleteNamespace(client, ns); err != nil {
+			for _, c := range clients {
+				if err := t.DeleteNamespace(c, ns); err != nil {
 					test.Error(err)
 				}
 			}
