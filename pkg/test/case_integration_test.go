@@ -7,11 +7,10 @@ import (
 	"os"
 	"testing"
 
-	"github.com/kudobuilder/kuttl/pkg/report"
-	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/discovery"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
+	"github.com/kudobuilder/kuttl/pkg/report"
 	testutils "github.com/kudobuilder/kuttl/pkg/test/utils"
 )
 
@@ -56,39 +55,39 @@ func TestMultiClusterCase(t *testing.T) {
 	c := Case{
 		Logger: testutils.NewTestLogger(t, ""),
 		Steps: []*Step{
-			&Step{
+			{
 				Name:  "initialize-testenv",
 				Index: 0,
-				Apply: []runtime.Object{
+				Apply: []client.Object{
 					testutils.WithSpec(t, testutils.NewPod("hello", ""), podSpec),
 				},
-				Asserts: []runtime.Object{
+				Asserts: []client.Object{
 					testutils.WithSpec(t, testutils.NewPod("hello", ""), podSpec),
 				},
 				Timeout: 2,
 			},
-			&Step{
+			{
 				Name:  "use-testenv2",
 				Index: 1,
-				Apply: []runtime.Object{
+				Apply: []client.Object{
 					testutils.WithSpec(t, testutils.NewPod("hello2", ""), podSpec),
 				},
-				Asserts: []runtime.Object{
+				Asserts: []client.Object{
 					testutils.WithSpec(t, testutils.NewPod("hello2", ""), podSpec),
 				},
-				Errors: []runtime.Object{
+				Errors: []client.Object{
 					testutils.WithSpec(t, testutils.NewPod("hello", ""), podSpec),
 				},
 				Timeout:    2,
 				Kubeconfig: tmpfile.Name(),
 			},
-			&Step{
+			{
 				Name:  "verify-testenv-does-not-have-testenv2-resources",
 				Index: 2,
-				Asserts: []runtime.Object{
+				Asserts: []client.Object{
 					testutils.WithSpec(t, testutils.NewPod("hello", ""), podSpec),
 				},
-				Errors: []runtime.Object{
+				Errors: []client.Object{
 					testutils.WithSpec(t, testutils.NewPod("hello2", ""), podSpec),
 				},
 				Timeout: 2,
