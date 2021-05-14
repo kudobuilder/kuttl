@@ -99,6 +99,9 @@ type TestStep struct {
 
 	// Allowed environment labels
 	// Disallowed environment labels
+
+	// Kubeconfig to use when applying and asserting for this step.
+	Kubeconfig string `json:"kubeconfig,omitempty"`
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object

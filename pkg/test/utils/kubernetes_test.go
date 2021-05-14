@@ -482,7 +482,7 @@ func TestRunScript(t *testing.T) {
 
 			logger := NewTestLogger(t, "")
 			// script runs with output
-			_, err := RunCommand(context.TODO(), "", hcmd, "", stdout, stderr, logger, 0)
+			_, err := RunCommand(context.TODO(), "", hcmd, "", stdout, stderr, logger, 0, "")
 
 			if tt.wantedErr {
 				assert.Error(t, err)
