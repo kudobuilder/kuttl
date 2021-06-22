@@ -14,6 +14,7 @@ import (
 	petname "github.com/dustinkirkland/golang-petname"
 	funk "github.com/thoas/go-funk"
 	corev1 "k8s.io/api/core/v1"
+	eventsv1 "k8s.io/api/events/v1"
 	eventsbeta1 "k8s.io/api/events/v1beta1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -131,6 +132,19 @@ func (o byFirstTimestamp) Less(i, j int) bool {
 	return o[i].ObjectMeta.CreationTimestamp.Before(&o[j].ObjectMeta.CreationTimestamp)
 }
 
+// byFirstTimestampV1 sorts a slice of eventsv1 by first timestamp, using their involvedObject's name as a tie breaker.
+type byFirstTimestampV1 []eventsv1.Event
+
+func (o byFirstTimestampV1) Len() int      { return len(o) }
+func (o byFirstTimestampV1) Swap(i, j int) { o[i], o[j] = o[j], o[i] }
+
+func (o byFirstTimestampV1) Less(i, j int) bool {
+	if o[i].ObjectMeta.CreationTimestamp.Equal(&o[j].ObjectMeta.CreationTimestamp) {
+		return o[i].Name < o[j].Name
+	}
+	return o[i].ObjectMeta.CreationTimestamp.Before(&o[j].ObjectMeta.CreationTimestamp)
+}
+
 // CollectEvents gathers all events from namespace and prints it out to log
 func (t *Case) CollectEvents(namespace string) {
 	cl, err := t.Client(false)
@@ -139,22 +153,62 @@ func (t *Case) CollectEvents(namespace string) {
 		return
 	}
 
+	err = t.collectEventsBeta1(cl, namespace)
+	if err != nil {
+		t.Logger.Log("Trying with events eventsv1 API...")
+		t.collectEventsV1(cl, namespace)
+	}
+}
+
+func (t *Case) collectEventsBeta1(cl client.Client, namespace string) error {
 	eventsList := &eventsbeta1.EventList{}
 
-	err = cl.List(context.TODO(), eventsList, client.InNamespace(namespace))
+	err := cl.List(context.TODO(), eventsList, client.InNamespace(namespace))
 	if err != nil {
 		t.Logger.Logf("Failed to collect events for %s in ns %s: %v", t.Name, namespace, err)
-		return
+		return err
 	}
 
 	events := eventsList.Items
 	sort.Sort(byFirstTimestamp(events))
 
 	t.Logger.Logf("%s events from ns %s:", t.Name, namespace)
-	printEvents(events, t.Logger)
+	printEventsBeta1(events, t.Logger)
+	return nil
 }
 
-func printEvents(events []eventsbeta1.Event, logger testutils.Logger) {
+func (t *Case) collectEventsV1(cl client.Client, namespace string) {
+	eventsList := &eventsv1.EventList{}
+
+	err := cl.List(context.TODO(), eventsList, client.InNamespace(namespace))
+	if err != nil {
+		t.Logger.Logf("Failed to collect events for %s in ns %s: %v", t.Name, namespace, err)
+		return
+	}
+
+	events := eventsList.Items
+	sort.Sort(byFirstTimestampV1(events))
+
+	t.Logger.Logf("%s events from ns %s:", t.Name, namespace)
+	printEventsV1(events, t.Logger)
+}
+
+func printEventsBeta1(events []eventsbeta1.Event, logger testutils.Logger) {
+	for _, e := range events {
+		// time type regarding action reason note reportingController related
+		logger.Logf("%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s",
+			e.ObjectMeta.CreationTimestamp,
+			e.Type,
+			shortString(&e.Regarding),
+			e.Action,
+			e.Reason,
+			e.Note,
+			e.ReportingController,
+			shortString(e.Related))
+	}
+}
+
+func printEventsV1(events []eventsv1.Event, logger testutils.Logger) {
 	for _, e := range events {
 		// time type regarding action reason note reportingController related
 		logger.Logf("%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s",
