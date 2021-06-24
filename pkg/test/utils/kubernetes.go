@@ -1016,7 +1016,11 @@ func RunCommand(ctx context.Context, namespace string, cmd harness.Command, cwd 
 	kuttlENV["NAMESPACE"] = namespace
 	kuttlENV["KUBECONFIG"] = fmt.Sprintf("%s/kubeconfig", actualDir)
 	if kubeconfigOverride != "" {
-		kuttlENV["KUBECONFIG"] = filepath.Join(actualDir, kubeconfigOverride)
+		if filepath.IsAbs(kubeconfigOverride) {
+			kuttlENV["KUBECONFIG"] = kubeconfigOverride
+		} else {
+			kuttlENV["KUBECONFIG"] = filepath.Join(actualDir, kubeconfigOverride)
+		}
 	}
 	kuttlENV["PATH"] = fmt.Sprintf("%s/bin/:%s", actualDir, os.Getenv("PATH"))
 

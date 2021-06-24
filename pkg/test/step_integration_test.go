@@ -356,6 +356,22 @@ func TestApplyExpansion(t *testing.T) {
 
 }
 
+func TestOverriddenKubeconfigPathResolution(t *testing.T) {
+	os.Setenv("SUBPATH", "test")
+	defer func() {
+		os.Unsetenv("SUBPATH")
+	}()
+	stepRelativePath := &Step{Dir: "step_integration_test_data/kubeconfig_path_resolution/"}
+	err := stepRelativePath.LoadYAML("step_integration_test_data/kubeconfig_path_resolution/00-step1.yaml")
+	assert.NoError(t, err)
+	assert.Equal(t, "step_integration_test_data/kubeconfig_path_resolution/kubeconfig-test.yaml", stepRelativePath.Kubeconfig)
+
+	stepAbsPath := &Step{Dir: "step_integration_test_data/kubeconfig_path_resolution/"}
+	err = stepAbsPath.LoadYAML("step_integration_test_data/kubeconfig_path_resolution/00-step2.yaml")
+	assert.NoError(t, err)
+	assert.Equal(t, "/absolute/kubeconfig-test.yaml", stepAbsPath.Kubeconfig)
+}
+
 func TestTwoTestStepping(t *testing.T) {
 	apply := []client.Object{}
 	step := &Step{
