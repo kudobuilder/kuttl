@@ -4,18 +4,18 @@ linters:
     - deadcode
     - dupl
     - errcheck
+    - exportloopref
     - goconst
     - gocritic
     - gocyclo
     - gofmt
     - goimports
-    - golint
     - gosimple
     - ineffassign
     - lll
     - misspell
     - nakedret
-    - scopelint
+    - revive
     - staticcheck
     - structcheck
     - stylecheck
