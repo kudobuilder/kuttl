@@ -120,6 +120,28 @@ func TestRetryWithUnexpectedError(t *testing.T) {
 	assert.Equal(t, 1, index)
 }
 
+func TestKubeconfigPath(t *testing.T) {
+
+	tests := []struct {
+		name     string
+		path     string
+		override string
+		expected string
+	}{
+		{name: "no-override", path: "foo", expected: "foo/kubeconfig"},
+		{name: "override-relative", path: "foo", override: "bar/kubeconfig", expected: "foo/bar/kubeconfig"},
+		{name: "override-abs", path: "foo", override: "/bar/kubeconfig", expected: "/bar/kubeconfig"},
+	}
+
+	for _, tt := range tests {
+		tt := tt
+		t.Run(tt.name, func(t *testing.T) {
+			result := kubeconfigPath(tt.path, tt.override)
+			assert.Equal(t, tt.expected, result)
+		})
+	}
+}
+
 func TestRetryWithNil(t *testing.T) {
 	assert.Equal(t, nil, Retry(context.TODO(), nil, IsJSONSyntaxError))
 }

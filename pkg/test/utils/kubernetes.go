@@ -1014,14 +1014,7 @@ func RunCommand(ctx context.Context, namespace string, cmd harness.Command, cwd 
 
 	kuttlENV := make(map[string]string)
 	kuttlENV["NAMESPACE"] = namespace
-	kuttlENV["KUBECONFIG"] = fmt.Sprintf("%s/kubeconfig", actualDir)
-	if kubeconfigOverride != "" {
-		if filepath.IsAbs(kubeconfigOverride) {
-			kuttlENV["KUBECONFIG"] = kubeconfigOverride
-		} else {
-			kuttlENV["KUBECONFIG"] = filepath.Join(actualDir, kubeconfigOverride)
-		}
-	}
+	kuttlENV["KUBECONFIG"] = kubeconfigPath(actualDir, kubeconfigOverride)
 	kuttlENV["PATH"] = fmt.Sprintf("%s/bin/:%s", actualDir, os.Getenv("PATH"))
 
 	// by default testsuite timeout is the command timeout
@@ -1085,6 +1078,16 @@ func RunCommand(ctx context.Context, namespace string, cmd harness.Command, cwd 
 		return nil, fmt.Errorf("command %q exceeded %v sec timeout, %w", cmd.Command, timeout, cmdCtx.Err())
 	}
 	return nil, err
+}
+
+func kubeconfigPath(actualDir, override string) string {
+	if override != "" {
+		if filepath.IsAbs(override) {
+			return override
+		}
+		return filepath.Join(actualDir, override)
+	}
+	return fmt.Sprintf("%s/kubeconfig", actualDir)
 }
 
 // convertAssertCommand converts a set of TestAssertCommand to Commands so it all the existing functions can be used
