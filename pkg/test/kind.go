@@ -101,11 +101,7 @@ func loadContainer(docker testutils.DockerClient, node nodes.Node, container str
 
 	defer image.Close()
 
-	if err := nodeutils.LoadImageArchive(node, image); err != nil {
-		return err
-	}
-
-	return nil
+	return nodeutils.LoadImageArchive(node, image)
 }
 
 // IsMinVersion checks if pass ver is the min required kind version
