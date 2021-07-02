@@ -20,6 +20,7 @@ builds:
       - 386
       - amd64
       - arm
+      - arm64
       - ppc64le
       - s390x
 archives:
