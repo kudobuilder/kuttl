@@ -12,7 +12,7 @@ import (
 	"time"
 
 	petname "github.com/dustinkirkland/golang-petname"
-	funk "github.com/thoas/go-funk"
+	"github.com/thoas/go-funk"
 	corev1 "k8s.io/api/core/v1"
 	eventsv1 "k8s.io/api/events/v1"
 	eventsbeta1 "k8s.io/api/events/v1beta1"
@@ -173,6 +173,9 @@ func (t *Case) CollectEvents(namespace string) {
 		if err != nil {
 			t.Logger.Log("Trying with events corev1 API...")
 			err = t.collectEventsCoreV1(cl, namespace)
+			if err != nil {
+				t.Logger.Log("All event APIs failed")
+			}
 		}
 	}
 }
