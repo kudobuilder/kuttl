@@ -69,6 +69,7 @@ EOF
 generate_platform linux amd64 ./kubectl-kuttl >> kuttl.yaml
 generate_platform linux 386 ./kubectl-kuttl >> kuttl.yaml
 generate_platform darwin amd64 ./kubectl-kuttl >> kuttl.yaml
+generate_platform darwin arm64 ./kubectl-kuttl >> kuttl.yaml
 
 ### Discontinued support for 32-bit darwin
 # generate_platform darwin 386 ./kubectl-kuttl >> kuttl.yaml
