@@ -18,6 +18,7 @@ import (
 	eventsbeta1 "k8s.io/api/events/v1beta1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/discovery"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
@@ -69,14 +70,27 @@ func (t *Case) DeleteNamespace(cl client.Client, ns *namespace) error {
 		defer cancel()
 	}
 
-	return cl.Delete(ctx, &corev1.Namespace{
+	nsobj := &corev1.Namespace{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: ns.Name,
 		},
 		TypeMeta: metav1.TypeMeta{
-			Kind: "Namespace",
+			Kind:       "Namespace",
+			APIVersion: "v1",
 		},
-	})
+	}
+
+	if err := cl.Delete(ctx, nsobj); err != nil {
+		return err
+	}
+
+	return wait.PollImmediateUntil(100*time.Millisecond, func() (done bool, err error) {
+		err = cl.Get(ctx, client.ObjectKeyFromObject(nsobj), &corev1.Namespace{})
+		if err == nil || !errors.IsNotFound(err) {
+			return false, err
+		}
+		return true, nil
+	}, ctx.Done())
 }
 
 // CreateNamespace creates a namespace in Kubernetes to use for a test.
