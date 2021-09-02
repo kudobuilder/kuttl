@@ -8,8 +8,8 @@ owners:
   - "@nfnt"
   - "@kensipe"
 creation-date: 2020-10-28
-last-updated: 2021-02-04
-status: implementable
+last-updated: 2021-09-02
+status: implemented
 ---
 
 # Assertions for CLI commands
