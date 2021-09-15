@@ -19,7 +19,7 @@ func ToObjects(paths []string) ([]client.Object, error) {
 	for _, path := range paths {
 		objs, err := testutils.LoadYAMLFromFile(path)
 		if err != nil {
-			return nil, fmt.Errorf("file %q load yaml error", path)
+			return nil, fmt.Errorf("file %q load yaml error: %w", path, err)
 		}
 		apply = append(apply, objs...)
 	}
