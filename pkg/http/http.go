@@ -28,7 +28,7 @@ func ToObjects(urlPath string) ([]client.Object, error) {
 
 	objs, err := testutils.LoadYAML(urlPath, buf)
 	if err != nil {
-		return nil, fmt.Errorf("url %q load yaml error", urlPath)
+		return nil, fmt.Errorf("url %q load yaml error: %w", urlPath, err)
 	}
 	apply = append(apply, objs...)
 

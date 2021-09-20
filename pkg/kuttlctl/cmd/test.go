@@ -233,7 +233,7 @@ For more detailed documentation, visit: https://kuttl.dev`,
 		},
 	}
 
-	testCmd.Flags().StringVar(&configPath, "config", "", "Path to file to load test settings from (must not be set with any other arguments).")
+	testCmd.Flags().StringVar(&configPath, "config", "", "Path to file to load base test settings from (these may be overridden with command-line arguments).")
 	testCmd.Flags().StringVar(&crdDir, "crd-dir", "", "Directory to load CustomResourceDefinitions from prior to running the tests.")
 	testCmd.Flags().StringSliceVar(&manifestDirs, "manifest-dir", []string{}, "One or more directories containing manifests to apply before running the tests.")
 	testCmd.Flags().StringVar(&testToRun, "test", "", "If set, the specific test case to run.")
