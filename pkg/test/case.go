@@ -34,12 +34,13 @@ var testStepRegex = regexp.MustCompile(`^(\d+)-(?:[^\.]+)(?:\.yaml)?$`)
 // Case contains all of the test steps and the Kubernetes client and other global configuration
 // for a test.
 type Case struct {
-	Steps              []*Step
-	Name               string
-	Dir                string
-	SkipDelete         bool
-	Timeout            int
-	PreferredNamespace string
+	Steps                  []*Step
+	Name                   string
+	Dir                    string
+	SkipDelete             bool
+	Timeout                int
+	PreferredNamespace     string
+	BlockOnNamespaceDelete bool
 
 	Client          func(forceNew bool) (client.Client, error)
 	DiscoveryClient func() (discovery.DiscoveryInterface, error)
@@ -84,13 +85,18 @@ func (t *Case) DeleteNamespace(cl client.Client, ns *namespace) error {
 		return err
 	}
 
-	return wait.PollImmediateUntil(100*time.Millisecond, func() (done bool, err error) {
-		err = cl.Get(ctx, client.ObjectKeyFromObject(nsobj), &corev1.Namespace{})
-		if err == nil || !errors.IsNotFound(err) {
-			return false, err
-		}
-		return true, nil
-	}, ctx.Done())
+	if t.BlockOnNamespaceDelete {
+		t.Logger.Log("Blocking until namespace is deleted:", ns.Name)
+		return wait.PollImmediateUntil(100*time.Millisecond, func() (done bool, err error) {
+			err = cl.Get(ctx, client.ObjectKeyFromObject(nsobj), &corev1.Namespace{})
+			if err == nil || !errors.IsNotFound(err) {
+				return false, err
+			}
+			return true, nil
+		}, ctx.Done())
+	}
+
+	return nil
 }
 
 // CreateNamespace creates a namespace in Kubernetes to use for a test.
