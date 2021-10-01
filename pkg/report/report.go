@@ -5,6 +5,7 @@ import (
 	"encoding/xml"
 	"fmt"
 	"io/ioutil"
+	"os"
 	"path/filepath"
 	"time"
 )
@@ -216,6 +217,15 @@ func latestEnd(start time.Time, testcases []*Testcase) time.Time {
 // Report prints a report for TestSuites to the directory.  ftype == json | xml
 func (ts *Testsuites) Report(dir, name string, ftype Type) error {
 	ts.Close()
+
+	// Create the folder to save the report if it doesn't exist
+	if _, err := os.Stat(dir); os.IsNotExist(err) {
+		dirCreationErr := os.MkdirAll(dir, 0755)
+		if dirCreationErr != nil {
+			return dirCreationErr
+		}
+	}
+
 	// if a report is requested it is always created
 	switch ftype {
 	case XML:
