@@ -515,6 +515,8 @@ func LoadYAML(path string, r io.Reader) ([]client.Object, error) {
 			return nil, fmt.Errorf("error decoding yaml %s: %w", path, err)
 		}
 
+		unstructuredObj.Object = Translate(unstructuredObj.Object).(map[string]interface{})
+
 		obj, err := ConvertUnstructured(unstructuredObj)
 		if err != nil {
 			return nil, fmt.Errorf("error converting unstructured object %s (%s): %w", ResourceID(unstructuredObj), path, err)
