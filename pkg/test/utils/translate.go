@@ -97,7 +97,7 @@ func translateRecursive(copy, original reflect.Value) {
 	case reflect.String:
 		translatedString := original.Interface().(string)
 		if strings.HasPrefix(translatedString, "$") {
-			variable := TrimLeftChar(translatedString)
+			variable := translatedString[1:]
 			if val, ok := os.LookupEnv(variable); ok {
 				translatedString = val
 			}
