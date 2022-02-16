@@ -219,11 +219,15 @@ func (ts *Testsuites) Report(dir, name string, ftype Type) error {
 	ts.Close()
 
 	// Create the folder to save the report if it doesn't exist
-	if _, err := os.Stat(dir); os.IsNotExist(err) {
-		dirCreationErr := os.MkdirAll(dir, 0755)
-		if dirCreationErr != nil {
-			return dirCreationErr
+	_, err := os.Stat(dir)
+
+	if os.IsNotExist(err) {
+		err = os.MkdirAll(dir, 0755)
+		if err != nil {
+			return err
 		}
+	} else if err != nil {
+		return err
 	}
 
 	// if a report is requested it is always created
