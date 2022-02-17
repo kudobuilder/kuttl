@@ -35,7 +35,7 @@ ifneq (${GOLANGCI_LINT_VER}, "$(shell ./bin/golangci-lint version --format short
 	@echo "golangci-lint missing or not version '${GOLANGCI_LINT_VER}', downloading..."
 	curl -sSfL "https://raw.githubusercontent.com/golangci/golangci-lint/v${GOLANGCI_LINT_VER}/install.sh" | sh -s -- -b ./bin "v${GOLANGCI_LINT_VER}"
 endif
-	./bin/golangci-lint --timeout 3m run --build-tags integration
+	./bin/golangci-lint --timeout 5m run --build-tags integration
 	
 .PHONY: download
 download:  ## Downloads go dependencies
