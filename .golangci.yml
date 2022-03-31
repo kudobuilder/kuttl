@@ -24,6 +24,7 @@ linters:
     - unused
     - varcheck
 run:
+  go: '1.17'
   skip-dirs:
     - hack
     - dist
