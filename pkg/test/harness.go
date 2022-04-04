@@ -220,7 +220,7 @@ func (h *Harness) RunTestEnv() (*rest.Config, error) {
 
 	h.T.Logf("started test environment (kube-apiserver and etcd) in %v, with following options:\n%s",
 		time.Since(started),
-		strings.Join(testenv.Environment.KubeAPIServerFlags, "\n"))
+		strings.Join(testenv.Environment.KubeAPIServerFlags, "\n")) //nolint // KubeAPIServerFlags is deprecated and needs a solution for the next bump
 	h.env = testenv.Environment
 
 	return testenv.Config, nil
