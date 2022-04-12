@@ -13,7 +13,9 @@ then
     echo "Running E2E tests with junit output"
     mkdir -p reports/
     go get github.com/jstemmer/go-junit-report
-
+    go install github.com/jstemmer/go-junit-report
+    go mod tidy
+    
     ./bin/kubectl-kuttl test pkg/test/test_data/ 2>&1 \
         | tee /dev/fd/2 \
         | go-junit-report -set-exit-code \

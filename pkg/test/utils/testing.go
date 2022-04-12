@@ -5,9 +5,11 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"reflect"
 	"regexp"
 	"runtime/pprof"
 	"testing"
+	"time"
 )
 
 // RunTests runs a Go test method without requiring the Go compiler.
@@ -44,7 +46,7 @@ func RunTests(testName string, testToRun string, parallelism int, testFunc func(
 			Name: testName,
 			F:    testFunc,
 		},
-	}, nil, nil).Run())
+	}, nil, nil, nil).Run())
 }
 
 // testDeps implements the testDeps interface for MainStart.
@@ -88,4 +90,41 @@ func (testDeps) StartTestLog(w io.Writer) {}
 
 func (testDeps) StopTestLog() error {
 	return nil
+}
+
+func (testDeps) CoordinateFuzzing(time.Duration, int64, time.Duration, int64, int, []corpusEntry, []reflect.Type, string, string) error {
+	return nil
+}
+
+func (testDeps) RunFuzzWorker(func(corpusEntry) error) error {
+	return nil
+}
+
+func (testDeps) ReadCorpus(string, []reflect.Type) ([]corpusEntry, error) {
+	return nil, nil
+}
+
+func (testDeps) CheckCorpus([]interface{}, []reflect.Type) error {
+	return nil
+}
+
+func (testDeps) ResetCoverage() {
+
+}
+
+func (testDeps) SnapshotCoverage() {
+
+}
+
+// corpusEntry is from the public go testing which references an internal structure.
+// corpusEntry is an alias to the same type as internal/fuzz.CorpusEntry.
+// We use a type alias because we don't want to export this type, and we can't
+// import internal/fuzz from testing.
+type corpusEntry = struct {
+	Parent     string
+	Path       string
+	Data       []byte
+	Values     []interface{}
+	Generation int
+	IsSeed     bool
 }
