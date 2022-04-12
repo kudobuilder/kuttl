@@ -35,6 +35,7 @@ kind-logs-*/
 
 ### gorelease
 dist/
+deps/
 
 ### VS Code
 .vscode/
