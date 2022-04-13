@@ -25,7 +25,7 @@ jobs:
 
   lint:
     docker:
-      - image: kudobuilder/golang:1.17
+      - image: kudobuilder/golang:1.18
     working_directory: /go/src/github.com/kudobuilder/kuttl
     steps:
       - checkout
