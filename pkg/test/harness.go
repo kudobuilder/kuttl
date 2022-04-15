@@ -538,6 +538,8 @@ func (h *Harness) Stop() {
 		}
 	}
 
+	h.Report()
+
 	if h.TestSuite.SkipClusterDelete {
 		cwd, err := os.Getwd()
 		if err != nil {
@@ -573,7 +575,6 @@ func (h *Harness) Stop() {
 
 		h.kind = nil
 	}
-	h.Report()
 }
 
 // wraps Test.Fatal in order to clean up harness
