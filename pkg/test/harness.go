@@ -238,6 +238,9 @@ func (h *Harness) Config() (*rest.Config, error) {
 
 	var err error
 	switch {
+	case h.TestSuite.Config != nil:
+		h.T.Log("running tests with passed rest config.")
+		h.config = h.TestSuite.Config.RC
 	case h.TestSuite.StartControlPlane:
 		h.T.Log("running tests with a mocked control plane (kube-apiserver and etcd).")
 		h.config, err = h.RunTestEnv()
