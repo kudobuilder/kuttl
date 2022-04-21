@@ -235,7 +235,7 @@ func (ts *Testsuites) Report(dir, name string, ftype Type) error {
 }
 
 func ensureDir(dir string) error {
-	if dir != "" {
+	if dir == "" {
 		return nil
 	}
 	_, err := os.Stat(dir)
