@@ -242,9 +242,7 @@ func ensureDir(dir string) error {
 	// Create the folder to save the report if it doesn't exist
 	if os.IsNotExist(err) {
 		err = os.MkdirAll(dir, 0755)
-		if err != nil {
-			return err
-		}
+		//	no need for error check, it is always returned and handled by caller
 	}
 	return err
 }
