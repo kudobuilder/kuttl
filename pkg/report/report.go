@@ -218,16 +218,11 @@ func latestEnd(start time.Time, testcases []*Testcase) time.Time {
 func (ts *Testsuites) Report(dir, name string, ftype Type) error {
 	ts.Close()
 
-	// Create the folder to save the report if it doesn't exist
-	_, err := os.Stat(dir)
-
-	if os.IsNotExist(err) {
-		err = os.MkdirAll(dir, 0755)
+	if dir != "" {
+		err := ensureDir(dir)
 		if err != nil {
 			return err
 		}
-	} else if err != nil {
-		return err
 	}
 
 	// if a report is requested it is always created
@@ -239,6 +234,19 @@ func (ts *Testsuites) Report(dir, name string, ftype Type) error {
 	default:
 		return writeJSONReport(dir, name, ts)
 	}
+}
+
+func ensureDir(dir string) error {
+	_, err := os.Stat(dir)
+	// TODO log this, need to passing logger or have logger added to Testsuites
+	// Create the folder to save the report if it doesn't exist
+	if os.IsNotExist(err) {
+		err = os.MkdirAll(dir, 0755)
+		if err != nil {
+			return err
+		}
+	}
+	return err
 }
 
 // NewSuite creates and assigns a TestSuite to the TestSuites (then returns the suite)
