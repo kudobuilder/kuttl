@@ -218,11 +218,9 @@ func latestEnd(start time.Time, testcases []*Testcase) time.Time {
 func (ts *Testsuites) Report(dir, name string, ftype Type) error {
 	ts.Close()
 
-	if dir != "" {
-		err := ensureDir(dir)
-		if err != nil {
-			return err
-		}
+	err := ensureDir(dir)
+	if err != nil {
+		return err
 	}
 
 	// if a report is requested it is always created
@@ -237,6 +235,9 @@ func (ts *Testsuites) Report(dir, name string, ftype Type) error {
 }
 
 func ensureDir(dir string) error {
+	if dir != "" {
+		return nil
+	}
 	_, err := os.Stat(dir)
 	// TODO log this, need to passing logger or have logger added to Testsuites
 	// Create the folder to save the report if it doesn't exist
