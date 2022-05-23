@@ -357,7 +357,7 @@ func (s *Step) CheckResourceAbsent(expected runtime.Object, namespace string) er
 
 	for _, actual := range actuals {
 		if err := testutils.IsSubset(expectedObj, actual.UnstructuredContent()); err == nil {
-			return fmt.Errorf("resource matched of kind: %s", gvk.String())
+			return fmt.Errorf("resource matched of kind: %s: %+v", gvk.String(), actual.UnstructuredContent())
 		}
 	}
 
