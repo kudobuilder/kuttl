@@ -1,0 +1,152 @@
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  name: testsuites.kuttl.dev
+spec:
+  group: kuttl.dev
+  names:
+    kind: TestSuite
+    plural: testsuites
+  scope: Namespaced
+  versions:
+    - name: v1beta1
+      served: true # served as to allow IDEs to remotely load them and offer coding assistance
+      storage: true
+      schema:
+        openAPIV3Schema: #! inlined from teststep-json-schema.yaml where authoring is made easier. See https://github.com/crossplane/crossplane/issues/3197#issuecomment-1191479570 for details
+          description: |
+            The TestSuite object specifies the settings for the entire test suite and should live in the test suite 
+            configuration file (kuttl-test.yaml by default, or --config)
+          type: object
+          properties:
+            crdDir:
+              description: Path to CRDs to install before running tests. KUTTL waits for CRDs to be available prior to starting tests.
+              type: string
+            manifestDirs:
+              description: Paths to manifests to install before running tests.
+              type: array
+              items:
+                type: string
+            testDirs:
+              description: Directories containing test cases to run.
+              type: array
+              items:
+                type: string
+            startControlPlane:
+              description: Whether or not to start a local etcd and kubernetes API server for the tests.
+              type: boolean
+              default: false
+            startKIND:
+              description: Whether or not to start a local kind cluster for the tests.
+              type: boolean
+              default: false
+            kindNodeCache:
+              description: If set, each node defined in the kind configuration will have a docker volume mounted into it to persist pulled container images across test runs
+              type: boolean
+              default: false
+            kindConfig:
+              description: Path to the KIND configuration file to use.
+              type: boolean
+            kindContext:
+              description: KIND context to use.
+              type: string
+              default: "kind"
+            skipDelete:
+              description: If set, do not delete the resources after running the tests (implies SkipClusterDelete).
+              type: boolean
+              default: false
+            skipClusterDelete:
+              description: If set, do not delete the mocked control plane or kind cluster.
+              type: boolean
+              default: false
+            timeout:
+              description: Override the default timeout of 30 seconds (in seconds).
+              type: integer
+              default: 30
+            parallel:
+              description: The maximum number of tests to run at once.
+              type: integer
+              default: 8
+            artifactsDir:
+              description: The directory to output artifacts to (current working directory if not specified).
+              type: string
+              default: "."
+            commands:
+              description: Commands to run prior to running the tests.
+              type: array
+              items:
+                description: The Command object is used to enable running commands in tests
+                type: object
+                properties:
+                  command:
+                    description: The command and argument to run as a string.
+                    type: string
+                  script:
+                    description: |
+                      Allows a shell script to run 
+                      - namespaced and command should not be used with script. 
+                      - namespaced is ignored and command is an error. 
+                      - env expansion is depended upon the shell but ENV is passed to the runtime env.
+                    type: string
+                  namespaced:
+                    description: |
+                      If set, the --namespace flag will be appended to the command with the namespace to use 
+                      (the test namespace for a test step or "default" for the test suite).
+                    type: boolean
+                  ignoreFailure:
+                    description: If set, failures will be ignored.
+                    type: boolean
+                  background:
+                    description: |
+                      If this command is to be started in the background. 
+                      These are only support in TestSuites.
+                    type: boolean
+                  skipLogOutput:
+                    description: |
+                      If set, the output from the command is not logged. 
+                      Useful for sensitive logs or to reduce noise.
+                    type: boolean
+                  timeout:
+                    description: Override the TestSuite timeout for this command (in seconds).
+                    type: integer
+            kindContainers:
+              description: List of Docker images to load into the KIND cluster once it is started.
+              type: array
+              items:
+                type: string
+              default: [ ]
+            reportFormat:
+              description: |
+                Determines the report format. If empty, no report is generated. One of: JSON, XML.
+              type: string
+            reportName:
+              description: The name of report to create. This field is not used unless reportFormat is set.
+              default: "kuttl-test"
+              type: string
+            namespace:
+              description: |
+                The namespace to use for tests. This namespace will be created if it does not exist 
+                and removed if it was created (unless skipDelete is set). 
+                If no namespace is set, one will be auto-generated.
+              type: string
+            suppress:
+              description: Suppresses log collection of the specified types. Currently only events is supported.
+              type: array
+              items:
+                type: string
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
