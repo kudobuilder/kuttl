@@ -4,7 +4,10 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"k8s.io/apimachinery/pkg/util/strategicpatch"
+	"k8s.io/kube-openapi/pkg/util/proto"
 	"path/filepath"
+	"reflect"
 	"regexp"
 	"strings"
 	"time"
@@ -244,6 +247,18 @@ func (s *Step) CheckResource(expected runtime.Object, namespace string) []error 
 		return []error{err}
 	}
 
+	apiSchema, err := dClient.OpenAPISchema()
+	if err != nil {
+		return []error{err}
+	}
+
+	models, err := proto.NewOpenAPIData(apiSchema)
+	if err != nil {
+		return []error{err}
+	}
+	//for _, model := range models.ListModels() {
+	//	fmt.Println(model)
+	//}
 	testErrors := []error{}
 
 	name, namespace, err := testutils.Namespaced(dClient, expected, namespace)
@@ -285,8 +300,27 @@ func (s *Step) CheckResource(expected runtime.Object, namespace string) []error 
 
 		tmpTestErrors := []error{}
 
-		if err := testutils.IsSubset(expectedObj, actual.UnstructuredContent()); err != nil {
-			diff, diffErr := testutils.PrettyDiff(expected, &actual)
+		model := models.LookupModel("io.k8s.api.core.v1.Namespace")
+		pm := strategicpatch.NewPatchMetaFromOpenAPI(model)
+		patched, err := strategicpatch.StrategicMergeMapPatchUsingLookupPatchMeta(actual.UnstructuredContent(), expectedObj, pm)
+		fmt.Println("patched")
+		fmt.Println(patched)
+		if err != nil {
+			testErrors = append(testErrors, err)
+			continue
+		}
+
+		fmt.Println("patched")
+		fmt.Println(patched)
+		fmt.Println("unstructured")
+		fmt.Println(actual.UnstructuredContent())
+		if reflect.DeepEqual(map[string]interface{}(patched), actual.UnstructuredContent()) {
+			continue
+		} else {
+
+			//		if err := testutils.IsSubset(expectedObj, actual.UnstructuredContent()); err != nil {
+			diff, diffErr := testutils.PrettyDiff(&unstructured.Unstructured{Object: patched}, &actual)
+			fmt.Println(diff)
 			if diffErr == nil {
 				tmpTestErrors = append(tmpTestErrors, fmt.Errorf(diff))
 			} else {
