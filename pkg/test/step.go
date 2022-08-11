@@ -235,6 +235,62 @@ func list(cl client.Client, gvk schema.GroupVersionKind, namespace string) ([]un
 	return list.Items, nil
 }
 
+// groupVersionKindExtensionKey is the key used to lookup the
+// GroupVersionKind value for an object definition from the
+// definition's "extensions" map.
+const groupVersionKindExtensionKey = "x-kubernetes-group-version-kind"
+
+// Get and parse GroupVersionKind from the extension.
+// Stolen from https://github.com/kubernetes/kubernetes/pull/54181/files#diff-b2030bccb7d3726b6ac8a4ac74e56964eb72249cc9859b6c13a2d652178620aeR80
+// and https://github.com/kubernetes/kubernetes/blob/f5956716e3a92fba30c81635c68187653f7567c2/staging/src/k8s.io/apimachinery/pkg/util/managedfields/gvkparser.go#L83
+func parseGroupVersionKind(s proto.Schema) ([]schema.GroupVersionKind, error) {
+	extensions := s.GetExtensions()
+
+	// Get the extensions
+	gvkExtension, ok := extensions[groupVersionKindExtensionKey]
+	if !ok {
+		return nil, fmt.Errorf("no extension %q among %q", groupVersionKindExtensionKey, reflect.ValueOf(extensions).MapKeys())
+	}
+
+	// gvk extension must be a list of at least 1 element.
+	gvkList, ok := gvkExtension.([]interface{})
+	if !ok {
+		return nil, fmt.Errorf("extension is not a list but %T", gvkExtension)
+	}
+	if len(gvkList) == 0 {
+		return nil, fmt.Errorf("extension has %d elements", len(gvkList))
+	}
+	var gvkListResult []schema.GroupVersionKind
+	for _, gvk := range gvkList {
+		// gvk extension list must be a map with group, version, and
+		// kind fields
+		gvkMap, ok := gvk.(map[interface{}]interface{})
+		if !ok {
+			return nil, fmt.Errorf("extension element is not a map, but %T", gvk)
+		}
+		group, ok := gvkMap["group"].(string)
+		if !ok {
+			return nil, fmt.Errorf("group is not a string but %T", gvkMap["group"])
+		}
+		version, ok := gvkMap["version"].(string)
+		if !ok {
+			return nil, fmt.Errorf("version is not a string but %T", gvkMap["version"])
+		}
+		kind, ok := gvkMap["kind"].(string)
+		if !ok {
+			return nil, fmt.Errorf("kind is not a string but %T", gvkMap["kind"])
+		}
+
+		gvkListResult = append(gvkListResult, schema.GroupVersionKind{
+			Group:   group,
+			Version: version,
+			Kind:    kind,
+		})
+
+	}
+	return gvkListResult, nil
+}
+
 // CheckResource checks if the expected resource's state in Kubernetes is correct.
 func (s *Step) CheckResource(expected runtime.Object, namespace string) []error {
 	cl, err := s.Client(false)
@@ -256,9 +312,9 @@ func (s *Step) CheckResource(expected runtime.Object, namespace string) []error 
 	if err != nil {
 		return []error{err}
 	}
-	//for _, model := range models.ListModels() {
-	//	fmt.Println(model)
-	//}
+
+	gvkToModel := mapGVKToModels(models)
+
 	testErrors := []error{}
 
 	name, namespace, err := testutils.Namespaced(dClient, expected, namespace)
@@ -300,27 +356,31 @@ func (s *Step) CheckResource(expected runtime.Object, namespace string) []error 
 
 		tmpTestErrors := []error{}
 
-		model := models.LookupModel("io.k8s.api.core.v1.Namespace")
+		model, found := gvkToModel[actual.GroupVersionKind()]
+		if !found {
+			// TODO: fallback to old-style comparison
+			testErrors = append(testErrors, fmt.Errorf("OpenAPI schema model for %q not found", actual.GroupVersionKind()))
+			continue
+		}
 		pm := strategicpatch.NewPatchMetaFromOpenAPI(model)
-		patched, err := strategicpatch.StrategicMergeMapPatchUsingLookupPatchMeta(actual.UnstructuredContent(), expectedObj, pm)
-		fmt.Println("patched")
-		fmt.Println(patched)
+		patched, err := strategicpatch.StrategicMergeMapPatchUsingLookupPatchMeta(actual.DeepCopy().UnstructuredContent(), expectedObj, pm)
+		//		fmt.Println("patched")
+		//		fmt.Printf("%+v", patched)
 		if err != nil {
 			testErrors = append(testErrors, err)
 			continue
 		}
 
-		fmt.Println("patched")
-		fmt.Println(patched)
-		fmt.Println("unstructured")
-		fmt.Println(actual.UnstructuredContent())
+		//		fmt.Println("actual")
+		//		fmt.Println(actual.UnstructuredContent())
 		if reflect.DeepEqual(map[string]interface{}(patched), actual.UnstructuredContent()) {
 			continue
 		} else {
 
-			//		if err := testutils.IsSubset(expectedObj, actual.UnstructuredContent()); err != nil {
+			err := testutils.IsSubset(map[string]interface{}(patched), actual.UnstructuredContent())
+
 			diff, diffErr := testutils.PrettyDiff(&unstructured.Unstructured{Object: patched}, &actual)
-			fmt.Println(diff)
+			//			fmt.Println(diff)
 			if diffErr == nil {
 				tmpTestErrors = append(tmpTestErrors, fmt.Errorf(diff))
 			} else {
@@ -338,6 +398,25 @@ func (s *Step) CheckResource(expected runtime.Object, namespace string) []error 
 	}
 
 	return testErrors
+}
+
+func mapGVKToModels(models proto.Models) map[schema.GroupVersionKind]proto.Schema {
+	modelNames := models.ListModels()
+	gvkToModel := make(map[schema.GroupVersionKind]proto.Schema, len(modelNames))
+	for _, modelName := range modelNames {
+		model := models.LookupModel(modelName)
+		gvks, err := parseGroupVersionKind(model)
+		if err != nil {
+			continue
+		}
+		for _, gvk := range gvks {
+			if _, present := gvkToModel[gvk]; present {
+				fmt.Printf("duplicate GVK %q in OpenAPI schema\n", gvk)
+			}
+			gvkToModel[gvk] = model
+		}
+	}
+	return gvkToModel
 }
 
 // CheckResourceAbsent checks if the expected resource's state is absent in Kubernetes.
