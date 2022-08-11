@@ -18,7 +18,7 @@ func Assert(namespace string, timeout int, assertFiles ...string) error {
 	var objects []client.Object
 
 	for _, file := range assertFiles {
-		o, err := ObjectsFromPath(file, "")
+		o, err := ObjectsFromPath(file, "", testutils.GetTemplatingContext(namespace))
 		if err != nil {
 			return err
 		}
@@ -64,7 +64,7 @@ func Errors(namespace string, timeout int, errorFiles ...string) error {
 	var objects []client.Object
 
 	for _, file := range errorFiles {
-		o, err := ObjectsFromPath(file, "")
+		o, err := ObjectsFromPath(file, "", testutils.GetTemplatingContext(namespace))
 		if err != nil {
 			return err
 		}

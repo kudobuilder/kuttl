@@ -100,6 +100,7 @@ func TestMultiClusterCase(t *testing.T) {
 			return testenv.DiscoveryClient, nil
 		},
 	}
+	c.determineNamespace()
 
 	c.Run(t, &report.Testcase{})
 }

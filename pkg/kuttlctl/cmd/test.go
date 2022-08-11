@@ -88,7 +88,7 @@ For more detailed documentation, visit: https://kuttl.dev`,
 
 			// Load the configuration YAML into options.
 			if configPath != "" {
-				objects, err := testutils.LoadYAMLFromFile(configPath)
+				objects, err := testutils.LoadYAMLFromFile(configPath, testutils.TemplatingContext{})
 				if err != nil {
 					return err
 				}

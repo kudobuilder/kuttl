@@ -17,6 +17,7 @@ import (
 	"strings"
 	"sync"
 	"testing"
+	"text/template"
 	"time"
 
 	"github.com/google/shlex"
@@ -484,8 +485,25 @@ func MarshalObjectJSON(o runtime.Object, w io.Writer) error {
 	return json.NewSerializer(json.DefaultMetaFactory, nil, nil, false).Encode(copied, w)
 }
 
+type TemplatingContext struct {
+	Namespace string
+	Env       map[string]string
+}
+
 // LoadYAMLFromFile loads all objects from a YAML file.
-func LoadYAMLFromFile(path string) ([]client.Object, error) {
+func LoadYAMLFromFile(path string, templatingContext TemplatingContext) ([]client.Object, error) {
+	if strings.HasSuffix(path, ".gotmpl.yaml") {
+		tpl, err := template.ParseFiles(path)
+		if err != nil {
+			return nil, fmt.Errorf("failed to parse file %q as go template: %w", path, err)
+		}
+		b := strings.Builder{}
+		err = tpl.Execute(&b, templatingContext)
+		if err != nil {
+			return nil, fmt.Errorf("failed to execute file %q as go template: %w", path, err)
+		}
+		return LoadYAML(path, strings.NewReader(b.String()))
+	}
 	opened, err := os.Open(path)
 	if err != nil {
 		return nil, err
@@ -574,7 +592,7 @@ func InstallManifests(ctx context.Context, c client.Client, dClient discovery.Di
 			return nil
 		}
 
-		objs, err := LoadYAMLFromFile(path)
+		objs, err := LoadYAMLFromFile(path, TemplatingContext{})
 		if err != nil {
 			return err
 		}
@@ -1232,4 +1250,18 @@ func InClusterConfig() (bool, error) {
 		return false, nil
 	}
 	return false, err
+}
+
+func GetTemplatingContext(namespace string) TemplatingContext {
+	env := make(map[string]string, len(os.Environ()))
+	for _, setting := range os.Environ() {
+		if name, val, found := strings.Cut(setting, "="); found {
+			env[name] = val
+		}
+	}
+
+	return TemplatingContext{
+		Namespace: namespace,
+		Env:       env,
+	}
 }

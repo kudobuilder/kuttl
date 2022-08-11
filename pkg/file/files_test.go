@@ -1,6 +1,7 @@
 package file
 
 import (
+	"github.com/kudobuilder/kuttl/pkg/test/utils"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -51,13 +52,13 @@ func TestFromPath(t *testing.T) {
 
 func TestToRuntimeObjects(t *testing.T) {
 	files := []string{"testdata/path/test1.yaml"}
-	objs, err := ToObjects(files)
+	objs, err := ToObjects(files, utils.TemplatingContext{})
 	assert.NoError(t, err)
 	assert.Equal(t, 1, len(objs))
 	assert.Equal(t, "Pod", objs[0].GetObjectKind().GroupVersionKind().Kind)
 
 	files = append(files, "testdata/path/test2.yaml")
-	_, err = ToObjects(files)
+	_, err = ToObjects(files, utils.TemplatingContext{})
 	assert.Error(t, err, "file \"testdata/path/test2.yaml\" load yaml error")
 }
 

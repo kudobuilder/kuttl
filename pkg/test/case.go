@@ -28,7 +28,7 @@ import (
 )
 
 // testStepRegex contains one capturing group to determine the index of a step file.
-var testStepRegex = regexp.MustCompile(`^(\d+)-(?:[^\.]+)(?:\.yaml)?$`)
+var testStepRegex = regexp.MustCompile(`^(\d+)-(?:[^\.]+)(?:\.gotmpl)?(?:\.yaml)?$`)
 
 // Case contains all of the test steps and the Kubernetes client and other global configuration
 // for a test.
@@ -42,6 +42,7 @@ type Case struct {
 
 	Client          func(forceNew bool) (client.Client, error)
 	DiscoveryClient func() (discovery.DiscoveryInterface, error)
+	ns              *namespace
 
 	Logger testutils.Logger
 	// Suppress is used to suppress logs
@@ -54,13 +55,13 @@ type namespace struct {
 }
 
 // DeleteNamespace deletes a namespace in Kubernetes after we are done using it.
-func (t *Case) DeleteNamespace(cl client.Client, ns *namespace) error {
-	if !ns.AutoCreated {
-		t.Logger.Log("Skipping deletion of user-supplied namespace:", ns.Name)
+func (t *Case) DeleteNamespace(cl client.Client) error {
+	if !t.ns.AutoCreated {
+		t.Logger.Log("Skipping deletion of user-supplied namespace:", t.ns.Name)
 		return nil
 	}
 
-	t.Logger.Log("Deleting namespace:", ns.Name)
+	t.Logger.Log("Deleting namespace:", t.ns.Name)
 
 	ctx := context.Background()
 	if t.Timeout > 0 {
@@ -71,7 +72,7 @@ func (t *Case) DeleteNamespace(cl client.Client, ns *namespace) error {
 
 	return cl.Delete(ctx, &corev1.Namespace{
 		ObjectMeta: metav1.ObjectMeta{
-			Name: ns.Name,
+			Name: t.ns.Name,
 		},
 		TypeMeta: metav1.TypeMeta{
 			Kind: "Namespace",
@@ -80,12 +81,12 @@ func (t *Case) DeleteNamespace(cl client.Client, ns *namespace) error {
 }
 
 // CreateNamespace creates a namespace in Kubernetes to use for a test.
-func (t *Case) CreateNamespace(cl client.Client, ns *namespace) error {
-	if !ns.AutoCreated {
-		t.Logger.Log("Skipping creation of user-supplied namespace:", ns.Name)
+func (t *Case) CreateNamespace(cl client.Client) error {
+	if !t.ns.AutoCreated {
+		t.Logger.Log("Skipping creation of user-supplied namespace:", t.ns.Name)
 		return nil
 	}
-	t.Logger.Log("Creating namespace:", ns.Name)
+	t.Logger.Log("Creating namespace:", t.ns.Name)
 
 	ctx := context.Background()
 	if t.Timeout > 0 {
@@ -96,7 +97,7 @@ func (t *Case) CreateNamespace(cl client.Client, ns *namespace) error {
 
 	return cl.Create(ctx, &corev1.Namespace{
 		ObjectMeta: metav1.ObjectMeta{
-			Name: ns.Name,
+			Name: t.ns.Name,
 		},
 		TypeMeta: metav1.TypeMeta{
 			Kind: "Namespace",
@@ -292,8 +293,6 @@ func shortString(obj *corev1.ObjectReference) string {
 
 // Run runs a test case including all of its steps.
 func (t *Case) Run(test *testing.T, tc *report.Testcase) {
-	ns := t.determineNamespace()
-
 	cl, err := t.Client(false)
 	if err != nil {
 		tc.Failure = report.NewFailure(err.Error(), nil)
@@ -317,7 +316,7 @@ func (t *Case) Run(test *testing.T, tc *report.Testcase) {
 	}
 
 	for _, c := range clients {
-		if err := t.CreateNamespace(c, ns); err != nil {
+		if err := t.CreateNamespace(c); err != nil {
 			tc.Failure = report.NewFailure(err.Error(), nil)
 			test.Fatal(err)
 		}
@@ -326,7 +325,7 @@ func (t *Case) Run(test *testing.T, tc *report.Testcase) {
 	if !t.SkipDelete {
 		defer func() {
 			for _, c := range clients {
-				if err := t.DeleteNamespace(c, ns); err != nil {
+				if err := t.DeleteNamespace(c); err != nil {
 					test.Error(err)
 				}
 			}
@@ -348,13 +347,13 @@ func (t *Case) Run(test *testing.T, tc *report.Testcase) {
 
 		if !t.SkipDelete {
 			defer func() {
-				if err := testStep.Clean(ns.Name); err != nil {
+				if err := testStep.Clean(t.ns.Name); err != nil {
 					test.Error(err)
 				}
 			}()
 		}
 
-		if errs := testStep.Run(ns.Name); len(errs) > 0 {
+		if errs := testStep.Run(t.ns.Name); len(errs) > 0 {
 			caseErr := fmt.Errorf("failed in step %s", testStep.String())
 			tc.Failure = report.NewFailure(caseErr.Error(), errs)
 
@@ -369,22 +368,22 @@ func (t *Case) Run(test *testing.T, tc *report.Testcase) {
 	if funk.Contains(t.Suppress, "events") {
 		t.Logger.Logf("skipping kubernetes event logging")
 	} else {
-		t.CollectEvents(ns.Name)
+		t.CollectEvents(t.ns.Name)
 	}
 }
 
-func (t *Case) determineNamespace() *namespace {
-	ns := &namespace{
-		Name:        t.PreferredNamespace,
-		AutoCreated: false,
-	}
-	// no preferred ns, means we auto-create with petnames
+func (t *Case) determineNamespace() {
 	if t.PreferredNamespace == "" {
-		ns.Name = fmt.Sprintf("kuttl-test-%s", petname.Generate(2, "-"))
-		ns.AutoCreated = true
+		t.ns = &namespace{
+			Name:        fmt.Sprintf("kuttl-test-%s", petname.Generate(2, "-")),
+			AutoCreated: true,
+		}
+	} else {
+		t.ns = &namespace{
+			Name:        t.PreferredNamespace,
+			AutoCreated: false,
+		}
 	}
-	// if we have a preferred namespace, we do NOT auto-create
-	return ns
 }
 
 // CollectTestStepFiles collects a map of test steps and their associated files
@@ -446,6 +445,8 @@ func getIndexFromFile(fileName string) (int64, error) {
 
 // LoadTestSteps loads all of the test steps for a test case.
 func (t *Case) LoadTestSteps() error {
+	t.determineNamespace()
+
 	testStepFiles, err := t.CollectTestStepFiles()
 	if err != nil {
 		return err
@@ -464,7 +465,7 @@ func (t *Case) LoadTestSteps() error {
 		}
 
 		for _, file := range files {
-			if err := testStep.LoadYAML(file); err != nil {
+			if err := testStep.LoadYAML(file, testutils.GetTemplatingContext(t.ns.Name)); err != nil {
 				return err
 			}
 		}

@@ -26,7 +26,7 @@ import (
 
 // fileNameRegex contains two capturing groups to determine whether a file has special
 // meaning (ex. assert) or contains an appliable object, and extra name elements.
-var fileNameRegex = regexp.MustCompile(`^(?:\d+-)?([^-\.]+)(-[^\.]+)?(?:\.yaml)?$`)
+var fileNameRegex = regexp.MustCompile(`^(?:\d+-)?([^-\.]+)(-[^\.]+)?(?:\.gotmpl)?(?:\.yaml)?$`)
 
 // A Step contains the name of the test step, its index in the test,
 // and all of the test step's settings (including objects to apply and assert on).
@@ -476,8 +476,8 @@ func (s *Step) String() string {
 // * If the YAML file is called "errors", then it contains objects that,
 //   if seen, mark a test immediately failed.
 // * All other YAML files are considered resources to create.
-func (s *Step) LoadYAML(file string) error {
-	objects, err := testutils.LoadYAMLFromFile(file)
+func (s *Step) LoadYAML(file string, templatingContext testutils.TemplatingContext) error {
+	objects, err := testutils.LoadYAMLFromFile(file, templatingContext)
 	if err != nil {
 		return fmt.Errorf("loading %s: %s", file, err)
 	}
@@ -530,7 +530,7 @@ func (s *Step) LoadYAML(file string) error {
 		// process configured step applies
 		for _, applyPath := range s.Step.Apply {
 			exApply := env.Expand(applyPath)
-			apply, err := ObjectsFromPath(exApply, s.Dir)
+			apply, err := ObjectsFromPath(exApply, s.Dir, templatingContext)
 			if err != nil {
 				return fmt.Errorf("step %q apply path %s: %w", s.Name, exApply, err)
 			}
@@ -539,7 +539,7 @@ func (s *Step) LoadYAML(file string) error {
 		// process configured step asserts
 		for _, assertPath := range s.Step.Assert {
 			exAssert := env.Expand(assertPath)
-			assert, err := ObjectsFromPath(exAssert, s.Dir)
+			assert, err := ObjectsFromPath(exAssert, s.Dir, templatingContext)
 			if err != nil {
 				return fmt.Errorf("step %q assert path %s: %w", s.Name, exAssert, err)
 			}
@@ -548,7 +548,7 @@ func (s *Step) LoadYAML(file string) error {
 		// process configured errors
 		for _, errorPath := range s.Step.Error {
 			exError := env.Expand(errorPath)
-			errObjs, err := ObjectsFromPath(exError, s.Dir)
+			errObjs, err := ObjectsFromPath(exError, s.Dir, templatingContext)
 			if err != nil {
 				return fmt.Errorf("step %q error path %s: %w", s.Name, exError, err)
 			}
@@ -566,7 +566,7 @@ func (s *Step) LoadYAML(file string) error {
 func (s *Step) populateObjectsByFileName(fileName string, objects []client.Object) error {
 	matches := fileNameRegex.FindStringSubmatch(fileName)
 	if len(matches) < 2 {
-		return fmt.Errorf("%s does not match file name regexp: %s", fileName, testStepRegex.String())
+		return fmt.Errorf("%s does not match file name regexp: %s", fileName, fileNameRegex.String())
 	}
 
 	switch fname := strings.ToLower(matches[1]); fname {
@@ -590,7 +590,7 @@ func (s *Step) populateObjectsByFileName(fileName string, objects []client.Objec
 }
 
 // ObjectsFromPath returns an array of runtime.Objects for files / urls provided
-func ObjectsFromPath(path, dir string) ([]client.Object, error) {
+func ObjectsFromPath(path, dir string, templatingContext testutils.TemplatingContext) ([]client.Object, error) {
 	if http.IsURL(path) {
 		apply, err := http.ToObjects(path)
 		if err != nil {
@@ -605,7 +605,7 @@ func ObjectsFromPath(path, dir string) ([]client.Object, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to find YAML files in %s: %w", cPath, err)
 	}
-	apply, err := kfile.ToObjects(paths)
+	apply, err := kfile.ToObjects(paths, templatingContext)
 	if err != nil {
 		return nil, err
 	}

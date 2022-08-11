@@ -200,7 +200,7 @@ spec:
 		t.Fatal(err)
 	}
 
-	objs, err := LoadYAMLFromFile(tmpfile.Name())
+	objs, err := LoadYAMLFromFile(tmpfile.Name(), TemplatingContext{})
 	assert.Nil(t, err)
 
 	assert.Equal(t, &unstructured.Unstructured{
@@ -269,7 +269,7 @@ metadata:
 		t.Fatal(err)
 	}
 
-	objs, err := LoadYAMLFromFile(tmpfile.Name())
+	objs, err := LoadYAMLFromFile(tmpfile.Name(), TemplatingContext{})
 	assert.Nil(t, err)
 
 	crd := NewResource("apiextensions.k8s.io/v1beta1", "CustomResourceDefinition", "", "")
