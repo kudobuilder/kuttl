@@ -112,7 +112,7 @@ properties:
       The namespace to use for tests. This namespace will be created if it does not exist 
       and removed if it was created (unless skipDelete is set). 
       If no namespace is set, one will be auto-generated.
-   type: string
+    type: string
   suppress:
     description: Suppresses log collection of the specified types. Currently only events is supported.
     type: array
