@@ -307,6 +307,9 @@ func TestStepDeleteExistingLabelMatch(t *testing.T) {
 		DiscoveryClient: func() (discovery.DiscoveryInterface, error) { return testenv.DiscoveryClient, nil },
 	}
 
+	namespaceObj := testutils.NewResource("v1", "Namespace", namespace, "default")
+
+	assert.Nil(t, testenv.Client.Create(context.TODO(), namespaceObj))
 	assert.Nil(t, testenv.Client.Create(context.TODO(), podToKeep))
 	assert.Nil(t, testenv.Client.Create(context.TODO(), podToDelete))
 	assert.Nil(t, testenv.Client.Create(context.TODO(), podToDelete2))

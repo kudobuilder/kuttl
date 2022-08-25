@@ -60,8 +60,10 @@ func TestStepCreate(t *testing.T) {
 	clusterScopedResource := testutils.NewResource("v1", "Namespace", "my-namespace", "default")
 	podToUpdate := testutils.NewPod("update-me", "default")
 	specToApply := map[string]interface{}{
-		"replicas": int64(2),
+		"containers":    nil,
+		"restartPolicy": "OnFailure",
 	}
+
 	updateToApply := testutils.WithSpec(t, podToUpdate, specToApply)
 
 	cl := fake.NewClientBuilder().WithScheme(scheme.Scheme).WithRuntimeObjects(testutils.WithNamespace(podToUpdate, testNamespace)).Build()
@@ -155,11 +157,11 @@ func TestCheckResource(t *testing.T) {
 		{
 			testName: "resource subset match",
 			actual: testutils.WithSpec(t, testutils.NewPod("hello", ""), map[string]interface{}{
-				"ignored": "key",
-				"seen":    "key",
+				"containers":    nil,
+				"restartPolicy": "OnFailure",
 			}),
 			expected: testutils.WithSpec(t, testutils.NewPod("hello", ""), map[string]interface{}{
-				"seen": "key",
+				"restartPolicy": "OnFailure",
 			}),
 		},
 		{
