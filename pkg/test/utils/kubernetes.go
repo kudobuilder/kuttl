@@ -637,11 +637,13 @@ func ObjectKey(obj runtime.Object) client.ObjectKey {
 }
 
 // NewResource generates a Kubernetes object using the provided apiVersion, kind, name, and namespace.
+// The name and namespace are omitted if empty.
 func NewResource(apiVersion, kind, name, namespace string) *unstructured.Unstructured {
-	meta := map[string]interface{}{
-		"name": name,
-	}
+	meta := map[string]interface{}{}
 
+	if name != "" {
+		meta["name"] = name
+	}
 	if namespace != "" {
 		meta["namespace"] = namespace
 	}
@@ -688,6 +690,27 @@ func NewClusterRoleBinding(apiVersion, kind, name, namespace string, serviceAcco
 // NewPod creates a new pod object.
 func NewPod(name, namespace string) *unstructured.Unstructured {
 	return NewResource("v1", "Pod", name, namespace)
+}
+
+// NewV1Pod returns a new corev1.Pod object.
+// Each of name, namespace and serviceAccountName are set if non-empty.
+func NewV1Pod(name, namespace, serviceAccountName string) *corev1.Pod {
+	pod := corev1.Pod{}
+	pod.SetGroupVersionKind(schema.GroupVersionKind{
+		Group:   "",
+		Version: "v1",
+		Kind:    "Pod",
+	})
+	if name != "" {
+		pod.SetName(name)
+	}
+	if namespace != "" {
+		pod.SetNamespace(namespace)
+	}
+	if serviceAccountName != "" {
+		pod.Spec.ServiceAccountName = serviceAccountName
+	}
+	return &pod
 }
 
 // WithNamespace naively applies the namespace to the object. Used mainly in tests, otherwise

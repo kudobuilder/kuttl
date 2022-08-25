@@ -355,13 +355,20 @@ func (s *Step) CheckResourceAbsent(expected runtime.Object, namespace string) er
 		return err
 	}
 
+	var unexpectedObjects []unstructured.Unstructured
 	for _, actual := range actuals {
 		if err := testutils.IsSubset(expectedObj, actual.UnstructuredContent()); err == nil {
-			return fmt.Errorf("resource matched of kind: %s", gvk.String())
+			unexpectedObjects = append(unexpectedObjects, actual)
 		}
 	}
 
-	return nil
+	if len(unexpectedObjects) == 0 {
+		return nil
+	}
+	if len(unexpectedObjects) == 1 {
+		return fmt.Errorf("resource %s %s matched error assertion", unexpectedObjects[0].GroupVersionKind(), unexpectedObjects[0].GetName())
+	}
+	return fmt.Errorf("resource %s %s (and %d other resources) matched error assertion", unexpectedObjects[0].GroupVersionKind(), unexpectedObjects[0].GetName(), len(unexpectedObjects)-1)
 }
 
 // CheckAssertCommands Runs the commands provided in `commands` and check if have been run successfully.
