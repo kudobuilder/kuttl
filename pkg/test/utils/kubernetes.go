@@ -68,12 +68,13 @@ var APIServerDefaultArgs = []string{
 	"--advertise-address=127.0.0.1",
 	"--etcd-servers={{ if .EtcdURL }}{{ .EtcdURL.String }}{{ end }}",
 	"--cert-dir={{ .CertDir }}",
-	"--insecure-port={{ if .URL }}{{ .URL.Port }}{{ end }}",
-	"--insecure-bind-address={{ if .URL }}{{ .URL.Hostname }}{{ end }}",
+	"--insecure-port={{ if .URL }}{{ .URL.Port }}{{else}}0{{ end }}",
+	"{{ if .URL }}--insecure-bind-address={{ .URL.Hostname }}{{ end }}",
 	"--secure-port={{ if .SecurePort }}{{ .SecurePort }}{{ end }}",
-	"--disable-admission-plugins=ServiceAccount,NamespaceLifecycle",
+
+	"--disable-admission-plugins=ServiceAccount",
 	"--service-cluster-ip-range=10.0.0.0/24",
-	"--advertise-address={{ if .URL }}{{ .URL.Hostname }}{{ end }}",
+	"--allow-privileged=true",
 }
 
 // TODO (kensipe): need to consider options around AlwaysAdmin https://github.com/kudobuilder/kudo/pull/1420/files#r391449597
@@ -549,14 +550,14 @@ func MatchesKind(obj runtime.Object, kinds ...runtime.Object) bool {
 }
 
 // InstallManifests recurses over ManifestsDir to install all resources defined in YAML manifests.
-func InstallManifests(ctx context.Context, c client.Client, dClient discovery.DiscoveryInterface, manifestsDir string, kinds ...runtime.Object) ([]client.Object, error) {
-	objects := []client.Object{}
+func InstallManifests(ctx context.Context, c client.Client, dClient discovery.DiscoveryInterface, manifestsDir string, kinds ...runtime.Object) ([]*apiextv1.CustomResourceDefinition, error) {
+	crds := []*apiextv1.CustomResourceDefinition{}
 
 	if manifestsDir == "" {
-		return objects, nil
+		return crds, nil
 	}
 
-	return objects, filepath.Walk(manifestsDir, func(path string, info os.FileInfo, err error) error {
+	return crds, filepath.Walk(manifestsDir, func(path string, info os.FileInfo, err error) error {
 		if err != nil {
 			return err
 		}
@@ -610,7 +611,16 @@ func InstallManifests(ctx context.Context, c client.Client, dClient discovery.Di
 			// TODO: use test logger instead of Go logger
 			log.Println(ResourceID(obj), action)
 
-			objects = append(objects, obj)
+			newCrd := apiextv1.CustomResourceDefinition{
+				TypeMeta: metav1.TypeMeta{
+					Kind:       obj.GetObjectKind().GroupVersionKind().Kind,
+					APIVersion: obj.GetObjectKind().GroupVersionKind().Version,
+				},
+				ObjectMeta: metav1.ObjectMeta{
+					Name: obj.GetName(),
+				},
+			}
+			crds = append(crds, &newCrd)
 		}
 
 		return nil
