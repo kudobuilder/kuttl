@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"encoding/xml"
 	"flag"
-	"io/ioutil"
+	"os"
 	"path/filepath"
 	"testing"
 
@@ -67,19 +67,19 @@ AssertionError`,
 
 	if *updateGolden {
 		t.Logf("updating golden files %s and %s", goldenXML, goldenJSON)
-		if err := ioutil.WriteFile(xmlFile, []byte(xout), 0600); err != nil {
+		if err := os.WriteFile(xmlFile, []byte(xout), 0600); err != nil {
 			t.Fatalf("failed to update golden file: %s", err)
 		}
-		if err := ioutil.WriteFile(jsonFile, []byte(jout), 0600); err != nil {
+		if err := os.WriteFile(jsonFile, []byte(jout), 0600); err != nil {
 			t.Fatalf("failed to update golden file: %s", err)
 		}
 	}
-	gxml, err := ioutil.ReadFile(xmlFile)
+	gxml, err := os.ReadFile(xmlFile)
 	if err != nil {
 		t.Fatalf("failed reading .golden: %s", err)
 	}
 	assert.Equal(t, string(gxml), xout, "for golden file: %s", xmlFile)
-	gjson, err := ioutil.ReadFile(jsonFile)
+	gjson, err := os.ReadFile(jsonFile)
 	if err != nil {
 		t.Fatalf("failed reading .golden: %s", err)
 	}

@@ -2,7 +2,6 @@ package file
 
 import (
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strings"
@@ -41,7 +40,7 @@ func FromPath(path, pattern string) ([]string, error) {
 		return nil, fmt.Errorf("file mode issue with %w", err)
 	}
 	if fi.IsDir() {
-		fileInfos, err := ioutil.ReadDir(path)
+		fileInfos, err := os.ReadDir(path)
 		if err != nil {
 			return nil, err
 		}

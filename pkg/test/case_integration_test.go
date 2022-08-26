@@ -3,7 +3,6 @@
 package test
 
 import (
-	"io/ioutil"
 	"os"
 	"testing"
 
@@ -41,7 +40,7 @@ func TestMultiClusterCase(t *testing.T) {
 		},
 	}
 
-	tmpfile, err := ioutil.TempFile("", "kubeconfig")
+	tmpfile, err := os.CreateTemp("", "kubeconfig")
 	if err != nil {
 		t.Error(err)
 		return

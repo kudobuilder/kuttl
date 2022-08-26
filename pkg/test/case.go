@@ -3,7 +3,7 @@ package test
 import (
 	"context"
 	"fmt"
-	"io/ioutil"
+	"os"
 	"path/filepath"
 	"regexp"
 	"sort"
@@ -392,7 +392,7 @@ func (t *Case) determineNamespace() *namespace {
 func (t *Case) CollectTestStepFiles() (map[int64][]string, error) {
 	testStepFiles := map[int64][]string{}
 
-	files, err := ioutil.ReadDir(t.Dir)
+	files, err := os.ReadDir(t.Dir)
 	if err != nil {
 		return nil, err
 	}
@@ -414,7 +414,7 @@ func (t *Case) CollectTestStepFiles() (map[int64][]string, error) {
 		testStepPath := filepath.Join(t.Dir, file.Name())
 
 		if file.IsDir() {
-			testStepDir, err := ioutil.ReadDir(testStepPath)
+			testStepDir, err := os.ReadDir(testStepPath)
 			if err != nil {
 				return nil, err
 			}

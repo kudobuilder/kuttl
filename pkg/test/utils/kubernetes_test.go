@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"context"
 	"errors"
-	"io/ioutil"
 	"os"
 	"testing"
 	"time"
@@ -170,11 +169,11 @@ func TestRetryWithTimeout(t *testing.T) {
 }
 
 func TestLoadYAML(t *testing.T) {
-	tmpfile, err := ioutil.TempFile("", "test.yaml")
+	tmpfile, err := os.CreateTemp("", "test.yaml")
 	assert.Nil(t, err)
 	defer tmpfile.Close()
 
-	err = ioutil.WriteFile(tmpfile.Name(), []byte(`
+	err = os.WriteFile(tmpfile.Name(), []byte(`
 apiVersion: v1
 kind: Pod
 metadata:
@@ -246,11 +245,11 @@ spec:
 }
 
 func TestMatchesKind(t *testing.T) {
-	tmpfile, err := ioutil.TempFile("", "test.yaml")
+	tmpfile, err := os.CreateTemp("", "test.yaml")
 	assert.Nil(t, err)
 	defer tmpfile.Close()
 
-	err = ioutil.WriteFile(tmpfile.Name(), []byte(`
+	err = os.WriteFile(tmpfile.Name(), []byte(`
 apiVersion: v1
 kind: Pod
 metadata:

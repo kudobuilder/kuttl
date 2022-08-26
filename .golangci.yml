@@ -1,7 +1,6 @@
 linters:
   auto-fix: false
   enable:
-    - deadcode
     - dupl
     - errcheck
     - exportloopref
@@ -17,12 +16,10 @@ linters:
     - nakedret
     - revive
     - staticcheck
-    - structcheck
     - stylecheck
     - unconvert
     - unparam
     - unused
-    - varcheck
 run:
   go: '1.17'
   skip-dirs:

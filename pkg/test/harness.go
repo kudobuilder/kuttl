@@ -5,7 +5,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"io/ioutil"
 	"math/rand"
 	"os"
 	"os/exec"
@@ -63,7 +62,7 @@ func (h *Harness) LoadTests(dir string) ([]*Case, error) {
 		return nil, err
 	}
 
-	files, err := ioutil.ReadDir(dir)
+	files, err := os.ReadDir(dir)
 	if err != nil {
 		return nil, err
 	}
@@ -170,7 +169,7 @@ func (h *Harness) RunKIND() (*rest.Config, error) {
 // various parts of system may need it, starting with kind, or working with tar test suites
 func (h *Harness) initTempPath() (err error) {
 	if h.tempPath == "" {
-		h.tempPath, err = ioutil.TempDir("", "kuttl")
+		h.tempPath, err = os.MkdirTemp("", "kuttl")
 		h.T.Log("temp folder created", h.tempPath)
 	}
 	return err
@@ -415,7 +414,7 @@ func (h *Harness) testPreProcessing() []string {
 			client := http.NewClient()
 			h.T.Logf("downloading %s", dir)
 			// fresh temp dir created for each download to prevent overwriting
-			folder, err := ioutil.TempDir(h.tempPath, filepath.Base(dir))
+			folder, err := os.MkdirTemp(h.tempPath, filepath.Base(dir))
 			if err != nil {
 				h.T.Fatal(err)
 			}
@@ -609,7 +608,7 @@ func (h *Harness) Report() {
 }
 
 func (h *Harness) loadKindConfig(path string) (*kindConfig.Cluster, error) {
-	raw, err := ioutil.ReadFile(path)
+	raw, err := os.ReadFile(path)
 	if err != nil {
 		return nil, err
 	}

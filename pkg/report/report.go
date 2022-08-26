@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"encoding/xml"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"time"
@@ -271,7 +270,7 @@ func writeXMLReport(dir, name string, ts *Testsuites) error {
 	}
 	xmlStr := string(xDoc)
 	//nolint:gosec
-	return ioutil.WriteFile(file, []byte(xmlStr), 0644)
+	return os.WriteFile(file, []byte(xmlStr), 0644)
 }
 
 func writeJSONReport(dir, name string, ts *Testsuites) error {
@@ -282,5 +281,5 @@ func writeJSONReport(dir, name string, ts *Testsuites) error {
 	}
 
 	//nolint:gosec
-	return ioutil.WriteFile(file, jDoc, 0644)
+	return os.WriteFile(file, jDoc, 0644)
 }
