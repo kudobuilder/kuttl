@@ -478,11 +478,11 @@ func (s *Step) String() string {
 }
 
 // LoadYAML loads the resources from a YAML file for a test step:
-// * If the YAML file is called "assert", then it contains objects to
-//   add to the test step's list of assertions.
-// * If the YAML file is called "errors", then it contains objects that,
-//   if seen, mark a test immediately failed.
-// * All other YAML files are considered resources to create.
+//   - If the YAML file is called "assert", then it contains objects to
+//     add to the test step's list of assertions.
+//   - If the YAML file is called "errors", then it contains objects that,
+//     if seen, mark a test immediately failed.
+//   - All other YAML files are considered resources to create.
 func (s *Step) LoadYAML(file string) error {
 	objects, err := testutils.LoadYAMLFromFile(file)
 	if err != nil {
