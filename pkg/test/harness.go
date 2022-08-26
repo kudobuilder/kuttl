@@ -219,7 +219,7 @@ func (h *Harness) RunTestEnv() (*rest.Config, error) {
 
 	h.T.Logf("started test environment (kube-apiserver and etcd) in %v, with following options:\n%s",
 		time.Since(started),
-		strings.Join(testenv.Environment.ControlPlane.GetAPIServer().Args, "\n"))
+		strings.Join(testenv.Environment.ControlPlane.GetAPIServer().Configure().AsStrings(nil), "\n"))
 	h.env = testenv.Environment
 
 	return testenv.Config, nil
