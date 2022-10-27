@@ -84,3 +84,21 @@ spec:
                   timeout:
                     description: Override the TestSuite timeout for this command (in seconds).
                     type: integer
+            apply:
+              description: |
+                List of path to resources to be *applied* in this step. A path may point to a file or directory, and is relative to the TestStep the folder is defined in.
+              type: array
+              items:
+                type: string
+            assert:
+              description: |
+                List of path to resources to be *assert expected* in this step. A path may point to a file or directory, and is relative to the TestStep the folder is defined in.
+              type: array
+              items:
+                type: string
+            error:
+              description: |
+                List of path to resources to be *error expected* in this step. A path may point to a file or directory, and is relative to the TestStep the folder is defined in.
+              type: array
+              items:
+                type: string
