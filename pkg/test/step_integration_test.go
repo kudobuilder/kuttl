@@ -347,9 +347,9 @@ func TestCheckedTypeAssertions(t *testing.T) {
 
 func TestApplyExpansion(t *testing.T) {
 	os.Setenv("TEST_FOO", "test")
-	defer func() {
+	t.Cleanup(func() {
 		os.Unsetenv("TEST_FOO")
-	}()
+	})
 
 	step := Step{Dir: "step_integration_test_data/assert_expand/"}
 	path := "step_integration_test_data/assert_expand/00-step1.yaml"
@@ -361,9 +361,9 @@ func TestApplyExpansion(t *testing.T) {
 
 func TestOverriddenKubeconfigPathResolution(t *testing.T) {
 	os.Setenv("SUBPATH", "test")
-	defer func() {
+	t.Cleanup(func() {
 		os.Unsetenv("SUBPATH")
-	}()
+	})
 	stepRelativePath := &Step{Dir: "step_integration_test_data/kubeconfig_path_resolution/"}
 	err := stepRelativePath.LoadYAML("step_integration_test_data/kubeconfig_path_resolution/00-step1.yaml")
 	assert.NoError(t, err)

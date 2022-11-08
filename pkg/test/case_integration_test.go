@@ -21,14 +21,14 @@ func TestMultiClusterCase(t *testing.T) {
 		t.Error(err)
 		return
 	}
-	defer testenv.Environment.Stop()
+	t.Cleanup(testenv.Environment.Stop)
 
 	testenv2, err := testutils.StartTestEnvironment(testutils.APIServerDefaultArgs, false)
 	if err != nil {
 		t.Error(err)
 		return
 	}
-	defer testenv2.Environment.Stop()
+	t.Cleanup(testenv2.Environment.Stop)
 
 	podSpec := map[string]interface{}{
 		"restartPolicy": "Never",
@@ -45,7 +45,9 @@ func TestMultiClusterCase(t *testing.T) {
 		t.Error(err)
 		return
 	}
-	defer os.Remove(tmpfile.Name())
+	t.Cleanup(func() {
+		os.Remove(tmpfile.Name())
+	})
 	if err := testutils.Kubeconfig(testenv2.Config, tmpfile); err != nil {
 		t.Error(err)
 		return
