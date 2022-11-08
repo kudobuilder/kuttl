@@ -317,23 +317,21 @@ func (t *Case) Run(test *testing.T, tc *report.Testcase) {
 	}
 
 	for _, c := range clients {
+		c := c
 		if err := t.CreateNamespace(c, ns); err != nil {
 			tc.Failure = report.NewFailure(err.Error(), nil)
 			test.Fatal(err)
-		}
-	}
-
-	if !t.SkipDelete {
-		defer func() {
-			for _, c := range clients {
+		} else if !t.SkipDelete {
+			test.Cleanup(func() {
 				if err := t.DeleteNamespace(c, ns); err != nil {
 					test.Error(err)
 				}
-			}
-		}()
+			})
+		}
 	}
 
 	for _, testStep := range t.Steps {
+		testStep := testStep
 		testStep.Client = t.Client
 		if testStep.Kubeconfig != "" {
 			testStep.Client = newClient(testStep.Kubeconfig)
@@ -347,11 +345,11 @@ func (t *Case) Run(test *testing.T, tc *report.Testcase) {
 		tc.Assertions += len(testStep.Errors)
 
 		if !t.SkipDelete {
-			defer func(step *Step) {
-				if err := step.Clean(ns.Name); err != nil {
+			test.Cleanup(func() {
+				if err := testStep.Clean(ns.Name); err != nil {
 					test.Error(err)
 				}
-			}(testStep)
+			})
 		}
 
 		if errs := testStep.Run(ns.Name); len(errs) > 0 {
