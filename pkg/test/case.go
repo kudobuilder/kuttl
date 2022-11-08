@@ -94,11 +94,13 @@ func (t *Case) CreateNamespace(test *testing.T, cl client.Client, ns *namespace)
 		defer cancel()
 	}
 
-	test.Cleanup(func() {
-		if err := t.DeleteNamespace(cl, ns); err != nil {
-			test.Error(err)
-		}
-	})
+	if !t.SkipDelete {
+		test.Cleanup(func() {
+			if err := t.DeleteNamespace(cl, ns); err != nil {
+				test.Error(err)
+			}
+		})
+	}
 
 	return cl.Create(ctx, &corev1.Namespace{
 		ObjectMeta: metav1.ObjectMeta{
