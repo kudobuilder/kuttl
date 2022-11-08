@@ -80,7 +80,7 @@ func (t *Case) DeleteNamespace(cl client.Client, ns *namespace) error {
 }
 
 // CreateNamespace creates a namespace in Kubernetes to use for a test.
-func (t *Case) CreateNamespace(cl client.Client, ns *namespace) error {
+func (t *Case) CreateNamespace(test *testing.T, cl client.Client, ns *namespace) error {
 	if !ns.AutoCreated {
 		t.Logger.Log("Skipping creation of user-supplied namespace:", ns.Name)
 		return nil
@@ -93,6 +93,12 @@ func (t *Case) CreateNamespace(cl client.Client, ns *namespace) error {
 		ctx, cancel = context.WithTimeout(ctx, time.Duration(t.Timeout)*time.Second)
 		defer cancel()
 	}
+
+	test.Cleanup(func() {
+		if err := t.DeleteNamespace(cl, ns); err != nil {
+			test.Error(err)
+		}
+	})
 
 	return cl.Create(ctx, &corev1.Namespace{
 		ObjectMeta: metav1.ObjectMeta{
@@ -317,16 +323,9 @@ func (t *Case) Run(test *testing.T, tc *report.Testcase) {
 	}
 
 	for _, c := range clients {
-		c := c
-		if err := t.CreateNamespace(c, ns); err != nil {
+		if err := t.CreateNamespace(test, c, ns); err != nil {
 			tc.Failure = report.NewFailure(err.Error(), nil)
 			test.Fatal(err)
-		} else if !t.SkipDelete {
-			test.Cleanup(func() {
-				if err := t.DeleteNamespace(c, ns); err != nil {
-					test.Error(err)
-				}
-			})
 		}
 	}
 
