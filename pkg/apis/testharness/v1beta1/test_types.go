@@ -89,6 +89,9 @@ type TestStep struct {
 	// +kubebuilder:validation:Format:=int64
 	Index int `json:"index,omitempty"`
 
+	// ExpectFailure means entries in `apply` should fail.
+	ExpectFailure bool `json:"expectFailure,omitempty"`
+
 	// Apply, Assert and Error lists of files or directories to use in the test step.
 	// Useful to reuse a number of applies across tests / test steps.
 	// all relative paths are relative to the folder the TestStep is defined in.

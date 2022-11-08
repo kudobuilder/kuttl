@@ -178,12 +178,16 @@ func (s *Step) Create(namespace string) []error {
 		return []error{err}
 	}
 
-	errors := []error{}
+	errs := []error{}
+	expectFailure := false
+	if s.Step != nil {
+		expectFailure = s.Step.ExpectFailure
+	}
 
 	for _, obj := range s.Apply {
 		_, _, err := testutils.Namespaced(dClient, obj, namespace)
 		if err != nil {
-			errors = append(errors, err)
+			errs = append(errs, err)
 			continue
 		}
 		ctx := context.Background()
@@ -194,17 +198,22 @@ func (s *Step) Create(namespace string) []error {
 		}
 
 		if updated, err := testutils.CreateOrUpdate(ctx, cl, obj, true); err != nil {
-			errors = append(errors, err)
+			if !expectFailure {
+				errs = append(errs, err)
+			}
 		} else {
 			action := "created"
 			if updated {
 				action = "updated"
 			}
 			s.Logger.Log(testutils.ResourceID(obj), action)
+			if expectFailure {
+				errs = append(errs, errors.New("an error was expected but didn't happen"))
+			}
 		}
 	}
 
-	return errors
+	return errs
 }
 
 // GetTimeout gets the timeout defined for the test step.
