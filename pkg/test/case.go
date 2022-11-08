@@ -343,7 +343,6 @@ func (t *Case) Run(test *testing.T, tc *report.Testcase) {
 	}
 
 	for _, testStep := range t.Steps {
-		testStep := testStep
 		testStep.Client = t.Client
 		if testStep.Kubeconfig != "" {
 			testStep.Client = newClient(testStep.Kubeconfig)
