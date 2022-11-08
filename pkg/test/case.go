@@ -347,11 +347,11 @@ func (t *Case) Run(test *testing.T, tc *report.Testcase) {
 		tc.Assertions += len(testStep.Errors)
 
 		if !t.SkipDelete {
-			defer func() {
-				if err := testStep.Clean(ns.Name); err != nil {
+			defer func(step *Step) {
+				if err := step.Clean(ns.Name); err != nil {
 					test.Error(err)
 				}
-			}()
+			}(testStep)
 		}
 
 		if errs := testStep.Run(ns.Name); len(errs) > 0 {
