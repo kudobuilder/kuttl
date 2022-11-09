@@ -21,7 +21,11 @@ func TestMultiClusterCase(t *testing.T) {
 		t.Error(err)
 		return
 	}
-	t.Cleanup(testenv.Environment.Stop)
+	t.Cleanup(func() {
+		if err := testenv.Environment.Stop(); err != nil {
+			t.Error(err)
+		}
+	})
 
 	testenv2, err := testutils.StartTestEnvironment(testutils.APIServerDefaultArgs, false)
 	if err != nil {
