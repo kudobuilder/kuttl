@@ -40,8 +40,7 @@ var (
 )
 
 // newTestCmd creates the test command for the CLI
-// nolint:gocyclo
-func newTestCmd() *cobra.Command {
+func newTestCmd() *cobra.Command { //nolint:gocyclo
 	configPath := ""
 	crdDir := ""
 	manifestDirs := []string{}

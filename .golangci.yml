@@ -21,6 +21,7 @@ linters:
     - lll
     - misspell
     - nakedret
+    - nolintlint
     - revive
     - staticcheck
     - stylecheck
