@@ -2,13 +2,18 @@ linters:
   auto-fix: false
   enable:
     - asasalint
+    - asciicheck
+    - bidichk
     - bodyclose
     - containedctx
+    - decorder
     - dogsled
+    - durationcheck
     - dupl
     - errcheck
     - errname
     - exportloopref
+    - gochecknoinits
     - goconst
     - gocritic
     - gocyclo
@@ -17,14 +22,19 @@ linters:
     - gosimple
     - govet
     - grouper
+    - importas
     - ineffassign
     - lll
+    - makezero
     - misspell
     - nakedret
+    - noctx
     - nolintlint
+    - nosprintfhostport
     - revive
     - staticcheck
     - stylecheck
+    - typecheck
     - unconvert
     - unparam
     - unused
