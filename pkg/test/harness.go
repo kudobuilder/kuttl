@@ -602,18 +602,17 @@ func (h *Harness) Report() {
 	if len(h.TestSuite.ReportFormat) == 0 {
 		return
 	}
-	if err := h.report.Report(h.TestSuite.ArtifactsDir, h.GetReportName(), report.Type(h.TestSuite.ReportFormat)); err != nil {
+	if err := h.report.Report(h.TestSuite.ArtifactsDir, h.reportName(), report.Type(h.TestSuite.ReportFormat)); err != nil {
 		h.fatal(fmt.Errorf("fatal error writing report: %v", err))
 	}
 }
 
-// GetReportName returns the configured ReportName.
-func (h *Harness) GetReportName() string {
-	reportName := "kuttl-report"
+// reportName returns the configured ReportName.
+func (h *Harness) reportName() string {
 	if h.TestSuite.ReportName != "" {
-		reportName = h.TestSuite.ReportName
+		return h.TestSuite.ReportName
 	}
-	return reportName
+	return "kuttl-report"
 }
 
 func (h *Harness) loadKindConfig(path string) (*kindConfig.Cluster, error) {

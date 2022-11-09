@@ -22,10 +22,10 @@ func TestGetTimeout(t *testing.T) {
 
 func TestGetReportName(t *testing.T) {
 	h := Harness{}
-	assert.Equal(t, "kuttl-report", h.GetReportName())
+	assert.Equal(t, "kuttl-report", h.reportName())
 
 	h.TestSuite.ReportName = "special-kuttl-report"
-	assert.Equal(t, "special-kuttl-report", h.GetReportName())
+	assert.Equal(t, "special-kuttl-report", h.reportName())
 }
 
 type dockerMock struct {
