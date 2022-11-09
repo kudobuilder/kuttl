@@ -9,9 +9,9 @@ import (
 
 func TestExpandWithMap(t *testing.T) {
 	os.Setenv("KUTTL_TEST_123", "hello")
-	defer func() {
+	t.Cleanup(func() {
 		os.Unsetenv("KUTTL_TEST_123")
-	}()
+	})
 	assert.Equal(t, "hello $  world", ExpandWithMap("$KUTTL_TEST_123 $$ $DOES_NOT_EXIST_1234 ${EXPAND_ME}", map[string]string{
 		"EXPAND_ME": "world",
 	}))

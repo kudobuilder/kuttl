@@ -351,7 +351,7 @@ func (h *Harness) DockerClient() (testutils.DockerClient, error) {
 // tests at dir.
 func (h *Harness) RunTests() {
 	// cleanup after running tests
-	defer h.Stop()
+	h.T.Cleanup(h.Stop)
 	h.T.Log("running tests")
 
 	testDirs := h.testPreProcessing()
