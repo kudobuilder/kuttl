@@ -64,7 +64,7 @@ type TestSuite struct {
 	// maps to report.Type, however we don't want generated.deepcopy to have reference to it.
 	ReportFormat string `json:"reportFormat"`
 
-	// ReportName defines the name of report to create.  It defaults to "kuttl-test" and is not used unless ReportFormat is defined.
+	// ReportName defines the name of report to create.  It defaults to "kuttl-report" and is not used unless ReportFormat is defined.
 	ReportName string `json:"reportName"`
 	// Namespace defines the namespace to use for tests
 	// The value "" means to auto-generate tests namespaces, these namespaces will be created and removed for each test
