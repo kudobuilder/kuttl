@@ -28,6 +28,7 @@ linters:
     - unconvert
     - unparam
     - unused
+    - wastedassign
     - whitespace
 run:
   go: '1.17'

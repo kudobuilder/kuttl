@@ -80,7 +80,7 @@ func TestGETAPIResource(t *testing.T) {
 	assert.Nil(t, err)
 	assert.Equal(t, apiResource.Kind, "Pod")
 
-	apiResource, err = GetAPIResource(fake, schema.GroupVersionKind{
+	_, err = GetAPIResource(fake, schema.GroupVersionKind{
 		Kind:    "NonExistentResourceType",
 		Version: "v1",
 	})
