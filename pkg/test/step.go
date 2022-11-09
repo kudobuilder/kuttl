@@ -166,6 +166,30 @@ func (s *Step) DeleteExisting(namespace string) error {
 	})
 }
 
+func apply(logger testutils.Logger, timeout int, dClient discovery.DiscoveryInterface, client client.Client, obj client.Object, namespace string) error {
+	_, _, err := testutils.Namespaced(dClient, obj, namespace)
+	if err != nil {
+		return err
+	}
+	ctx := context.Background()
+	if timeout > 0 {
+		var cancel context.CancelFunc
+		ctx, cancel = context.WithTimeout(ctx, time.Duration(timeout)*time.Second)
+		defer cancel()
+	}
+
+	if updated, err := testutils.CreateOrUpdate(ctx, client, obj, true); err != nil {
+		return err
+	} else {
+		action := "created"
+		if updated {
+			action = "updated"
+		}
+		logger.Log(testutils.ResourceID(obj), action)
+	}
+	return nil
+}
+
 // Create applies all resources defined in the Apply list.
 func (s *Step) Create(namespace string) []error {
 	cl, err := s.Client(true)
@@ -185,31 +209,15 @@ func (s *Step) Create(namespace string) []error {
 	}
 
 	for _, obj := range s.Apply {
-		_, _, err := testutils.Namespaced(dClient, obj, namespace)
-		if err != nil {
+		err := apply(s.Logger, s.Timeout, dClient, cl, obj, namespace)
+		// if there was an error but we didn't expect one
+		if err != nil && !expectFailure {
 			errs = append(errs, err)
-			continue
 		}
-		ctx := context.Background()
-		if s.Timeout > 0 {
-			var cancel context.CancelFunc
-			ctx, cancel = context.WithTimeout(ctx, time.Duration(s.Timeout)*time.Second)
-			defer cancel()
-		}
-
-		if updated, err := testutils.CreateOrUpdate(ctx, cl, obj, true); err != nil {
-			if !expectFailure {
-				errs = append(errs, err)
-			}
-		} else {
-			action := "created"
-			if updated {
-				action = "updated"
-			}
-			s.Logger.Log(testutils.ResourceID(obj), action)
-			if expectFailure {
-				errs = append(errs, errors.New("an error was expected but didn't happen"))
-			}
+		// if there was no error but we expected one
+		if err == nil && expectFailure {
+			// TODO: improve error message
+			errs = append(errs, errors.New("an error was expected but didn't happen"))
 		}
 	}
 
