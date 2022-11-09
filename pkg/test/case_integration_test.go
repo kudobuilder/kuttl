@@ -28,7 +28,11 @@ func TestMultiClusterCase(t *testing.T) {
 		t.Error(err)
 		return
 	}
-	t.Cleanup(testenv2.Environment.Stop)
+	t.Cleanup(func() {
+		if err := testenv2.Environment.Stop(); err != nil {
+			t.Error(err)
+		}
+	})
 
 	podSpec := map[string]interface{}{
 		"restartPolicy": "Never",
