@@ -1,8 +1,13 @@
 linters:
   auto-fix: false
   enable:
+    - asasalint
+    - bodyclose
+    - containedctx
+    - dogsled
     - dupl
     - errcheck
+    - errname
     - exportloopref
     - goconst
     - gocritic
@@ -10,6 +15,8 @@ linters:
     - gofmt
     - goimports
     - gosimple
+    - govet
+    - grouper
     - ineffassign
     - lll
     - misspell
@@ -20,6 +27,7 @@ linters:
     - unconvert
     - unparam
     - unused
+    - whitespace
 run:
   go: '1.17'
   skip-dirs:

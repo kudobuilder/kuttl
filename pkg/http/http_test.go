@@ -5,7 +5,6 @@ import (
 )
 
 func TestIsURL(t *testing.T) {
-
 	tests := []struct {
 		name string
 		path string

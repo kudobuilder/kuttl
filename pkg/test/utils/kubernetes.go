@@ -349,7 +349,6 @@ func Namespaced(dClient discovery.DiscoveryInterface, obj runtime.Object, namesp
 
 	resource, err := GetAPIResource(dClient, obj.GetObjectKind().GroupVersionKind())
 	if err != nil {
-
 		return "", "", fmt.Errorf("retrieving API resource for %v failed: %v", obj.GetObjectKind().GroupVersionKind(), err)
 	}
 
@@ -529,11 +528,9 @@ func LoadYAML(path string, r io.Reader) ([]client.Object, error) {
 		} else {
 			objects = append(objects, obj)
 		}
-
 	}
 
 	return objects, nil
-
 }
 
 // MatchesKind returns true if the Kubernetes kind of obj matches any of kinds.
@@ -659,7 +656,6 @@ func NewResource(apiVersion, kind, name, namespace string) *unstructured.Unstruc
 
 // NewClusterRoleBinding Create a clusterrolebinding for the serviceAccount passed
 func NewClusterRoleBinding(apiVersion, kind, name, namespace string, serviceAccount string, roleName string) runtime.Object {
-
 	sa := &rbacv1.ClusterRoleBinding{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: name,
@@ -924,7 +920,6 @@ func WaitForDelete(c *RetryClient, objs []runtime.Object) error {
 
 // WaitForSA waits for a service account to be present
 func WaitForSA(config *rest.Config, name, namespace string) error {
-
 	c, err := NewRetryClient(config, client.Options{
 		Scheme: Scheme(),
 	})
@@ -1160,7 +1155,6 @@ func RunCommands(ctx context.Context, logger Logger, namespace string, commands 
 	}
 
 	for i, cmd := range commands {
-
 		bg, err := RunCommand(ctx, namespace, cmd, workdir, logger, logger, logger, timeout, kubeconfigOverride)
 		if err != nil {
 			cmdListSize := len(commands)
