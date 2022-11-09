@@ -10,6 +10,7 @@ import (
 	"os/exec"
 	"os/signal"
 	"path/filepath"
+	"regexp"
 	"strings"
 	"sync"
 	"testing"
@@ -375,6 +376,17 @@ func (h *Harness) RunTests() {
 			suite := h.report.NewSuite(testDir)
 			for _, test := range tests {
 				test := test
+
+				// if the test suite specifies a regex for test names to be skipped ...
+				if h.TestSuite.SkipTestRegex != "" {
+					matched, err := regexp.MatchString(h.TestSuite.SkipTestRegex, test.Name)
+					if err != nil {
+						t.Logf("failed to match %s with regex %s with error %s", test.Name, h.TestSuite.SkipTestRegex, err.Error())
+					} else if matched {
+						t.Logf("test name  %s matched with regex %s, test will be skipped", test.Name, h.TestSuite.SkipTestRegex)
+						continue
+					}
+				}
 
 				test.Client = h.Client
 				test.DiscoveryClient = h.DiscoveryClient

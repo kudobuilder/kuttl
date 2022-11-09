@@ -71,8 +71,10 @@ type TestSuite struct {
 	// Any other value is the name of the namespace to use.  This namespace will be created if it does not exist and will
 	// be removed it was created (unless --skipDelete is used).
 	Namespace string `json:"namespace"`
-	// Suppress is used to suppress logs
+	// Suppress is used to suppress logs.
 	Suppress []string `json:"suppress"`
+	// SkipTestRegex is used to skip tests based on a regular expression.
+	SkipTestRegex string `json:"skipTestRegex"`
 
 	Config *RestConfig `json:"config,omitempty"`
 }
