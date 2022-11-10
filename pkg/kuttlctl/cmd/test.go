@@ -55,6 +55,7 @@ func newTestCmd() *cobra.Command {
 	skipClusterDelete := false
 	parallel := 0
 	artifactsDir := ""
+	fullName := false
 	mockControllerFile := ""
 	timeout := 30
 	reportFormat := ""
@@ -179,6 +180,10 @@ For more detailed documentation, visit: https://kuttl.dev`,
 				options.ArtifactsDir = artifactsDir
 			}
 
+			if isSet(flags, "full-name") {
+				options.FullName = fullName
+			}
+
 			if isSet(flags, "namespace") {
 				if strings.TrimSpace(namespace) == "" {
 					return errors.New(`setting namespace explicitly to "" or empty string is not supported`)
@@ -257,6 +262,7 @@ For more detailed documentation, visit: https://kuttl.dev`,
 	testCmd.Flags().StringVar(&reportName, "report-name", "kuttl-report", "Name for the report.  Report location determined by --artifacts-dir and report file type determined by --report.")
 	testCmd.Flags().StringVarP(&namespace, "namespace", "n", "", "Namespace to use for tests. Provided namespaces must exist prior to running tests.")
 	testCmd.Flags().StringSliceVar(&suppress, "suppress-log", []string{}, "Suppress logging for these kinds of logs (events).")
+	testCmd.Flags().BoolVar(&fullName, "full-name", false, "If set, uses the full test case folder path instead of folder name.")
 	// This cannot be a global flag because pkg/test/utils.RunTests calls flag.Parse which barfs on unknown top-level flags.
 	// Putting it here at least does not advertise it on a level where using it is impossible.
 	test.SetFlags(testCmd.Flags())
