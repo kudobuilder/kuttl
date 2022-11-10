@@ -174,10 +174,10 @@ func (t *Case) CollectEvents(namespace string) {
 		return
 	}
 
-	err = t.collectEventsBeta1(cl, namespace)
+	err = t.collectEventsV1(cl, namespace)
 	if err != nil {
-		t.Logger.Log("Trying with events eventsv1 API...")
-		err = t.collectEventsV1(cl, namespace)
+		t.Logger.Log("Trying with events eventsv1beta1 API...")
+		err = t.collectEventsBeta1(cl, namespace)
 		if err != nil {
 			t.Logger.Log("Trying with events corev1 API...")
 			err = t.collectEventsCoreV1(cl, namespace)
