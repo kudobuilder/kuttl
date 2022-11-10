@@ -382,7 +382,7 @@ func (h *Harness) RunTests() {
 
 				name := test.Name
 				if h.TestSuite.FullName {
-					name = path.Join(testDir, name)
+					name = path.Join(strings.Trim(strings.Trim(testDir, "."), "/"), name)
 				}
 
 				t.Run(name, func(t *testing.T) {
