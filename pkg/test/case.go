@@ -16,8 +16,9 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	eventsv1 "k8s.io/api/events/v1"
 	eventsbeta1 "k8s.io/api/events/v1beta1"
-	"k8s.io/apimachinery/pkg/api/errors"
+	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/discovery"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
@@ -69,13 +70,26 @@ func (t *Case) DeleteNamespace(cl client.Client, ns *namespace) error {
 		defer cancel()
 	}
 
-	return cl.Delete(ctx, &corev1.Namespace{
+	nsObj := &corev1.Namespace{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: ns.Name,
 		},
 		TypeMeta: metav1.TypeMeta{
 			Kind: "Namespace",
 		},
+	}
+
+	if err := cl.Delete(ctx, nsObj); err != nil {
+		return err
+	}
+
+	return wait.PollImmediateUntilWithContext(ctx, 100*time.Millisecond, func(ctx context.Context) (done bool, err error) {
+		actual := &corev1.Namespace{}
+		err = cl.Get(ctx, testutils.ObjectKey(nsObj), actual)
+		if err == nil || !k8serrors.IsNotFound(err) {
+			return false, err
+		}
+		return true, nil
 	})
 }
 
@@ -121,7 +135,7 @@ func (t *Case) NamespaceExists(namespace string) (bool, error) {
 	}
 	ns := &corev1.Namespace{}
 	err = cl.Get(context.TODO(), client.ObjectKey{Name: namespace}, ns)
-	if err != nil && !errors.IsNotFound(err) {
+	if err != nil && !k8serrors.IsNotFound(err) {
 		return false, err
 	}
 	return ns.Name == namespace, nil
