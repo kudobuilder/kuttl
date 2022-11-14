@@ -32,8 +32,9 @@ var fileNameRegex = regexp.MustCompile(`^(?:\d+-)?([^-\.]+)(-[^\.]+)?(?:\.yaml)?
 // A Step contains the name of the test step, its index in the test,
 // and all of the test step's settings (including objects to apply and assert on).
 type Step struct {
-	Name  string
-	Index int
+	Name       string
+	Index      int
+	SkipDelete bool
 
 	Dir string
 
@@ -168,7 +169,7 @@ func (s *Step) DeleteExisting(namespace string) error {
 }
 
 // Create applies all resources defined in the Apply list.
-func (s *Step) Create(test *testing.T, namespace string, skipDelete bool) []error {
+func (s *Step) Create(test *testing.T, namespace string) []error {
 	cl, err := s.Client(true)
 	if err != nil {
 		return []error{err}
@@ -198,7 +199,7 @@ func (s *Step) Create(test *testing.T, namespace string, skipDelete bool) []erro
 			errors = append(errors, err)
 		} else {
 			// if the object was created, register cleanup
-			if !updated && !skipDelete {
+			if !updated && !s.SkipDelete {
 				obj := obj
 				// TODO(eddycharly): create context
 				test.Cleanup(func() {
@@ -416,7 +417,7 @@ func (s *Step) Check(namespace string, timeout int) []error {
 // Run runs a KUTTL test step:
 // 1. Apply all desired objects to Kubernetes.
 // 2. Wait for all of the states defined in the test step's asserts to be true.'
-func (s *Step) Run(test *testing.T, namespace string, skipDelete bool) []error {
+func (s *Step) Run(test *testing.T, namespace string) []error {
 	s.Logger.Log("starting test step", s.String())
 
 	if err := s.DeleteExisting(namespace); err != nil {
@@ -437,7 +438,7 @@ func (s *Step) Run(test *testing.T, namespace string, skipDelete bool) []error {
 		}
 	}
 
-	testErrors = append(testErrors, s.Create(test, namespace, skipDelete)...)
+	testErrors = append(testErrors, s.Create(test, namespace)...)
 
 	if len(testErrors) != 0 {
 		return testErrors

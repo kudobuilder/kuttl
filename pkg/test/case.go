@@ -344,7 +344,7 @@ func (t *Case) Run(test *testing.T, tc *report.Testcase) {
 		tc.Assertions += len(testStep.Asserts)
 		tc.Assertions += len(testStep.Errors)
 
-		if errs := testStep.Run(test, ns.Name, t.SkipDelete); len(errs) > 0 {
+		if errs := testStep.Run(test, ns.Name); len(errs) > 0 {
 			caseErr := fmt.Errorf("failed in step %s", testStep.String())
 			tc.Failure = report.NewFailure(caseErr.Error(), errs)
 
@@ -445,12 +445,13 @@ func (t *Case) LoadTestSteps() error {
 
 	for index, files := range testStepFiles {
 		testStep := &Step{
-			Timeout: t.Timeout,
-			Index:   int(index),
-			Dir:     t.Dir,
-			Asserts: []client.Object{},
-			Apply:   []client.Object{},
-			Errors:  []client.Object{},
+			Timeout:    t.Timeout,
+			Index:      int(index),
+			SkipDelete: t.SkipDelete,
+			Dir:        t.Dir,
+			Asserts:    []client.Object{},
+			Apply:      []client.Object{},
+			Errors:     []client.Object{},
 		}
 
 		for _, file := range files {
