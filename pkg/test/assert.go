@@ -14,7 +14,6 @@ import (
 
 // Assert checks all provided assert files against a namespace.  Upon assert failure, it prints the failures and returns an error
 func Assert(namespace string, timeout int, assertFiles ...string) error {
-
 	var objects []client.Object
 
 	for _, file := range assertFiles {
@@ -60,7 +59,6 @@ func Assert(namespace string, timeout int, assertFiles ...string) error {
 
 // Errors checks all provided errors files against a namespace.  Upon assert failure, it prints the failures and returns an error
 func Errors(namespace string, timeout int, errorFiles ...string) error {
-
 	var objects []client.Object
 
 	for _, file := range errorFiles {

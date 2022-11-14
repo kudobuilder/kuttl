@@ -21,7 +21,6 @@ type kind struct {
 }
 
 func newKind(kindContext string, explicitPath string, logger testutils.Logger) kind {
-
 	provider := cluster.NewProvider(cluster.ProviderWithLogger(&kindLogger{logger}))
 
 	return kind{

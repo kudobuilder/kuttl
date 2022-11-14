@@ -26,7 +26,6 @@ func newErrorsCmd() *cobra.Command {
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if len(args) == 0 {
 				return errors.New("one file argument is required")
-
 			}
 			return test.Errors(namespace, timeout, args...)
 		},
@@ -34,6 +33,5 @@ func newErrorsCmd() *cobra.Command {
 
 	errorsCmd.Flags().IntVar(&timeout, "timeout", 5, "The timeout to use as default for error evaluation.")
 	errorsCmd.Flags().StringVarP(&namespace, "namespace", "n", "default", "Namespace to use for test errors.")
-
 	return errorsCmd
 }

@@ -128,7 +128,6 @@ func (t *Case) CreateNamespace(test *testing.T, cl client.Client, ns *namespace)
 
 // NamespaceExists gets namespace and returns true if it exists
 func (t *Case) NamespaceExists(namespace string) (bool, error) {
-
 	cl, err := t.Client(false)
 	if err != nil {
 		return false, err

@@ -27,7 +27,6 @@ const (
 // Verify the test state as loaded from disk.
 // Each test provides a path to a set of test steps and their rendered result.
 func TestStepClean(t *testing.T) {
-
 	pod := testutils.NewPod("hello", "")
 
 	podWithNamespace := testutils.WithNamespace(pod, testNamespace)
@@ -54,7 +53,6 @@ func TestStepClean(t *testing.T) {
 // Verify the test state as loaded from disk.
 // Each test provides a path to a set of test steps and their rendered result.
 func TestStepCreate(t *testing.T) {
-
 	pod := testutils.NewPod("hello", "default")
 	podWithNamespace := testutils.NewPod("hello2", "different-namespace")
 	clusterScopedResource := testutils.NewResource("v1", "Namespace", "my-namespace", "default")
@@ -93,7 +91,6 @@ func TestStepCreate(t *testing.T) {
 
 // Verify that the DeleteExisting method properly cleans up resources during a test step.
 func TestStepDeleteExisting(t *testing.T) {
-
 	podToDelete := testutils.NewPod("delete-me", testNamespace)
 	podToDeleteDefaultNS := testutils.NewPod("also-delete-me", "default")
 	podToKeep := testutils.NewPod("keep-me", testNamespace)
