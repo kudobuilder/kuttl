@@ -198,16 +198,14 @@ func (s *Step) Create(test *testing.T, namespace string, skipDelete bool) []erro
 			errors = append(errors, err)
 		} else {
 			// if the object was created, register cleanup
-			if !updated {
-				if !skipDelete {
-					obj := obj
-					// TODO(eddycharly): create context
-					test.Cleanup(func() {
-						if err := cl.Delete(context.TODO(), obj); err != nil && !k8serrors.IsNotFound(err) {
-							test.Error(err)
-						}
-					})
-				}
+			if !updated && !skipDelete {
+				obj := obj
+				// TODO(eddycharly): create context
+				test.Cleanup(func() {
+					if err := cl.Delete(context.TODO(), obj); err != nil && !k8serrors.IsNotFound(err) {
+						test.Error(err)
+					}
+				})
 			}
 			action := "created"
 			if updated {
