@@ -77,7 +77,7 @@ func TestStepCreate(t *testing.T) {
 		DiscoveryClient: func() (discovery.DiscoveryInterface, error) { return testutils.FakeDiscoveryClient(), nil },
 	}
 
-	assert.Equal(t, []error{}, step.Create(testNamespace))
+	assert.Equal(t, []error{}, step.Create(t, testNamespace, false))
 
 	assert.Nil(t, cl.Get(context.TODO(), testutils.ObjectKey(pod), pod))
 	assert.Nil(t, cl.Get(context.TODO(), testutils.ObjectKey(clusterScopedResource), clusterScopedResource))
@@ -349,7 +349,7 @@ func TestRun(t *testing.T) {
 				}()
 			}
 
-			errors := test.Step.Run(testNamespace)
+			errors := test.Step.Run(t, testNamespace, false)
 
 			if test.shouldError {
 				assert.NotEqual(t, []error{}, errors)

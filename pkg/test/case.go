@@ -298,17 +298,6 @@ func shortString(obj *corev1.ObjectReference) string {
 		fieldRef)
 }
 
-func runStep(test *testing.T, testCase *Case, testStep *Step, ns *namespace) []error {
-	if !testCase.SkipDelete {
-		test.Cleanup(func() {
-			if err := testStep.Clean(ns.Name); err != nil {
-				test.Error(err)
-			}
-		})
-	}
-	return testStep.Run(ns.Name)
-}
-
 // Run runs a test case including all of its steps.
 func (t *Case) Run(test *testing.T, tc *report.Testcase) {
 	ns := t.determineNamespace()
@@ -355,7 +344,7 @@ func (t *Case) Run(test *testing.T, tc *report.Testcase) {
 		tc.Assertions += len(testStep.Asserts)
 		tc.Assertions += len(testStep.Errors)
 
-		if errs := runStep(test, t, testStep, ns); len(errs) > 0 {
+		if errs := testStep.Run(test, ns.Name, t.SkipDelete); len(errs) > 0 {
 			caseErr := fmt.Errorf("failed in step %s", testStep.String())
 			tc.Failure = report.NewFailure(caseErr.Error(), errs)
 
