@@ -201,7 +201,6 @@ func (s *Step) Create(test *testing.T, namespace string) []error {
 			// if the object was created, register cleanup
 			if !updated && !s.SkipDelete {
 				obj := obj
-				// TODO(eddycharly): create context
 				test.Cleanup(func() {
 					if err := cl.Delete(context.TODO(), obj); err != nil && !k8serrors.IsNotFound(err) {
 						test.Error(err)
