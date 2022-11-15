@@ -18,4 +18,4 @@ jobs:
         with:
           go-version: ~1.18.6
       - name: Run checks
-        run: make lint test integration-test
+        run: make lint test
