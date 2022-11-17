@@ -355,13 +355,20 @@ func (s *Step) CheckResourceAbsent(expected runtime.Object, namespace string) er
 		return err
 	}
 
+	var unexpectedObjects []unstructured.Unstructured
 	for _, actual := range actuals {
 		if err := testutils.IsSubset(expectedObj, actual.UnstructuredContent()); err == nil {
-			return fmt.Errorf("resource matched of kind: %s", gvk.String())
+			unexpectedObjects = append(unexpectedObjects, actual)
 		}
 	}
 
-	return nil
+	if len(unexpectedObjects) == 0 {
+		return nil
+	}
+	if len(unexpectedObjects) == 1 {
+		return fmt.Errorf("resource %s %s matched error assertion", unexpectedObjects[0].GroupVersionKind(), unexpectedObjects[0].GetName())
+	}
+	return fmt.Errorf("resource %s %s (and %d other resources) matched error assertion", unexpectedObjects[0].GroupVersionKind(), unexpectedObjects[0].GetName(), len(unexpectedObjects)-1)
 }
 
 // CheckAssertCommands Runs the commands provided in `commands` and check if have been run successfully.
@@ -471,11 +478,11 @@ func (s *Step) String() string {
 }
 
 // LoadYAML loads the resources from a YAML file for a test step:
-// * If the YAML file is called "assert", then it contains objects to
-//   add to the test step's list of assertions.
-// * If the YAML file is called "errors", then it contains objects that,
-//   if seen, mark a test immediately failed.
-// * All other YAML files are considered resources to create.
+//   - If the YAML file is called "assert", then it contains objects to
+//     add to the test step's list of assertions.
+//   - If the YAML file is called "errors", then it contains objects that,
+//     if seen, mark a test immediately failed.
+//   - All other YAML files are considered resources to create.
 func (s *Step) LoadYAML(file string) error {
 	objects, err := testutils.LoadYAMLFromFile(file)
 	if err != nil {

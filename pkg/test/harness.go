@@ -5,7 +5,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"io/ioutil"
 	"math/rand"
 	"os"
 	"os/exec"
@@ -63,7 +62,7 @@ func (h *Harness) LoadTests(dir string) ([]*Case, error) {
 		return nil, err
 	}
 
-	files, err := ioutil.ReadDir(dir)
+	files, err := os.ReadDir(dir)
 	if err != nil {
 		return nil, err
 	}
@@ -170,7 +169,7 @@ func (h *Harness) RunKIND() (*rest.Config, error) {
 // various parts of system may need it, starting with kind, or working with tar test suites
 func (h *Harness) initTempPath() (err error) {
 	if h.tempPath == "" {
-		h.tempPath, err = ioutil.TempDir("", "kuttl")
+		h.tempPath, err = os.MkdirTemp("", "kuttl")
 		h.T.Log("temp folder created", h.tempPath)
 	}
 	return err
@@ -220,7 +219,7 @@ func (h *Harness) RunTestEnv() (*rest.Config, error) {
 
 	h.T.Logf("started test environment (kube-apiserver and etcd) in %v, with following options:\n%s",
 		time.Since(started),
-		strings.Join(testenv.Environment.KubeAPIServerFlags, "\n"))
+		strings.Join(testenv.Environment.ControlPlane.GetAPIServer().Configure().AsStrings(nil), "\n"))
 	h.env = testenv.Environment
 
 	return testenv.Config, nil
@@ -238,6 +237,9 @@ func (h *Harness) Config() (*rest.Config, error) {
 
 	var err error
 	switch {
+	case h.TestSuite.Config != nil:
+		h.T.Log("running tests with passed rest config.")
+		h.config = h.TestSuite.Config.RC
 	case h.TestSuite.StartControlPlane:
 		h.T.Log("running tests with a mocked control plane (kube-apiserver and etcd).")
 		h.config, err = h.RunTestEnv()
@@ -349,7 +351,7 @@ func (h *Harness) DockerClient() (testutils.DockerClient, error) {
 // tests at dir.
 func (h *Harness) RunTests() {
 	// cleanup after running tests
-	defer h.Stop()
+	h.T.Cleanup(h.Stop)
 	h.T.Log("running tests")
 
 	testDirs := h.testPreProcessing()
@@ -369,7 +371,6 @@ func (h *Harness) RunTests() {
 
 	h.T.Run("harness", func(t *testing.T) {
 		for testDir, tests := range realTestSuite {
-
 			suite := h.report.NewSuite(testDir)
 			for _, test := range tests {
 				test := test
@@ -412,7 +413,7 @@ func (h *Harness) testPreProcessing() []string {
 			client := http.NewClient()
 			h.T.Logf("downloading %s", dir)
 			// fresh temp dir created for each download to prevent overwriting
-			folder, err := ioutil.TempDir(h.tempPath, filepath.Base(dir))
+			folder, err := os.MkdirTemp(h.tempPath, filepath.Base(dir))
 			if err != nil {
 				h.T.Fatal(err)
 			}
@@ -434,7 +435,6 @@ func (h *Harness) testPreProcessing() []string {
 
 // Run the test harness - start the control plane and then run the tests.
 func (h *Harness) Run() {
-
 	// capture ctrl+c and provide clean up
 	go func() {
 		sigchan := make(chan os.Signal, 1)
@@ -538,6 +538,8 @@ func (h *Harness) Stop() {
 		}
 	}
 
+	h.Report()
+
 	if h.TestSuite.SkipClusterDelete {
 		cwd, err := os.Getwd()
 		if err != nil {
@@ -573,7 +575,6 @@ func (h *Harness) Stop() {
 
 		h.kind = nil
 	}
-	h.Report()
 }
 
 // wraps Test.Fatal in order to clean up harness
@@ -599,13 +600,21 @@ func (h *Harness) Report() {
 	if len(h.TestSuite.ReportFormat) == 0 {
 		return
 	}
-	if err := h.report.Report(h.TestSuite.ArtifactsDir, h.TestSuite.ReportName, report.Type(h.TestSuite.ReportFormat)); err != nil {
+	if err := h.report.Report(h.TestSuite.ArtifactsDir, h.reportName(), report.Type(h.TestSuite.ReportFormat)); err != nil {
 		h.fatal(fmt.Errorf("fatal error writing report: %v", err))
 	}
 }
 
+// reportName returns the configured ReportName.
+func (h *Harness) reportName() string {
+	if h.TestSuite.ReportName != "" {
+		return h.TestSuite.ReportName
+	}
+	return "kuttl-report"
+}
+
 func (h *Harness) loadKindConfig(path string) (*kindConfig.Cluster, error) {
-	raw, err := ioutil.ReadFile(path)
+	raw, err := os.ReadFile(path)
 	if err != nil {
 		return nil, err
 	}

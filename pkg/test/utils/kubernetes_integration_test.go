@@ -1,4 +1,4 @@
-// +build integration
+//go:build integration
 
 package utils
 
@@ -37,7 +37,13 @@ func TestMain(m *testing.M) {
 func TestCreateOrUpdate(t *testing.T) {
 	// Run the test a bunch of times to try to trigger a conflict and ensure that it handles conflicts properly.
 	for i := 0; i < 10; i++ {
-		depToUpdate := WithSpec(t, NewPod("update-me", fmt.Sprintf("default-%d", i)), map[string]interface{}{
+		namespaceName := fmt.Sprintf("default-%d", i)
+		namespaceObj := NewResource("v1", "Namespace", namespaceName, "default")
+
+		_, err := CreateOrUpdate(context.TODO(), testenv.Client, namespaceObj, true)
+		assert.Nil(t, err)
+
+		depToUpdate := WithSpec(t, NewPod("update-me", namespaceName), map[string]interface{}{
 			"containers": []map[string]interface{}{
 				{
 					"image": "nginx",
@@ -46,7 +52,7 @@ func TestCreateOrUpdate(t *testing.T) {
 			},
 		})
 
-		_, err := CreateOrUpdate(context.TODO(), testenv.Client, SetAnnotation(depToUpdate, "test", "hi"), true)
+		_, err = CreateOrUpdate(context.TODO(), testenv.Client, SetAnnotation(depToUpdate, "test", "hi"), true)
 		assert.Nil(t, err)
 
 		quit := make(chan bool)
@@ -157,7 +163,6 @@ func TestRunCommand(t *testing.T) {
 	assert.Error(t, err)
 	assert.True(t, strings.Contains(err.Error(), "timeout"))
 	assert.Nil(t, cmd)
-
 }
 
 func TestRunCommandIgnoreErrors(t *testing.T) {

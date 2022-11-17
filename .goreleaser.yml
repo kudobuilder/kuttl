@@ -41,6 +41,8 @@ archives:
     format: binary
 brews:
   - name: kuttl-cli
+    ids:
+      - kubectl-kuttl-tarball
     tap:
       owner: kudobuilder
       name: homebrew-tap

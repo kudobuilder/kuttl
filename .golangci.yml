@@ -1,29 +1,47 @@
 linters:
   auto-fix: false
   enable:
-    - deadcode
+    - asasalint
+    - asciicheck
+    - bidichk
+    - bodyclose
+    - containedctx
+    - decorder
+    - dogsled
+    - durationcheck
     - dupl
     - errcheck
+    - errname
     - exportloopref
+    - gochecknoinits
     - goconst
     - gocritic
     - gocyclo
     - gofmt
     - goimports
     - gosimple
+    - govet
+    - grouper
+    - importas
     - ineffassign
     - lll
+    - makezero
     - misspell
     - nakedret
+    - noctx
+    - nolintlint
+    - nosprintfhostport
     - revive
     - staticcheck
-    - structcheck
     - stylecheck
+    - typecheck
     - unconvert
     - unparam
     - unused
-    - varcheck
+    - wastedassign
+    - whitespace
 run:
+  go: '1.17'
   skip-dirs:
     - hack
     - dist

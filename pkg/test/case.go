@@ -3,7 +3,7 @@ package test
 import (
 	"context"
 	"fmt"
-	"io/ioutil"
+	"os"
 	"path/filepath"
 	"regexp"
 	"sort"
@@ -80,7 +80,7 @@ func (t *Case) DeleteNamespace(cl client.Client, ns *namespace) error {
 }
 
 // CreateNamespace creates a namespace in Kubernetes to use for a test.
-func (t *Case) CreateNamespace(cl client.Client, ns *namespace) error {
+func (t *Case) CreateNamespace(test *testing.T, cl client.Client, ns *namespace) error {
 	if !ns.AutoCreated {
 		t.Logger.Log("Skipping creation of user-supplied namespace:", ns.Name)
 		return nil
@@ -92,6 +92,14 @@ func (t *Case) CreateNamespace(cl client.Client, ns *namespace) error {
 		var cancel context.CancelFunc
 		ctx, cancel = context.WithTimeout(ctx, time.Duration(t.Timeout)*time.Second)
 		defer cancel()
+	}
+
+	if !t.SkipDelete {
+		test.Cleanup(func() {
+			if err := t.DeleteNamespace(cl, ns); err != nil {
+				test.Error(err)
+			}
+		})
 	}
 
 	return cl.Create(ctx, &corev1.Namespace{
@@ -106,7 +114,6 @@ func (t *Case) CreateNamespace(cl client.Client, ns *namespace) error {
 
 // NamespaceExists gets namespace and returns true if it exists
 func (t *Case) NamespaceExists(namespace string) (bool, error) {
-
 	cl, err := t.Client(false)
 	if err != nil {
 		return false, err
@@ -166,10 +173,10 @@ func (t *Case) CollectEvents(namespace string) {
 		return
 	}
 
-	err = t.collectEventsBeta1(cl, namespace)
+	err = t.collectEventsV1(cl, namespace)
 	if err != nil {
-		t.Logger.Log("Trying with events eventsv1 API...")
-		err = t.collectEventsV1(cl, namespace)
+		t.Logger.Log("Trying with events eventsv1beta1 API...")
+		err = t.collectEventsBeta1(cl, namespace)
 		if err != nil {
 			t.Logger.Log("Trying with events corev1 API...")
 			err = t.collectEventsCoreV1(cl, namespace)
@@ -290,6 +297,17 @@ func shortString(obj *corev1.ObjectReference) string {
 		fieldRef)
 }
 
+func runStep(test *testing.T, testCase *Case, testStep *Step, ns *namespace) []error {
+	if !testCase.SkipDelete {
+		test.Cleanup(func() {
+			if err := testStep.Clean(ns.Name); err != nil {
+				test.Error(err)
+			}
+		})
+	}
+	return testStep.Run(ns.Name)
+}
+
 // Run runs a test case including all of its steps.
 func (t *Case) Run(test *testing.T, tc *report.Testcase) {
 	ns := t.determineNamespace()
@@ -317,20 +335,10 @@ func (t *Case) Run(test *testing.T, tc *report.Testcase) {
 	}
 
 	for _, c := range clients {
-		if err := t.CreateNamespace(c, ns); err != nil {
+		if err := t.CreateNamespace(test, c, ns); err != nil {
 			tc.Failure = report.NewFailure(err.Error(), nil)
 			test.Fatal(err)
 		}
-	}
-
-	if !t.SkipDelete {
-		defer func() {
-			for _, c := range clients {
-				if err := t.DeleteNamespace(c, ns); err != nil {
-					test.Error(err)
-				}
-			}
-		}()
 	}
 
 	for _, testStep := range t.Steps {
@@ -346,15 +354,7 @@ func (t *Case) Run(test *testing.T, tc *report.Testcase) {
 		tc.Assertions += len(testStep.Asserts)
 		tc.Assertions += len(testStep.Errors)
 
-		if !t.SkipDelete {
-			defer func() {
-				if err := testStep.Clean(ns.Name); err != nil {
-					test.Error(err)
-				}
-			}()
-		}
-
-		if errs := testStep.Run(ns.Name); len(errs) > 0 {
+		if errs := runStep(test, t, testStep, ns); len(errs) > 0 {
 			caseErr := fmt.Errorf("failed in step %s", testStep.String())
 			tc.Failure = report.NewFailure(caseErr.Error(), errs)
 
@@ -392,7 +392,7 @@ func (t *Case) determineNamespace() *namespace {
 func (t *Case) CollectTestStepFiles() (map[int64][]string, error) {
 	testStepFiles := map[int64][]string{}
 
-	files, err := ioutil.ReadDir(t.Dir)
+	files, err := os.ReadDir(t.Dir)
 	if err != nil {
 		return nil, err
 	}
@@ -414,7 +414,7 @@ func (t *Case) CollectTestStepFiles() (map[int64][]string, error) {
 		testStepPath := filepath.Join(t.Dir, file.Name())
 
 		if file.IsDir() {
-			testStepDir, err := ioutil.ReadDir(testStepPath)
+			testStepDir, err := os.ReadDir(testStepPath)
 			if err != nil {
 				return nil, err
 			}

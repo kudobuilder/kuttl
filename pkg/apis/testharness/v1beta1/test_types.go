@@ -3,7 +3,13 @@ package v1beta1
 import (
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/client-go/rest"
 )
+
+// Create embedded struct to implement custom DeepCopyInto method
+type RestConfig struct {
+	RC *rest.Config
+}
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 
@@ -58,7 +64,7 @@ type TestSuite struct {
 	// maps to report.Type, however we don't want generated.deepcopy to have reference to it.
 	ReportFormat string `json:"reportFormat"`
 
-	// ReportName defines the name of report to create.  It defaults to "kuttl-test" and is not used unless ReportFormat is defined.
+	// ReportName defines the name of report to create.  It defaults to "kuttl-report" and is not used unless ReportFormat is defined.
 	ReportName string `json:"reportName"`
 	// Namespace defines the namespace to use for tests
 	// The value "" means to auto-generate tests namespaces, these namespaces will be created and removed for each test
@@ -67,6 +73,8 @@ type TestSuite struct {
 	Namespace string `json:"namespace"`
 	// Suppress is used to suppress logs
 	Suppress []string `json:"suppress"`
+
+	Config *RestConfig `json:"config,omitempty"`
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
@@ -190,3 +198,7 @@ type TestCollector struct {
 
 // DefaultKINDContext defines the default kind context to use.
 const DefaultKINDContext = "kind"
+
+func (in *RestConfig) DeepCopyInto(out *RestConfig) {
+	out.RC = rest.CopyConfig(in.RC)
+}

@@ -27,7 +27,6 @@ const (
 // Verify the test state as loaded from disk.
 // Each test provides a path to a set of test steps and their rendered result.
 func TestStepClean(t *testing.T) {
-
 	pod := testutils.NewPod("hello", "")
 
 	podWithNamespace := testutils.WithNamespace(pod, testNamespace)
@@ -54,14 +53,15 @@ func TestStepClean(t *testing.T) {
 // Verify the test state as loaded from disk.
 // Each test provides a path to a set of test steps and their rendered result.
 func TestStepCreate(t *testing.T) {
-
 	pod := testutils.NewPod("hello", "default")
 	podWithNamespace := testutils.NewPod("hello2", "different-namespace")
 	clusterScopedResource := testutils.NewResource("v1", "Namespace", "my-namespace", "default")
 	podToUpdate := testutils.NewPod("update-me", "default")
 	specToApply := map[string]interface{}{
-		"replicas": int64(2),
+		"containers":    nil,
+		"restartPolicy": "OnFailure",
 	}
+
 	updateToApply := testutils.WithSpec(t, podToUpdate, specToApply)
 
 	cl := fake.NewClientBuilder().WithScheme(scheme.Scheme).WithRuntimeObjects(testutils.WithNamespace(podToUpdate, testNamespace)).Build()
@@ -91,7 +91,6 @@ func TestStepCreate(t *testing.T) {
 
 // Verify that the DeleteExisting method properly cleans up resources during a test step.
 func TestStepDeleteExisting(t *testing.T) {
-
 	podToDelete := testutils.NewPod("delete-me", testNamespace)
 	podToDeleteDefaultNS := testutils.NewPod("also-delete-me", "default")
 	podToKeep := testutils.NewPod("keep-me", testNamespace)
@@ -155,11 +154,11 @@ func TestCheckResource(t *testing.T) {
 		{
 			testName: "resource subset match",
 			actual: testutils.WithSpec(t, testutils.NewPod("hello", ""), map[string]interface{}{
-				"ignored": "key",
-				"seen":    "key",
+				"containers":    nil,
+				"restartPolicy": "OnFailure",
 			}),
 			expected: testutils.WithSpec(t, testutils.NewPod("hello", ""), map[string]interface{}{
-				"seen": "key",
+				"restartPolicy": "OnFailure",
 			}),
 		},
 		{
@@ -200,24 +199,46 @@ func TestCheckResource(t *testing.T) {
 func TestCheckResourceAbsent(t *testing.T) {
 	for _, test := range []struct {
 		name        string
-		actual      runtime.Object
+		actual      []runtime.Object
 		expected    runtime.Object
 		shouldError bool
+		expectedErr string
 	}{
 		{
 			name:        "resource matches",
-			actual:      testutils.NewPod("hello", ""),
+			actual:      []runtime.Object{testutils.NewPod("hello", "")},
 			expected:    testutils.NewPod("hello", ""),
 			shouldError: true,
 		},
 		{
+			name: "one of more resources matches",
+			actual: []runtime.Object{
+				testutils.NewV1Pod("pod1", "", "val1"),
+				testutils.NewV1Pod("pod2", "", "val2"),
+			},
+			expected:    testutils.WithSpec(t, testutils.NewPod("", ""), map[string]interface{}{"serviceAccountName": "val1"}),
+			shouldError: true,
+			expectedErr: "resource /v1, Kind=Pod pod1 matched error assertion",
+		},
+		{
+			name: "multiple of more resources matches",
+			actual: []runtime.Object{
+				testutils.NewV1Pod("pod1", "", "val1"),
+				testutils.NewV1Pod("pod2", "", "val1"),
+				testutils.NewV1Pod("pod3", "", "val2"),
+			},
+			expected:    testutils.WithSpec(t, testutils.NewPod("", ""), map[string]interface{}{"serviceAccountName": "val1"}),
+			shouldError: true,
+			expectedErr: "resource /v1, Kind=Pod pod1 (and 1 other resources) matched error assertion",
+		},
+		{
 			name:     "resource mis-match",
-			actual:   testutils.NewPod("hello", ""),
+			actual:   []runtime.Object{testutils.NewPod("hello", "")},
 			expected: testutils.WithSpec(t, testutils.NewPod("hello", ""), map[string]interface{}{"invalid": "key"}),
 		},
 		{
 			name:     "resource does not exist",
-			actual:   testutils.NewPod("other", ""),
+			actual:   []runtime.Object{testutils.NewPod("other", "")},
 			expected: testutils.NewPod("hello", ""),
 		},
 	} {
@@ -226,13 +247,15 @@ func TestCheckResourceAbsent(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			fakeDiscovery := testutils.FakeDiscoveryClient()
 
-			_, _, err := testutils.Namespaced(fakeDiscovery, test.actual, testNamespace)
-			assert.Nil(t, err)
+			for _, object := range test.actual {
+				_, _, err := testutils.Namespaced(fakeDiscovery, object, testNamespace)
+				assert.NoError(t, err)
+			}
 
 			step := Step{
 				Logger: testutils.NewTestLogger(t, ""),
 				Client: func(bool) (client.Client, error) {
-					return fake.NewClientBuilder().WithScheme(scheme.Scheme).WithRuntimeObjects(test.actual).Build(), nil
+					return fake.NewClientBuilder().WithScheme(scheme.Scheme).WithRuntimeObjects(test.actual...).Build(), nil
 				},
 				DiscoveryClient: func() (discovery.DiscoveryInterface, error) { return fakeDiscovery, nil },
 			}
@@ -240,9 +263,12 @@ func TestCheckResourceAbsent(t *testing.T) {
 			error := step.CheckResourceAbsent(test.expected, testNamespace)
 
 			if test.shouldError {
-				assert.NotNil(t, error)
+				assert.Error(t, error)
+				if test.expectedErr != "" {
+					assert.EqualError(t, error, test.expectedErr)
+				}
 			} else {
-				assert.Nil(t, error)
+				assert.NoError(t, error)
 			}
 		})
 	}

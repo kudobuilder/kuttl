@@ -1,4 +1,4 @@
-//+build integration
+//go:build integration
 
 package test
 
@@ -36,11 +36,11 @@ func TestAddContainers(t *testing.T) {
 		t.Fatalf("failed to start KIND cluster: %v", err)
 	}
 
-	defer func() {
+	t.Cleanup(func() {
 		if err := kind.Stop(); err != nil {
 			t.Fatalf("failed to stop KIND cluster: %v", err)
 		}
-	}()
+	})
 
 	docker, err := dockerClient.NewClientWithOpts(dockerClient.FromEnv)
 	if err != nil {

@@ -12,6 +12,7 @@ if [ "$INTEGRATION_OUTPUT_JUNIT" == true ]
 then
     echo "Running E2E tests with junit output"
     mkdir -p reports/
+    go get github.com/jstemmer/go-junit-report
     go install github.com/jstemmer/go-junit-report
     go mod tidy
 

@@ -1,4 +1,4 @@
-// +build integration
+//go:build integration
 
 package test
 
@@ -307,6 +307,9 @@ func TestStepDeleteExistingLabelMatch(t *testing.T) {
 		DiscoveryClient: func() (discovery.DiscoveryInterface, error) { return testenv.DiscoveryClient, nil },
 	}
 
+	namespaceObj := testutils.NewResource("v1", "Namespace", namespace, "default")
+
+	assert.Nil(t, testenv.Client.Create(context.TODO(), namespaceObj))
 	assert.Nil(t, testenv.Client.Create(context.TODO(), podToKeep))
 	assert.Nil(t, testenv.Client.Create(context.TODO(), podToDelete))
 	assert.Nil(t, testenv.Client.Create(context.TODO(), podToDelete2))
@@ -344,23 +347,22 @@ func TestCheckedTypeAssertions(t *testing.T) {
 
 func TestApplyExpansion(t *testing.T) {
 	os.Setenv("TEST_FOO", "test")
-	defer func() {
+	t.Cleanup(func() {
 		os.Unsetenv("TEST_FOO")
-	}()
+	})
 
 	step := Step{Dir: "step_integration_test_data/assert_expand/"}
 	path := "step_integration_test_data/assert_expand/00-step1.yaml"
 	err := step.LoadYAML(path)
 	assert.NoError(t, err)
 	assert.Equal(t, 1, len(step.Apply))
-
 }
 
 func TestOverriddenKubeconfigPathResolution(t *testing.T) {
 	os.Setenv("SUBPATH", "test")
-	defer func() {
+	t.Cleanup(func() {
 		os.Unsetenv("SUBPATH")
-	}()
+	})
 	stepRelativePath := &Step{Dir: "step_integration_test_data/kubeconfig_path_resolution/"}
 	err := stepRelativePath.LoadYAML("step_integration_test_data/kubeconfig_path_resolution/00-step1.yaml")
 	assert.NoError(t, err)
@@ -442,7 +444,6 @@ func TestStepFailure(t *testing.T) {
 }
 
 func TestAssertCommandsValidCommandRunsOk(t *testing.T) {
-
 	step := &Step{
 		Name:            t.Name(),
 		Index:           0,
@@ -460,7 +461,6 @@ func TestAssertCommandsValidCommandRunsOk(t *testing.T) {
 }
 
 func TestAssertCommandsMultipleCommandRunsOk(t *testing.T) {
-
 	step := &Step{
 		Name:            t.Name(),
 		Index:           0,
@@ -478,7 +478,6 @@ func TestAssertCommandsMultipleCommandRunsOk(t *testing.T) {
 }
 
 func TestAssertCommandsMissingCommandFails(t *testing.T) {
-
 	step := &Step{
 		Name:            t.Name(),
 		Index:           0,
@@ -496,7 +495,6 @@ func TestAssertCommandsMissingCommandFails(t *testing.T) {
 }
 
 func TestAssertCommandsFailingCommandFails(t *testing.T) {
-
 	step := &Step{
 		Name:            t.Name(),
 		Index:           0,
@@ -514,7 +512,6 @@ func TestAssertCommandsFailingCommandFails(t *testing.T) {
 }
 
 func TestAssertCommandsShouldTimeout(t *testing.T) {
-
 	step := &Step{
 		Name:            t.Name(),
 		Index:           0,

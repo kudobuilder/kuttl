@@ -68,6 +68,7 @@ EOF
 
 generate_platform linux amd64 ./kubectl-kuttl >> kuttl.yaml
 generate_platform linux 386 ./kubectl-kuttl >> kuttl.yaml
+generate_platform linux arm64 ./kubectl-kuttl >> kuttl.yaml
 generate_platform darwin amd64 ./kubectl-kuttl >> kuttl.yaml
 generate_platform darwin arm64 ./kubectl-kuttl >> kuttl.yaml
 

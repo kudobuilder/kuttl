@@ -68,12 +68,13 @@ var APIServerDefaultArgs = []string{
 	"--advertise-address=127.0.0.1",
 	"--etcd-servers={{ if .EtcdURL }}{{ .EtcdURL.String }}{{ end }}",
 	"--cert-dir={{ .CertDir }}",
-	"--insecure-port={{ if .URL }}{{ .URL.Port }}{{ end }}",
-	"--insecure-bind-address={{ if .URL }}{{ .URL.Hostname }}{{ end }}",
+	"--insecure-port={{ if .URL }}{{ .URL.Port }}{{else}}0{{ end }}",
+	"{{ if .URL }}--insecure-bind-address={{ .URL.Hostname }}{{ end }}",
 	"--secure-port={{ if .SecurePort }}{{ .SecurePort }}{{ end }}",
-	"--disable-admission-plugins=ServiceAccount,NamespaceLifecycle",
+
+	"--disable-admission-plugins=ServiceAccount",
 	"--service-cluster-ip-range=10.0.0.0/24",
-	"--advertise-address={{ if .URL }}{{ .URL.Hostname }}{{ end }}",
+	"--allow-privileged=true",
 }
 
 // TODO (kensipe): need to consider options around AlwaysAdmin https://github.com/kudobuilder/kudo/pull/1420/files#r391449597
@@ -348,7 +349,6 @@ func Namespaced(dClient discovery.DiscoveryInterface, obj runtime.Object, namesp
 
 	resource, err := GetAPIResource(dClient, obj.GetObjectKind().GroupVersionKind())
 	if err != nil {
-
 		return "", "", fmt.Errorf("retrieving API resource for %v failed: %v", obj.GetObjectKind().GroupVersionKind(), err)
 	}
 
@@ -528,11 +528,9 @@ func LoadYAML(path string, r io.Reader) ([]client.Object, error) {
 		} else {
 			objects = append(objects, obj)
 		}
-
 	}
 
 	return objects, nil
-
 }
 
 // MatchesKind returns true if the Kubernetes kind of obj matches any of kinds.
@@ -549,14 +547,14 @@ func MatchesKind(obj runtime.Object, kinds ...runtime.Object) bool {
 }
 
 // InstallManifests recurses over ManifestsDir to install all resources defined in YAML manifests.
-func InstallManifests(ctx context.Context, c client.Client, dClient discovery.DiscoveryInterface, manifestsDir string, kinds ...runtime.Object) ([]client.Object, error) {
-	objects := []client.Object{}
+func InstallManifests(ctx context.Context, c client.Client, dClient discovery.DiscoveryInterface, manifestsDir string, kinds ...runtime.Object) ([]*apiextv1.CustomResourceDefinition, error) {
+	crds := []*apiextv1.CustomResourceDefinition{}
 
 	if manifestsDir == "" {
-		return objects, nil
+		return crds, nil
 	}
 
-	return objects, filepath.Walk(manifestsDir, func(path string, info os.FileInfo, err error) error {
+	return crds, filepath.Walk(manifestsDir, func(path string, info os.FileInfo, err error) error {
 		if err != nil {
 			return err
 		}
@@ -610,7 +608,16 @@ func InstallManifests(ctx context.Context, c client.Client, dClient discovery.Di
 			// TODO: use test logger instead of Go logger
 			log.Println(ResourceID(obj), action)
 
-			objects = append(objects, obj)
+			newCrd := apiextv1.CustomResourceDefinition{
+				TypeMeta: metav1.TypeMeta{
+					Kind:       obj.GetObjectKind().GroupVersionKind().Kind,
+					APIVersion: obj.GetObjectKind().GroupVersionKind().Version,
+				},
+				ObjectMeta: metav1.ObjectMeta{
+					Name: obj.GetName(),
+				},
+			}
+			crds = append(crds, &newCrd)
 		}
 
 		return nil
@@ -627,11 +634,13 @@ func ObjectKey(obj runtime.Object) client.ObjectKey {
 }
 
 // NewResource generates a Kubernetes object using the provided apiVersion, kind, name, and namespace.
+// The name and namespace are omitted if empty.
 func NewResource(apiVersion, kind, name, namespace string) *unstructured.Unstructured {
-	meta := map[string]interface{}{
-		"name": name,
-	}
+	meta := map[string]interface{}{}
 
+	if name != "" {
+		meta["name"] = name
+	}
 	if namespace != "" {
 		meta["namespace"] = namespace
 	}
@@ -647,7 +656,6 @@ func NewResource(apiVersion, kind, name, namespace string) *unstructured.Unstruc
 
 // NewClusterRoleBinding Create a clusterrolebinding for the serviceAccount passed
 func NewClusterRoleBinding(apiVersion, kind, name, namespace string, serviceAccount string, roleName string) runtime.Object {
-
 	sa := &rbacv1.ClusterRoleBinding{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: name,
@@ -678,6 +686,27 @@ func NewClusterRoleBinding(apiVersion, kind, name, namespace string, serviceAcco
 // NewPod creates a new pod object.
 func NewPod(name, namespace string) *unstructured.Unstructured {
 	return NewResource("v1", "Pod", name, namespace)
+}
+
+// NewV1Pod returns a new corev1.Pod object.
+// Each of name, namespace and serviceAccountName are set if non-empty.
+func NewV1Pod(name, namespace, serviceAccountName string) *corev1.Pod {
+	pod := corev1.Pod{}
+	pod.SetGroupVersionKind(schema.GroupVersionKind{
+		Group:   "",
+		Version: "v1",
+		Kind:    "Pod",
+	})
+	if name != "" {
+		pod.SetName(name)
+	}
+	if namespace != "" {
+		pod.SetNamespace(namespace)
+	}
+	if serviceAccountName != "" {
+		pod.Spec.ServiceAccountName = serviceAccountName
+	}
+	return &pod
 }
 
 // WithNamespace naively applies the namespace to the object. Used mainly in tests, otherwise
@@ -891,7 +920,6 @@ func WaitForDelete(c *RetryClient, objs []runtime.Object) error {
 
 // WaitForSA waits for a service account to be present
 func WaitForSA(config *rest.Config, name, namespace string) error {
-
 	c, err := NewRetryClient(config, client.Options{
 		Scheme: Scheme(),
 	})
@@ -1127,7 +1155,6 @@ func RunCommands(ctx context.Context, logger Logger, namespace string, commands 
 	}
 
 	for i, cmd := range commands {
-
 		bg, err := RunCommand(ctx, namespace, cmd, workdir, logger, logger, logger, timeout, kubeconfigOverride)
 		if err != nil {
 			cmdListSize := len(commands)

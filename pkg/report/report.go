@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"encoding/xml"
 	"fmt"
-	"io/ioutil"
+	"os"
 	"path/filepath"
 	"time"
 )
@@ -216,6 +216,12 @@ func latestEnd(start time.Time, testcases []*Testcase) time.Time {
 // Report prints a report for TestSuites to the directory.  ftype == json | xml
 func (ts *Testsuites) Report(dir, name string, ftype Type) error {
 	ts.Close()
+
+	err := ensureDir(dir)
+	if err != nil {
+		return err
+	}
+
 	// if a report is requested it is always created
 	switch ftype {
 	case XML:
@@ -225,6 +231,20 @@ func (ts *Testsuites) Report(dir, name string, ftype Type) error {
 	default:
 		return writeJSONReport(dir, name, ts)
 	}
+}
+
+func ensureDir(dir string) error {
+	if dir == "" {
+		return nil
+	}
+	_, err := os.Stat(dir)
+	// TODO log this, need to passing logger or have logger added to Testsuites
+	// Create the folder to save the report if it doesn't exist
+	if os.IsNotExist(err) {
+		err = os.MkdirAll(dir, 0755)
+		//	no need for error check, it is always returned and handled by caller
+	}
+	return err
 }
 
 // NewSuite creates and assigns a TestSuite to the TestSuites (then returns the suite)
@@ -242,7 +262,6 @@ func (ts *Testsuites) SetFailure(message string) {
 }
 
 func writeXMLReport(dir, name string, ts *Testsuites) error {
-
 	file := filepath.Join(dir, fmt.Sprintf("%s.xml", name))
 	xDoc, err := xml.MarshalIndent(ts, " ", "  ")
 	if err != nil {
@@ -250,7 +269,7 @@ func writeXMLReport(dir, name string, ts *Testsuites) error {
 	}
 	xmlStr := string(xDoc)
 	//nolint:gosec
-	return ioutil.WriteFile(file, []byte(xmlStr), 0644)
+	return os.WriteFile(file, []byte(xmlStr), 0644)
 }
 
 func writeJSONReport(dir, name string, ts *Testsuites) error {
@@ -261,5 +280,5 @@ func writeJSONReport(dir, name string, ts *Testsuites) error {
 	}
 
 	//nolint:gosec
-	return ioutil.WriteFile(file, jDoc, 0644)
+	return os.WriteFile(file, jDoc, 0644)
 }

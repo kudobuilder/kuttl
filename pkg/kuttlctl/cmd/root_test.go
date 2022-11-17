@@ -18,7 +18,7 @@ func TestNormalizationFuncGlobalExistence(t *testing.T) {
 	}
 
 	// In case of failure of this test check this PR: spf13/cobra#110
-	if reflect.ValueOf(sub.Flags().GetNormalizeFunc()).Pointer() != reflect.ValueOf(root.Flags().GetNormalizeFunc()).Pointer() {
+	if reflect.ValueOf(sub.GlobalNormalizationFunc()).Pointer() != reflect.ValueOf(root.GlobalNormalizationFunc()).Pointer() {
 		t.Fatal("child and root commands should have the same normalization functions")
 	}
 }
