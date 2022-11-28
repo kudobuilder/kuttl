@@ -1,0 +1,22 @@
+name: "Integration tests"
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  integration-tests:
+    runs-on: ubuntu-20.04
+    steps:
+    - uses: actions/setup-go@v2.1.4
+      with:
+        go-version: 1.18
+    - uses: actions/checkout@v2.4.0
+    - name: "Install etcd"
+      run: ./hack/install-etcd.sh
+    - name: "Install kube-apiserver"
+      run: ./hack/install-kube-apiserver.sh
+    - name: "Run integration tests"
+      run: make integration-test INTEGRATION_OUTPUT_JUNIT="true"

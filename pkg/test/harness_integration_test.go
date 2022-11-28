@@ -63,7 +63,7 @@ func TestRunBackgroundCommands(t *testing.T) {
 	h.TestSuite.Commands = commands
 
 	h.Setup()
-	defer h.Stop()
+	t.Cleanup(h.Stop)
 
 	// setup creates bg processes
 	assert.Equal(t, 1, len(h.bgProcesses))

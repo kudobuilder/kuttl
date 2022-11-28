@@ -20,6 +20,14 @@ func TestGetTimeout(t *testing.T) {
 	assert.Equal(t, 45, h.GetTimeout())
 }
 
+func TestGetReportName(t *testing.T) {
+	h := Harness{}
+	assert.Equal(t, "kuttl-report", h.reportName())
+
+	h.TestSuite.ReportName = "special-kuttl-report"
+	assert.Equal(t, "special-kuttl-report", h.reportName())
+}
+
 type dockerMock struct {
 	ImageWriter *io.PipeWriter
 	imageReader *io.PipeReader
