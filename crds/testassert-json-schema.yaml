@@ -5,3 +5,55 @@ properties:
     description: Number of seconds that the test is allowed to run for
     type: integer
     default: 30
+  collectors:
+    type: object
+    properties:
+      type:
+        type: string
+        description: Type of collector to run. Values are one of `pod`, `command`, or `events`. If the field named `command` is specified, `type` is assumed to be `command`. If the field named `pod` is specified, `type` is assumed to be `pod`.
+        default: pod
+      pod:
+        type: string
+        description: The pod name from which to access logs.
+      namespace:
+        type: string
+        description: Namespace in which the pod or events can be located.
+      container:
+        type: string
+        description: Container name inside the pod from which to fetch logs. If empty assumes all containers.
+      selector:
+        type: string
+        description: Label query to select a pod.
+      tail:
+        type: integer
+        description: The number of last lines to collect from a pod. If omitted or zero, then the default is 10 if you use a selector, or -1 (all) if you use a pod name. This matches default behavior of `kubectl logs`.
+      command:
+        type: string
+        description: Command to run. Requires an empty type or type `command`. Must not specify fields `pod`, `namespace`, `container`, or `selector` if present.
+  commands:
+    description: Commands is a set of commands to be run as assertions for the current step
+    type: array
+    items:
+      description: The TestAssertCommand object is used by TestAssert to enable running arbitrary commands in asserts
+      type: object
+      properties:
+        command:
+          description: The command and argument to run as a string.
+          type: string
+        script:
+          description: |
+            Allows a shell script to run 
+            - namespaced and command should not be used with script. 
+            - namespaced is ignored and command is an error. 
+            - env expansion is depended upon the shell but ENV is passed to the runtime env.
+          type: string
+        namespaced:
+          description: |
+            If set, the --namespace flag will be appended to the command with the namespace to use 
+            (the test namespace).
+          type: boolean
+        skipLogOutput:
+          description: |
+            If set, the output from the command is not logged. 
+            Useful for sensitive logs or to reduce noise.
+          type: boolean
