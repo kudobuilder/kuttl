@@ -7,15 +7,10 @@ To setup the tests locally, you need either:
 Or:
 
 * Go
-* kubebuilder
-
-## Downloading kubebuilder
-
-To setup kubebuilder, fetch the latest release from [Github](https://github.com/kubernetes-sigs/kubebuilder/releases) and extract `etcd` and `kube-apiserver` into `/usr/local/kubebuilder/bin/`.
 
 # Docker only
 
-If you don't want to install kubebuilder and other dependencies of KUTTL locally, you can build KUTTL and run the tests inside a Docker container.
+If you don't want to install Go and other dependencies of KUTTL locally, you can build KUTTL and run the tests inside a Docker container.
 
 To run tests inside a Docker container, you can just execute:
 

@@ -11,6 +11,8 @@ DATE_FMT := "%Y-%m-%dT%H:%M:%SZ"
 BUILD_DATE := $(shell date -u -d "@$SOURCE_DATE_EPOCH" "+${DATE_FMT}" 2>/dev/null || date -u -r "${SOURCE_DATE_EPOCH}" "+${DATE_FMT}" 2>/dev/null || date -u "+${DATE_FMT}")
 LDFLAGS := -X ${GIT_VERSION_PATH}=${GIT_VERSION} -X ${GIT_COMMIT_PATH}=${GIT_COMMIT} -X ${BUILD_DATE_PATH}=${BUILD_DATE}
 GOLANGCI_LINT_VER = "1.50.1"
+# ENVTEST_K8S_VERSION refers to the version of kubebuilder assets to be downloaded by envtest binary.
+ENVTEST_K8S_VERSION ?= 1.25.0
 
 export GO111MODULE=on
 
@@ -133,10 +135,20 @@ endif
 
 .PHONY: integration-test
 # Run integration tests
-integration-test:  ## Runs integration tests
-	./hack/run-integration-tests.sh
+integration-test: envtest  ## Runs integration tests
+	KUBEBUILDER_ASSETS="$(shell $(ENVTEST) use $(ENVTEST_K8S_VERSION) --bin-dir $(LOCALBIN) -p path)" ./hack/run-integration-tests.sh
 
-# Run e2e tests
-.PHONY: e2e-test
-e2e-test: cli
-	./hack/run-e2e-tests.sh
+##@ Build Dependencies
+
+## Location to install dependencies to
+LOCALBIN ?= $(shell pwd)/bin
+$(LOCALBIN):
+	mkdir -p $(LOCALBIN)
+
+## Tool Binaries
+ENVTEST ?= $(LOCALBIN)/setup-envtest
+
+.PHONY: envtest
+envtest: $(ENVTEST) ## Download envtest-setup locally if necessary.
+$(ENVTEST): $(LOCALBIN)
+	test -s $(LOCALBIN)/setup-envtest || GOBIN=$(LOCALBIN) go install sigs.k8s.io/controller-runtime/tools/setup-envtest@latest

@@ -35,7 +35,6 @@ You can find the full text of the DCO here: https://developercertificate.org/
 
 - Git
 - Go `1.18` or later. Note that some [Makefile](Makefile) targets assume that your `$GOBIN` is in your `$PATH`.
-- [Kubebuilder](https://book.kubebuilder.io/quick-start.html#installation) version 2 or later - note that it is only needed for the `kube-apiserver` and `etcd` binaries, so no need to install *its* dependencies (such as `kustomize`).
 - A Kubernetes Cluster running version `1.19` or later (e.g., [kind](https://kind.sigs.k8s.io/) or [Minikube](https://kubernetes.io/docs/tasks/tools/install-minikube/))
 - [kubectl](https://kubernetes.io/docs/tasks/tools/install-kubectl/)
 
@@ -66,57 +65,6 @@ For the build to work you need proper version of `controller-gen` to be installe
   1. change `go.mod` back
 
 After the correct controller-gen version is installed.  All future builds will work.  The only time this work-around is necessary is if/when the controller-tools version is updated.  [The fix](https://go-review.googlesource.com/c/sys/+/274573/) has been merged into Go and should be resolved with go 1.18.1.
-
-
-#### Kubebuilder Envtest
-
-The pre-requisite for kubebuilder is for the [envtest](https://book.kubebuilder.io/reference/envtest.html).  It is used for the integration-tests, testing against kube-apiserver and etcd.  This has been complicated with Apple Silicon and process hanging etc.  The installation has changed a lot since the start of this project and is a common issue getting started.  The current use of `envtest` is to have `KUBEBUILDER_ASSETS` env variable set to the location of etcd and kube-apiserver.  For help regarding this, we found Makefile which can help.
-
-```Makefile
-.PHONY: all clean
-
-OS := $(shell uname)
-
-ifeq ($(OS),Linux)
-kernel := linux
-tar_wildcards := --wildcards
-endif
-ifeq ($(OS),Darwin)
-kernel := darwin
-tar_wildcards :=
-endif
-
-all: etcd kubectl kube-apiserver
-
-clean:
-	rm -f etcd
-	rm -f kubectl
-	rm -f kube-apiserver
-
-etcd:
-ifeq ($(OS),Linux)
-	curl -Ls https://github.com/etcd-io/etcd/releases/download/v3.5.0/etcd-v3.5.0-$(kernel)-amd64.tar.gz \
-  | tar zxv --strip-components=1 $(tar_wildcards) "*/etcd"
-endif
-ifeq ($(OS), Darwin)
-	curl -LO https://github.com/etcd-io/etcd/releases/download/v3.4.16/etcd-v3.4.16-darwin-amd64.zip
-	unzip etcd-v3.4.16-darwin-amd64.zip
-	cp etcd-v3.4.16-darwin-amd64/etcd .
-	rm etcd-v3.4.16-darwin-amd64.zip
-	rm -r etcd-v3.4.16-darwin-amd64
-endif
-
-kubectl:
-	curl -LO "https://dl.k8s.io/release/$(shell curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
-	chmod +x kubectl
-
-kube-apiserver:
-	curl -L https://storage.googleapis.com/kubebuilder-tools/kubebuilder-tools-1.19.2-$(kernel)-amd64.tar.gz \
-  | tar zxv --strip-components=2 $(tar_wildcards) "*/kube-apiserver"
-
-```
-
-Full M1 Apple Silicon support doesn't fully exist yet, and certainly not for older binaries.  This solution leverages Rosetta2. 
 
 ### Build Instructions
 
