@@ -262,7 +262,6 @@ func (ts *Testsuites) SetFailure(message string) {
 }
 
 func writeXMLReport(dir, name string, ts *Testsuites) error {
-
 	file := filepath.Join(dir, fmt.Sprintf("%s.xml", name))
 	xDoc, err := xml.MarshalIndent(ts, " ", "  ")
 	if err != nil {

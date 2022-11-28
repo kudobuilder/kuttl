@@ -356,7 +356,6 @@ func TestApplyExpansion(t *testing.T) {
 	err := step.LoadYAML(path)
 	assert.NoError(t, err)
 	assert.Equal(t, 1, len(step.Apply))
-
 }
 
 func TestOverriddenKubeconfigPathResolution(t *testing.T) {
@@ -445,7 +444,6 @@ func TestStepFailure(t *testing.T) {
 }
 
 func TestAssertCommandsValidCommandRunsOk(t *testing.T) {
-
 	step := &Step{
 		Name:            t.Name(),
 		Index:           0,
@@ -463,7 +461,6 @@ func TestAssertCommandsValidCommandRunsOk(t *testing.T) {
 }
 
 func TestAssertCommandsMultipleCommandRunsOk(t *testing.T) {
-
 	step := &Step{
 		Name:            t.Name(),
 		Index:           0,
@@ -481,7 +478,6 @@ func TestAssertCommandsMultipleCommandRunsOk(t *testing.T) {
 }
 
 func TestAssertCommandsMissingCommandFails(t *testing.T) {
-
 	step := &Step{
 		Name:            t.Name(),
 		Index:           0,
@@ -499,7 +495,6 @@ func TestAssertCommandsMissingCommandFails(t *testing.T) {
 }
 
 func TestAssertCommandsFailingCommandFails(t *testing.T) {
-
 	step := &Step{
 		Name:            t.Name(),
 		Index:           0,
@@ -517,7 +512,6 @@ func TestAssertCommandsFailingCommandFails(t *testing.T) {
 }
 
 func TestAssertCommandsShouldTimeout(t *testing.T) {
-
 	step := &Step{
 		Name:            t.Name(),
 		Index:           0,

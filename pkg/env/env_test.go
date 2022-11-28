@@ -15,7 +15,6 @@ func TestExpandWithMap(t *testing.T) {
 	assert.Equal(t, "hello $  world", ExpandWithMap("$KUTTL_TEST_123 $$ $DOES_NOT_EXIST_1234 ${EXPAND_ME}", map[string]string{
 		"EXPAND_ME": "world",
 	}))
-
 }
 
 func TestExpand(t *testing.T) {
@@ -44,14 +43,12 @@ func TestExpand(t *testing.T) {
 	os.Setenv("KUTTL_TEST_123", "hello")
 	for _, tt := range tests {
 		tt := tt
+
 		t.Run(tt.name, func(t *testing.T) {
-
 			got := Expand(tt.in)
-
 			if got != tt.want {
 				t.Errorf(`(%v) = %q; want "%v"`, tt.in, got, tt.want)
 			}
-
 		})
 	}
 }
