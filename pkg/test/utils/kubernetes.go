@@ -54,9 +54,9 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client/apiutil"
 	"sigs.k8s.io/controller-runtime/pkg/envtest"
 
-	"github.com/kudobuilder/kuttl/pkg/apis"
-	harness "github.com/kudobuilder/kuttl/pkg/apis/testharness/v1beta1"
-	"github.com/kudobuilder/kuttl/pkg/env"
+	"github.com/kyverno/kuttl/pkg/apis"
+	harness "github.com/kyverno/kuttl/pkg/apis/testharness/v1beta1"
+	"github.com/kyverno/kuttl/pkg/env"
 )
 
 // ensure that we only add to the scheme once.
@@ -77,7 +77,7 @@ var APIServerDefaultArgs = []string{
 	"--allow-privileged=true",
 }
 
-// TODO (kensipe): need to consider options around AlwaysAdmin https://github.com/kudobuilder/kudo/pull/1420/files#r391449597
+// TODO (kensipe): need to consider options around AlwaysAdmin https://github.com/kyverno/kudo/pull/1420/files#r391449597
 
 // IsJSONSyntaxError returns true if the error is a JSON syntax error.
 func IsJSONSyntaxError(err error) bool {

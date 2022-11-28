@@ -12,10 +12,10 @@ import (
 	"github.com/spf13/pflag"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
-	harness "github.com/kudobuilder/kuttl/pkg/apis/testharness/v1beta1"
-	"github.com/kudobuilder/kuttl/pkg/report"
-	"github.com/kudobuilder/kuttl/pkg/test"
-	testutils "github.com/kudobuilder/kuttl/pkg/test/utils"
+	harness "github.com/kyverno/kuttl/pkg/apis/testharness/v1beta1"
+	"github.com/kyverno/kuttl/pkg/report"
+	"github.com/kyverno/kuttl/pkg/test"
+	testutils "github.com/kyverno/kuttl/pkg/test/utils"
 )
 
 var (

@@ -1,4 +1,4 @@
-module github.com/kudobuilder/kuttl
+module github.com/kyverno/kuttl
 
 go 1.18
 

@@ -12,7 +12,7 @@ import (
 
 	"github.com/dustin/go-humanize"
 
-	"github.com/kudobuilder/kuttl/pkg/version"
+	"github.com/kyverno/kuttl/pkg/version"
 )
 
 // Client is client used to simplified http requests for tarballs

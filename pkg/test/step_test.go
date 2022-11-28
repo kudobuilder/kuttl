@@ -16,8 +16,8 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 
-	harness "github.com/kudobuilder/kuttl/pkg/apis/testharness/v1beta1"
-	testutils "github.com/kudobuilder/kuttl/pkg/test/utils"
+	harness "github.com/kyverno/kuttl/pkg/apis/testharness/v1beta1"
+	testutils "github.com/kyverno/kuttl/pkg/test/utils"
 )
 
 const (

@@ -16,7 +16,7 @@ import (
 	"k8s.io/apimachinery/pkg/watch"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
-	harness "github.com/kudobuilder/kuttl/pkg/apis/testharness/v1beta1"
+	harness "github.com/kyverno/kuttl/pkg/apis/testharness/v1beta1"
 )
 
 var testenv TestEnvironment

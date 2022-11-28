@@ -7,7 +7,7 @@ import (
 
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
-	testutils "github.com/kudobuilder/kuttl/pkg/test/utils"
+	testutils "github.com/kyverno/kuttl/pkg/test/utils"
 )
 
 // IsURL returns true if string is an URL

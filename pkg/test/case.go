@@ -23,8 +23,8 @@ import (
 
 	"k8s.io/client-go/tools/clientcmd"
 
-	"github.com/kudobuilder/kuttl/pkg/report"
-	testutils "github.com/kudobuilder/kuttl/pkg/test/utils"
+	"github.com/kyverno/kuttl/pkg/report"
+	testutils "github.com/kyverno/kuttl/pkg/test/utils"
 )
 
 // testStepRegex contains one capturing group to determine the index of a step file.

@@ -9,8 +9,8 @@ import (
 	"k8s.io/client-go/discovery"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
-	"github.com/kudobuilder/kuttl/pkg/report"
-	testutils "github.com/kudobuilder/kuttl/pkg/test/utils"
+	"github.com/kyverno/kuttl/pkg/report"
+	testutils "github.com/kyverno/kuttl/pkg/test/utils"
 )
 
 // Create two test environments, ensure that the second environment is used when

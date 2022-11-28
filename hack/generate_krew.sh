@@ -20,7 +20,7 @@ function generate_platform {
         ARCH=i386
     fi
 
-    URL="https://github.com/kudobuilder/kuttl/releases/download/v${VERSION}/kuttl_${VERSION}_${1}_${ARCH}.tar.gz"
+    URL="https://github.com/kyverno/kuttl/releases/download/v${VERSION}/kuttl_${VERSION}_${1}_${ARCH}.tar.gz"
     # check file exists first!
     if ! curl --output /dev/null --silent --head --fail "$URL"; then
       >&2 echo "URL does not exist: $URL"
@@ -40,7 +40,7 @@ function generate_platform {
       matchLabels:
         os: "${1}"
         arch: "${2}"
-    uri: https://github.com/kudobuilder/kuttl/releases/download/v${VERSION}/kuttl_${VERSION}_${1}_${ARCH}.tar.gz
+    uri: https://github.com/kyverno/kuttl/releases/download/v${VERSION}/kuttl_${VERSION}_${1}_${ARCH}.tar.gz
     sha256: "${sha}"
     bin: "${3}"
 EOF

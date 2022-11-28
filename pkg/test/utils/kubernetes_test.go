@@ -16,7 +16,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
-	harness "github.com/kudobuilder/kuttl/pkg/apis/testharness/v1beta1"
+	harness "github.com/kyverno/kuttl/pkg/apis/testharness/v1beta1"
 )
 
 func TestNamespaced(t *testing.T) {

@@ -22,7 +22,7 @@ if [[ ${RETVAL} != 0 ]]; then
     exit 1
 fi
 
-docker buildx build . -t "kudobuilder/kuttl:v$GIT_VERSION"  --platform linux/amd64,linux/arm64,linux/ppc64le --push
+docker buildx build . -t "kyverno/kuttl:v$GIT_VERSION"  --platform linux/amd64,linux/arm64,linux/ppc64le --push
 
 RETVAL=$?
 if [[ ${RETVAL} != 0 ]]; then

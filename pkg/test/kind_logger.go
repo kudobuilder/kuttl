@@ -6,7 +6,7 @@ import (
 	"github.com/spf13/pflag"
 	"sigs.k8s.io/kind/pkg/log"
 
-	testutils "github.com/kudobuilder/kuttl/pkg/test/utils"
+	testutils "github.com/kyverno/kuttl/pkg/test/utils"
 )
 
 type level int32

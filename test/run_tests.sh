@@ -36,7 +36,7 @@ fi
 if docker build -f test/Dockerfile -t kuttl-test .; then
     if docker run -e INTEGRATION_OUTPUT_JUNIT --net=host -it --rm -m 4g \
         -v /var/run/docker.sock:/var/run/docker.sock \
-        -v "$(pwd)"/reports:/go/src/github.com/kudobuilder/kuttl/reports \
+        -v "$(pwd)"/reports:/go/src/github.com/kyverno/kuttl/reports \
         -v "$(pwd)"/kind-logs:/tmp/kuttl-e2e-test \
         kuttl-test bash -c "make $TARGET; ret=\$?; chmod a+r -R /tmp/kuttl-e2e-test; exit \$ret"
     then

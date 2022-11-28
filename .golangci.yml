@@ -57,8 +57,8 @@ linters-settings:
   dupl:
     threshold: 400
   goimports:
-    # Don't use 'github.com/kudobuilder/kuttl', it'll result in unreliable output!
-    local-prefixes: github.com/kudobuilder
+    # Don't use 'github.com/kyverno/kuttl', it'll result in unreliable output!
+    local-prefixes: github.com/kyverno
 issues:
   # ignore errchecks for test files
   exclude-rules:

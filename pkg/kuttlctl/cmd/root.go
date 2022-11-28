@@ -3,7 +3,7 @@ package cmd
 import (
 	"github.com/spf13/cobra"
 
-	"github.com/kudobuilder/kuttl/pkg/version"
+	"github.com/kyverno/kuttl/pkg/version"
 )
 
 // NewKuttlCmd creates a new root command for kuttlctl

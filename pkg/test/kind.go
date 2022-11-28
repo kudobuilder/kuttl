@@ -10,7 +10,7 @@ import (
 	"sigs.k8s.io/kind/pkg/cluster/nodes"
 	"sigs.k8s.io/kind/pkg/cluster/nodeutils"
 
-	testutils "github.com/kudobuilder/kuttl/pkg/test/utils"
+	testutils "github.com/kyverno/kuttl/pkg/test/utils"
 )
 
 // kind provides a thin abstraction layer for a KIND cluster.

@@ -15,7 +15,7 @@ import (
 	"sigs.k8s.io/kind/pkg/apis/config/v1alpha4"
 	"sigs.k8s.io/kind/pkg/cluster/nodes"
 
-	testutils "github.com/kudobuilder/kuttl/pkg/test/utils"
+	testutils "github.com/kyverno/kuttl/pkg/test/utils"
 )
 
 const (

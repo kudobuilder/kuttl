@@ -1,6 +1,6 @@
 FROM kudobuilder/golang:1.18
 
-WORKDIR $GOPATH/src/github.com/kudobuilder/kuttl
+WORKDIR $GOPATH/src/github.com/kyverno/kuttl
 
 # install docker
 RUN apt-get update && apt-get install -y \

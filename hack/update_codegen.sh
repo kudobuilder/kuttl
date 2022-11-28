@@ -25,14 +25,14 @@ fi
 # https://github.com/kudobuilder/kudo/issues/1252
 FAKE_GOPATH="$(mktemp -d)"
 trap 'chmod -R u+rwX ${FAKE_GOPATH} && rm -rf ${FAKE_GOPATH}' EXIT
-FAKE_REPOPATH="${FAKE_GOPATH}/src/github.com/kudobuilder/kuttl"
+FAKE_REPOPATH="${FAKE_GOPATH}/src/github.com/kyverno/kuttl"
 mkdir -p "$(dirname "${FAKE_REPOPATH}")" && ln -s "${REPO_ROOT}" "${FAKE_REPOPATH}"
 export GOPATH="${FAKE_GOPATH}"
 cd "${FAKE_REPOPATH}"
 
 "${CODE_GEN_DIR}"/generate-groups.sh \
   deepcopy \
-  github.com/kudobuilder/kuttl/pkg/client \
-  github.com/kudobuilder/kuttl/pkg/apis \
+  github.com/kyverno/kuttl/pkg/client \
+  github.com/kyverno/kuttl/pkg/apis \
   "testharness:v1beta1" \
   --go-header-file hack/boilerplate.go.txt # must be last for some reason

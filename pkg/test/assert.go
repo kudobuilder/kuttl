@@ -9,7 +9,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/config"
 
-	testutils "github.com/kudobuilder/kuttl/pkg/test/utils"
+	testutils "github.com/kyverno/kuttl/pkg/test/utils"
 )
 
 // Assert checks all provided assert files against a namespace.  Upon assert failure, it prints the failures and returns an error
