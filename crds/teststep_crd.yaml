@@ -43,9 +43,28 @@ spec:
                     If specified, a label selector to use when looking up objects to delete. 
                     If both labels and name are unspecified, then all resources of the specified kind in the namespace will be deleted.
                   type: object
+            apply:
+              type: array
+              description: A list of files to apply as part of this step. Specified path is relative to that in which the step occurs.
+              items:
+                type: string
+            assert:
+              type: array
+              description: A list of files to assert as part of this step. See documentation for [asserts and errors](asserts-errors.md) for more information. Specified path is relative to that in which the step occurs.
+              items:
+                type: string
+            error:
+              type: array
+              description: A list of files to error as part of this step. See documentation for [asserts and errors](asserts-errors.md) for more information. Specified path is relative to that in which the step occurs.
+              items:
+                type: string
+
             index:
               description: Override the test step's index.
               type: integer
+            unitTest:
+              type: boolean
+              description: Indicates that this is a unit test - safe to run without a real Kubernetes cluster.
             commands:
               description: Commands to run prior at the beginning of the test step.
               type: array
@@ -84,3 +103,6 @@ spec:
                   timeout:
                     description: Override the TestSuite timeout for this command (in seconds).
                     type: integer
+            kubeconfig:
+              type: string
+              description: Kubeconfig to use when applying and asserting for this step. Optional.

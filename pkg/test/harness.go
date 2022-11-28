@@ -371,7 +371,6 @@ func (h *Harness) RunTests() {
 
 	h.T.Run("harness", func(t *testing.T) {
 		for testDir, tests := range realTestSuite {
-
 			suite := h.report.NewSuite(testDir)
 			for _, test := range tests {
 				test := test
@@ -436,7 +435,6 @@ func (h *Harness) testPreProcessing() []string {
 
 // Run the test harness - start the control plane and then run the tests.
 func (h *Harness) Run() {
-
 	// capture ctrl+c and provide clean up
 	go func() {
 		sigchan := make(chan os.Signal, 1)

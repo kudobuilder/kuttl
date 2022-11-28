@@ -41,7 +41,6 @@ func UnTar(dest string, r io.Reader, compressed bool) (err error) {
 		header, err := tr.Next()
 
 		switch {
-
 		// if no more files are found return
 		case err == io.EOF:
 			return nil
@@ -59,7 +58,6 @@ func UnTar(dest string, r io.Reader, compressed bool) (err error) {
 
 		// check the file type
 		switch header.Typeflag {
-
 		case tar.TypeDir:
 			// we don't need to handle folders, files have folder name in their names and that should be enough
 			if _, err := os.Stat(target); err != nil {

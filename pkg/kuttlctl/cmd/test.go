@@ -40,8 +40,7 @@ var (
 )
 
 // newTestCmd creates the test command for the CLI
-// nolint:gocyclo
-func newTestCmd() *cobra.Command {
+func newTestCmd() *cobra.Command { //nolint:gocyclo
 	configPath := ""
 	crdDir := ""
 	manifestDirs := []string{}
@@ -104,7 +103,6 @@ For more detailed documentation, visit: https://kuttl.dev`,
 						case *unstructured.Unstructured:
 							log.Println(fmt.Errorf("bad configuration in file %q", configPath))
 						}
-
 					} else {
 						log.Println(fmt.Errorf("unknown object type: %s", kind))
 					}
