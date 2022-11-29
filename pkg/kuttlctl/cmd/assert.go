@@ -26,7 +26,6 @@ func newAssertCmd() *cobra.Command {
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if len(args) == 0 {
 				return errors.New("one file argument is required")
-
 			}
 			return test.Assert(namespace, timeout, args...)
 		},

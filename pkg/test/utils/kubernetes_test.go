@@ -80,7 +80,7 @@ func TestGETAPIResource(t *testing.T) {
 	assert.Nil(t, err)
 	assert.Equal(t, apiResource.Kind, "Pod")
 
-	apiResource, err = GetAPIResource(fake, schema.GroupVersionKind{
+	_, err = GetAPIResource(fake, schema.GroupVersionKind{
 		Kind:    "NonExistentResourceType",
 		Version: "v1",
 	})
@@ -120,7 +120,6 @@ func TestRetryWithUnexpectedError(t *testing.T) {
 }
 
 func TestKubeconfigPath(t *testing.T) {
-
 	tests := []struct {
 		name     string
 		path     string
@@ -429,7 +428,6 @@ func TestGetKubectlArgs(t *testing.T) {
 		test := test
 
 		t.Run(test.testName, func(t *testing.T) {
-
 			if test.env != nil || len(test.env) > 0 {
 				for key, value := range test.env {
 					os.Setenv(key, value)
@@ -490,7 +488,6 @@ func TestRunScript(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-
 		tt := tt
 
 		t.Run(tt.name, func(t *testing.T) {

@@ -22,13 +22,22 @@ func TestMultiClusterCase(t *testing.T) {
 		return
 	}
 	t.Cleanup(testenv.Environment.Stop)
+	t.Cleanup(func() {
+		if err := testenv.Environment.Stop(); err != nil {
+			t.Error(err)
+		}
+	})
 
 	testenv2, err := testutils.StartTestEnvironment(testutils.APIServerDefaultArgs, false)
 	if err != nil {
 		t.Error(err)
 		return
 	}
-	t.Cleanup(testenv2.Environment.Stop)
+	t.Cleanup(func() {
+		if err := testenv2.Environment.Stop(); err != nil {
+			t.Error(err)
+		}
+	})
 
 	podSpec := map[string]interface{}{
 		"restartPolicy": "Never",

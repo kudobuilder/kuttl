@@ -121,7 +121,7 @@ spec:
               type: string
             reportName:
               description: The name of report to create. This field is not used unless reportFormat is set.
-              default: "kuttl-test"
+              default: "kuttl-report"
               type: string
             namespace:
               description: |

@@ -40,8 +40,7 @@ var (
 )
 
 // newTestCmd creates the test command for the CLI
-// nolint:gocyclo
-func newTestCmd() *cobra.Command {
+func newTestCmd() *cobra.Command { //nolint:gocyclo
 	configPath := ""
 	crdDir := ""
 	manifestDirs := []string{}
@@ -58,6 +57,7 @@ func newTestCmd() *cobra.Command {
 	mockControllerFile := ""
 	timeout := 30
 	reportFormat := ""
+	reportName := "kuttl-report"
 	namespace := ""
 	suppress := []string{}
 
@@ -103,7 +103,6 @@ For more detailed documentation, visit: https://kuttl.dev`,
 						case *unstructured.Unstructured:
 							log.Println(fmt.Errorf("bad configuration in file %q", configPath))
 						}
-
 					} else {
 						log.Println(fmt.Errorf("unknown object type: %s", kind))
 					}
@@ -111,7 +110,6 @@ For more detailed documentation, visit: https://kuttl.dev`,
 			}
 
 			// Override configuration file options with any command line flags if they are set.
-			options.ReportName = "kuttl-test"
 			if isSet(flags, "crd-dir") {
 				options.CRDDir = crdDir
 			}
@@ -169,6 +167,10 @@ For more detailed documentation, visit: https://kuttl.dev`,
 			if isSet(flags, "report") {
 				var ftype = report.Type(strings.ToLower(reportFormat))
 				options.ReportFormat = reportType(ftype)
+			}
+
+			if isSet(flags, "report-name") {
+				options.ReportName = reportName
 			}
 
 			if isSet(flags, "artifacts-dir") {
@@ -250,6 +252,7 @@ For more detailed documentation, visit: https://kuttl.dev`,
 	testCmd.Flags().IntVar(&parallel, "parallel", 8, "The maximum number of tests to run at once.")
 	testCmd.Flags().IntVar(&timeout, "timeout", 30, "The timeout to use as default for TestSuite configuration.")
 	testCmd.Flags().StringVar(&reportFormat, "report", "", "Specify JSON|XML for report.  Report location determined by --artifacts-dir.")
+	testCmd.Flags().StringVar(&reportName, "report-name", "kuttl-report", "Name for the report.  Report location determined by --artifacts-dir and report file type determined by --report.")
 	testCmd.Flags().StringVarP(&namespace, "namespace", "n", "", "Namespace to use for tests. Provided namespaces must exist prior to running tests.")
 	testCmd.Flags().StringSliceVar(&suppress, "suppress-log", []string{}, "Suppress logging for these kinds of logs (events).")
 	// This cannot be a global flag because pkg/test/utils.RunTests calls flag.Parse which barfs on unknown top-level flags.

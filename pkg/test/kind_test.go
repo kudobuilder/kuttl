@@ -7,7 +7,6 @@ import (
 )
 
 func TestCheckVersion(t *testing.T) {
-
 	tests := []struct {
 		name     string
 		ver      string

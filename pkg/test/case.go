@@ -114,7 +114,6 @@ func (t *Case) CreateNamespace(test *testing.T, cl client.Client, ns *namespace)
 
 // NamespaceExists gets namespace and returns true if it exists
 func (t *Case) NamespaceExists(namespace string) (bool, error) {
-
 	cl, err := t.Client(false)
 	if err != nil {
 		return false, err
@@ -174,10 +173,10 @@ func (t *Case) CollectEvents(namespace string) {
 		return
 	}
 
-	err = t.collectEventsBeta1(cl, namespace)
+	err = t.collectEventsV1(cl, namespace)
 	if err != nil {
-		t.Logger.Log("Trying with events eventsv1 API...")
-		err = t.collectEventsV1(cl, namespace)
+		t.Logger.Log("Trying with events eventsv1beta1 API...")
+		err = t.collectEventsBeta1(cl, namespace)
 		if err != nil {
 			t.Logger.Log("Trying with events corev1 API...")
 			err = t.collectEventsCoreV1(cl, namespace)
