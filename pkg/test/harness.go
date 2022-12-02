@@ -227,6 +227,8 @@ func (h *Harness) RunTestEnv() (*rest.Config, error) {
 
 // Config returns the current Kubernetes configuration - either from the environment
 // or from the created temporary control plane.
+// As a side effect, on first successful call this method also writes a kubernetes client config file in YAML format
+// to a file called "kubeconfig" in the current directory.
 func (h *Harness) Config() (*rest.Config, error) {
 	h.configLock.Lock()
 	defer h.configLock.Unlock()
