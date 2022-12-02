@@ -264,7 +264,7 @@ func (h *Harness) Config() (*rest.Config, error) {
 		}
 	}
 	if err != nil {
-		return h.config, err
+		return nil, err
 	}
 
 	// if not the mocked control plane
@@ -280,10 +280,10 @@ func (h *Harness) Config() (*rest.Config, error) {
 
 				// if it still does not have a SA then return the first "default"/"default" error
 				if tempErr != nil {
-					return h.config, err
+					return nil, err
 				}
 			} else {
-				return h.config, err
+				return nil, err
 			}
 		}
 		h.T.Logf("Successful connection to cluster at: %s", h.config.Host)
@@ -292,7 +292,7 @@ func (h *Harness) Config() (*rest.Config, error) {
 	// The creation of the "kubeconfig" is necessary for out of cluster execution of kubectl
 	f, err := os.Create("kubeconfig")
 	if err != nil {
-		return h.config, err
+		return nil, err
 	}
 
 	defer f.Close()
