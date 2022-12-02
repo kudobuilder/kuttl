@@ -267,24 +267,16 @@ func (h *Harness) Config() (*rest.Config, error) {
 		return nil, err
 	}
 
-	// if not the mocked control plane
+	// Newly started clusters aren't ready until default service account is ready.
+	// We need to wait until one is present. Otherwise, we sometimes hit an error such as:
+	//   error looking up service account <namespace>/default: serviceaccount "default" not found
+	//
+	// We avoid doing this for the mocked control plane case (because in that case the default service
+	// account is not provided anyway?)
 	if !h.TestSuite.StartControlPlane {
-		// newly started clusters aren't ready until default service account is ready
-		// fixes: error looking up service account <namespace>/default: serviceaccount "default" not found
 		// we avoid this with "inCluster" as the cluster must be already be up since we're running on it
-		err = testutils.WaitForSA(h.config, "default", "default")
-		if err != nil {
-			// if there is a namespace provided but no "default"/"default" SA found, also check a SA in the provided NS
-			if h.TestSuite.Namespace != "" {
-				tempErr := testutils.WaitForSA(h.config, "default", h.TestSuite.Namespace)
-
-				// if it still does not have a SA then return the first "default"/"default" error
-				if tempErr != nil {
-					return nil, err
-				}
-			} else {
-				return nil, err
-			}
+		if err := h.waitForFunctionalCluster(); err != nil {
+			return nil, err
 		}
 		h.T.Logf("Successful connection to cluster at: %s", h.config.Host)
 	}
@@ -298,6 +290,22 @@ func (h *Harness) Config() (*rest.Config, error) {
 	defer f.Close()
 
 	return h.config, testutils.Kubeconfig(h.config, f)
+}
+
+func (h *Harness) waitForFunctionalCluster() error {
+	err := testutils.WaitForSA(h.config, "default", "default")
+	if err == nil {
+		return nil
+	}
+	// if there is a namespace provided but no "default"/"default" SA found, also check a SA in the provided NS
+	if h.TestSuite.Namespace != "" {
+		tempErr := testutils.WaitForSA(h.config, "default", h.TestSuite.Namespace)
+		if tempErr == nil {
+			return nil
+		}
+	}
+	// either way, return the first "default"/"default" error
+	return err
 }
 
 // Client returns the current Kubernetes client for the test harness.
