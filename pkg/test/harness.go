@@ -255,13 +255,6 @@ func (h *Harness) Config() (*rest.Config, error) {
 			return nil, err
 		}
 		h.config.WarningHandler = rest.NewWarningWriter(os.Stderr, rest.WarningWriterOptions{Deduplicate: true})
-		inCluster, err := testutils.InClusterConfig()
-		if err != nil {
-			return nil, err
-		}
-		if inCluster {
-			return h.config, nil
-		}
 	}
 	if err != nil {
 		return nil, err
@@ -273,15 +266,17 @@ func (h *Harness) Config() (*rest.Config, error) {
 	//
 	// We avoid doing this for the mocked control plane case (because in that case the default service
 	// account is not provided anyway?)
+	// We still do this when running inside a cluster, because the cluster kuttl is pointed *at* might
+	// be different from the cluster it is running *in*, and it does not hurt when it is the same cluster.
 	if !h.TestSuite.StartControlPlane {
-		// we avoid this with "inCluster" as the cluster must be already be up since we're running on it
 		if err := h.waitForFunctionalCluster(); err != nil {
 			return nil, err
 		}
 		h.T.Logf("Successful connection to cluster at: %s", h.config.Host)
 	}
 
-	// The creation of the "kubeconfig" is necessary for out of cluster execution of kubectl
+	// The creation of the "kubeconfig" is necessary for out of cluster execution of kubectl,
+	// as well as in-cluster when the supplied KUBECONFIG is some *other* cluster.
 	f, err := os.Create("kubeconfig")
 	if err != nil {
 		return nil, err
