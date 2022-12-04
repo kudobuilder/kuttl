@@ -78,13 +78,14 @@ func (h *Harness) LoadTests(dir string) ([]*Case, error) {
 		}
 
 		tests = append(tests, &Case{
-			Timeout:            timeout,
-			Steps:              []*Step{},
-			Name:               file.Name(),
-			PreferredNamespace: h.TestSuite.Namespace,
-			Dir:                filepath.Join(dir, file.Name()),
-			SkipDelete:         h.TestSuite.SkipDelete,
-			Suppress:           h.TestSuite.Suppress,
+			Timeout:                timeout,
+			Steps:                  []*Step{},
+			Name:                   file.Name(),
+			PreferredNamespace:     h.TestSuite.Namespace,
+			Dir:                    filepath.Join(dir, file.Name()),
+			BlockOnNamespaceDelete: h.TestSuite.BlockOnNamespaceDelete,
+			SkipDelete:             h.TestSuite.SkipDelete,
+			Suppress:               h.TestSuite.Suppress,
 		})
 	}
 
