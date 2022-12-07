@@ -964,7 +964,6 @@ type TestEnvironment struct {
 // suitable for use in tests.
 func StartTestEnvironment(kubeAPIServerFlags []string, attachControlPlaneOutput bool) (env TestEnvironment, err error) {
 	env.Environment = &envtest.Environment{
-		KubeAPIServerFlags:       kubeAPIServerFlags,
 		AttachControlPlaneOutput: attachControlPlaneOutput,
 	}
 
