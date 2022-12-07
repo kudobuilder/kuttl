@@ -62,21 +62,6 @@ import (
 // ensure that we only add to the scheme once.
 var schemeLock sync.Once
 
-// APIServerDefaultArgs are copied from the internal controller-runtime pkg/internal/testing/integration/internal/apiserver.go
-// sadly, we can't import them anymore since it is an internal package
-var APIServerDefaultArgs = []string{
-	"--advertise-address=127.0.0.1",
-	"--etcd-servers={{ if .EtcdURL }}{{ .EtcdURL.String }}{{ end }}",
-	"--cert-dir={{ .CertDir }}",
-	"--insecure-port={{ if .URL }}{{ .URL.Port }}{{else}}0{{ end }}",
-	"{{ if .URL }}--insecure-bind-address={{ .URL.Hostname }}{{ end }}",
-	"--secure-port={{ if .SecurePort }}{{ .SecurePort }}{{ end }}",
-
-	"--disable-admission-plugins=ServiceAccount",
-	"--service-cluster-ip-range=10.0.0.0/24",
-	"--allow-privileged=true",
-}
-
 // TODO (kensipe): need to consider options around AlwaysAdmin https://github.com/kudobuilder/kudo/pull/1420/files#r391449597
 
 // IsJSONSyntaxError returns true if the error is a JSON syntax error.
