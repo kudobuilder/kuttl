@@ -224,7 +224,7 @@ func (r *RetryClient) Patch(ctx context.Context, obj client.Object, patch client
 // Get retrieves an obj for the given object key from the Kubernetes Cluster.
 // obj must be a struct pointer so that obj can be updated with the response
 // returned by the Server.
-func (r *RetryClient) Get(ctx context.Context, key client.ObjectKey, obj client.Object) error {
+func (r *RetryClient) Get(ctx context.Context, key client.ObjectKey, obj client.Object, opts ...client.GetOption) error {
 	return Retry(ctx, func(ctx context.Context) error {
 		return r.Client.Get(ctx, key, obj)
 	}, IsJSONSyntaxError)
@@ -949,7 +949,6 @@ type TestEnvironment struct {
 // suitable for use in tests.
 func StartTestEnvironment(kubeAPIServerFlags []string, attachControlPlaneOutput bool) (env TestEnvironment, err error) {
 	env.Environment = &envtest.Environment{
-		KubeAPIServerFlags:       kubeAPIServerFlags,
 		AttachControlPlaneOutput: attachControlPlaneOutput,
 	}
 
