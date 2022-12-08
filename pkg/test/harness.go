@@ -212,7 +212,7 @@ func (h *Harness) addNodeCaches(dockerClient testutils.DockerClient, kindCfg *ki
 func (h *Harness) RunTestEnv() (*rest.Config, error) {
 	started := time.Now()
 
-	testenv, err := testutils.StartTestEnvironment(h.TestSuite.ControlPlaneArgs, h.TestSuite.AttachControlPlaneOutput)
+	testenv, err := testutils.StartTestEnvironment(h.TestSuite.AttachControlPlaneOutput)
 	if err != nil {
 		return nil, err
 	}
