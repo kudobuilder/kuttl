@@ -62,21 +62,6 @@ import (
 // ensure that we only add to the scheme once.
 var schemeLock sync.Once
 
-// APIServerDefaultArgs are copied from the internal controller-runtime pkg/internal/testing/integration/internal/apiserver.go
-// sadly, we can't import them anymore since it is an internal package
-var APIServerDefaultArgs = []string{
-	"--advertise-address=127.0.0.1",
-	"--etcd-servers={{ if .EtcdURL }}{{ .EtcdURL.String }}{{ end }}",
-	"--cert-dir={{ .CertDir }}",
-	"--insecure-port={{ if .URL }}{{ .URL.Port }}{{else}}0{{ end }}",
-	"{{ if .URL }}--insecure-bind-address={{ .URL.Hostname }}{{ end }}",
-	"--secure-port={{ if .SecurePort }}{{ .SecurePort }}{{ end }}",
-
-	"--disable-admission-plugins=ServiceAccount",
-	"--service-cluster-ip-range=10.0.0.0/24",
-	"--allow-privileged=true",
-}
-
 // TODO (kensipe): need to consider options around AlwaysAdmin https://github.com/kudobuilder/kudo/pull/1420/files#r391449597
 
 // IsJSONSyntaxError returns true if the error is a JSON syntax error.
@@ -239,7 +224,7 @@ func (r *RetryClient) Patch(ctx context.Context, obj client.Object, patch client
 // Get retrieves an obj for the given object key from the Kubernetes Cluster.
 // obj must be a struct pointer so that obj can be updated with the response
 // returned by the Server.
-func (r *RetryClient) Get(ctx context.Context, key client.ObjectKey, obj client.Object) error {
+func (r *RetryClient) Get(ctx context.Context, key client.ObjectKey, obj client.Object, opts ...client.GetOption) error {
 	return Retry(ctx, func(ctx context.Context) error {
 		return r.Client.Get(ctx, key, obj)
 	}, IsJSONSyntaxError)
@@ -964,7 +949,6 @@ type TestEnvironment struct {
 // suitable for use in tests.
 func StartTestEnvironment(kubeAPIServerFlags []string, attachControlPlaneOutput bool) (env TestEnvironment, err error) {
 	env.Environment = &envtest.Environment{
-		KubeAPIServerFlags:       kubeAPIServerFlags,
 		AttachControlPlaneOutput: attachControlPlaneOutput,
 	}
 

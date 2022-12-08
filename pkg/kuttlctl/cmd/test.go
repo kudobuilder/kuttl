@@ -213,9 +213,8 @@ For more detailed documentation, visit: https://kuttl.dev`,
 			var err error
 			if mockControllerFile != "" {
 				APIServerArgs, err = testutils.ReadMockControllerConfig(mockControllerFile)
-			} else {
-				APIServerArgs = testutils.APIServerDefaultArgs
 			}
+
 			if err != nil {
 				return err
 			}
