@@ -28,7 +28,7 @@ var testenv testutils.TestEnvironment
 func TestMain(m *testing.M) {
 	var err error
 
-	testenv, err = testutils.StartTestEnvironment(nil, false)
+	testenv, err = testutils.StartTestEnvironment(false)
 	if err != nil {
 		log.Fatal(err)
 	}
