@@ -27,7 +27,7 @@ func TestHarnessRunIntegration(t *testing.T) {
 }
 
 func TestHarnessRunIntegrationWithConfig(t *testing.T) {
-	testenv, err := testutils.StartTestEnvironment(nil, false)
+	testenv, err := testutils.StartTestEnvironment(false)
 	if err != nil {
 		t.Fatalf("fatal error starting environment: %s", err)
 	}
