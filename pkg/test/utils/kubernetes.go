@@ -1232,15 +1232,3 @@ func Kubeconfig(cfg *rest.Config, w io.Writer) error {
 		},
 	}, w)
 }
-
-// InClusterConfig returns true if in cluster, false if not
-func InClusterConfig() (bool, error) {
-	_, err := rest.InClusterConfig()
-	if err == nil {
-		return true, nil
-	}
-	if errors.Is(err, rest.ErrNotInCluster) {
-		return false, nil
-	}
-	return false, err
-}
