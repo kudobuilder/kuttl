@@ -1,49 +1,75 @@
-apiVersion: apiextensions.k8s.io/v1beta1
+apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   name: prowjobs.prow.example.com
 spec:
   group: prow.example.com
-  version: v1
   names:
     kind: ProwJob
     singular: prowjob
     plural: prowjobs
   scope: Namespaced
-  additionalPrinterColumns:
-  - name: Job
-    type: string
-    description: The name of the job being run.
-    JSONPath: .spec.job
-  - name: BuildId
-    type: string
-    description: The ID of the job being run.
-    JSONPath: .status.build_id
-  - name: Type
-    type: string
-    description: The type of job being run.
-    JSONPath: .spec.type
-  - name: Org
-    type: string
-    description: The org for which the job is running.
-    JSONPath: .spec.refs.org
-  - name: Repo
-    type: string
-    description: The repo for which the job is running.
-    JSONPath: .spec.refs.repo
-  - name: Pulls
-    type: string
-    description: The pulls for which the job is running.
-    JSONPath: ".spec.refs.pulls[*].number"
-  - name: StartTime
-    type: date
-    description: When the job started running.
-    JSONPath: .status.startTime
-  - name: CompletionTime
-    type: date
-    description: When the job finished running.
-    JSONPath: .status.completionTime
-  - name: State
-    description: The state of the job.
-    type: string
-    JSONPath: .status.state
+  versions:
+  - additionalPrinterColumns:
+    - name: Job
+      type: string
+      description: The name of the job being run.
+      jsonPath: .spec.job
+    - name: BuildId
+      type: string
+      description: The ID of the job being run.
+      jsonPath: .status.build_id
+    - name: Type
+      type: string
+      description: The type of job being run.
+      jsonPath: .spec.type
+    - name: Org
+      type: string
+      description: The org for which the job is running.
+      jsonPath: .spec.refs.org
+    - name: Repo
+      type: string
+      description: The repo for which the job is running.
+      jsonPath: .spec.refs.repo
+    - name: Pulls
+      type: string
+      description: The pulls for which the job is running.
+      jsonPath: ".spec.refs.pulls[*].number"
+    - name: StartTime
+      type: date
+      description: When the job started running.
+      jsonPath: .status.startTime
+    - name: CompletionTime
+      type: date
+      description: When the job finished running.
+      jsonPath: .status.completionTime
+    - name: State
+      description: The state of the job.
+      type: string
+      jsonPath: .status.state
+    name: v1
+    served: true
+    storage: true
+    schema:
+      openAPIV3Schema:
+        description: ProwJob contains the spec as well as runtime metadata.
+        properties:
+          apiVersion:
+            description: 'APIVersion defines the versioned schema of this representation
+              of an object. Servers should convert recognized schemas to the latest
+              internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+            type: string
+          kind:
+            description: 'Kind is a string value representing the REST resource this
+              object represents. Servers may infer this from the endpoint the client
+              submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+            type: string
+          metadata:
+            type: object
+          spec:
+            type: object
+            x-kubernetes-preserve-unknown-fields: true
+          status:
+            type: object
+            x-kubernetes-preserve-unknown-fields: true
+        type: object
