@@ -62,7 +62,8 @@ func TestMultiClusterCase(t *testing.T) {
 	}
 
 	c := Case{
-		Logger: testutils.NewTestLogger(t, ""),
+		Logger:     testutils.NewTestLogger(t, ""),
+		SkipDelete: true,
 		Steps: []*Step{
 			{
 				Name:  "initialize-testenv",

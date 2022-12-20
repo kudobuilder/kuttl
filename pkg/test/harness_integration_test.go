@@ -19,6 +19,7 @@ func TestHarnessRunIntegration(t *testing.T) {
 				"./test_data/",
 			},
 			StartControlPlane: true,
+			SkipDelete:        true,
 			CRDDir:            "./test_crds/",
 		},
 		T: t,
@@ -39,6 +40,7 @@ func TestHarnessRunIntegrationWithConfig(t *testing.T) {
 			},
 			// set as true to skip service account check
 			StartControlPlane: true,
+			SkipDelete:        true,
 			Config:            config,
 			CRDDir:            "./test_crds/",
 		},
