@@ -159,7 +159,6 @@ For more detailed documentation, visit: https://kuttl.dev`,
 			// there is no namespace controller.
 			if options.StartControlPlane {
 				options.SkipDelete = true
-				options.SkipClusterDelete = true
 			}
 
 			if isSet(flags, "skip-delete") {
