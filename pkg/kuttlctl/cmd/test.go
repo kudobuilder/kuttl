@@ -153,6 +153,15 @@ For more detailed documentation, visit: https://kuttl.dev`,
 				return errors.New("only use --attach-control-plane-output with --start-control-plane")
 			}
 
+			// if we are working with a control plane we can not wait to delete ns (there is no ns controller)
+			// this is added before flags potentially override.  control plane should skip ns and cluster delete but
+			// perhaps there are cases where that is part of the test.  In general, there is no cluster to delete and
+			// there is no namespace controller.
+			if options.StartControlPlane {
+				options.SkipDelete = true
+				options.SkipClusterDelete = true
+			}
+
 			if isSet(flags, "skip-delete") {
 				options.SkipDelete = skipDelete
 			}
