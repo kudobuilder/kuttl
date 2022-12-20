@@ -1,6 +1,9 @@
-//go:build e2e
+//go:build integration
 
 package test
+
+// This test file is the only test that requires docker on the platform.  It may be worth creating a new build tag for that
+// but adds complexity for 1 case.
 
 import (
 	"bufio"
