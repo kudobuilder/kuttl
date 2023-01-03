@@ -184,6 +184,11 @@ func (r *RetryClient) RESTMapper() meta.RESTMapper {
 	return r.Client.RESTMapper()
 }
 
+// SubResource returns a subresource client for the named subResource.
+func (r *RetryClient) SubResource(subResource string) client.SubResourceClient {
+	return r.Client.SubResource(subResource)
+}
+
 // Create saves the object obj in the Kubernetes cluster.
 func (r *RetryClient) Create(ctx context.Context, obj client.Object, opts ...client.CreateOption) error {
 	return Retry(ctx, func(ctx context.Context) error {
@@ -226,7 +231,7 @@ func (r *RetryClient) Patch(ctx context.Context, obj client.Object, patch client
 // returned by the Server.
 func (r *RetryClient) Get(ctx context.Context, key client.ObjectKey, obj client.Object, opts ...client.GetOption) error {
 	return Retry(ctx, func(ctx context.Context) error {
-		return r.Client.Get(ctx, key, obj)
+		return r.Client.Get(ctx, key, obj, opts...)
 	}, IsJSONSyntaxError)
 }
 
@@ -271,9 +276,17 @@ func (r *RetryClient) Status() client.StatusWriter {
 	}
 }
 
+// Create saves the subResource object in the Kubernetes cluster. obj must be a
+// struct pointer so that obj can be updated with the content returned by the Server.
+func (r *RetryStatusWriter) Create(ctx context.Context, obj client.Object, subResource client.Object, opts ...client.SubResourceCreateOption) error {
+	return Retry(ctx, func(ctx context.Context) error {
+		return r.StatusWriter.Create(ctx, obj, subResource, opts...)
+	}, IsJSONSyntaxError)
+}
+
 // Update updates the given obj in the Kubernetes cluster. obj must be a
 // struct pointer so that obj can be updated with the content returned by the Server.
-func (r *RetryStatusWriter) Update(ctx context.Context, obj client.Object, opts ...client.UpdateOption) error {
+func (r *RetryStatusWriter) Update(ctx context.Context, obj client.Object, opts ...client.SubResourceUpdateOption) error {
 	return Retry(ctx, func(ctx context.Context) error {
 		return r.StatusWriter.Update(ctx, obj, opts...)
 	}, IsJSONSyntaxError)
@@ -281,7 +294,7 @@ func (r *RetryStatusWriter) Update(ctx context.Context, obj client.Object, opts 
 
 // Patch patches the given obj in the Kubernetes cluster. obj must be a
 // struct pointer so that obj can be updated with the content returned by the Server.
-func (r *RetryStatusWriter) Patch(ctx context.Context, obj client.Object, patch client.Patch, opts ...client.PatchOption) error {
+func (r *RetryStatusWriter) Patch(ctx context.Context, obj client.Object, patch client.Patch, opts ...client.SubResourcePatchOption) error {
 	return Retry(ctx, func(ctx context.Context) error {
 		return r.StatusWriter.Patch(ctx, obj, patch, opts...)
 	}, IsJSONSyntaxError)
