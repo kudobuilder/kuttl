@@ -75,9 +75,6 @@ This process will create a `dist` folder with all the build artifacts. The chang
 
 The docker release is accomplished by `make docker-release`.  Details on what is required are provided in [Docker.md](DOCKER.md).
 
-### Cutting a Release Branch
-
-As outlined above, when it is necessary to create a new release branch, it is necessary to update the [circle-ci config](https://github.com/kudobuilder/kuttl/blob/main/.circle-ci/config.yml#L13) to test merges against the correct branch. It is necessary replace all references to `main` with the appropriate release branch.
 
 ### Cutting a Patch Release
 

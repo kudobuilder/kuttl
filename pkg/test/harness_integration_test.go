@@ -19,6 +19,7 @@ func TestHarnessRunIntegration(t *testing.T) {
 				"./test_data/",
 			},
 			StartControlPlane: true,
+			SkipDelete:        true,
 			CRDDir:            "./test_crds/",
 		},
 		T: t,
@@ -27,7 +28,7 @@ func TestHarnessRunIntegration(t *testing.T) {
 }
 
 func TestHarnessRunIntegrationWithConfig(t *testing.T) {
-	testenv, err := testutils.StartTestEnvironment(nil, false)
+	testenv, err := testutils.StartTestEnvironment(false)
 	if err != nil {
 		t.Fatalf("fatal error starting environment: %s", err)
 	}
@@ -39,6 +40,7 @@ func TestHarnessRunIntegrationWithConfig(t *testing.T) {
 			},
 			// set as true to skip service account check
 			StartControlPlane: true,
+			SkipDelete:        true,
 			Config:            config,
 			CRDDir:            "./test_crds/",
 		},

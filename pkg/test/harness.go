@@ -213,7 +213,7 @@ func (h *Harness) addNodeCaches(dockerClient testutils.DockerClient, kindCfg *ki
 func (h *Harness) RunTestEnv() (*rest.Config, error) {
 	started := time.Now()
 
-	testenv, err := testutils.StartTestEnvironment(h.TestSuite.ControlPlaneArgs, h.TestSuite.AttachControlPlaneOutput)
+	testenv, err := testutils.StartTestEnvironment(h.TestSuite.AttachControlPlaneOutput)
 	if err != nil {
 		return nil, err
 	}
@@ -228,6 +228,8 @@ func (h *Harness) RunTestEnv() (*rest.Config, error) {
 
 // Config returns the current Kubernetes configuration - either from the environment
 // or from the created temporary control plane.
+// As a side effect, on first successful call this method also writes a kubernetes client config file in YAML format
+// to a file called "kubeconfig" in the current directory.
 func (h *Harness) Config() (*rest.Config, error) {
 	h.configLock.Lock()
 	defer h.configLock.Unlock()
@@ -254,49 +256,52 @@ func (h *Harness) Config() (*rest.Config, error) {
 			return nil, err
 		}
 		h.config.WarningHandler = rest.NewWarningWriter(os.Stderr, rest.WarningWriterOptions{Deduplicate: true})
-		inCluster, err := testutils.InClusterConfig()
-		if err != nil {
-			return nil, err
-		}
-		if inCluster {
-			return h.config, nil
-		}
 	}
 	if err != nil {
-		return h.config, err
+		return nil, err
 	}
 
-	// if not the mocked control plane
+	// Newly started clusters aren't ready until default service account is ready.
+	// We need to wait until one is present. Otherwise, we sometimes hit an error such as:
+	//   error looking up service account <namespace>/default: serviceaccount "default" not found
+	//
+	// We avoid doing this for the mocked control plane case (because in that case the default service
+	// account is not provided anyway?)
+	// We still do this when running inside a cluster, because the cluster kuttl is pointed *at* might
+	// be different from the cluster it is running *in*, and it does not hurt when it is the same cluster.
 	if !h.TestSuite.StartControlPlane {
-		// newly started clusters aren't ready until default service account is ready
-		// fixes: error looking up service account <namespace>/default: serviceaccount "default" not found
-		// we avoid this with "inCluster" as the cluster must be already be up since we're running on it
-		err = testutils.WaitForSA(h.config, "default", "default")
-		if err != nil {
-			// if there is a namespace provided but no "default"/"default" SA found, also check a SA in the provided NS
-			if h.TestSuite.Namespace != "" {
-				tempErr := testutils.WaitForSA(h.config, "default", h.TestSuite.Namespace)
-
-				// if it still does not have a SA then return the first "default"/"default" error
-				if tempErr != nil {
-					return h.config, err
-				}
-			} else {
-				return h.config, err
-			}
+		if err := h.waitForFunctionalCluster(); err != nil {
+			return nil, err
 		}
 		h.T.Logf("Successful connection to cluster at: %s", h.config.Host)
 	}
 
-	// The creation of the "kubeconfig" is necessary for out of cluster execution of kubectl
+	// The creation of the "kubeconfig" is necessary for out of cluster execution of kubectl,
+	// as well as in-cluster when the supplied KUBECONFIG is some *other* cluster.
 	f, err := os.Create("kubeconfig")
 	if err != nil {
-		return h.config, err
+		return nil, err
 	}
 
 	defer f.Close()
 
 	return h.config, testutils.Kubeconfig(h.config, f)
+}
+
+func (h *Harness) waitForFunctionalCluster() error {
+	err := testutils.WaitForSA(h.config, "default", "default")
+	if err == nil {
+		return nil
+	}
+	// if there is a namespace provided but no "default"/"default" SA found, also check a SA in the provided NS
+	if h.TestSuite.Namespace != "" {
+		tempErr := testutils.WaitForSA(h.config, "default", h.TestSuite.Namespace)
+		if tempErr == nil {
+			return nil
+		}
+	}
+	// either way, return the first "default"/"default" error
+	return err
 }
 
 // Client returns the current Kubernetes client for the test harness.

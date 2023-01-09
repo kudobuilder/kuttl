@@ -28,7 +28,7 @@ var testenv testutils.TestEnvironment
 func TestMain(m *testing.M) {
 	var err error
 
-	testenv, err = testutils.StartTestEnvironment(testutils.APIServerDefaultArgs, false)
+	testenv, err = testutils.StartTestEnvironment(false)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -439,7 +439,7 @@ func TestStepFailure(t *testing.T) {
 		Timeout:         1,
 	}
 
-	errs := step.Run(namespace)
+	errs := step.Run(t, namespace)
 	assert.Equal(t, len(errs), 1)
 }
 
@@ -456,7 +456,7 @@ func TestAssertCommandsValidCommandRunsOk(t *testing.T) {
 	err := step.LoadYAML("step_integration_test_data/assert_commands/valid_command/00-assert.yaml")
 	assert.NoError(t, err)
 
-	errors := step.Run("irrelevant")
+	errors := step.Run(t, "irrelevant")
 	assert.Equal(t, len(errors), 0)
 }
 
@@ -473,7 +473,7 @@ func TestAssertCommandsMultipleCommandRunsOk(t *testing.T) {
 	err := step.LoadYAML("step_integration_test_data/assert_commands/multiple_commands/00-assert.yaml")
 	assert.NoError(t, err)
 
-	errors := step.Run("irrelevant")
+	errors := step.Run(t, "irrelevant")
 	assert.Equal(t, len(errors), 0)
 }
 
@@ -490,7 +490,7 @@ func TestAssertCommandsMissingCommandFails(t *testing.T) {
 	err := step.LoadYAML("step_integration_test_data/assert_commands/command_does_not_exist/00-assert.yaml")
 	assert.NoError(t, err)
 
-	errors := step.Run("irrelevant")
+	errors := step.Run(t, "irrelevant")
 	assert.Equal(t, len(errors), 1)
 }
 
@@ -507,7 +507,7 @@ func TestAssertCommandsFailingCommandFails(t *testing.T) {
 	err := step.LoadYAML("step_integration_test_data/assert_commands/failing_comand/00-assert.yaml")
 	assert.NoError(t, err)
 
-	errors := step.Run("irrelevant")
+	errors := step.Run(t, "irrelevant")
 	assert.Equal(t, len(errors), 1)
 }
 
@@ -526,7 +526,7 @@ func TestAssertCommandsShouldTimeout(t *testing.T) {
 	assert.NoError(t, err)
 
 	start := time.Now()
-	errors := step.Run("irrelevant")
+	errors := step.Run(t, "irrelevant")
 	duration := time.Since(start).Seconds()
 	assert.Greater(t, duration, float64(1))
 	assert.Less(t, duration, float64(5))

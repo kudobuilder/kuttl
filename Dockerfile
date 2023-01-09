@@ -30,8 +30,8 @@ FROM registry.access.redhat.com/ubi8/ubi-minimal:latest
 RUN microdnf install vim tar gzip
 RUN echo 'alias vi=vim' >> ~/.bashrc
 
-#  kube 1.18
-RUN curl -LO https://storage.googleapis.com/kubernetes-release/release/v1.18.0/bin/linux/amd64/kubectl
+#  kube 1.26
+RUN curl -LO https://storage.googleapis.com/kubernetes-release/release/v1.26.0/bin/linux/amd64/kubectl
 RUN chmod +x ./kubectl
 RUN mv ./kubectl /usr/local/bin/kubectl
 

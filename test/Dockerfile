@@ -17,6 +17,5 @@ RUN make download
 COPY pkg/ pkg/
 COPY cmd/ cmd/
 COPY hack/run-integration-tests.sh hack/run-integration-tests.sh
-COPY hack/run-e2e-tests.sh hack/run-e2e-tests.sh
 COPY test/ test/
 COPY kuttl-test.yaml kuttl-test.yaml

@@ -16,8 +16,9 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	eventsv1 "k8s.io/api/events/v1"
 	eventsbeta1 "k8s.io/api/events/v1beta1"
-	"k8s.io/apimachinery/pkg/api/errors"
+	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/discovery"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
@@ -69,13 +70,26 @@ func (t *Case) DeleteNamespace(cl client.Client, ns *namespace) error {
 		defer cancel()
 	}
 
-	return cl.Delete(ctx, &corev1.Namespace{
+	nsObj := &corev1.Namespace{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: ns.Name,
 		},
 		TypeMeta: metav1.TypeMeta{
 			Kind: "Namespace",
 		},
+	}
+
+	if err := cl.Delete(ctx, nsObj); err != nil {
+		return err
+	}
+
+	return wait.PollImmediateUntilWithContext(ctx, 100*time.Millisecond, func(ctx context.Context) (done bool, err error) {
+		actual := &corev1.Namespace{}
+		err = cl.Get(ctx, client.ObjectKey{Name: ns.Name}, actual)
+		if k8serrors.IsNotFound(err) {
+			return true, nil
+		}
+		return false, err
 	})
 }
 
@@ -120,7 +134,7 @@ func (t *Case) NamespaceExists(namespace string) (bool, error) {
 	}
 	ns := &corev1.Namespace{}
 	err = cl.Get(context.TODO(), client.ObjectKey{Name: namespace}, ns)
-	if err != nil && !errors.IsNotFound(err) {
+	if err != nil && !k8serrors.IsNotFound(err) {
 		return false, err
 	}
 	return ns.Name == namespace, nil
@@ -297,17 +311,6 @@ func shortString(obj *corev1.ObjectReference) string {
 		fieldRef)
 }
 
-func runStep(test *testing.T, testCase *Case, testStep *Step, ns *namespace) []error {
-	if !testCase.SkipDelete {
-		test.Cleanup(func() {
-			if err := testStep.Clean(ns.Name); err != nil {
-				test.Error(err)
-			}
-		})
-	}
-	return testStep.Run(ns.Name)
-}
-
 // Run runs a test case including all of its steps.
 func (t *Case) Run(test *testing.T, tc *report.Testcase) {
 	ns := t.determineNamespace()
@@ -354,7 +357,7 @@ func (t *Case) Run(test *testing.T, tc *report.Testcase) {
 		tc.Assertions += len(testStep.Asserts)
 		tc.Assertions += len(testStep.Errors)
 
-		if errs := runStep(test, t, testStep, ns); len(errs) > 0 {
+		if errs := testStep.Run(test, ns.Name); len(errs) > 0 {
 			caseErr := fmt.Errorf("failed in step %s", testStep.String())
 			tc.Failure = report.NewFailure(caseErr.Error(), errs)
 
@@ -455,12 +458,13 @@ func (t *Case) LoadTestSteps() error {
 
 	for index, files := range testStepFiles {
 		testStep := &Step{
-			Timeout: t.Timeout,
-			Index:   int(index),
-			Dir:     t.Dir,
-			Asserts: []client.Object{},
-			Apply:   []client.Object{},
-			Errors:  []client.Object{},
+			Timeout:    t.Timeout,
+			Index:      int(index),
+			SkipDelete: t.SkipDelete,
+			Dir:        t.Dir,
+			Asserts:    []client.Object{},
+			Apply:      []client.Object{},
+			Errors:     []client.Object{},
 		}
 
 		for _, file := range files {

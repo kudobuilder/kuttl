@@ -62,21 +62,6 @@ import (
 // ensure that we only add to the scheme once.
 var schemeLock sync.Once
 
-// APIServerDefaultArgs are copied from the internal controller-runtime pkg/internal/testing/integration/internal/apiserver.go
-// sadly, we can't import them anymore since it is an internal package
-var APIServerDefaultArgs = []string{
-	"--advertise-address=127.0.0.1",
-	"--etcd-servers={{ if .EtcdURL }}{{ .EtcdURL.String }}{{ end }}",
-	"--cert-dir={{ .CertDir }}",
-	"--insecure-port={{ if .URL }}{{ .URL.Port }}{{else}}0{{ end }}",
-	"{{ if .URL }}--insecure-bind-address={{ .URL.Hostname }}{{ end }}",
-	"--secure-port={{ if .SecurePort }}{{ .SecurePort }}{{ end }}",
-
-	"--disable-admission-plugins=ServiceAccount",
-	"--service-cluster-ip-range=10.0.0.0/24",
-	"--allow-privileged=true",
-}
-
 // TODO (kensipe): need to consider options around AlwaysAdmin https://github.com/kudobuilder/kudo/pull/1420/files#r391449597
 
 // IsJSONSyntaxError returns true if the error is a JSON syntax error.
@@ -199,6 +184,11 @@ func (r *RetryClient) RESTMapper() meta.RESTMapper {
 	return r.Client.RESTMapper()
 }
 
+// SubResource returns a subresource client for the named subResource.
+func (r *RetryClient) SubResource(subResource string) client.SubResourceClient {
+	return r.Client.SubResource(subResource)
+}
+
 // Create saves the object obj in the Kubernetes cluster.
 func (r *RetryClient) Create(ctx context.Context, obj client.Object, opts ...client.CreateOption) error {
 	return Retry(ctx, func(ctx context.Context) error {
@@ -239,9 +229,9 @@ func (r *RetryClient) Patch(ctx context.Context, obj client.Object, patch client
 // Get retrieves an obj for the given object key from the Kubernetes Cluster.
 // obj must be a struct pointer so that obj can be updated with the response
 // returned by the Server.
-func (r *RetryClient) Get(ctx context.Context, key client.ObjectKey, obj client.Object) error {
+func (r *RetryClient) Get(ctx context.Context, key client.ObjectKey, obj client.Object, opts ...client.GetOption) error {
 	return Retry(ctx, func(ctx context.Context) error {
-		return r.Client.Get(ctx, key, obj)
+		return r.Client.Get(ctx, key, obj, opts...)
 	}, IsJSONSyntaxError)
 }
 
@@ -286,9 +276,17 @@ func (r *RetryClient) Status() client.StatusWriter {
 	}
 }
 
+// Create saves the subResource object in the Kubernetes cluster. obj must be a
+// struct pointer so that obj can be updated with the content returned by the Server.
+func (r *RetryStatusWriter) Create(ctx context.Context, obj client.Object, subResource client.Object, opts ...client.SubResourceCreateOption) error {
+	return Retry(ctx, func(ctx context.Context) error {
+		return r.StatusWriter.Create(ctx, obj, subResource, opts...)
+	}, IsJSONSyntaxError)
+}
+
 // Update updates the given obj in the Kubernetes cluster. obj must be a
 // struct pointer so that obj can be updated with the content returned by the Server.
-func (r *RetryStatusWriter) Update(ctx context.Context, obj client.Object, opts ...client.UpdateOption) error {
+func (r *RetryStatusWriter) Update(ctx context.Context, obj client.Object, opts ...client.SubResourceUpdateOption) error {
 	return Retry(ctx, func(ctx context.Context) error {
 		return r.StatusWriter.Update(ctx, obj, opts...)
 	}, IsJSONSyntaxError)
@@ -296,7 +294,7 @@ func (r *RetryStatusWriter) Update(ctx context.Context, obj client.Object, opts 
 
 // Patch patches the given obj in the Kubernetes cluster. obj must be a
 // struct pointer so that obj can be updated with the content returned by the Server.
-func (r *RetryStatusWriter) Patch(ctx context.Context, obj client.Object, patch client.Patch, opts ...client.PatchOption) error {
+func (r *RetryStatusWriter) Patch(ctx context.Context, obj client.Object, patch client.Patch, opts ...client.SubResourcePatchOption) error {
 	return Retry(ctx, func(ctx context.Context) error {
 		return r.StatusWriter.Patch(ctx, obj, patch, opts...)
 	}, IsJSONSyntaxError)
@@ -962,9 +960,8 @@ type TestEnvironment struct {
 
 // StartTestEnvironment is a wrapper for controller-runtime's envtest that creates a Kubernetes API server and etcd
 // suitable for use in tests.
-func StartTestEnvironment(kubeAPIServerFlags []string, attachControlPlaneOutput bool) (env TestEnvironment, err error) {
+func StartTestEnvironment(attachControlPlaneOutput bool) (env TestEnvironment, err error) {
 	env.Environment = &envtest.Environment{
-		KubeAPIServerFlags:       kubeAPIServerFlags,
 		AttachControlPlaneOutput: attachControlPlaneOutput,
 	}
 
@@ -1247,16 +1244,4 @@ func Kubeconfig(cfg *rest.Config, w io.Writer) error {
 			},
 		},
 	}, w)
-}
-
-// InClusterConfig returns true if in cluster, false if not
-func InClusterConfig() (bool, error) {
-	_, err := rest.InClusterConfig()
-	if err == nil {
-		return true, nil
-	}
-	if errors.Is(err, rest.ErrNotInCluster) {
-		return false, nil
-	}
-	return false, err
 }
