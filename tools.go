@@ -1,3 +1,4 @@
+//go:build tools
 // +build tools
 
 // Package tools is used to import go modules that we use for tooling as dependencies.
