@@ -3,7 +3,6 @@ package utils
 import (
 	"os"
 	"reflect"
-	"strings"
 )
 
 // Translate traverses an arbitrary struct and translates all strings it encounters
@@ -13,7 +12,7 @@ import (
 //
 // The MIT License (MIT)
 //
-// Copyright (c) 2014 Heye Vöcking
+// # Copyright (c) 2014 Heye Vöcking
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -95,14 +94,7 @@ func translateRecursive(copy, original reflect.Value) {
 
 	// If it is a string translate it (yay finally we're doing what we came for)
 	case reflect.String:
-		translatedString := original.Interface().(string)
-		if strings.HasPrefix(translatedString, "$") {
-			variable := translatedString[1:]
-			if val, ok := os.LookupEnv(variable); ok {
-				translatedString = val
-			}
-		}
-		copy.SetString(translatedString)
+		copy.SetString(os.ExpandEnv(original.Interface().(string)))
 
 	// And everything else will simply be taken from the original
 	default:
