@@ -3,7 +3,6 @@ package utils
 import (
 	"bytes"
 	"fmt"
-	"os"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -23,13 +22,9 @@ func testDecoder(s string) *unstructured.Unstructured {
 
 func TestTranslate(t *testing.T) {
 	namespace := "foo"
-	if err := os.Setenv("NAMESPACE", namespace); err != nil {
-		fmt.Println(err)
-	}
-	BAZ := "bar"
-	if err := os.Setenv("BAZ", BAZ); err != nil {
-		fmt.Println(err)
-	}
+	t.Setenv("NAMESPACE", namespace)
+	baz := "bar"
+	t.Setenv("BAZ", baz)
 
 	manifestTemplate := `
 apiVersion: example.com/v1
@@ -61,7 +56,7 @@ spec:
   key2: %s
  key2:
   key1: %s
-`, namespace, BAZ, namespace)
+`, namespace, baz, namespace)
 
 	assert.Equal(t, fmt.Sprint(testDecoder(manifestTemplated)), fmt.Sprint(Translate(testDecoder(manifestTemplate))))
 }
