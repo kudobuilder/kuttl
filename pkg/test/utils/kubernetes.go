@@ -508,14 +508,15 @@ func LoadYAML(path string, r io.Reader) ([]client.Object, error) {
 			return nil, fmt.Errorf("error reading yaml %s: %w", path, err)
 		}
 
+		// replace all variables from the environment
+		data = []byte(os.ExpandEnv(string(data)))
+
 		unstructuredObj := &unstructured.Unstructured{}
 		decoder := yaml.NewYAMLOrJSONDecoder(bytes.NewBuffer(data), len(data))
 
 		if err = decoder.Decode(unstructuredObj); err != nil {
 			return nil, fmt.Errorf("error decoding yaml %s: %w", path, err)
 		}
-
-		unstructuredObj.Object = Translate(unstructuredObj.Object).(map[string]interface{})
 
 		obj, err := ConvertUnstructured(unstructuredObj)
 		if err != nil {

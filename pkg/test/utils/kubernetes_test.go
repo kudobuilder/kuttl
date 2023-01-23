@@ -5,6 +5,7 @@ import (
 	"context"
 	"errors"
 	"os"
+	"strconv"
 	"testing"
 	"time"
 
@@ -182,6 +183,11 @@ spec:
   containers:
   - name: nginx
     image: nginx:1.7.9
+  - name: app
+    image: app:$APP_VERSION
+    resources:
+      requests:
+        cpu: ${CPU_COUNT}
 ---
 apiVersion: v1
 kind: Pod
@@ -197,6 +203,13 @@ spec:
 	if err != nil {
 		t.Fatal(err)
 	}
+
+	appVersion := "0.0.1-alpha"
+	t.Setenv("APP_VERSION", appVersion)
+	// test replacing a different type (int64 in this case)
+	// and nested values
+	cpuCount := int64(2)
+	t.Setenv("CPU_COUNT", strconv.Itoa(int(cpuCount)))
 
 	objs, err := LoadYAMLFromFile(tmpfile.Name())
 	assert.Nil(t, err)
@@ -215,6 +228,15 @@ spec:
 					map[string]interface{}{
 						"image": "nginx:1.7.9",
 						"name":  "nginx",
+					},
+					map[string]interface{}{
+						"name":  "app",
+						"image": "app:" + appVersion,
+						"resources": map[string]interface{}{
+							"requests": map[string]interface{}{
+								"cpu": cpuCount,
+							},
+						},
 					},
 				},
 			},
