@@ -169,7 +169,8 @@ func TestRetryWithTimeout(t *testing.T) {
 }
 
 func TestLoadYAML(t *testing.T) {
-	tmpfile, err := os.CreateTemp("", "test.yaml")
+	tmpDir := t.TempDir()
+	tmpfile, err := os.CreateTemp(tmpDir, "test.yaml")
 	assert.Nil(t, err)
 	defer tmpfile.Close()
 
@@ -199,6 +200,14 @@ spec:
   containers:
   - name: nginx
     image: nginx:1.7.9
+---
+apiVersion: $GROUP_VERSION
+kind: $KIND
+metadata:
+  name: hello
+spec:
+  config:
+    $KEY_VAR: bar
 `), 0600)
 	if err != nil {
 		t.Fatal(err)
@@ -210,6 +219,16 @@ spec:
 	// and nested values
 	cpuCount := int64(2)
 	t.Setenv("CPU_COUNT", strconv.Itoa(int(cpuCount)))
+
+	// test GVK
+	groupVersion := "example.com/v1"
+	t.Setenv("GROUP_VERSION", groupVersion)
+	kind := "custom"
+	t.Setenv("KIND", kind)
+
+	// key update
+	keyVar := "baz"
+	t.Setenv("KEY_VAR", keyVar)
 
 	objs, err := LoadYAMLFromFile(tmpfile.Name())
 	assert.Nil(t, err)
@@ -263,10 +282,26 @@ spec:
 			},
 		},
 	}, objs[1])
+
+	assert.Equal(t, &unstructured.Unstructured{
+		Object: map[string]interface{}{
+			"apiVersion": groupVersion,
+			"kind":       kind,
+			"metadata": map[string]interface{}{
+				"name": "hello",
+			},
+			"spec": map[string]interface{}{
+				"config": map[string]interface{}{
+					keyVar: "bar",
+				},
+			},
+		},
+	}, objs[2])
 }
 
 func TestMatchesKind(t *testing.T) {
-	tmpfile, err := os.CreateTemp("", "test.yaml")
+	tmpDir := t.TempDir()	
+	tmpfile, err := os.CreateTemp(tmpDir, "test.yaml")
 	assert.Nil(t, err)
 	defer tmpfile.Close()
 
