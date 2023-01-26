@@ -203,9 +203,9 @@ func (s *Step) Create(test *testing.T, namespace string) []error {
 				obj := obj
 				test.Cleanup(func() {
 					ctx := context.Background()
-					if timeout > 0 {
+					if s.Timeout > 0 {
 						var cancel context.CancelFunc
-						ctx, cancel = context.WithTimeout(ctx, time.Duration(timeout)*time.Second)
+						ctx, cancel = context.WithTimeout(ctx, time.Duration(s.Timeout)*time.Second)
 						defer cancel()
 					}
 					if err := wait.PollImmediateUntilWithContext(ctx, 100*time.Millisecond, func(ctx context.Context) (bool, error) {
@@ -225,7 +225,7 @@ func (s *Step) Create(test *testing.T, namespace string) []error {
 						}); err != nil {
 							test.Error(err)
 						} else {
-							logger.Log(testutils.ResourceID(obj), "deleted")
+							s.Logger.Log(testutils.ResourceID(obj), "deleted")
 						}
 					}
 				})
