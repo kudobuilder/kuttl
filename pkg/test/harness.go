@@ -605,7 +605,9 @@ func (h *Harness) Report() {
 	if len(h.TestSuite.ReportFormat) == 0 {
 		return
 	}
-	if err := h.report.Report(h.TestSuite.ArtifactsDir, h.reportName(), report.Type(h.TestSuite.ReportFormat)); err != nil {
+
+	reportType := report.Type(strings.ToLower(h.TestSuite.ReportFormat))
+	if err := h.report.Report(h.TestSuite.ArtifactsDir, h.reportName(), reportType); err != nil {
 		h.fatal(fmt.Errorf("fatal error writing report: %v", err))
 	}
 }
