@@ -387,7 +387,7 @@ func (t *Case) determineNamespace() *namespace {
 		ns.AutoCreated = true
 	}
 
-	if _, ok := os.LookupEnv("NAMESPACE"); ok { // user can supply this environment variable
+	if _, ok := os.LookupEnv("NAMESPACE"); !ok { // user can supply this environment variable
 		os.Setenv("NAMESPACE", t.PreferredNamespace) // set this environment variable so it can be templated by other 'steps'
 	}
 	// if we have a preferred namespace, we do NOT auto-create
