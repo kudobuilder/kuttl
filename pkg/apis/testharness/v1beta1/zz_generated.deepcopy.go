@@ -239,6 +239,11 @@ func (in *TestSuite) DeepCopyInto(out *TestSuite) {
 		in, out := &in.Config, &out.Config
 		*out = (*in).DeepCopy()
 	}
+	if in.TestExcludeDirs != nil {
+		in, out := &in.TestExcludeDirs, &out.TestExcludeDirs
+		*out = make([]string, len(*in))
+		copy(*out, *in)
+	}
 	return
 }
 

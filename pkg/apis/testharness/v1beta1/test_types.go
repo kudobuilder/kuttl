@@ -77,6 +77,10 @@ type TestSuite struct {
 	Suppress []string `json:"suppress"`
 
 	Config *RestConfig `json:"config,omitempty"`
+
+	// Test sub directories that needs to be excluded from the test run that may otherwise be included with `TestDirs`.
+	// Include all directories specified in `TestDirs`` and exclude those specified in `TestExcludeDirs`.
+	TestExcludeDirs []string `json:"testExcludeDirs,omitempty"`
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
