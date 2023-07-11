@@ -77,11 +77,11 @@ func (h *Harness) LoadTests(dir string, testExcludes []string) ([]*Case, error) 
 			continue
 		}
 
+		// If test excludes are specified, check and add tests that are not excluded explicitly.
 		if isTestExcluded(file.Name(), testExcludes) {
 			h.T.Logf("skipping test dir %s as its excluded by excludeDirs", file.Name())
 			continue
 		}
-
 		tests = append(tests, &Case{
 			Timeout:            timeout,
 			Steps:              []*Step{},
@@ -365,13 +365,13 @@ func (h *Harness) RunTests() {
 	h.T.Log("running tests")
 
 	testDirs := h.testPreProcessing()
-	testExcludeDirs := h.TestSuite.TestExcludeDirs
+	testExcludes := h.TestSuite.TestExcludeDirs
 
 	//todo: testsuite + testsuites (extend case to have what we need (need testdir here)
 	// TestSuite is a TestSuiteCollection and should be renamed for v1beta2
 	realTestSuite := make(map[string][]*Case)
 	for _, testDir := range testDirs {
-		tempTests, err := h.LoadTests(testDir, testExcludeDirs)
+		tempTests, err := h.LoadTests(testDir, testExcludes)
 		if err != nil {
 			h.T.Fatal(err)
 		}
@@ -644,12 +644,15 @@ func (h *Harness) loadKindConfig(path string) (*kindConfig.Cluster, error) {
 	return cluster, nil
 }
 
+// isTestExcluded returns true if a test is excluded explicitly, false otherwise.
 func isTestExcluded(testDirName string, testExcludes []string) bool {
-	if testExcludes == nil || len(testExcludes) == 0 {
+	if len(testExcludes) <= 0 {
+		// Test excludes not specified. Include all tests by default.
 		return false
 	}
 	for _, testExclude := range testExcludes {
-		if strings.Contains(testDirName, testExclude) {
+		// TODO: support regex based comparison in future
+		if strings.Compare(testDirName, testExclude) == 0 {
 			return true
 		}
 	}
