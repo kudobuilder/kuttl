@@ -46,7 +46,7 @@ spec:
               default: false
             kindConfig:
               description: Path to the KIND configuration file to use.
-              type: boolean
+              type: string
             kindContext:
               description: KIND context to use.
               type: string
