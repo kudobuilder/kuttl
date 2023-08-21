@@ -1,12 +1,14 @@
 package test
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/labels"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	harness "github.com/kudobuilder/kuttl/pkg/apis/testharness/v1beta1"
@@ -18,10 +20,12 @@ import (
 func TestLoadTestSteps(t *testing.T) {
 	for _, tt := range []struct {
 		path      string
+		runLabels labels.Set
 		testSteps []Step
 	}{
 		{
-			"test_data/with-overrides/",
+			"test_data/with-overrides",
+			labels.Set{},
 			[]Step{
 				{
 					Name:  "with-test-step-name-override",
@@ -52,7 +56,8 @@ func TestLoadTestSteps(t *testing.T) {
 							"qosClass": "BestEffort",
 						}),
 					},
-					Errors: []client.Object{},
+					Errors:        []client.Object{},
+					TestRunLabels: labels.Set{},
 				},
 				{
 					Name:  "test-assert",
@@ -96,7 +101,8 @@ func TestLoadTestSteps(t *testing.T) {
 							"qosClass": "BestEffort",
 						}),
 					},
-					Errors: []client.Object{},
+					Errors:        []client.Object{},
+					TestRunLabels: labels.Set{},
 				},
 				{
 					Name:  "pod",
@@ -124,7 +130,8 @@ func TestLoadTestSteps(t *testing.T) {
 							"qosClass": "BestEffort",
 						}),
 					},
-					Errors: []client.Object{},
+					Errors:        []client.Object{},
+					TestRunLabels: labels.Set{},
 				},
 				{
 					Name:  "name-overridden",
@@ -164,12 +171,14 @@ func TestLoadTestSteps(t *testing.T) {
 							"restartPolicy": "Never",
 						}),
 					},
-					Errors: []client.Object{},
+					Errors:        []client.Object{},
+					TestRunLabels: labels.Set{},
 				},
 			},
 		},
 		{
 			"test_data/list-pods",
+			labels.Set{},
 			[]Step{
 				{
 					Name:  "pod",
@@ -217,6 +226,101 @@ func TestLoadTestSteps(t *testing.T) {
 							},
 						},
 					},
+					Errors:        []client.Object{},
+					TestRunLabels: labels.Set{},
+				},
+			},
+		},
+		{
+			"test_data/test-run-labels",
+			labels.Set{},
+			[]Step{
+				{
+					Name:          "",
+					Index:         1,
+					TestRunLabels: labels.Set{},
+					Apply:         []client.Object{},
+					Asserts:       []client.Object{},
+					Errors:        []client.Object{},
+				},
+			},
+		},
+		{
+			"test_data/test-run-labels",
+			labels.Set{"flavor": "a"},
+			[]Step{
+				{
+					Name:          "create-a",
+					Index:         1,
+					TestRunLabels: labels.Set{"flavor": "a"},
+					Apply: []client.Object{
+						&unstructured.Unstructured{
+							Object: map[string]interface{}{
+								"apiVersion": "v1",
+								"kind":       "ConfigMap",
+								"metadata": map[string]interface{}{
+									"name": "test",
+								},
+								"data": map[string]interface{}{
+									"flavor": "a",
+								},
+							},
+						},
+					},
+					Asserts: []client.Object{
+						&unstructured.Unstructured{
+							Object: map[string]interface{}{
+								"apiVersion": "v1",
+								"kind":       "ConfigMap",
+								"metadata": map[string]interface{}{
+									"name": "test",
+								},
+								"data": map[string]interface{}{
+									"flavor": "a",
+								},
+							},
+						},
+					},
+					Errors: []client.Object{},
+				},
+			},
+		},
+		{
+			"test_data/test-run-labels",
+			labels.Set{"flavor": "b"},
+			[]Step{
+				{
+					Name:          "create-b",
+					Index:         1,
+					TestRunLabels: labels.Set{"flavor": "b"},
+					Apply: []client.Object{
+						&unstructured.Unstructured{
+							Object: map[string]interface{}{
+								"apiVersion": "v1",
+								"kind":       "ConfigMap",
+								"metadata": map[string]interface{}{
+									"name": "test",
+								},
+								"data": map[string]interface{}{
+									"flavor": "b",
+								},
+							},
+						},
+					},
+					Asserts: []client.Object{
+						&unstructured.Unstructured{
+							Object: map[string]interface{}{
+								"apiVersion": "v1",
+								"kind":       "ConfigMap",
+								"metadata": map[string]interface{}{
+									"name": "test",
+								},
+								"data": map[string]interface{}{
+									"flavor": "b",
+								},
+							},
+						},
+					},
 					Errors: []client.Object{},
 				},
 			},
@@ -224,8 +328,8 @@ func TestLoadTestSteps(t *testing.T) {
 	} {
 		tt := tt
 
-		t.Run(tt.path, func(t *testing.T) {
-			test := &Case{Dir: tt.path, Logger: testutils.NewTestLogger(t, tt.path)}
+		t.Run(fmt.Sprintf("%s/%s", tt.path, tt.runLabels), func(t *testing.T) {
+			test := &Case{Dir: tt.path, Logger: testutils.NewTestLogger(t, tt.path), RunLabels: tt.runLabels}
 
 			err := test.LoadTestSteps()
 			assert.Nil(t, err)
@@ -238,11 +342,11 @@ func TestLoadTestSteps(t *testing.T) {
 			assert.Equal(t, len(tt.testSteps), len(testStepsVal))
 			for index := range tt.testSteps {
 				tt.testSteps[index].Dir = tt.path
-				assert.Equal(t, tt.testSteps[index].Apply, testStepsVal[index].Apply)
-				assert.Equal(t, tt.testSteps[index].Asserts, testStepsVal[index].Asserts)
-				assert.Equal(t, tt.testSteps[index].Errors, testStepsVal[index].Errors)
-				assert.Equal(t, tt.testSteps[index].Step, testStepsVal[index].Step)
-				assert.Equal(t, tt.testSteps[index].Dir, testStepsVal[index].Dir)
+				assert.Equal(t, tt.testSteps[index].Apply, testStepsVal[index].Apply, "apply objects need to match")
+				assert.Equal(t, tt.testSteps[index].Asserts, testStepsVal[index].Asserts, "assert objects need to match")
+				assert.Equal(t, tt.testSteps[index].Errors, testStepsVal[index].Errors, "error objects need to match")
+				assert.Equal(t, tt.testSteps[index].Step, testStepsVal[index].Step, "step object needs to match")
+				assert.Equal(t, tt.testSteps[index].Dir, testStepsVal[index].Dir, "dir needs to match")
 				assert.Equal(t, tt.testSteps[index], testStepsVal[index])
 			}
 		})
