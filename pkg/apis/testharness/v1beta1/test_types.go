@@ -13,6 +13,19 @@ type RestConfig struct {
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 
+// TestFile contains attributes of a single test file.
+type TestFile struct {
+	// The type meta object, should always be a GVK of kuttl.dev/v1beta1/TestFile.
+	metav1.TypeMeta `json:",inline"`
+	// Set labels or the test suite name.
+	metav1.ObjectMeta `json:"metadata,omitempty"`
+
+	// Which test runs should this file be used in. Empty selector matches all test runs.
+	TestRunSelector *metav1.LabelSelector `json:"testRunSelector,omitempty"`
+}
+
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+
 // TestSuite configures which tests should be loaded.
 type TestSuite struct {
 	// The type meta object, should always be a GVK of kuttl.dev/v1beta1/TestSuite or kuttl.dev/v1beta1/TestSuite.
