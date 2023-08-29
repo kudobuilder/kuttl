@@ -27,7 +27,7 @@ func newVersionCmd() *cobra.Command {
 }
 
 // VersionCmd performs the version sub command
-func VersionCmd(cmd *cobra.Command, args []string) error {
+func VersionCmd(_ *cobra.Command, _ []string) error {
 	kuttlVersion := version.Get()
 	fmt.Printf("KUTTL Version: %s\n", fmt.Sprintf("%#v", kuttlVersion))
 	return nil
