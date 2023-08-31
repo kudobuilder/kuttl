@@ -1,4 +1,4 @@
-FROM kudobuilder/golang:1.18
+FROM kudobuilder/golang:1.21
 
 WORKDIR $GOPATH/src/github.com/kudobuilder/kuttl
 

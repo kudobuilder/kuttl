@@ -42,15 +42,15 @@ func newDockerMock() *dockerMock {
 	}
 }
 
-func (d *dockerMock) VolumeCreate(ctx context.Context, body volumetypes.VolumeCreateBody) (dockertypes.Volume, error) {
+func (d *dockerMock) VolumeCreate(_ context.Context, body volumetypes.VolumeCreateBody) (dockertypes.Volume, error) {
 	return dockertypes.Volume{
 		Mountpoint: fmt.Sprintf("/var/lib/docker/data/%s", body.Name),
 	}, nil
 }
 
-func (d *dockerMock) NegotiateAPIVersion(ctx context.Context) {}
+func (d *dockerMock) NegotiateAPIVersion(_ context.Context) {}
 
-func (d *dockerMock) ImageSave(ctx context.Context, imageIDs []string) (io.ReadCloser, error) {
+func (d *dockerMock) ImageSave(_ context.Context, _ []string) (io.ReadCloser, error) {
 	return d.imageReader, nil
 }
 

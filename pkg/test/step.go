@@ -142,12 +142,12 @@ func (s *Step) DeleteExisting(namespace string) error {
 	}
 
 	for _, obj := range toDelete {
-		delete := &unstructured.Unstructured{}
-		delete.SetGroupVersionKind(obj.GetObjectKind().GroupVersionKind())
-		delete.SetName(obj.GetName())
-		delete.SetNamespace(obj.GetNamespace())
+		del := &unstructured.Unstructured{}
+		del.SetGroupVersionKind(obj.GetObjectKind().GroupVersionKind())
+		del.SetName(obj.GetName())
+		del.SetNamespace(obj.GetNamespace())
 
-		err := cl.Delete(context.TODO(), delete)
+		err := cl.Delete(context.TODO(), del)
 		if err != nil && !k8serrors.IsNotFound(err) {
 			return err
 		}
