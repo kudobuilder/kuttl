@@ -1,6 +1,6 @@
 module github.com/kudobuilder/kuttl
 
-go 1.18
+go 1.21
 
 require (
 	github.com/Masterminds/semver/v3 v3.1.1
@@ -29,7 +29,7 @@ require (
 	github.com/Microsoft/go-winio v0.5.1 // indirect
 	github.com/alessio/shellescape v1.4.1 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
-	github.com/docker/distribution v2.8.1+incompatible // indirect
+	github.com/docker/distribution v2.8.2+incompatible // indirect
 	github.com/docker/go-connections v0.4.0 // indirect
 	github.com/docker/go-units v0.4.0 // indirect
 	github.com/emicklei/go-restful/v3 v3.9.0 // indirect
