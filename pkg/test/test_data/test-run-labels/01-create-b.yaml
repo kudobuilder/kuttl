@@ -1,0 +1,12 @@
+apiVersion: kuttl.dev/v1beta1
+kind: TestFile
+testRunSelector:
+  matchLabels:
+    flavor: b
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: test
+data:
+  flavor: b

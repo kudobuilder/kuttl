@@ -18,6 +18,7 @@ import (
 	volumetypes "github.com/docker/docker/api/types/volume"
 	docker "github.com/docker/docker/client"
 	"gopkg.in/yaml.v2"
+	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/discovery"
 	"k8s.io/client-go/rest"
@@ -53,6 +54,7 @@ type Harness struct {
 	stopping      bool
 	bgProcesses   []*exec.Cmd
 	report        *report.Testsuites
+	RunLabels     labels.Set
 }
 
 // LoadTests loads all of the tests in a given directory.
@@ -85,6 +87,7 @@ func (h *Harness) LoadTests(dir string) ([]*Case, error) {
 			Dir:                filepath.Join(dir, file.Name()),
 			SkipDelete:         h.TestSuite.SkipDelete,
 			Suppress:           h.TestSuite.Suppress,
+			RunLabels:          h.RunLabels,
 		})
 	}
 
