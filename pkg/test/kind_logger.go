@@ -86,6 +86,6 @@ func (n *nopLogger) Enabled() bool {
 	return false
 }
 
-func (n *nopLogger) Info(message string) {}
+func (n *nopLogger) Info(_ string) {}
 
-func (n *nopLogger) Infof(format string, args ...interface{}) {}
+func (n *nopLogger) Infof(_ string, _ ...interface{}) {}
