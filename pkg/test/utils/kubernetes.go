@@ -400,6 +400,8 @@ func ConvertUnstructured(in client.Object) (client.Object, error) {
 		return in, nil
 	}
 	switch {
+	case kind == "TestFile":
+		converted = &harness.TestFile{}
 	case kind == "TestStep":
 		converted = &harness.TestStep{}
 	case kind == "TestAssert":

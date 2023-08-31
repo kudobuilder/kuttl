@@ -61,6 +61,7 @@ func newTestCmd() *cobra.Command { //nolint:gocyclo
 	reportName := "kuttl-report"
 	namespace := ""
 	suppress := []string{}
+	var runLabels labelSetValue
 
 	options := harness.TestSuite{}
 
@@ -229,6 +230,7 @@ For more detailed documentation, visit: https://kuttl.dev`,
 				harness := test.Harness{
 					TestSuite: options,
 					T:         t,
+					RunLabels: runLabels.AsLabelSet(),
 				}
 
 				harness.Run()
@@ -257,6 +259,7 @@ For more detailed documentation, visit: https://kuttl.dev`,
 	testCmd.Flags().StringVar(&reportName, "report-name", "kuttl-report", "Name for the report.  Report location determined by --artifacts-dir and report file type determined by --report.")
 	testCmd.Flags().StringVarP(&namespace, "namespace", "n", "", "Namespace to use for tests. Provided namespaces must exist prior to running tests.")
 	testCmd.Flags().StringSliceVar(&suppress, "suppress-log", []string{}, "Suppress logging for these kinds of logs (events).")
+	testCmd.Flags().Var(&runLabels, "test-run-labels", "Labels to use for this test run.")
 	// This cannot be a global flag because pkg/test/utils.RunTests calls flag.Parse which barfs on unknown top-level flags.
 	// Putting it here at least does not advertise it on a level where using it is impossible.
 	test.SetFlags(testCmd.Flags())
