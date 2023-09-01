@@ -11,7 +11,9 @@ import (
 	"time"
 
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/util/wait"
@@ -36,7 +38,8 @@ type Step struct {
 	Index      int
 	SkipDelete bool
 
-	Dir string
+	Dir           string
+	TestRunLabels labels.Set
 
 	Step   *harness.TestStep
 	Assert *harness.TestAssert
@@ -142,12 +145,12 @@ func (s *Step) DeleteExisting(namespace string) error {
 	}
 
 	for _, obj := range toDelete {
-		delete := &unstructured.Unstructured{}
-		delete.SetGroupVersionKind(obj.GetObjectKind().GroupVersionKind())
-		delete.SetName(obj.GetName())
-		delete.SetNamespace(obj.GetNamespace())
+		del := &unstructured.Unstructured{}
+		del.SetGroupVersionKind(obj.GetObjectKind().GroupVersionKind())
+		del.SetName(obj.GetName())
+		del.SetNamespace(obj.GetNamespace())
 
-		err := cl.Delete(context.TODO(), delete)
+		err := cl.Delete(context.TODO(), del)
 		if err != nil && !k8serrors.IsNotFound(err) {
 			return err
 		}
@@ -495,9 +498,9 @@ func (s *Step) String() string {
 //     if seen, mark a test immediately failed.
 //   - All other YAML files are considered resources to create.
 func (s *Step) LoadYAML(file string) error {
-	objects, err := testutils.LoadYAMLFromFile(file)
-	if err != nil {
-		return fmt.Errorf("loading %s: %s", file, err)
+	skipFile, objects, err := s.loadOrSkipFile(file)
+	if skipFile || err != nil {
+		return err
 	}
 
 	if err = s.populateObjectsByFileName(filepath.Base(file), objects); err != nil {
@@ -599,6 +602,38 @@ func (s *Step) LoadYAML(file string) error {
 	s.Asserts = asserts
 	s.Errors = errors
 	return nil
+}
+
+func (s *Step) loadOrSkipFile(file string) (bool, []client.Object, error) {
+	loadedObjects, err := testutils.LoadYAMLFromFile(file)
+	if err != nil {
+		return false, nil, fmt.Errorf("loading %s: %s", file, err)
+	}
+
+	var objects []client.Object
+	shouldSkip := false
+	testFileObjEncountered := false
+
+	for i, object := range loadedObjects {
+		if testFileObject, ok := object.(*harness.TestFile); ok {
+			if testFileObjEncountered {
+				return false, nil, fmt.Errorf("more than one TestFile object encountered in file %q", file)
+			}
+			testFileObjEncountered = true
+			selector, err := metav1.LabelSelectorAsSelector(testFileObject.TestRunSelector)
+			if err != nil {
+				return false, nil, fmt.Errorf("unrecognized test run selector in object %d of %q: %w", i, file, err)
+			}
+			if selector.Empty() || selector.Matches(s.TestRunLabels) {
+				continue
+			}
+			fmt.Printf("Skipping file %q, label selector does not match test run labels.\n", file)
+			shouldSkip = true
+		} else {
+			objects = append(objects, object)
+		}
+	}
+	return shouldSkip, objects, nil
 }
 
 // populateObjectsByFileName populates s.Asserts, s.Errors, and/or s.Apply for files containing

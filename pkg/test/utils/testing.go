@@ -86,7 +86,7 @@ func (testDeps) ImportPath() string {
 	return ""
 }
 
-func (testDeps) StartTestLog(w io.Writer) {}
+func (testDeps) StartTestLog(_ io.Writer) {}
 
 func (testDeps) StopTestLog() error {
 	return nil

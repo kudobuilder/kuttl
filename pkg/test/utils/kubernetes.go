@@ -245,7 +245,7 @@ func (r *RetryClient) List(ctx context.Context, list client.ObjectList, opts ...
 }
 
 // Watch watches a specific object and returns all events for it.
-func (r *RetryClient) Watch(ctx context.Context, obj runtime.Object) (watch.Interface, error) {
+func (r *RetryClient) Watch(_ context.Context, obj runtime.Object) (watch.Interface, error) {
 	meta, err := meta.Accessor(obj)
 	if err != nil {
 		return nil, err
@@ -400,6 +400,8 @@ func ConvertUnstructured(in client.Object) (client.Object, error) {
 		return in, nil
 	}
 	switch {
+	case kind == "TestFile":
+		converted = &harness.TestFile{}
 	case kind == "TestStep":
 		converted = &harness.TestStep{}
 	case kind == "TestAssert":

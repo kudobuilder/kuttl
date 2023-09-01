@@ -104,7 +104,7 @@ func Errors(namespace string, timeout int, errorFiles ...string) error {
 	return errors.New("error asserts not valid")
 }
 
-func Client(forceNew bool) (client.Client, error) {
+func Client(_ bool) (client.Client, error) {
 	cfg, err := config.GetConfig()
 	if err != nil {
 		return nil, err

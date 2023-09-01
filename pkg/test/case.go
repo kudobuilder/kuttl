@@ -18,6 +18,7 @@ import (
 	eventsbeta1 "k8s.io/api/events/v1beta1"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/discovery"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -40,6 +41,7 @@ type Case struct {
 	SkipDelete         bool
 	Timeout            int
 	PreferredNamespace string
+	RunLabels          labels.Set
 
 	Client          func(forceNew bool) (client.Client, error)
 	DiscoveryClient func() (discovery.DiscoveryInterface, error)
@@ -458,13 +460,14 @@ func (t *Case) LoadTestSteps() error {
 
 	for index, files := range testStepFiles {
 		testStep := &Step{
-			Timeout:    t.Timeout,
-			Index:      int(index),
-			SkipDelete: t.SkipDelete,
-			Dir:        t.Dir,
-			Asserts:    []client.Object{},
-			Apply:      []client.Object{},
-			Errors:     []client.Object{},
+			Timeout:       t.Timeout,
+			Index:         int(index),
+			SkipDelete:    t.SkipDelete,
+			Dir:           t.Dir,
+			TestRunLabels: t.RunLabels,
+			Asserts:       []client.Object{},
+			Apply:         []client.Object{},
+			Errors:        []client.Object{},
 		}
 
 		for _, file := range files {

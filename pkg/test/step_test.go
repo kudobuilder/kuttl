@@ -260,15 +260,15 @@ func TestCheckResourceAbsent(t *testing.T) {
 				DiscoveryClient: func() (discovery.DiscoveryInterface, error) { return fakeDiscovery, nil },
 			}
 
-			error := step.CheckResourceAbsent(test.expected, testNamespace)
+			err := step.CheckResourceAbsent(test.expected, testNamespace)
 
 			if test.shouldError {
-				assert.Error(t, error)
+				assert.Error(t, err)
 				if test.expectedErr != "" {
-					assert.EqualError(t, error, test.expectedErr)
+					assert.EqualError(t, err, test.expectedErr)
 				}
 			} else {
-				assert.NoError(t, error)
+				assert.NoError(t, err)
 			}
 		})
 	}
