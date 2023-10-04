@@ -36,7 +36,7 @@ Learn more on how to engage with the KUDO community on the [community page](http
 
 ## Contributions
 
-Please read the [contributing guide](https://github.com/kudobuilder/kuttl/blob/main/CONTRIBUTING.md) for details around:
+Please read the [contributing guide](CONTRIBUTING.md) for details around:
 
 1. Code of Conduct
 1. Code Culture
