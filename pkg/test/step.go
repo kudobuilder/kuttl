@@ -11,6 +11,7 @@ import (
 	"time"
 
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/labels"
@@ -230,13 +231,17 @@ func (s *Step) GetTimeout() int {
 	return timeout
 }
 
-func list(cl client.Client, gvk schema.GroupVersionKind, namespace string) ([]unstructured.Unstructured, error) {
+func list(cl client.Client, gvk schema.GroupVersionKind, namespace string, labelsMap map[string]string) ([]unstructured.Unstructured, error) {
 	list := unstructured.UnstructuredList{}
 	list.SetGroupVersionKind(gvk)
 
 	listOptions := []client.ListOption{}
 	if namespace != "" {
 		listOptions = append(listOptions, client.InNamespace(namespace))
+	}
+
+	if len(labelsMap) > 0 {
+		listOptions = append(listOptions, client.MatchingLabels(labelsMap))
 	}
 
 	if err := cl.List(context.TODO(), &list, listOptions...); err != nil {
@@ -280,7 +285,11 @@ func (s *Step) CheckResource(expected runtime.Object, namespace string) []error 
 
 		actuals = append(actuals, actual)
 	} else {
-		actuals, err = list(cl, gvk, namespace)
+		m, err := meta.Accessor(expected)
+		if err != nil {
+			return append(testErrors, err)
+		}
+		actuals, err = list(cl, gvk, namespace, m.GetLabels())
 		if len(actuals) == 0 {
 			testErrors = append(testErrors, fmt.Errorf("no resources matched of kind: %s", gvk.String()))
 		}
@@ -358,7 +367,11 @@ func (s *Step) CheckResourceAbsent(expected runtime.Object, namespace string) er
 
 		actuals = []unstructured.Unstructured{actual}
 	} else {
-		actuals, err = list(cl, gvk, namespace)
+		m, err := meta.Accessor(expected)
+		if err != nil {
+			return err
+		}
+		actuals, err = list(cl, gvk, namespace, m.GetLabels())
 		if err != nil {
 			return err
 		}
