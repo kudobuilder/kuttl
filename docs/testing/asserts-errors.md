@@ -2,10 +2,6 @@
 
 Test asserts are the part of a [test step](steps.md) that define the state to wait for Kubernetes to reach. It is possible to match specific objects by name as well as match any object that matches a defined state. Test errors define states that should not be reached.
 
-<h2>Table of Contents</h2>
-
-[[toc]]
-
 ## Format
 
 The test assert file for a test step is found at `$index-assert.yaml`. So, if the test step index is `00`, the assert should be called `00-assert.yaml`. This file can contain any number of objects to match on. If the objects have a namespace set, it will be respected, but if a namespace is not set, then the test harness will look for the objects in the test case's namespace.

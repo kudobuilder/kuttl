@@ -1,9 +1,5 @@
 # KUTTL Configuration Reference
 
-<h2>Table of Contents</h2>
-
-[[toc]]
-
 ## TestSuite
 
 The `TestSuite` object specifies the settings for the entire test suite and should live in the test suite configuration file (`kuttl-test.yaml` by default, or `--config`):

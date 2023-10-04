@@ -2,10 +2,6 @@
 
 This document demonstrates how to use the KUTTL CLI
 
-<h2>Table of Contents</h2>
-
-[[toc]]
-
 ## Setup the KUTTL Kubectl Plugin
 
 ### Requirements

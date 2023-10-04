@@ -4,10 +4,6 @@ Each test case is broken down into test steps. Test steps within a test case are
 
 A test step can create, update, and delete objects as well as run any kubectl command.
 
-<h2>Table of Contents</h2>
-
-[[toc]]
-
 ## Format
 
 A test step can include many YAML files and each YAML file can contain many Kubernetes objects. In a test case's directory, each file that begins with the same index is considered a part of the same test step. All objects inside of a test step are operated on by the test harness simultaneously, so use separate test steps to order operations.

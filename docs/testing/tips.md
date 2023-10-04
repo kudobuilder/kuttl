@@ -2,8 +2,6 @@
 
 This document contains some tips and gotchas that can be helpful when writing tests.
 
-[[toc]]
-
 ## Loading Built Images Into KIND
 
 When KIND clusters are started, you may want to load an image that has not been pushed into the registry. To do this, you can use the `kindContainers` setting on your `TestSuite`.

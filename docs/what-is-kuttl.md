@@ -1,7 +1,5 @@
 # What is KUTTL
 
-[[toc]]
-
 ## Overview
 
 The KUbernetes Test TooL (KUTTL) provides a declarative approach to testing production-grade Kubernetes [operators](https://kubernetes.io/docs/concepts/extend-kubernetes/operator/).

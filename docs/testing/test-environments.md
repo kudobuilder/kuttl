@@ -4,8 +4,6 @@ The KUTTL test harness can run tests against several different test environments
 
 A default environment for the tests can be defined in `kuttl-test.yaml` allowing each test suite or project to easily use the correct environment.
 
-[[toc]]
-
 ## Live Cluster
 
 If no configuration is provided, the tests will run against your default cluster context using whatever Kubernetes cluster is configured in your kubeconfig.

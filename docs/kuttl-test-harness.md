@@ -4,10 +4,6 @@ KUTTL is a declarative integration testing harness for testing operators, KUDO, 
 
 Whether you are developing an application, controller, operator, or deploying Kubernetes clusters the KUTTL test harness helps you easily write portable end-to-end, integration, and conformance tests for Kubernetes without needing to write any code.
 
-<h2>Table of Contents</h2>
-
-[[toc]]
-
 ## Installation
 
 The test harness CLI is included in the KUTTL CLI, to install we can install the CLI using [krew](https://github.com/kubernetes-sigs/krew):
