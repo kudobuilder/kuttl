@@ -13,7 +13,7 @@ KUTTL is designed for testing operators, however it can declaratively test any k
 
 ## Getting Started
 
-Please refer to the [getting started guide](https://kuttl.dev/docs/) documentation.
+Please refer to the [getting started guide](docs/README.md) documentation.
 
 ## Resources
 
