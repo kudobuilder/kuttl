@@ -31,85 +31,88 @@ kubectl krew install kuttl
 
 ## Commands
 
-::: flag kubectl kuttl help [command] [flags]
-Provides general help or help on a specific command
-:::
+* **`kubectl kuttl help [command] [flags]`**
 
-::: flag kubectl kuttl version
-Print the current KUTTL version.
-:::
+  Provide general help or help on a specific command
 
-::: flag kubectl kuttl test
-Run KUTTL test harness.
-:::
+* **`kubectl kuttl version`**
+
+  Print the current KUTTL version.
+
+* **`kubectl kuttl test`**
+
+  Run KUTTL test harness.
+
 
 ## Flags
 
-::: tip Usage
-`kubectl kuttl test <name> [flags]`
-:::
+> [!NOTE]
+> **Usage**
+>
+> `kubectl kuttl test <name> [flags]`
 
-::: flag -h, --help
-Help for test
-:::
+Flags are:
 
-::: flag --artifacts-dir (string)
-Directory to output kind logs to (if not specified, the current working directory).
-:::
+* **`-h, --help`**
 
-::: flag --config (string)
-Path to file to load test settings from. This is usually the kuttl-test.yaml file.
-:::
+  Help for test
 
-::: flag --crd-dir (string)
-Directory to load CustomResourceDefinitions from prior to running the tests.
-:::
+* **`--artifacts-dir (string)`**
 
-::: flag --kind-config (string)
-Specify the KIND configuration file path (implies --start-kind, cannot be used with --start-control-plane).
-:::
+  Directory to output kind logs to (if not specified, the current working directory).
 
-::: flag --kind-context (string)
-Specify the KIND context name to use (default: kind).
-:::
+* **`--config (string)`**
 
-::: flag --manifest-dir (stringArray)
-One or more directories containing manifests to apply before running the tests.
-:::
+  Path to file to load test settings from. This is usually the `kuttl-test.yaml` file.
 
-::: flag --parallel (int)
-The maximum number of tests to run at once. (default 8)
-:::
+* **`--crd-dir (string)`**
 
-::: flag --skip-cluster-delete (bool)
-If set, do not delete the mocked control plane or kind cluster.
-:::
+  Directory to load CustomResourceDefinitions from prior to running the tests.
 
-::: flag --skip-delete (bool)
-If set, do not delete resources created during tests (helpful for debugging test failures, implies --skip-cluster-delete).
-:::
+* **`--kind-config (string)`**
 
-::: flag --start-control-plane (bool)
-Start a local Kubernetes control plane for the tests (requires etcd and kube-apiserver binaries, cannot be used with --start-kind).
-:::
+  Specify the KIND configuration file path (implies `--start-kind`, cannot be used with `--start-control-plane`).
 
-::: flag --start-kind (bool)
-Start a KIND cluster for the tests (cannot be used with --start-control-plane).
-:::
+* **`--kind-context (string)`**
 
-::: flag --test (string)
-If set, the specific test case to run.
-:::
+  Specify the KIND context name to use (default: `kind`).
 
-::: flag --test-run-labels (string)
-Optional label set to associate with this test run.
-This label set can then be matched against by the `testRunSelector` in `TestFile` objects to optionally exclude selected files.
-The syntax is comma-separated list of key=value assignments.
-:::
+* **`--manifest-dir (stringArray)`**
 
-::: flag -v or -vv (int)
-Logging verbosity level. 0=normal, 1=verbose, 2=detailed, 3 or more =trace.
-:::
+  One or more directories containing manifests to apply before running the tests.
+
+* **`--parallel (int)`**
+
+  The maximum number of tests to run at once. (default `8`)
+
+* **`--skip-cluster-delete (bool)`**
+
+  If set, do not delete the mocked control plane or kind cluster.
+
+* **`--skip-delete (bool)`**
+
+  If set, do not delete resources created during tests (helpful for debugging test failures, implies `--skip-cluster-delete`).
+
+* **`--start-control-plane (bool)`**
+
+  Start a local Kubernetes control plane for the tests (requires `etcd` and `kube-apiserver` binaries, cannot be used with `--start-kind`).
+
+* **`--start-kind (bool)`**
+
+  Start a KIND cluster for the tests (cannot be used with `--start-control-plane`).
+
+* **`--test (string)`**
+
+  If set, the specific test case to run.
+
+* **`--test-run-labels (string)`**
+
+  Optional label set to associate with this test run.
+  This label set can then be matched against by the `testRunSelector` in `TestFile` objects to optionally exclude selected files.
+  The syntax is comma-separated list of `key=value` assignments.
+
+* **`-v or -vv (int)`**
+  Logging verbosity level. 0=normal, 1=verbose, 2=detailed, 3 or more =trace.
 
 
 
@@ -117,7 +120,7 @@ Logging verbosity level. 0=normal, 1=verbose, 2=detailed, 3 or more =trace.
 
 ### KUTTL Test
 
-KUTTL test command is the heart of the test harness.  It requires a kuttl-test.yaml which defines the test setup.
+KUTTL test command is the heart of the test harness.  It requires a `kuttl-test.yaml` which defines the test setup.
 
 ```yaml
 apiVersion: kuttl.dev/v1beta1
