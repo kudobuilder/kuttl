@@ -105,9 +105,12 @@ Use defining commands, it is possible to use shell expansion in the command or t
 - `$PATH` KUTTL prepends the $PATH with the `$CWD/bin`
 - `$KUBECONFIG` is the `$CWD/kubeconfig`
 
-::: warning Command Expansion of `$`
-The `$` in the command signifies the need for an expansion.  If you have a need to use `$` without expansion, you will need to escape it by expressing `$$` which will result in 1 `$` when the command runs.
-:::
+> [!WARNING]
+> **Command Expansion of `$`**
+>
+> The `$` in the command signifies the need for an expansion.
+> If you have a need to use `$` without expansion, you will need to escape it by expressing `$$`,
+> which will result in a single `$` when the command runs.
 
 ### Shell scripts
 
@@ -122,6 +125,8 @@ commands:
 
 When `script` instead of `command` is used, the attributes `namespaced` is not allowed and silently ignored. You can however use the `$NAMESPACE` environment variable as well as all other ENV vars.
 
-::: warning Shell dependent
-Scripts are executed by prepending `sh -c` to the given script and therefore depend on the configured environment and shell.
-:::
+> [!WARNING]
+> **Shell dependent behavior**
+>
+> Scripts are executed by prepending `sh -c` to the given script
+> and therefore their behavior depends on the configured environment and shell.
