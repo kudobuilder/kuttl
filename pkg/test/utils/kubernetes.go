@@ -1050,7 +1050,7 @@ func GetArgs(ctx context.Context, cmd harness.Command, namespace string, envMap 
 func RunCommand(ctx context.Context, namespace string, cmd harness.Command, cwd string, stdout io.Writer, stderr io.Writer, logger Logger, timeout int, kubeconfigOverride string) (*exec.Cmd, error) {
 	actualDir, err := os.Getwd()
 	if err != nil {
-		return nil, fmt.Errorf("command %q with %w", cmd.Command, err)
+		return nil, fmt.Errorf("command %q with %w", cmd.String(), err)
 	}
 
 	kuttlENV := make(map[string]string)
@@ -1082,7 +1082,7 @@ func RunCommand(ctx context.Context, namespace string, cmd harness.Command, cwd 
 
 	builtCmd, err := GetArgs(cmdCtx, cmd, namespace, kuttlENV)
 	if err != nil {
-		return nil, fmt.Errorf("processing command %q with %w", cmd.Command, err)
+		return nil, fmt.Errorf("processing command %q with %w", cmd.String(), err)
 	}
 
 	logger.Logf("running command: %v", builtCmd.Args)
@@ -1116,7 +1116,7 @@ func RunCommand(ctx context.Context, namespace string, cmd harness.Command, cwd 
 		return nil, nil
 	}
 	if errors.Is(cmdCtx.Err(), context.DeadlineExceeded) {
-		return nil, fmt.Errorf("command %q exceeded %v sec timeout, %w", cmd.Command, timeout, cmdCtx.Err())
+		return nil, fmt.Errorf("command %q exceeded %v sec timeout, %w", cmd.String(), timeout, cmdCtx.Err())
 	}
 	return nil, err
 }
