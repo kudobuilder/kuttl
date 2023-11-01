@@ -161,7 +161,7 @@ func (s *Step) DeleteExisting(namespace string) error {
 		for _, obj := range toDelete {
 			actual := &unstructured.Unstructured{}
 			actual.SetGroupVersionKind(obj.GetObjectKind().GroupVersionKind())
-			err = cl.Get(context.TODO(), testutils.ObjectKey(obj), actual)
+			err = cl.Get(ctx, testutils.ObjectKey(obj), actual)
 			if err == nil || !k8serrors.IsNotFound(err) {
 				return false, err
 			}
