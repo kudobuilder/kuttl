@@ -1118,7 +1118,10 @@ func RunCommand(ctx context.Context, namespace string, cmd harness.Command, cwd 
 	if errors.Is(cmdCtx.Err(), context.DeadlineExceeded) {
 		return nil, fmt.Errorf("command %q exceeded %v sec timeout, %w", cmd.String(), timeout, cmdCtx.Err())
 	}
-	return nil, err
+	if err != nil {
+		return nil, fmt.Errorf("command %q failed, %w", cmd.String(), err)
+	}
+	return nil, nil
 }
 
 func kubeconfigPath(actualDir, override string) string {
