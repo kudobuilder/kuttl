@@ -157,7 +157,7 @@ func (s *Step) DeleteExisting(namespace string) error {
 	}
 
 	// Wait for resources to be deleted.
-	return wait.PollImmediate(100*time.Millisecond, time.Duration(s.GetTimeout())*time.Second, func() (done bool, err error) {
+	return wait.PollUntilContextTimeout(context.TODO(), 100*time.Millisecond, time.Duration(s.GetTimeout())*time.Second, true, func(ctx context.Context) (done bool, err error) {
 		for _, obj := range toDelete {
 			actual := &unstructured.Unstructured{}
 			actual.SetGroupVersionKind(obj.GetObjectKind().GroupVersionKind())
