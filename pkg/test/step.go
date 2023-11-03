@@ -273,7 +273,6 @@ func (s *Step) CheckResource(expected runtime.Object, namespace string) []error 
 	gvk := expected.GetObjectKind().GroupVersionKind()
 
 	actuals := []unstructured.Unstructured{}
-
 	if name != "" {
 		actual := unstructured.Unstructured{}
 		actual.SetGroupVersionKind(gvk)
@@ -291,15 +290,15 @@ func (s *Step) CheckResource(expected runtime.Object, namespace string) []error 
 		if err != nil {
 			return append(testErrors, err)
 		}
-		actuals, err := list(cl, gvk, namespace, m.GetLabels())
+		matches, err := list(cl, gvk, namespace, m.GetLabels())
 		if err != nil {
 			return append(testErrors, err)
 		}
-		if len(actuals) == 0 {
+		if len(matches) == 0 {
 			testErrors = append(testErrors, fmt.Errorf("no resources matched of kind: %s", gvk.String()))
 		}
+		actuals = append(actuals, matches...)
 	}
-
 	expectedObj, err := runtime.DefaultUnstructuredConverter.ToUnstructured(expected)
 	if err != nil {
 		return append(testErrors, err)
@@ -307,7 +306,6 @@ func (s *Step) CheckResource(expected runtime.Object, namespace string) []error 
 
 	for _, actual := range actuals {
 		actual := actual
-
 		tmpTestErrors := []error{}
 
 		if err := testutils.IsSubset(expectedObj, actual.UnstructuredContent()); err != nil {
