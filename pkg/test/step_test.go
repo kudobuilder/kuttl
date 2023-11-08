@@ -136,34 +136,71 @@ func TestStepDeleteExisting(t *testing.T) {
 func TestCheckResource(t *testing.T) {
 	for _, test := range []struct {
 		testName    string
-		actual      runtime.Object
+		actual      []runtime.Object
 		expected    runtime.Object
 		shouldError bool
 	}{
 		{
 			testName: "resource matches",
-			actual:   testutils.NewPod("hello", ""),
+			actual: []runtime.Object{
+				testutils.NewPod("hello", ""),
+			},
 			expected: testutils.NewPod("hello", ""),
 		},
 		{
+			testName: "resource matches with labels",
+			actual: []runtime.Object{
+				testutils.WithSpec(t, testutils.NewPod("deploy-8b2d", ""),
+					map[string]interface{}{
+						"containers":         nil,
+						"serviceAccountName": "invalid",
+					}),
+				testutils.WithSpec(
+					t,
+					testutils.WithLabels(
+						t,
+						testutils.NewPod("deploy-8c2z", ""),
+						map[string]string{"label": "my-label"},
+					),
+					map[string]interface{}{
+						"containers":         nil,
+						"serviceAccountName": "valid",
+					},
+				),
+			},
+
+			expected: testutils.WithSpec(
+				t,
+				testutils.WithLabels(
+					t,
+					testutils.NewPod("", ""),
+					map[string]string{"label": "my-label"},
+				),
+				map[string]interface{}{
+					"containers":         nil,
+					"serviceAccountName": "valid",
+				},
+			),
+		},
+		{
 			testName:    "resource mis-match",
-			actual:      testutils.NewPod("hello", ""),
+			actual:      []runtime.Object{testutils.NewPod("hello", "")},
 			expected:    testutils.WithSpec(t, testutils.NewPod("hello", ""), map[string]interface{}{"invalid": "key"}),
 			shouldError: true,
 		},
 		{
 			testName: "resource subset match",
-			actual: testutils.WithSpec(t, testutils.NewPod("hello", ""), map[string]interface{}{
+			actual: []runtime.Object{testutils.WithSpec(t, testutils.NewPod("hello", ""), map[string]interface{}{
 				"containers":    nil,
 				"restartPolicy": "OnFailure",
-			}),
+			})},
 			expected: testutils.WithSpec(t, testutils.NewPod("hello", ""), map[string]interface{}{
 				"restartPolicy": "OnFailure",
 			}),
 		},
 		{
 			testName:    "resource does not exist",
-			actual:      testutils.NewPod("other", ""),
+			actual:      []runtime.Object{testutils.NewPod("other", "")},
 			expected:    testutils.NewPod("hello", ""),
 			shouldError: true,
 		},
@@ -174,19 +211,20 @@ func TestCheckResource(t *testing.T) {
 			fakeDiscovery := testutils.FakeDiscoveryClient()
 			namespace := testNamespace
 
-			_, _, err := testutils.Namespaced(fakeDiscovery, test.actual, namespace)
-			assert.Nil(t, err)
+			for _, actualObj := range test.actual {
+				_, _, err := testutils.Namespaced(fakeDiscovery, actualObj, namespace)
+				assert.Nil(t, err)
+			}
 
 			step := Step{
 				Logger: testutils.NewTestLogger(t, ""),
 				Client: func(bool) (client.Client, error) {
-					return fake.NewClientBuilder().WithScheme(scheme.Scheme).WithRuntimeObjects(test.actual).Build(), nil
+					return fake.NewClientBuilder().WithScheme(scheme.Scheme).WithRuntimeObjects(test.actual...).Build(), nil
 				},
 				DiscoveryClient: func() (discovery.DiscoveryInterface, error) { return fakeDiscovery, nil },
 			}
 
 			errors := step.CheckResource(test.expected, namespace)
-
 			if test.shouldError {
 				assert.NotEqual(t, []error{}, errors)
 			} else {
