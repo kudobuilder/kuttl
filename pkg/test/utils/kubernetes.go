@@ -372,8 +372,50 @@ func Namespaced(dClient discovery.DiscoveryInterface, obj runtime.Object, namesp
 	return m.GetName(), namespace, nil
 }
 
+func pruneLargeAdditions(expected *unstructured.Unstructured, actual *unstructured.Unstructured) runtime.Object {
+	pruned := actual.DeepCopy()
+	prune(expected.Object, pruned.Object)
+	return pruned
+}
+
+func prune(expected map[string]interface{}, actual map[string]interface{}) {
+	const maxLines = 10
+	toRemove := []string{}
+	for k, v := range actual {
+		if _, inExpected := expected[k]; inExpected {
+			expectedMap, isExpectedMap := expected[k].(map[string]interface{})
+			actualMap, isActualMap := actual[k].(map[string]interface{})
+			if isActualMap && isExpectedMap {
+				prune(expectedMap, actualMap)
+			}
+			continue
+		}
+		numLines, err := countLines(k, v)
+		if err != nil || numLines < maxLines {
+			continue
+		}
+		toRemove = append(toRemove, k)
+	}
+	for _, s := range toRemove {
+		actual[s] = fmt.Sprintf("[... elided field over %d lines long ...]", maxLines)
+	}
+}
+
+func countLines(k string, v interface{}) (int, error) {
+	buf := strings.Builder{}
+	dummyObj := &unstructured.Unstructured{
+		Object: map[string]interface{}{k: v}}
+	err := MarshalObject(dummyObj, &buf)
+	if err != nil {
+		return 0, fmt.Errorf("cannot marshal field %s to compute its length in lines: %w", k, err)
+	}
+	return strings.Count(buf.String(), "\n"), nil
+}
+
 // PrettyDiff creates a unified diff highlighting the differences between two Kubernetes resources
-func PrettyDiff(expected runtime.Object, actual runtime.Object) (string, error) {
+func PrettyDiff(expected *unstructured.Unstructured, actual *unstructured.Unstructured) (string, error) {
+	actualPruned := pruneLargeAdditions(expected, actual)
+
 	expectedBuf := &bytes.Buffer{}
 	actualBuf := &bytes.Buffer{}
 
@@ -381,7 +423,7 @@ func PrettyDiff(expected runtime.Object, actual runtime.Object) (string, error) 
 		return "", err
 	}
 
-	if err := MarshalObject(actual, actualBuf); err != nil {
+	if err := MarshalObject(actualPruned, actualBuf); err != nil {
 		return "", err
 	}
 

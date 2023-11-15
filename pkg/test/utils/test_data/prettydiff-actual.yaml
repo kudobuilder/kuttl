@@ -1,0 +1,639 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  annotations:
+    email: support@stackrox.com
+    meta.helm.sh/release-name: stackrox-central-services
+    meta.helm.sh/release-namespace: kuttl-test-thorough-hermit
+    owner: stackrox
+  labels:
+    app: central
+    app.kubernetes.io/component: central
+    app.kubernetes.io/instance: stackrox-central-services
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: stackrox
+    app.kubernetes.io/part-of: stackrox-central-services
+    app.kubernetes.io/version: 4.3.x-160-g465d734c11
+    helm.sh/chart: stackrox-central-services-400.3.0-160-g465d734c11
+  managedFields:
+  - apiVersion: apps/v1
+    fieldsType: FieldsV1
+    fieldsV1:
+      f:metadata:
+        f:annotations:
+          .: {}
+          f:email: {}
+          f:meta.helm.sh/release-name: {}
+          f:meta.helm.sh/release-namespace: {}
+          f:owner: {}
+        f:labels:
+          .: {}
+          f:app: {}
+          f:app.kubernetes.io/component: {}
+          f:app.kubernetes.io/instance: {}
+          f:app.kubernetes.io/managed-by: {}
+          f:app.kubernetes.io/name: {}
+          f:app.kubernetes.io/part-of: {}
+          f:app.kubernetes.io/version: {}
+          f:helm.sh/chart: {}
+        f:ownerReferences:
+          .: {}
+          k:{"uid":"ff834d91-0853-42b3-9460-7ebf1c659f8a"}: {}
+      f:spec:
+        f:minReadySeconds: {}
+        f:progressDeadlineSeconds: {}
+        f:replicas: {}
+        f:revisionHistoryLimit: {}
+        f:selector: {}
+        f:strategy:
+          f:type: {}
+        f:template:
+          f:metadata:
+            f:annotations:
+              .: {}
+              f:email: {}
+              f:meta.helm.sh/release-name: {}
+              f:meta.helm.sh/release-namespace: {}
+              f:owner: {}
+              f:traffic.sidecar.istio.io/excludeInboundPorts: {}
+            f:labels:
+              .: {}
+              f:app: {}
+              f:app.kubernetes.io/component: {}
+              f:app.kubernetes.io/instance: {}
+              f:app.kubernetes.io/managed-by: {}
+              f:app.kubernetes.io/name: {}
+              f:app.kubernetes.io/part-of: {}
+              f:app.kubernetes.io/version: {}
+              f:helm.sh/chart: {}
+            f:namespace: {}
+          f:spec:
+            f:affinity:
+              .: {}
+              f:nodeAffinity:
+                .: {}
+                f:preferredDuringSchedulingIgnoredDuringExecution: {}
+            f:containers:
+              k:{"name":"central"}:
+                .: {}
+                f:command: {}
+                f:env:
+                  .: {}
+                  k:{"name":"GOMAXPROCS"}:
+                    .: {}
+                    f:name: {}
+                    f:valueFrom:
+                      .: {}
+                      f:resourceFieldRef: {}
+                  k:{"name":"GOMEMLIMIT"}:
+                    .: {}
+                    f:name: {}
+                    f:valueFrom:
+                      .: {}
+                      f:resourceFieldRef: {}
+                  k:{"name":"NO_PROXY"}:
+                    .: {}
+                    f:name: {}
+                    f:valueFrom:
+                      .: {}
+                      f:secretKeyRef: {}
+                  k:{"name":"POD_NAMESPACE"}:
+                    .: {}
+                    f:name: {}
+                    f:valueFrom:
+                      .: {}
+                      f:fieldRef: {}
+                  k:{"name":"ROX_INSTALL_METHOD"}:
+                    .: {}
+                    f:name: {}
+                    f:value: {}
+                  k:{"name":"ROX_OFFLINE_MODE"}:
+                    .: {}
+                    f:name: {}
+                    f:value: {}
+                f:image: {}
+                f:imagePullPolicy: {}
+                f:name: {}
+                f:ports:
+                  .: {}
+                  k:{"containerPort":8443,"protocol":"TCP"}:
+                    .: {}
+                    f:containerPort: {}
+                    f:name: {}
+                    f:protocol: {}
+                f:readinessProbe:
+                  .: {}
+                  f:failureThreshold: {}
+                  f:httpGet:
+                    .: {}
+                    f:path: {}
+                    f:port: {}
+                    f:scheme: {}
+                  f:periodSeconds: {}
+                  f:successThreshold: {}
+                  f:timeoutSeconds: {}
+                f:resources:
+                  .: {}
+                  f:limits:
+                    .: {}
+                    f:cpu: {}
+                    f:memory: {}
+                  f:requests:
+                    .: {}
+                    f:cpu: {}
+                    f:memory: {}
+                f:securityContext:
+                  .: {}
+                  f:capabilities:
+                    .: {}
+                    f:drop: {}
+                  f:readOnlyRootFilesystem: {}
+                f:terminationMessagePath: {}
+                f:terminationMessagePolicy: {}
+                f:volumeMounts:
+                  .: {}
+                  k:{"mountPath":"/etc/ext-db"}:
+                    .: {}
+                    f:mountPath: {}
+                    f:name: {}
+                  k:{"mountPath":"/etc/pki/ca-trust"}:
+                    .: {}
+                    f:mountPath: {}
+                    f:name: {}
+                  k:{"mountPath":"/etc/ssl"}:
+                    .: {}
+                    f:mountPath: {}
+                    f:name: {}
+                  k:{"mountPath":"/etc/stackrox"}:
+                    .: {}
+                    f:mountPath: {}
+                    f:name: {}
+                  k:{"mountPath":"/etc/stackrox.d/endpoints/"}:
+                    .: {}
+                    f:mountPath: {}
+                    f:name: {}
+                    f:readOnly: {}
+                  k:{"mountPath":"/run/secrets/stackrox.io/central-license/"}:
+                    .: {}
+                    f:mountPath: {}
+                    f:name: {}
+                    f:readOnly: {}
+                  k:{"mountPath":"/run/secrets/stackrox.io/certs/"}:
+                    .: {}
+                    f:mountPath: {}
+                    f:name: {}
+                    f:readOnly: {}
+                  k:{"mountPath":"/run/secrets/stackrox.io/db-password"}:
+                    .: {}
+                    f:mountPath: {}
+                    f:name: {}
+                  k:{"mountPath":"/run/secrets/stackrox.io/default-tls-cert/"}:
+                    .: {}
+                    f:mountPath: {}
+                    f:name: {}
+                    f:readOnly: {}
+                  k:{"mountPath":"/run/secrets/stackrox.io/htpasswd/"}:
+                    .: {}
+                    f:mountPath: {}
+                    f:name: {}
+                    f:readOnly: {}
+                  k:{"mountPath":"/run/secrets/stackrox.io/jwt/"}:
+                    .: {}
+                    f:mountPath: {}
+                    f:name: {}
+                    f:readOnly: {}
+                  k:{"mountPath":"/run/secrets/stackrox.io/proxy-config/"}:
+                    .: {}
+                    f:mountPath: {}
+                    f:name: {}
+                    f:readOnly: {}
+                  k:{"mountPath":"/tmp"}:
+                    .: {}
+                    f:mountPath: {}
+                    f:name: {}
+                  k:{"mountPath":"/usr/local/share/ca-certificates/"}:
+                    .: {}
+                    f:mountPath: {}
+                    f:name: {}
+                    f:readOnly: {}
+                  k:{"mountPath":"/var/lib/stackrox"}:
+                    .: {}
+                    f:mountPath: {}
+                    f:name: {}
+                  k:{"mountPath":"/var/log/stackrox/"}:
+                    .: {}
+                    f:mountPath: {}
+                    f:name: {}
+            f:dnsPolicy: {}
+            f:restartPolicy: {}
+            f:schedulerName: {}
+            f:securityContext:
+              .: {}
+              f:fsGroup: {}
+              f:runAsUser: {}
+            f:serviceAccount: {}
+            f:serviceAccountName: {}
+            f:terminationGracePeriodSeconds: {}
+            f:volumes:
+              .: {}
+              k:{"name":"additional-ca-volume"}:
+                .: {}
+                f:name: {}
+                f:secret:
+                  .: {}
+                  f:defaultMode: {}
+                  f:optional: {}
+                  f:secretName: {}
+              k:{"name":"central-certs-volume"}:
+                .: {}
+                f:name: {}
+                f:secret:
+                  .: {}
+                  f:defaultMode: {}
+                  f:secretName: {}
+              k:{"name":"central-config-volume"}:
+                .: {}
+                f:configMap:
+                  .: {}
+                  f:defaultMode: {}
+                  f:name: {}
+                  f:optional: {}
+                f:name: {}
+              k:{"name":"central-db-password"}:
+                .: {}
+                f:name: {}
+                f:secret:
+                  .: {}
+                  f:defaultMode: {}
+                  f:secretName: {}
+              k:{"name":"central-default-tls-cert-volume"}:
+                .: {}
+                f:name: {}
+                f:secret:
+                  .: {}
+                  f:defaultMode: {}
+                  f:optional: {}
+                  f:secretName: {}
+              k:{"name":"central-etc-pki-volume"}:
+                .: {}
+                f:emptyDir: {}
+                f:name: {}
+              k:{"name":"central-etc-ssl-volume"}:
+                .: {}
+                f:emptyDir: {}
+                f:name: {}
+              k:{"name":"central-external-db-volume"}:
+                .: {}
+                f:configMap:
+                  .: {}
+                  f:defaultMode: {}
+                  f:name: {}
+                  f:optional: {}
+                f:name: {}
+              k:{"name":"central-htpasswd-volume"}:
+                .: {}
+                f:name: {}
+                f:secret:
+                  .: {}
+                  f:defaultMode: {}
+                  f:optional: {}
+                  f:secretName: {}
+              k:{"name":"central-jwt-volume"}:
+                .: {}
+                f:name: {}
+                f:secret:
+                  .: {}
+                  f:defaultMode: {}
+                  f:items: {}
+                  f:secretName: {}
+              k:{"name":"central-license-volume"}:
+                .: {}
+                f:name: {}
+                f:secret:
+                  .: {}
+                  f:defaultMode: {}
+                  f:optional: {}
+                  f:secretName: {}
+              k:{"name":"central-tmp-volume"}:
+                .: {}
+                f:emptyDir: {}
+                f:name: {}
+              k:{"name":"endpoints-config-volume"}:
+                .: {}
+                f:configMap:
+                  .: {}
+                  f:defaultMode: {}
+                  f:name: {}
+                f:name: {}
+              k:{"name":"proxy-config-volume"}:
+                .: {}
+                f:name: {}
+                f:secret:
+                  .: {}
+                  f:defaultMode: {}
+                  f:optional: {}
+                  f:secretName: {}
+              k:{"name":"stackrox-db"}:
+                .: {}
+                f:emptyDir: {}
+                f:name: {}
+              k:{"name":"varlog"}:
+                .: {}
+                f:emptyDir: {}
+                f:name: {}
+    manager: stackrox-operator
+    operation: Update
+    time: "2023-11-14T20:02:13Z"
+  - apiVersion: apps/v1
+    fieldsType: FieldsV1
+    fieldsV1:
+      f:metadata:
+        f:annotations:
+          f:deployment.kubernetes.io/revision: {}
+      f:status:
+        f:conditions:
+          .: {}
+          k:{"type":"Available"}:
+            .: {}
+            f:lastTransitionTime: {}
+            f:lastUpdateTime: {}
+            f:message: {}
+            f:reason: {}
+            f:status: {}
+            f:type: {}
+          k:{"type":"Progressing"}:
+            .: {}
+            f:lastTransitionTime: {}
+            f:lastUpdateTime: {}
+            f:message: {}
+            f:reason: {}
+            f:status: {}
+            f:type: {}
+        f:observedGeneration: {}
+        f:replicas: {}
+        f:unavailableReplicas: {}
+        f:updatedReplicas: {}
+    manager: kube-controller-manager
+    operation: Update
+    subresource: status
+    time: "2023-11-14T20:02:16Z"
+  name: central
+  namespace: kuttl-test-thorough-hermit
+  ownerReferences:
+  - apiVersion: platform.stackrox.io/v1alpha1
+    blockOwnerDeletion: true
+    controller: true
+    kind: Central
+    name: stackrox-central-services
+    uid: ff834d91-0853-42b3-9460-7ebf1c659f8a
+spec:
+  minReadySeconds: 15
+  progressDeadlineSeconds: 600
+  replicas: 1
+  revisionHistoryLimit: 10
+  selector:
+    matchLabels:
+      app: central
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      annotations:
+        email: support@stackrox.com
+        meta.helm.sh/release-name: stackrox-central-services
+        meta.helm.sh/release-namespace: kuttl-test-thorough-hermit
+        owner: stackrox
+        traffic.sidecar.istio.io/excludeInboundPorts: "8443"
+      creationTimestamp: null
+      labels:
+        app: central
+        app.kubernetes.io/component: central
+        app.kubernetes.io/instance: stackrox-central-services
+        app.kubernetes.io/managed-by: Helm
+        app.kubernetes.io/name: stackrox
+        app.kubernetes.io/part-of: stackrox-central-services
+        app.kubernetes.io/version: 4.3.x-160-g465d734c11
+        helm.sh/chart: stackrox-central-services-400.3.0-160-g465d734c11
+      namespace: kuttl-test-thorough-hermit
+    spec:
+      affinity:
+        nodeAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - preference:
+              matchExpressions:
+              - key: cloud.google.com/gke-preemptible
+                operator: NotIn
+                values:
+                - "true"
+            weight: 100
+          - preference:
+              matchExpressions:
+              - key: node-role.kubernetes.io/infra
+                operator: Exists
+            weight: 50
+          - preference:
+              matchExpressions:
+              - key: node-role.kubernetes.io/compute
+                operator: Exists
+            weight: 25
+          - preference:
+              matchExpressions:
+              - key: node-role.kubernetes.io/master
+                operator: DoesNotExist
+            weight: 100
+          - preference:
+              matchExpressions:
+              - key: node-role.kubernetes.io/control-plane
+                operator: DoesNotExist
+            weight: 100
+      containers:
+      - command:
+        - /stackrox/central-entrypoint.sh
+        env:
+        - name: GOMEMLIMIT
+          valueFrom:
+            resourceFieldRef:
+              divisor: "0"
+              resource: limits.memory
+        - name: GOMAXPROCS
+          valueFrom:
+            resourceFieldRef:
+              divisor: "0"
+              resource: limits.cpu
+        - name: POD_NAMESPACE
+          valueFrom:
+            fieldRef:
+              apiVersion: v1
+              fieldPath: metadata.namespace
+        - name: ROX_OFFLINE_MODE
+          value: "false"
+        - name: ROX_INSTALL_METHOD
+          value: operator
+        - name: NO_PROXY
+          valueFrom:
+            secretKeyRef:
+              key: NO_PROXY
+              name: central-stackrox-central-services-proxy-env
+        image: quay.io/rhacs-eng/main:4.3.x-160-g465d734c11
+        imagePullPolicy: IfNotPresent
+        name: central
+        ports:
+        - containerPort: 8443
+          name: api
+          protocol: TCP
+        readinessProbe:
+          failureThreshold: 3
+          httpGet:
+            path: /v1/ping
+            port: 8443
+            scheme: HTTPS
+          periodSeconds: 10
+          successThreshold: 1
+          timeoutSeconds: 1
+        resources:
+          limits:
+            cpu: "1"
+            memory: 4Gi
+          requests:
+            cpu: 500m
+            memory: 1Gi
+        securityContext:
+          capabilities:
+            drop:
+            - NET_RAW
+          readOnlyRootFilesystem: true
+        terminationMessagePath: /dev/termination-log
+        terminationMessagePolicy: File
+        volumeMounts:
+        - mountPath: /var/log/stackrox/
+          name: varlog
+        - mountPath: /tmp
+          name: central-tmp-volume
+        - mountPath: /etc/ssl
+          name: central-etc-ssl-volume
+        - mountPath: /etc/pki/ca-trust
+          name: central-etc-pki-volume
+        - mountPath: /run/secrets/stackrox.io/certs/
+          name: central-certs-volume
+          readOnly: true
+        - mountPath: /run/secrets/stackrox.io/default-tls-cert/
+          name: central-default-tls-cert-volume
+          readOnly: true
+        - mountPath: /run/secrets/stackrox.io/htpasswd/
+          name: central-htpasswd-volume
+          readOnly: true
+        - mountPath: /run/secrets/stackrox.io/jwt/
+          name: central-jwt-volume
+          readOnly: true
+        - mountPath: /usr/local/share/ca-certificates/
+          name: additional-ca-volume
+          readOnly: true
+        - mountPath: /run/secrets/stackrox.io/central-license/
+          name: central-license-volume
+          readOnly: true
+        - mountPath: /var/lib/stackrox
+          name: stackrox-db
+        - mountPath: /etc/stackrox
+          name: central-config-volume
+        - mountPath: /run/secrets/stackrox.io/proxy-config/
+          name: proxy-config-volume
+          readOnly: true
+        - mountPath: /etc/stackrox.d/endpoints/
+          name: endpoints-config-volume
+          readOnly: true
+        - mountPath: /run/secrets/stackrox.io/db-password
+          name: central-db-password
+        - mountPath: /etc/ext-db
+          name: central-external-db-volume
+      dnsPolicy: ClusterFirst
+      restartPolicy: Always
+      schedulerName: default-scheduler
+      securityContext:
+        fsGroup: 4000
+        runAsUser: 4000
+      serviceAccount: central
+      serviceAccountName: central
+      terminationGracePeriodSeconds: 30
+      volumes:
+      - emptyDir: {}
+        name: varlog
+      - emptyDir: {}
+        name: central-tmp-volume
+      - emptyDir: {}
+        name: central-etc-ssl-volume
+      - emptyDir: {}
+        name: central-etc-pki-volume
+      - name: central-certs-volume
+        secret:
+          defaultMode: 420
+          secretName: central-tls
+      - name: central-default-tls-cert-volume
+        secret:
+          defaultMode: 420
+          optional: true
+          secretName: central-default-tls-cert
+      - name: central-htpasswd-volume
+        secret:
+          defaultMode: 420
+          optional: true
+          secretName: central-htpasswd
+      - name: central-jwt-volume
+        secret:
+          defaultMode: 420
+          items:
+          - key: jwt-key.pem
+            path: jwt-key.pem
+          secretName: central-tls
+      - name: additional-ca-volume
+        secret:
+          defaultMode: 420
+          optional: true
+          secretName: additional-ca
+      - name: central-license-volume
+        secret:
+          defaultMode: 420
+          optional: true
+          secretName: central-license
+      - configMap:
+          defaultMode: 420
+          name: central-config
+          optional: true
+        name: central-config-volume
+      - name: proxy-config-volume
+        secret:
+          defaultMode: 420
+          optional: true
+          secretName: proxy-config
+      - configMap:
+          defaultMode: 420
+          name: central-endpoints
+        name: endpoints-config-volume
+      - name: central-db-password
+        secret:
+          defaultMode: 420
+          secretName: central-db-password
+      - configMap:
+          defaultMode: 420
+          name: central-external-db
+          optional: true
+        name: central-external-db-volume
+      - emptyDir: {}
+        name: stackrox-db
+status:
+  conditions:
+  - lastTransitionTime: "2023-11-14T20:02:14Z"
+    lastUpdateTime: "2023-11-14T20:02:14Z"
+    message: Deployment does not have minimum availability.
+    reason: MinimumReplicasUnavailable
+    status: "False"
+    type: Available
+  - lastTransitionTime: "2023-11-14T19:51:39Z"
+    lastUpdateTime: "2023-11-14T20:02:15Z"
+    message: ReplicaSet "central-cf947d75b" is progressing.
+    reason: ReplicaSetUpdated
+    status: "True"
+    type: Progressing
+  observedGeneration: 2
+  replicas: 1
+  unavailableReplicas: 1
+  updatedReplicas: 1
