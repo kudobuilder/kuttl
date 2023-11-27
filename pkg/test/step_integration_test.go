@@ -289,7 +289,8 @@ func TestStepDeleteExistingLabelMatch(t *testing.T) {
 	}), podSpec)
 
 	step := Step{
-		Logger: testutils.NewTestLogger(t, ""),
+		Logger:  testutils.NewTestLogger(t, ""),
+		Timeout: 60,
 		Step: &harness.TestStep{
 			Delete: []harness.ObjectReference{
 				{

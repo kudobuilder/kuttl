@@ -356,7 +356,7 @@ func TestRun(t *testing.T) {
 				assert.Nil(t, client.Get(context.TODO(), types.NamespacedName{Namespace: testNamespace, Name: "hello"}, pod))
 
 				// mock kubelet to set the pod status
-				assert.Nil(t, client.Update(context.TODO(), testutils.WithStatus(t, pod, map[string]interface{}{
+				assert.Nil(t, client.Status().Update(context.TODO(), testutils.WithStatus(t, pod, map[string]interface{}{
 					"phase": "Ready",
 				})))
 			},

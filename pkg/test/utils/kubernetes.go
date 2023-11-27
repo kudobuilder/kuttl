@@ -164,7 +164,11 @@ func NewRetryClient(cfg *rest.Config, opts client.Options) (*RetryClient, error)
 	}
 
 	if opts.Mapper == nil {
-		opts.Mapper, err = apiutil.NewDynamicRESTMapper(cfg)
+		httpClient, err := rest.HTTPClientFor(cfg)
+		if err != nil {
+			return nil, err
+		}
+		opts.Mapper, err = apiutil.NewDynamicRESTMapper(cfg, httpClient)
 		if err != nil {
 			return nil, err
 		}
@@ -187,6 +191,16 @@ func (r *RetryClient) RESTMapper() meta.RESTMapper {
 // SubResource returns a subresource client for the named subResource.
 func (r *RetryClient) SubResource(subResource string) client.SubResourceClient {
 	return r.Client.SubResource(subResource)
+}
+
+// GroupVersionKindFor returns the GroupVersionKind for the provided object.
+func (r *RetryClient) GroupVersionKindFor(obj runtime.Object) (schema.GroupVersionKind, error) {
+	return r.Client.GroupVersionKindFor(obj)
+}
+
+// IsObjectNamespaced returns true if the object is namespaced.
+func (r *RetryClient) IsObjectNamespaced(obj runtime.Object) (bool, error) {
+	return r.Client.IsObjectNamespaced(obj)
 }
 
 // Create saves the object obj in the Kubernetes cluster.
@@ -904,11 +918,11 @@ func GetAPIResource(dClient discovery.DiscoveryInterface, gvk schema.GroupVersio
 // WaitForDelete waits for the provide runtime objects to be deleted from cluster
 func WaitForDelete(c *RetryClient, objs []runtime.Object) error {
 	// Wait for resources to be deleted.
-	return wait.PollImmediate(100*time.Millisecond, 10*time.Second, func() (done bool, err error) {
+	return wait.PollUntilContextTimeout(context.TODO(), 100*time.Millisecond, 10*time.Second, true, func(ctx context.Context) (done bool, err error) {
 		for _, obj := range objs {
 			actual := &unstructured.Unstructured{}
 			actual.SetGroupVersionKind(obj.GetObjectKind().GroupVersionKind())
-			err = c.Get(context.TODO(), ObjectKey(obj), actual)
+			err = c.Get(ctx, ObjectKey(obj), actual)
 			if err == nil || !k8serrors.IsNotFound(err) {
 				return false, err
 			}
@@ -933,8 +947,8 @@ func WaitForSA(config *rest.Config, name, namespace string) error {
 		Namespace: namespace,
 		Name:      name,
 	}
-	return wait.PollImmediate(500*time.Millisecond, 60*time.Second, func() (done bool, err error) {
-		err = c.Get(context.TODO(), key, obj)
+	return wait.PollUntilContextTimeout(context.TODO(), 500*time.Millisecond, 60*time.Second, true, func(ctx context.Context) (done bool, err error) {
+		err = c.Get(ctx, key, obj)
 		if k8serrors.IsNotFound(err) {
 			return false, nil
 		}
