@@ -5,7 +5,7 @@
 [![lint](https://github.com/kudobuilder/kuttl/actions/workflows/lint.yml/badge.svg?branch=main)](https://github.com/kudobuilder/kuttl/actions)
 [![unit test](https://github.com/kudobuilder/kuttl/actions/workflows/unittest.yml/badge.svg?branch=main)](https://github.com/kudobuilder/kuttl/actions)
 [![integration-test](https://github.com/kudobuilder/kuttl/actions/workflows/integration-test.yml/badge.svg?branch=main)](https://github.com/kudobuilder/kuttl/actions)
-[![e2e](https://github.com/kudobuilder/kuttl/actions/workflows/e2e.yml/badge.svg?branch=main)](https://github.com/kudobuilder/kuttl/actions)
+[![Go Report Card](https://goreportcard.com/badge/github.com/kudobuilder/kuttl)](https://goreportcard.com/report/github.com/kudobuilder/kuttl)  
 
 KUbernetes Test TooL (KUTTL) provides a declarative approach to test Kubernetes Operators.
 
