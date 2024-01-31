@@ -31,18 +31,25 @@ If this object is in the errors file, the test harness will report an error if t
 
 ## Listing Resources in the Cluster
 
-If an object in the assert file has no name set, then the harness will list objects of that kind and expect there to be one that matches. For example, an assert:
+If an object in the assert file has no name set, then the harness will list objects of that kind.
+If the object in the assert file has `metadata.labels` field, then it will be used as a label selector for the list operation.
+Then `kuttl` will expect there to be at least one object that matches. For example, an assert:
 
 ```yaml
 apiVersion: v1
 kind: Pod
+metadata:
+  labels:
+    app: my-app
 status:
   phase: Successful
 ```
 
-This example would wait for *any* pod to exist in the test namespace with the `status.phase=Successful`.
+This example would wait for a pod with an `app` label value of `my-app` to exist in the test namespace with the `status.phase=Successful`.
 
-If this is defined in the errors file instead, the test harness will report an error if *any* pod exists in the test namespace with `status.phase=Successful`.
+If no labels were specified, *any* pod with specified status would satisfy the assertion.
+
+If this is defined in the errors file instead, the test harness will report an error if *any* such pod exists in the test namespace with `status.phase=Successful`.
 
 ## Failures
 
