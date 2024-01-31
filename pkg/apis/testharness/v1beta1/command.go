@@ -17,6 +17,9 @@ package v1beta1
 
 import "strings"
 
+// String returns a human-readable representation of a Command.
+// In particular, when the .Script field is set, we try to omit comments
+// as well as `set -...` commands, and elide long content.
 func (c *Command) String() string {
 	if c.Command == "" && c.Script == "" {
 		return "(invalid command with neither Command nor Script set)"
@@ -30,7 +33,8 @@ func (c *Command) String() string {
 	return summarize(c.Script)
 }
 
-// summarize returns a short representation of a multi-line command.
+// summarize returns a short representation of a multi-line shell script.
+// It tries to remove comments and `set -...` commands.
 func summarize(script string) string {
 	var lines []string
 	for i, line := range strings.Split(script, "\n") {
@@ -43,9 +47,11 @@ func summarize(script string) string {
 		}
 		lines = append(lines, line)
 	}
-	joined := strings.Join(lines, "\\n ")
-	if len(joined) > 70 {
-		return joined[:67] + "..."
+	joined := strings.Join(lines, `\n `)
+	const maxLen = 70
+	if len(joined) > maxLen {
+		const ellipsis = "..."
+		return joined[:(maxLen-len(ellipsis))] + ellipsis
 	}
 	return joined
 }
