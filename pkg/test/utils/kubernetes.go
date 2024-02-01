@@ -378,9 +378,24 @@ func pruneLargeAdditions(expected *unstructured.Unstructured, actual *unstructur
 	return pruned
 }
 
+// prune replaces some fields in the actual tree to make it smaller for display.
+//
+// The goal is to make diffs on large objects much less verbose but not any less useful,
+// by omitting these fields in the object which are not specified in the assertion and are at least
+// moderately long when serialized.
+//
+// This way, for example when asserting on status.availableReplicas of a Deployment
+// (which is missing if zero replicas are available) will still show the status.unavailableReplicas
+// for example, but will omit spec completely unless the assertion also mentions it.
+//
+// This saves hundreds to thousands of lines of logs to scroll when debugging failures of some operator tests.
 func prune(expected map[string]interface{}, actual map[string]interface{}) {
+	// This value was chosen so that it is low enough to hide huge fields like `metadata.managedFields`,
+	// but large enough such that for example a typical `metadata.labels` still shows,
+	// since it might be useful for identifying reported objects like pods.
+	// This could potentially be turned into a knob in the future.
 	const maxLines = 10
-	toRemove := []string{}
+	var toRemove []string
 	for k, v := range actual {
 		if _, inExpected := expected[k]; inExpected {
 			expectedMap, isExpectedMap := expected[k].(map[string]interface{})
