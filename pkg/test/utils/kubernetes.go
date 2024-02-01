@@ -372,8 +372,65 @@ func Namespaced(dClient discovery.DiscoveryInterface, obj runtime.Object, namesp
 	return m.GetName(), namespace, nil
 }
 
+func pruneLargeAdditions(expected *unstructured.Unstructured, actual *unstructured.Unstructured) runtime.Object {
+	pruned := actual.DeepCopy()
+	prune(expected.Object, pruned.Object)
+	return pruned
+}
+
+// prune replaces some fields in the actual tree to make it smaller for display.
+//
+// The goal is to make diffs on large objects much less verbose but not any less useful,
+// by omitting these fields in the object which are not specified in the assertion and are at least
+// moderately long when serialized.
+//
+// This way, for example when asserting on status.availableReplicas of a Deployment
+// (which is missing if zero replicas are available) will still show the status.unavailableReplicas
+// for example, but will omit spec completely unless the assertion also mentions it.
+//
+// This saves hundreds to thousands of lines of logs to scroll when debugging failures of some operator tests.
+func prune(expected map[string]interface{}, actual map[string]interface{}) {
+	// This value was chosen so that it is low enough to hide huge fields like `metadata.managedFields`,
+	// but large enough such that for example a typical `metadata.labels` still shows,
+	// since it might be useful for identifying reported objects like pods.
+	// This could potentially be turned into a knob in the future.
+	const maxLines = 10
+	var toRemove []string
+	for k, v := range actual {
+		if _, inExpected := expected[k]; inExpected {
+			expectedMap, isExpectedMap := expected[k].(map[string]interface{})
+			actualMap, isActualMap := actual[k].(map[string]interface{})
+			if isActualMap && isExpectedMap {
+				prune(expectedMap, actualMap)
+			}
+			continue
+		}
+		numLines, err := countLines(k, v)
+		if err != nil || numLines < maxLines {
+			continue
+		}
+		toRemove = append(toRemove, k)
+	}
+	for _, s := range toRemove {
+		actual[s] = fmt.Sprintf("[... elided field over %d lines long ...]", maxLines)
+	}
+}
+
+func countLines(k string, v interface{}) (int, error) {
+	buf := strings.Builder{}
+	dummyObj := &unstructured.Unstructured{
+		Object: map[string]interface{}{k: v}}
+	err := MarshalObject(dummyObj, &buf)
+	if err != nil {
+		return 0, fmt.Errorf("cannot marshal field %s to compute its length in lines: %w", k, err)
+	}
+	return strings.Count(buf.String(), "\n"), nil
+}
+
 // PrettyDiff creates a unified diff highlighting the differences between two Kubernetes resources
-func PrettyDiff(expected runtime.Object, actual runtime.Object) (string, error) {
+func PrettyDiff(expected *unstructured.Unstructured, actual *unstructured.Unstructured) (string, error) {
+	actualPruned := pruneLargeAdditions(expected, actual)
+
 	expectedBuf := &bytes.Buffer{}
 	actualBuf := &bytes.Buffer{}
 
@@ -381,7 +438,7 @@ func PrettyDiff(expected runtime.Object, actual runtime.Object) (string, error) 
 		return "", err
 	}
 
-	if err := MarshalObject(actual, actualBuf); err != nil {
+	if err := MarshalObject(actualPruned, actualBuf); err != nil {
 		return "", err
 	}
 

@@ -309,7 +309,8 @@ func (s *Step) CheckResource(expected runtime.Object, namespace string) []error 
 		tmpTestErrors := []error{}
 
 		if err := testutils.IsSubset(expectedObj, actual.UnstructuredContent()); err != nil {
-			diff, diffErr := testutils.PrettyDiff(expected, &actual)
+			diff, diffErr := testutils.PrettyDiff(
+				&unstructured.Unstructured{Object: expectedObj}, &actual)
 			if diffErr == nil {
 				tmpTestErrors = append(tmpTestErrors, fmt.Errorf(diff))
 			} else {
