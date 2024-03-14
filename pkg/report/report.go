@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"sync"
 	"time"
 )
 
@@ -67,7 +68,7 @@ type Testcase struct {
 	end time.Time
 }
 
-// TestSuite is a collection of Testcase and is a summary of those details.
+// Testsuite is a collection of Testcase and is a summary of those details.
 type Testsuite struct {
 	// Tests is the number of Testcases in the collection.
 	Tests int `xml:"tests,attr" json:"tests"`
@@ -82,8 +83,11 @@ type Testsuite struct {
 	Name string `xml:"name,attr" json:"name"`
 	// Properties which are specific to this suite.
 	Properties *Properties `xml:"properties" json:"properties,omitempty"`
-	// Testcase is a collection of test cases.
-	Testcase []*Testcase `xml:"testcase" json:"testcase,omitempty"`
+	// Testcases is a collection of test cases.
+	Testcases []*Testcase `xml:"testcase" json:"testcase,omitempty"`
+	// SubSuites is a collection of child test suites.
+	SubSuites []*Testsuite `xml:"testsuite" json:"testsuite,omitempty"`
+	lock      sync.Mutex
 }
 
 // Testsuites is a collection of Testsuite and defines the rollup summary of all stats.
@@ -148,7 +152,7 @@ func (ts *Testsuite) AddTestcase(testcase *Testcase) {
 	testcase.Time = fmt.Sprintf("%.3f", elapsed.Seconds())
 	testcase.Classname = filepath.Base(ts.Name)
 
-	ts.Testcase = append(ts.Testcase, testcase)
+	ts.Testcases = append(ts.Testcases, testcase)
 	ts.Tests++
 	if testcase.Failure != nil {
 		ts.Failures++
@@ -166,6 +170,37 @@ func (ts *Testsuite) AddProperty(property Property) {
 		return
 	}
 	ts.Properties.Property = append(ts.Properties.Property, property)
+}
+
+// NewSubSuite creates a new child suite and returns it.
+func (ts *Testsuite) NewSubSuite(name string) *Testsuite {
+	s := NewSuite(name)
+	ts.lock.Lock()
+	defer ts.lock.Unlock()
+	ts.SubSuites = append(ts.SubSuites, s)
+	return s
+}
+
+// summarize sets counters and elapsed time attributes based on children.
+// Returns the timestamp of the end of latest child.
+func (ts *Testsuite) summarize() time.Time {
+	end := ts.Timestamp
+	for _, subSuite := range ts.SubSuites {
+		subSuiteEnd := subSuite.summarize()
+		if subSuiteEnd.After(end) {
+			end = subSuiteEnd
+		}
+		ts.Tests += subSuite.Tests
+		ts.Failures += subSuite.Failures
+	}
+	for _, testcase := range ts.Testcases {
+		if testcase.end.After(end) {
+			end = testcase.end
+		}
+	}
+	elapsed := end.Sub(ts.Timestamp)
+	ts.Time = fmt.Sprintf("%.3f", elapsed.Seconds())
+	return end
 }
 
 // AddTestSuite is a convenience method to add a testsuite to the collection in testsuites
@@ -194,8 +229,7 @@ func (ts *Testsuites) Close() {
 
 	// async work makes this necessary (stats for each testsuite)
 	for _, testsuite := range ts.Testsuite {
-		elapsed = latestEnd(testsuite.Timestamp, testsuite.Testcase).Sub(testsuite.Timestamp)
-		testsuite.Time = fmt.Sprintf("%.3f", elapsed.Seconds())
+		testsuite.summarize()
 
 		ts.Tests += testsuite.Tests
 		ts.Failures += testsuite.Failures
@@ -203,15 +237,6 @@ func (ts *Testsuites) Close() {
 }
 
 // latestEnd provides the time of the latest end out of the collection of testcases
-func latestEnd(start time.Time, testcases []*Testcase) time.Time {
-	end := start
-	for _, testcase := range testcases {
-		if testcase.end.After(end) {
-			end = testcase.end
-		}
-	}
-	return end
-}
 
 // Report prints a report for TestSuites to the directory.  ftype == json | xml
 func (ts *Testsuites) Report(dir, name string, ftype Type) error {

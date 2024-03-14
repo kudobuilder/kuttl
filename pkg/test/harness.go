@@ -379,7 +379,7 @@ func (h *Harness) RunTests() {
 
 	h.T.Run("harness", func(t *testing.T) {
 		for testDir, tests := range realTestSuite {
-			suite := h.report.NewSuite(testDir)
+			suiteReport := h.report.NewSuite(testDir)
 			for _, test := range tests {
 				test := test
 
@@ -397,9 +397,8 @@ func (h *Harness) RunTests() {
 						t.Fatal(err)
 					}
 
-					tc := report.NewCase(test.Name)
-					test.Run(t, tc)
-					suite.AddTestcase(tc)
+					testReport := suiteReport.NewSubSuite(test.Name)
+					test.Run(t, testReport)
 				})
 			}
 		}
