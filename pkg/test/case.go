@@ -314,12 +314,14 @@ func shortString(obj *corev1.ObjectReference) string {
 }
 
 // Run runs a test case including all of its steps.
-func (t *Case) Run(test *testing.T, tc *report.Testcase) {
+func (t *Case) Run(test *testing.T, ts *report.Testsuite) {
+	setupReport := report.NewCase("setup")
 	ns := t.determineNamespace()
 
 	cl, err := t.Client(false)
 	if err != nil {
-		tc.Failure = report.NewFailure(err.Error(), nil)
+		setupReport.Failure = report.NewFailure(err.Error(), nil)
+		ts.AddTestcase(setupReport)
 		test.Fatal(err)
 	}
 
@@ -332,7 +334,8 @@ func (t *Case) Run(test *testing.T, tc *report.Testcase) {
 
 		cl, err := newClient(testStep.Kubeconfig)(false)
 		if err != nil {
-			tc.Failure = report.NewFailure(err.Error(), nil)
+			setupReport.Failure = report.NewFailure(err.Error(), nil)
+			ts.AddTestcase(setupReport)
 			test.Fatal(err)
 		}
 
@@ -341,12 +344,15 @@ func (t *Case) Run(test *testing.T, tc *report.Testcase) {
 
 	for _, c := range clients {
 		if err := t.CreateNamespace(test, c, ns); err != nil {
-			tc.Failure = report.NewFailure(err.Error(), nil)
+			setupReport.Failure = report.NewFailure(err.Error(), nil)
+			ts.AddTestcase(setupReport)
 			test.Fatal(err)
 		}
 	}
+	ts.AddTestcase(setupReport)
 
 	for _, testStep := range t.Steps {
+		tc := report.NewCase("step " + testStep.String())
 		testStep.Client = t.Client
 		if testStep.Kubeconfig != "" {
 			testStep.Client = newClient(testStep.Kubeconfig)
@@ -359,7 +365,8 @@ func (t *Case) Run(test *testing.T, tc *report.Testcase) {
 		tc.Assertions += len(testStep.Asserts)
 		tc.Assertions += len(testStep.Errors)
 
-		if errs := testStep.Run(test, ns.Name); len(errs) > 0 {
+		errs := testStep.Run(test, ns.Name)
+		if len(errs) > 0 {
 			caseErr := fmt.Errorf("failed in step %s", testStep.String())
 			tc.Failure = report.NewFailure(caseErr.Error(), errs)
 
@@ -367,6 +374,9 @@ func (t *Case) Run(test *testing.T, tc *report.Testcase) {
 			for _, err := range errs {
 				test.Error(err)
 			}
+		}
+		ts.AddTestcase(tc)
+		if len(errs) > 0 {
 			break
 		}
 	}

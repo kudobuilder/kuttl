@@ -111,5 +111,5 @@ func TestMultiClusterCase(t *testing.T) {
 		},
 	}
 
-	c.Run(t, &report.Testcase{})
+	c.Run(t, &report.Testsuite{})
 }
