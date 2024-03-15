@@ -385,7 +385,7 @@ func (t *Case) determineNamespace() *namespace {
 	}
 	// no preferred ns, means we auto-create with petnames
 	if t.PreferredNamespace == "" {
-		ns.Name = fmt.Sprintf("kuttl-test-%s", petname.Generate(2, "-"))
+		ns.Name = fmt.Sprintf("kuttl-test-%s", petname.Generate(4, "-"))
 		ns.AutoCreated = true
 	}
 	// if we have a preferred namespace, we do NOT auto-create
