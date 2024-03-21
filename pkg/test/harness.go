@@ -58,7 +58,7 @@ type Harness struct {
 }
 
 // LoadTests loads all of the tests in a given directory.
-func (h *Harness) LoadTests(dir string) ([]*Case, error) {
+func (h *Harness) LoadTests(dir string, testExcludes []string) ([]*Case, error) {
 	dir, err := filepath.Abs(dir)
 	if err != nil {
 		return nil, err
@@ -79,6 +79,11 @@ func (h *Harness) LoadTests(dir string) ([]*Case, error) {
 			continue
 		}
 
+		// If test excludes are specified, check and add tests that are not excluded explicitly.
+		if isTestExcluded(file.Name(), testExcludes) {
+			h.T.Logf("skipping test dir %s as its excluded by excludeDirs", file.Name())
+			continue
+		}
 		tests = append(tests, &Case{
 			Timeout:            timeout,
 			Steps:              []*Step{},
@@ -363,12 +368,13 @@ func (h *Harness) RunTests() {
 	h.T.Log("running tests")
 
 	testDirs := h.testPreProcessing()
+	testExcludes := h.TestSuite.TestExcludeDirs
 
 	//todo: testsuite + testsuites (extend case to have what we need (need testdir here)
 	// TestSuite is a TestSuiteCollection and should be renamed for v1beta2
 	realTestSuite := make(map[string][]*Case)
 	for _, testDir := range testDirs {
-		tempTests, err := h.LoadTests(testDir)
+		tempTests, err := h.LoadTests(testDir, testExcludes)
 		if err != nil {
 			h.T.Fatal(err)
 		}
@@ -639,4 +645,19 @@ func (h *Harness) loadKindConfig(path string) (*kindConfig.Cluster, error) {
 		h.T.Logf("Warning: %q in %s is not a supported version.\n", cluster.APIVersion, path)
 	}
 	return cluster, nil
+}
+
+// isTestExcluded returns true if a test is excluded explicitly, false otherwise.
+func isTestExcluded(testDirName string, testExcludes []string) bool {
+	if len(testExcludes) <= 0 {
+		// Test excludes not specified. Include all tests by default.
+		return false
+	}
+	for _, testExclude := range testExcludes {
+		// TODO: support regex based comparison in future
+		if strings.Compare(testDirName, testExclude) == 0 {
+			return true
+		}
+	}
+	return false
 }
