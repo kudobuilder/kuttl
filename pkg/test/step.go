@@ -525,6 +525,10 @@ func (s *Step) LoadYAML(file string) error {
 
 	for _, obj := range s.Asserts {
 		if obj.GetObjectKind().GroupVersionKind().Kind == "TestAssert" {
+			if s.Assert != nil {
+				return fmt.Errorf("more than 1 TestAssert not allowed in step %q", s.Name)
+			}
+
 			if testAssert, ok := obj.DeepCopyObject().(*harness.TestAssert); ok {
 				s.Assert = testAssert
 			} else {
@@ -532,6 +536,23 @@ func (s *Step) LoadYAML(file string) error {
 			}
 		} else {
 			asserts = append(asserts, obj)
+		}
+	}
+
+	errors := []client.Object{}
+
+	for _, obj := range s.Errors {
+		if obj.GetObjectKind().GroupVersionKind().Kind == "TestAssert" {
+			if s.Assert != nil {
+				return fmt.Errorf("more than 1 TestAssert not allowed in step %q", s.Name)
+			}
+			if testAssert, ok := obj.DeepCopyObject().(*harness.TestAssert); ok {
+				s.Assert = testAssert
+			} else {
+				return fmt.Errorf("failed to load TestAssert object from %s: it contains an object of type %T", file, obj)
+			}
+		} else {
+			errors = append(errors, obj)
 		}
 	}
 
@@ -587,12 +608,13 @@ func (s *Step) LoadYAML(file string) error {
 			if err != nil {
 				return fmt.Errorf("step %q error path %s: %w", s.Name, exError, err)
 			}
-			s.Errors = append(s.Errors, errObjs...)
+			errors = append(errors, errObjs...)
 		}
 	}
 
 	s.Apply = applies
 	s.Asserts = asserts
+	s.Errors = errors
 	return nil
 }
 
