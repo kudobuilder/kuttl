@@ -164,7 +164,11 @@ func NewRetryClient(cfg *rest.Config, opts client.Options) (*RetryClient, error)
 	}
 
 	if opts.Mapper == nil {
-		opts.Mapper, err = apiutil.NewDynamicRESTMapper(cfg)
+		httpClient, err := rest.HTTPClientFor(cfg)
+		if err != nil {
+			return nil, err
+		}
+		opts.Mapper, err = apiutil.NewDynamicRESTMapper(cfg, httpClient)
 		if err != nil {
 			return nil, err
 		}
@@ -187,6 +191,16 @@ func (r *RetryClient) RESTMapper() meta.RESTMapper {
 // SubResource returns a subresource client for the named subResource.
 func (r *RetryClient) SubResource(subResource string) client.SubResourceClient {
 	return r.Client.SubResource(subResource)
+}
+
+// GroupVersionKindFor returns the GroupVersionKind for the provided object.
+func (r *RetryClient) GroupVersionKindFor(obj runtime.Object) (schema.GroupVersionKind, error) {
+	return r.Client.GroupVersionKindFor(obj)
+}
+
+// IsObjectNamespaced returns true if the object is namespaced.
+func (r *RetryClient) IsObjectNamespaced(obj runtime.Object) (bool, error) {
+	return r.Client.IsObjectNamespaced(obj)
 }
 
 // Create saves the object obj in the Kubernetes cluster.
@@ -358,8 +372,65 @@ func Namespaced(dClient discovery.DiscoveryInterface, obj runtime.Object, namesp
 	return m.GetName(), namespace, nil
 }
 
+func pruneLargeAdditions(expected *unstructured.Unstructured, actual *unstructured.Unstructured) runtime.Object {
+	pruned := actual.DeepCopy()
+	prune(expected.Object, pruned.Object)
+	return pruned
+}
+
+// prune replaces some fields in the actual tree to make it smaller for display.
+//
+// The goal is to make diffs on large objects much less verbose but not any less useful,
+// by omitting these fields in the object which are not specified in the assertion and are at least
+// moderately long when serialized.
+//
+// This way, for example when asserting on status.availableReplicas of a Deployment
+// (which is missing if zero replicas are available) will still show the status.unavailableReplicas
+// for example, but will omit spec completely unless the assertion also mentions it.
+//
+// This saves hundreds to thousands of lines of logs to scroll when debugging failures of some operator tests.
+func prune(expected map[string]interface{}, actual map[string]interface{}) {
+	// This value was chosen so that it is low enough to hide huge fields like `metadata.managedFields`,
+	// but large enough such that for example a typical `metadata.labels` still shows,
+	// since it might be useful for identifying reported objects like pods.
+	// This could potentially be turned into a knob in the future.
+	const maxLines = 10
+	var toRemove []string
+	for k, v := range actual {
+		if _, inExpected := expected[k]; inExpected {
+			expectedMap, isExpectedMap := expected[k].(map[string]interface{})
+			actualMap, isActualMap := actual[k].(map[string]interface{})
+			if isActualMap && isExpectedMap {
+				prune(expectedMap, actualMap)
+			}
+			continue
+		}
+		numLines, err := countLines(k, v)
+		if err != nil || numLines < maxLines {
+			continue
+		}
+		toRemove = append(toRemove, k)
+	}
+	for _, s := range toRemove {
+		actual[s] = fmt.Sprintf("[... elided field over %d lines long ...]", maxLines)
+	}
+}
+
+func countLines(k string, v interface{}) (int, error) {
+	buf := strings.Builder{}
+	dummyObj := &unstructured.Unstructured{
+		Object: map[string]interface{}{k: v}}
+	err := MarshalObject(dummyObj, &buf)
+	if err != nil {
+		return 0, fmt.Errorf("cannot marshal field %s to compute its length in lines: %w", k, err)
+	}
+	return strings.Count(buf.String(), "\n"), nil
+}
+
 // PrettyDiff creates a unified diff highlighting the differences between two Kubernetes resources
-func PrettyDiff(expected runtime.Object, actual runtime.Object) (string, error) {
+func PrettyDiff(expected *unstructured.Unstructured, actual *unstructured.Unstructured) (string, error) {
+	actualPruned := pruneLargeAdditions(expected, actual)
+
 	expectedBuf := &bytes.Buffer{}
 	actualBuf := &bytes.Buffer{}
 
@@ -367,7 +438,7 @@ func PrettyDiff(expected runtime.Object, actual runtime.Object) (string, error) 
 		return "", err
 	}
 
-	if err := MarshalObject(actual, actualBuf); err != nil {
+	if err := MarshalObject(actualPruned, actualBuf); err != nil {
 		return "", err
 	}
 
@@ -904,11 +975,11 @@ func GetAPIResource(dClient discovery.DiscoveryInterface, gvk schema.GroupVersio
 // WaitForDelete waits for the provide runtime objects to be deleted from cluster
 func WaitForDelete(c *RetryClient, objs []runtime.Object) error {
 	// Wait for resources to be deleted.
-	return wait.PollImmediate(100*time.Millisecond, 10*time.Second, func() (done bool, err error) {
+	return wait.PollUntilContextTimeout(context.TODO(), 100*time.Millisecond, 10*time.Second, true, func(ctx context.Context) (done bool, err error) {
 		for _, obj := range objs {
 			actual := &unstructured.Unstructured{}
 			actual.SetGroupVersionKind(obj.GetObjectKind().GroupVersionKind())
-			err = c.Get(context.TODO(), ObjectKey(obj), actual)
+			err = c.Get(ctx, ObjectKey(obj), actual)
 			if err == nil || !k8serrors.IsNotFound(err) {
 				return false, err
 			}
@@ -933,8 +1004,8 @@ func WaitForSA(config *rest.Config, name, namespace string) error {
 		Namespace: namespace,
 		Name:      name,
 	}
-	return wait.PollImmediate(500*time.Millisecond, 60*time.Second, func() (done bool, err error) {
-		err = c.Get(context.TODO(), key, obj)
+	return wait.PollUntilContextTimeout(context.TODO(), 500*time.Millisecond, 60*time.Second, true, func(ctx context.Context) (done bool, err error) {
+		err = c.Get(ctx, key, obj)
 		if k8serrors.IsNotFound(err) {
 			return false, nil
 		}
@@ -1036,7 +1107,7 @@ func GetArgs(ctx context.Context, cmd harness.Command, namespace string, envMap 
 func RunCommand(ctx context.Context, namespace string, cmd harness.Command, cwd string, stdout io.Writer, stderr io.Writer, logger Logger, timeout int, kubeconfigOverride string) (*exec.Cmd, error) {
 	actualDir, err := os.Getwd()
 	if err != nil {
-		return nil, fmt.Errorf("command %q with %w", cmd.Command, err)
+		return nil, fmt.Errorf("command %q with %w", cmd.String(), err)
 	}
 
 	kuttlENV := make(map[string]string)
@@ -1068,7 +1139,7 @@ func RunCommand(ctx context.Context, namespace string, cmd harness.Command, cwd 
 
 	builtCmd, err := GetArgs(cmdCtx, cmd, namespace, kuttlENV)
 	if err != nil {
-		return nil, fmt.Errorf("processing command %q with %w", cmd.Command, err)
+		return nil, fmt.Errorf("processing command %q with %w", cmd.String(), err)
 	}
 
 	logger.Logf("running command: %v", builtCmd.Args)
@@ -1102,9 +1173,12 @@ func RunCommand(ctx context.Context, namespace string, cmd harness.Command, cwd 
 		return nil, nil
 	}
 	if errors.Is(cmdCtx.Err(), context.DeadlineExceeded) {
-		return nil, fmt.Errorf("command %q exceeded %v sec timeout, %w", cmd.Command, timeout, cmdCtx.Err())
+		return nil, fmt.Errorf("command %q exceeded %v sec timeout, %w", cmd.String(), timeout, cmdCtx.Err())
 	}
-	return nil, err
+	if err != nil {
+		return nil, fmt.Errorf("command %q failed, %w", cmd.String(), err)
+	}
+	return nil, nil
 }
 
 func kubeconfigPath(actualDir, override string) string {

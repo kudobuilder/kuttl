@@ -74,6 +74,33 @@ After the correct controller-gen version is installed.  All future builds will w
 
 After running this command, CLI will be available in `bin/kubectl-kuttl` and you can invoke the command for example like this `bin/kubectl-kuttl version` (no need to install it as `kubectl` plugin).
 
+### Debugging in VSCode
+
+Click Run > Add Configuration... to open the `launch.json` file. Add below configuration objects to specify the necessary sample tests and assertions in the `args[]`.
+
+```json
+{
+  // Use IntelliSense to learn about possible attributes.
+  // Hover to view descriptions of existing attributes.
+  // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "KUTTL Debug",
+      "type": "go",
+      "request": "launch",
+      "mode": "debug",
+      "program": "${workspaceFolder}/cmd/kubectl-kuttl/main.go",
+      "args": [
+        "test", 
+        "sample", 
+        "--config=${workspaceFolder}/cmd/kubectl-kuttl/<sample_tests_dir_to_run_with_kuttl>"
+      ]
+    }
+  ]
+}
+```
+
 ### Testing
 
 Use `make all` to run all available tests.

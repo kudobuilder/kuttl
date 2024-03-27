@@ -5,7 +5,7 @@
 [![lint](https://github.com/kudobuilder/kuttl/actions/workflows/lint.yml/badge.svg?branch=main)](https://github.com/kudobuilder/kuttl/actions)
 [![unit test](https://github.com/kudobuilder/kuttl/actions/workflows/unittest.yml/badge.svg?branch=main)](https://github.com/kudobuilder/kuttl/actions)
 [![integration-test](https://github.com/kudobuilder/kuttl/actions/workflows/integration-test.yml/badge.svg?branch=main)](https://github.com/kudobuilder/kuttl/actions)
-[![e2e](https://github.com/kudobuilder/kuttl/actions/workflows/e2e.yml/badge.svg?branch=main)](https://github.com/kudobuilder/kuttl/actions)
+[![Go Report Card](https://goreportcard.com/badge/github.com/kudobuilder/kuttl)](https://goreportcard.com/report/github.com/kudobuilder/kuttl)  
 
 KUbernetes Test TooL (KUTTL) provides a declarative approach to test Kubernetes Operators.
 
@@ -13,7 +13,7 @@ KUTTL is designed for testing operators, however it can declaratively test any k
 
 ## Getting Started
 
-Please refer to the [getting started guide](https://kuttl.dev/docs/) documentation.
+Please refer to the [getting started guide](docs/README.md) documentation.
 
 ## Resources
 
@@ -36,7 +36,7 @@ Learn more on how to engage with the KUDO community on the [community page](http
 
 ## Contributions
 
-Please read the [contributing guide](https://github.com/kudobuilder/kuttl/blob/main/CONTRIBUTING.md) for details around:
+Please read the [contributing guide](CONTRIBUTING.md) for details around:
 
 1. Code of Conduct
 1. Code Culture

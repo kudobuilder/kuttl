@@ -193,7 +193,7 @@ func (h *Harness) addNodeCaches(dockerClient testutils.DockerClient, kindCfg *ki
 	}
 
 	for index := range kindCfg.Nodes {
-		volume, err := dockerClient.VolumeCreate(context.TODO(), volumetypes.VolumeCreateBody{
+		volume, err := dockerClient.VolumeCreate(context.TODO(), volumetypes.CreateOptions{
 			Driver: "local",
 			Name:   fmt.Sprintf("%s-%d", h.TestSuite.KINDContext, index),
 		})

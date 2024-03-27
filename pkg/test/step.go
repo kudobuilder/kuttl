@@ -11,6 +11,7 @@ import (
 	"time"
 
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/labels"
@@ -157,11 +158,11 @@ func (s *Step) DeleteExisting(namespace string) error {
 	}
 
 	// Wait for resources to be deleted.
-	return wait.PollImmediate(100*time.Millisecond, time.Duration(s.GetTimeout())*time.Second, func() (done bool, err error) {
+	return wait.PollUntilContextTimeout(context.TODO(), 100*time.Millisecond, time.Duration(s.GetTimeout())*time.Second, true, func(ctx context.Context) (done bool, err error) {
 		for _, obj := range toDelete {
 			actual := &unstructured.Unstructured{}
 			actual.SetGroupVersionKind(obj.GetObjectKind().GroupVersionKind())
-			err = cl.Get(context.TODO(), testutils.ObjectKey(obj), actual)
+			err = cl.Get(ctx, testutils.ObjectKey(obj), actual)
 			if err == nil || !k8serrors.IsNotFound(err) {
 				return false, err
 			}
@@ -230,13 +231,17 @@ func (s *Step) GetTimeout() int {
 	return timeout
 }
 
-func list(cl client.Client, gvk schema.GroupVersionKind, namespace string) ([]unstructured.Unstructured, error) {
+func list(cl client.Client, gvk schema.GroupVersionKind, namespace string, labelsMap map[string]string) ([]unstructured.Unstructured, error) {
 	list := unstructured.UnstructuredList{}
 	list.SetGroupVersionKind(gvk)
 
 	listOptions := []client.ListOption{}
 	if namespace != "" {
 		listOptions = append(listOptions, client.InNamespace(namespace))
+	}
+
+	if len(labelsMap) > 0 {
+		listOptions = append(listOptions, client.MatchingLabels(labelsMap))
 	}
 
 	if err := cl.List(context.TODO(), &list, listOptions...); err != nil {
@@ -268,27 +273,32 @@ func (s *Step) CheckResource(expected runtime.Object, namespace string) []error 
 	gvk := expected.GetObjectKind().GroupVersionKind()
 
 	actuals := []unstructured.Unstructured{}
-
 	if name != "" {
 		actual := unstructured.Unstructured{}
 		actual.SetGroupVersionKind(gvk)
 
-		err = cl.Get(context.TODO(), client.ObjectKey{
+		if err := cl.Get(context.TODO(), client.ObjectKey{
 			Namespace: namespace,
 			Name:      name,
-		}, &actual)
+		}, &actual); err != nil {
+			return append(testErrors, err)
+		}
 
 		actuals = append(actuals, actual)
 	} else {
-		actuals, err = list(cl, gvk, namespace)
-		if len(actuals) == 0 {
+		m, err := meta.Accessor(expected)
+		if err != nil {
+			return append(testErrors, err)
+		}
+		matches, err := list(cl, gvk, namespace, m.GetLabels())
+		if err != nil {
+			return append(testErrors, err)
+		}
+		if len(matches) == 0 {
 			testErrors = append(testErrors, fmt.Errorf("no resources matched of kind: %s", gvk.String()))
 		}
+		actuals = append(actuals, matches...)
 	}
-	if err != nil {
-		return append(testErrors, err)
-	}
-
 	expectedObj, err := runtime.DefaultUnstructuredConverter.ToUnstructured(expected)
 	if err != nil {
 		return append(testErrors, err)
@@ -296,11 +306,11 @@ func (s *Step) CheckResource(expected runtime.Object, namespace string) []error 
 
 	for _, actual := range actuals {
 		actual := actual
-
 		tmpTestErrors := []error{}
 
 		if err := testutils.IsSubset(expectedObj, actual.UnstructuredContent()); err != nil {
-			diff, diffErr := testutils.PrettyDiff(expected, &actual)
+			diff, diffErr := testutils.PrettyDiff(
+				&unstructured.Unstructured{Object: expectedObj}, &actual)
 			if diffErr == nil {
 				tmpTestErrors = append(tmpTestErrors, fmt.Errorf(diff))
 			} else {
@@ -358,7 +368,11 @@ func (s *Step) CheckResourceAbsent(expected runtime.Object, namespace string) er
 
 		actuals = []unstructured.Unstructured{actual}
 	} else {
-		actuals, err = list(cl, gvk, namespace)
+		m, err := meta.Accessor(expected)
+		if err != nil {
+			return err
+		}
+		actuals, err = list(cl, gvk, namespace, m.GetLabels())
 		if err != nil {
 			return err
 		}
