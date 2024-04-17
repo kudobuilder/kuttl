@@ -61,7 +61,7 @@ brews:
   - name: kuttl-cli
     ids:
       - kubectl-kuttl-tarball
-    tap:
+    repository:
       owner: kudobuilder
       name: homebrew-tap
     commit_author:
