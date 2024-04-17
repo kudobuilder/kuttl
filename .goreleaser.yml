@@ -27,17 +27,35 @@ archives:
   - id: kubectl-kuttl-tarball
     builds:
       - kubectl-kuttl
-    replacements:
-      386: i386
-      amd64: x86_64
+    # Based on the default name_template with addition of arch replacements
+    # See https://goreleaser.com/customization/archive/#archives
+    name_template: >-
+      {{ .ProjectName }}_
+      {{- .Version }}_
+      {{- .Os }}_
+      {{- if eq .Arch "amd64" }}x86_64
+      {{- else if eq .Arch "386" }}i386
+      {{- else }}{{ .Arch }}{{ end }}
+      {{- with .Arm }}v{{ . }}{{ end }}
+      {{- with .Mips }}_{{ . }}{{ end }}
+      {{- if not (eq .Amd64 "v1") }}{{ .Amd64 }}{{ end }}
     format: tar.gz
   - id: binaries
     builds:
       - manager
       - kubectl-kuttl
-    replacements:
-      386: i386
-      amd64: x86_64
+    # Based on the default name_template with addition of arch replacements
+    # See https://goreleaser.com/customization/archive/#archives
+    name_template: >-
+      {{ .Binary }}_
+      {{- .Version }}_
+      {{- .Os }}_
+      {{- if eq .Arch "amd64" }}x86_64
+      {{- else if eq .Arch "386" }}i386
+      {{- else }}{{ .Arch }}{{ end }}
+      {{- with .Arm }}v{{ . }}{{ end }}
+      {{- with .Mips }}_{{ . }}{{ end }}
+      {{- if not (eq .Amd64 "v1") }}{{ .Amd64 }}{{ end }}
     format: binary
 brews:
   - name: kuttl-cli
