@@ -29,6 +29,27 @@
              "message": "test failure"
            }
          }
+       ],
+       "testsuite": [
+         {
+           "tests": 7,
+           "failures": 1,
+           "timestamp": "0001-01-01T00:00:00Z",
+           "time": "",
+           "name": "sub-test-suite",
+           "testcase": [
+             {
+               "classname": "pkg1.test.test_things",
+               "name": "test_params_func:2",
+               "timestamp": "0001-01-01T00:00:00Z",
+               "time": "",
+               "failure": {
+                 "text": "Traceback (most recent call last):\n  File \"nose2/plugins/loader/parameters.py\", line 162, in func\n    return obj(*argSet)\n  File \"nose2/tests/functional/support/scenario/tests_in_package/pkg1/test/test_things.py\", line 64, in test_params_func\n    assert a == 1\nAssertionError",
+                 "message": "test failure"
+               }
+             }
+           ]
+         }
        ]
      }
    ]

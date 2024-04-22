@@ -36,8 +36,18 @@ AssertionError`,
 		Failures: 1,
 		Time:     "",
 		Name:     "github.com/kubebuilder/kuttl/pkg/version",
-		Testcase: []*Testcase{
+		Testcases: []*Testcase{
 			tcase,
+		},
+		SubSuites: []*Testsuite{
+			{
+				Tests:    7,
+				Failures: 1,
+				Name:     "sub-test-suite",
+				Testcases: []*Testcase{
+					tcase,
+				},
+			},
 		},
 	}
 
