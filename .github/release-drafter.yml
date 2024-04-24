@@ -10,6 +10,9 @@ categories:
   - title: '🐛 Bug Fixes'
     labels:
       - 'release/bugfix'
+  - title: '🌱 Dependency bumps'
+    labels:
+      - 'dependencies'
 change-template: '- $TITLE (#$NUMBER)'
 template: |
   This is a draft for the next release.
