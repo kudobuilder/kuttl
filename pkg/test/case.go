@@ -316,7 +316,12 @@ func shortString(obj *corev1.ObjectReference) string {
 // Run runs a test case including all of its steps.
 func (t *Case) Run(test *testing.T, ts *report.Testsuite) {
 	setupReport := report.NewCase("setup")
-	ns := t.determineNamespace()
+	ns, err := t.determineNamespace()
+	if err != nil {
+		setupReport.Failure = report.NewFailure(err.Error(), nil)
+		ts.AddTestcase(setupReport)
+		test.Fatal(err)
+	}
 
 	cl, err := t.Client(false)
 	if err != nil {
@@ -388,7 +393,7 @@ func (t *Case) Run(test *testing.T, ts *report.Testsuite) {
 	}
 }
 
-func (t *Case) determineNamespace() *namespace {
+func (t *Case) determineNamespace() (*namespace, error) {
 	ns := &namespace{
 		Name:        t.PreferredNamespace,
 		AutoCreated: false,
@@ -397,9 +402,17 @@ func (t *Case) determineNamespace() *namespace {
 	if t.PreferredNamespace == "" {
 		ns.Name = fmt.Sprintf("kuttl-test-%s", petname.Generate(2, "-"))
 		ns.AutoCreated = true
+	} else {
+		exist, err := t.NamespaceExists(t.PreferredNamespace)
+		if err != nil {
+			return nil, fmt.Errorf("failed to determine existence of namespace %q: %w", t.PreferredNamespace, err)
+		}
+		if !exist {
+			ns.AutoCreated = true
+		}
 	}
-	// if we have a preferred namespace, we do NOT auto-create
-	return ns
+	// if we have a preferred namespace, and it already exists, we do NOT auto-create
+	return ns, nil
 }
 
 // CollectTestStepFiles collects a map of test steps and their associated files
