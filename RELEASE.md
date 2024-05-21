@@ -21,12 +21,7 @@ The `HEAD` of the release branches follows the same conventions as main.  It is 
 
 ### Documentation
 
-Pull request for documentation (in the `kuttl.dev` repo) should be prepared and reviewed at
-the same time as the pull request for any user-visible (documentation-worthy) change.
-The description for the code change PR should link to the documentation PR (and vice-versa).
-
-The documentation PR should be made against the `next-release` branch, and merged as soon as its
-corresponding PR(s) against the `kuttl` repo is/are merged.
+Documentation is now stored in the main repository, and should be updated in the same PRs which change functionality.
 
 ### Bug Fixes
 
@@ -46,7 +41,9 @@ The KUTTL Project is aiming to do monthly minor releases but the period could be
 1. Every release should have an appointed release manager (RM)
 1. RM is responsible for following the process below
 1. RM should announce the release in the public [#kudo slack channel](https://kubernetes.slack.com/messages/kudo/) at least two days prior to the date
-1. RM makes sure all PRs that need to go into the release are merged prior to the process starting
+1. RM makes sure all PRs that need to go into the release are:
+   1. labeled with the `release/*` labels as appropriate (the release drafter GitHub Action depends on these)
+   2. merged prior to the process starting
 
 ### Release Process
 
@@ -61,8 +58,8 @@ The token must grant full access to: `repo`, `write:packages`, `read:packages`.
 The release process is:
 
 1. Tag the kuttl repo with expected release `git tag -a v0.2.0 -m "v0.2.0"` and push the tag `git push --tags`.
-1. Invoke goreleaser `goreleaser --rm-dist`.
-1. Update the GH release with release highlights. There is a draft that contains categorized changes since the last release. It provides categories for highlights, breaking changes, and contributors which should be added the gorelease release notes. The changelog from the draft log is ignored. After the contents are copied, the draft can be deleted.
+1. Invoke goreleaser `goreleaser --clean`.
+1. Update the GH release with release highlights. There is a draft release prepared by release drafter GitHub Action, that contains categorized changes since the last release. It provides categories for highlights, breaking changes, and contributors which should be added the gorelease release notes. The changelog from the draft log is ignored. After the contents are copied, the draft can be deleted or left as is.
 1. Send an announcement email to [kudobuilder@googlegroups.com](https://groups.google.com/forum/#!forum/kudobuilder) with the subject `[ANNOUNCE] KUTTL $VERSION is released`
 1. Run `./hack/generate_krew.sh` and submit the generated `kuttl.yaml` to https://github.com/kubernetes-sigs/krew-index/.
 
@@ -74,7 +71,6 @@ This process will create a `dist` folder with all the build artifacts. The chang
 ### Docker Release
 
 The docker release is accomplished by `make docker-release`.  Details on what is required are provided in [Docker.md](DOCKER.md).
-
 
 ### Cutting a Patch Release
 
