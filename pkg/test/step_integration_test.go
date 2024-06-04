@@ -533,3 +533,28 @@ func TestAssertCommandsShouldTimeout(t *testing.T) {
 	assert.Less(t, duration, float64(5))
 	assert.Equal(t, len(errors), 1)
 }
+
+func TestAssertCommandsScriptPath(t *testing.T) {
+	step := &Step{
+		Name:            t.Name(),
+		Index:           0,
+		Logger:          testutils.NewTestLogger(t, ""),
+		Client:          func(bool) (client.Client, error) { return testenv.Client, nil },
+		DiscoveryClient: func() (discovery.DiscoveryInterface, error) { return testenv.DiscoveryClient, nil },
+		Dir:             "step_integration_test_data/assert_commands/path_script/",
+	}
+
+	// TestAssert runs a script via absolute and relative path to the test, so it should run ok, and not return any errors.
+	err := step.LoadYAML("step_integration_test_data/assert_commands/path_script/00-assert.yaml")
+	assert.NoError(t, err)
+
+	errors := step.Run(t, "irrelevant")
+	assert.Equal(t, len(errors), 0)
+
+	// Load the same in a TestStep should behave the same, so it should run ok, and not return any errors.
+	err = step.LoadYAML("step_integration_test_data/assert_commands/path_script/00-step.yaml")
+	assert.NoError(t, err)
+
+	errors = step.Run(t, "irrelevant")
+	assert.Equal(t, len(errors), 0)
+}

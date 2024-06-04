@@ -403,7 +403,7 @@ func (s *Step) CheckResourceAbsent(expected runtime.Object, namespace string) er
 // the errors returned can be a a failure of executing the command or the failure of the command executed.
 func (s *Step) CheckAssertCommands(ctx context.Context, namespace string, commands []harness.TestAssertCommand, timeout int) []error {
 	testErrors := []error{}
-	if _, err := testutils.RunAssertCommands(ctx, s.Logger, namespace, commands, "", timeout, s.Kubeconfig); err != nil {
+	if _, err := testutils.RunAssertCommands(ctx, s.Logger, namespace, commands, s.Dir, timeout, s.Kubeconfig); err != nil {
 		testErrors = append(testErrors, err)
 	}
 	return testErrors
