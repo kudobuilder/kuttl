@@ -164,4 +164,4 @@ background    | bool   | If this command is to be started in the background. The
 skipLogOutput | bool   | If set, the output from the command is *not* logged. Useful for sensitive logs or to reduce noise.
 timeout       | int    | Override the TestSuite timeout for this command (in seconds).
 
-*Note*: The current working directory (CWD) for `commend`/`script` is the test directory.
+*Note*: The current working directory (CWD) for `command`/`script` is the test directory.
