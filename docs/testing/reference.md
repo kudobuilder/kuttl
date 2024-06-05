@@ -163,3 +163,5 @@ ignoreFailure | bool   | If set, failures will be ignored.
 background    | bool   | If this command is to be started in the background. These are only support in TestSuites.
 skipLogOutput | bool   | If set, the output from the command is *not* logged. Useful for sensitive logs or to reduce noise.
 timeout       | int    | Override the TestSuite timeout for this command (in seconds).
+
+*Note*: The current working directory (CWD) for `commend`/`script` is the test directory.

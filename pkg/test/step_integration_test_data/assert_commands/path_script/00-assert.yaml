@@ -1,0 +1,10 @@
+apiVersion: kuttl.dev/v1beta1
+kind: TestAssert
+timeout: 30
+commands:
+- script: |
+    echo step call script using relative path
+    ./test/script.sh
+- script: |
+    echo step call script using absolute path
+    $(pwd)/test/script.sh
