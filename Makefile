@@ -46,6 +46,7 @@ download:  ## Downloads go dependencies
 .PHONY: generate-clean
 generate-clean:
 	rm -rf hack/code-gen
+	rm -rf hack/vendor
 
 .PHONY: cli
 # Build CLI
