@@ -52,7 +52,7 @@ The official binaries for KUTTL are created using [goreleaser](https://gorelease
 1. Ensure you have credential `GITHUB_TOKEN` set.
 The env must include `export GITHUB_TOKEN=<personal access token>`.
 [Help](https://help.github.com/en/articles/creating-a-personal-access-token-for-the-command-line) provided from Github.
-The token must grant full access to: `repo`, `write:packages`, `read:packages`.
+The [token](https://github.com/settings/tokens/new) must grant access to: `repo`, `write:packages`, `read:packages`.
 
 
 The release process is:
@@ -61,6 +61,7 @@ The release process is:
 1. Invoke goreleaser `goreleaser --clean`.
 1. Update the GH release with release highlights. There is a draft release prepared by release drafter GitHub Action, that contains categorized changes since the last release. It provides categories for highlights, breaking changes, and contributors which should be added the gorelease release notes. The changelog from the draft log is ignored. After the contents are copied, the draft can be deleted or left as is.
 1. Send an announcement email to [kudobuilder@googlegroups.com](https://groups.google.com/forum/#!forum/kudobuilder) with the subject `[ANNOUNCE] KUTTL $VERSION is released`
+1. Send an announcement message to Kubernetes Slack channel [#kudo](https://kubernetes.slack.com/archives/CG3HTFCMV).
 1. Run `./hack/generate_krew.sh` and submit the generated `kuttl.yaml` to https://github.com/kubernetes-sigs/krew-index/.
 
 
