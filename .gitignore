@@ -3,6 +3,7 @@ bin/
 vendor/
 hack/code-gen
 hack/controller-gen
+hack/vendor
 test/.git-credentials
 reports/
 kuttl.yaml
