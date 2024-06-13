@@ -16,11 +16,11 @@ require (
 	github.com/stretchr/testify v1.9.0
 	github.com/thoas/go-funk v0.9.2
 	gopkg.in/yaml.v2 v2.4.0
-	k8s.io/api v0.30.1
-	k8s.io/apiextensions-apiserver v0.30.1
-	k8s.io/apimachinery v0.30.1
-	k8s.io/client-go v0.30.1
-	k8s.io/code-generator v0.30.1
+	k8s.io/api v0.30.2
+	k8s.io/apiextensions-apiserver v0.30.2
+	k8s.io/apimachinery v0.30.2
+	k8s.io/client-go v0.30.2
+	k8s.io/code-generator v0.30.2
 	sigs.k8s.io/controller-runtime v0.16.3
 	sigs.k8s.io/controller-tools v0.15.0
 	sigs.k8s.io/kind v0.17.0
@@ -39,6 +39,7 @@ require (
 	github.com/evanphx/json-patch/v5 v5.6.0 // indirect
 	github.com/fatih/color v1.16.0 // indirect
 	github.com/go-logr/logr v1.4.1 // indirect
+	github.com/go-logr/zapr v1.3.0 // indirect
 	github.com/go-openapi/jsonpointer v0.19.6 // indirect
 	github.com/go-openapi/jsonreference v0.20.2 // indirect
 	github.com/go-openapi/swag v0.22.3 // indirect
