@@ -23,7 +23,7 @@ else
     git -C "${CODE_GEN_DIR}" reset --hard "${VERSION}"
 fi
 
-# Set GOBIN make gen_helpers install and run binaries in the versioned directory.
+# Set GOBIN to make gen_helpers install and run binaries in the versioned directory.
 export GOBIN="${CODE_GEN_DIR}/bin"
 
 source "${CODE_GEN_DIR}/kube_codegen.sh"
