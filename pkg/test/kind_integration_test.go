@@ -12,7 +12,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/docker/docker/api/types"
+	"github.com/docker/docker/api/types/image"
 	dockerClient "github.com/docker/docker/client"
 	"github.com/thoas/go-funk"
 	"sigs.k8s.io/kind/pkg/apis/config/v1alpha4"
@@ -56,7 +56,7 @@ func TestAddContainers(t *testing.T) {
 		t.Error("KIND isn't running")
 	}
 
-	reader, err := docker.ImagePull(ctx, testImage, types.ImagePullOptions{})
+	reader, err := docker.ImagePull(ctx, testImage, image.PullOptions{})
 	if err != nil {
 		t.Errorf("failed to pull test image: %v", err)
 	}
