@@ -56,7 +56,7 @@ func TestAddContainers(t *testing.T) {
 		t.Error("KIND isn't running")
 	}
 
-	reader, err := docker.ImagePull(ctx, testImage, image.ImagePullOptions{})
+	reader, err := docker.ImagePull(ctx, testImage, image.PullOptions{})
 	if err != nil {
 		t.Errorf("failed to pull test image: %v", err)
 	}
