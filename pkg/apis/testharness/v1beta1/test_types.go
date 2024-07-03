@@ -6,6 +6,7 @@ import (
 	"k8s.io/client-go/rest"
 )
 
+const KubeconfigLoadingEager = "Eager"
 const KubeconfigLoadingLazy = "Lazy"
 
 // Create embedded struct to implement custom DeepCopyInto method

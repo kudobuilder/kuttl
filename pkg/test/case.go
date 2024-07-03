@@ -376,7 +376,7 @@ func (t *Case) Run(test *testing.T, ts *report.Testsuite) {
 		if testStep.KubeconfigLoading == v1beta1.KubeconfigLoadingLazy {
 			cl, err = newClient(testStep.Kubeconfig)(false)
 			if err != nil {
-				errs = append(errs, fmt.Errorf("failed to lazy-load kubeconfig '%v': %w", testStep.Kubeconfig, err))
+				errs = append(errs, fmt.Errorf("failed to lazy-load kubeconfig %q: %w", testStep.Kubeconfig, err))
 			} else {
 				clients[testStep.Kubeconfig] = cl
 			}

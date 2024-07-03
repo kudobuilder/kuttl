@@ -556,7 +556,15 @@ func (s *Step) LoadYAML(file string) error {
 				exKubeconfig := env.Expand(s.Step.Kubeconfig)
 				s.Kubeconfig = cleanPath(exKubeconfig, s.Dir)
 			}
-			s.KubeconfigLoading = s.Step.KubeconfigLoading
+
+			switch s.Step.KubeconfigLoading {
+			case "":
+				s.KubeconfigLoading = harness.KubeconfigLoadingEager
+			case harness.KubeconfigLoadingEager, harness.KubeconfigLoadingLazy:
+				s.KubeconfigLoading = s.Step.KubeconfigLoading
+			default:
+				return fmt.Errorf("attribute 'kubeconfigLoading' has invalid value %q", s.Step.KubeconfigLoading)
+			}
 		} else {
 			applies = append(applies, obj)
 		}
