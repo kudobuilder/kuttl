@@ -334,7 +334,7 @@ func (t *Case) Run(test *testing.T, ts *report.Testsuite) {
 	clients := map[string]client.Client{"": cl}
 
 	for _, testStep := range t.Steps {
-		if clients[testStep.Kubeconfig] != nil || testStep.KubeconfigLoading != v1beta1.KubeconfigLoadingLazy {
+		if clients[testStep.Kubeconfig] != nil || testStep.KubeconfigLoading == v1beta1.KubeconfigLoadingLazy {
 			continue
 		}
 
