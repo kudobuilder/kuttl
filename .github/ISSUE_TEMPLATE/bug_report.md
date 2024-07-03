@@ -1,9 +1,9 @@
 ---
 name: Bug report
 about: Report a bug encountered while operating KUTTL
-title: ''
-labels: kind/bug
-assignees: ''
+title: "[Bug]: "
+labels: ["bug"]
+assignees: []
 
 ---
 
