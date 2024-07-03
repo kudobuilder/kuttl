@@ -333,11 +333,11 @@ func (t *Case) Run(test *testing.T, ts *report.Testsuite) {
 	clients := map[string]client.Client{"": cl}
 
 	for _, testStep := range t.Steps {
-		if clients[testStep.Kubeconfig] != nil {
+		if clients[testStep.Kubeconfig] != nil || testStep.LazyLoadKubeConfig {
 			continue
 		}
 
-		cl, err := newClient(testStep.Kubeconfig)(false)
+		cl, err = newClient(testStep.Kubeconfig)(false)
 		if err != nil {
 			setupReport.Failure = report.NewFailure(err.Error(), nil)
 			ts.AddTestcase(setupReport)
@@ -369,6 +369,16 @@ func (t *Case) Run(test *testing.T, ts *report.Testsuite) {
 		testStep.Logger = t.Logger.WithPrefix(testStep.String())
 		tc.Assertions += len(testStep.Asserts)
 		tc.Assertions += len(testStep.Errors)
+
+		if testStep.LazyLoadKubeConfig {
+			cl, err = newClient(testStep.Kubeconfig)(false)
+			if err != nil {
+				setupReport.Failure = report.NewFailure(err.Error(), nil)
+				ts.AddTestcase(setupReport)
+				test.Fatal(err)
+			}
+			clients[testStep.Kubeconfig] = cl
+		}
 
 		errs := testStep.Run(test, ns.Name)
 		if len(errs) > 0 {

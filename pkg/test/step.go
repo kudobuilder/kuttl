@@ -51,9 +51,10 @@ type Step struct {
 
 	Timeout int
 
-	Kubeconfig      string
-	Client          func(forceNew bool) (client.Client, error)
-	DiscoveryClient func() (discovery.DiscoveryInterface, error)
+	Kubeconfig         string
+	LazyLoadKubeConfig bool
+	Client             func(forceNew bool) (client.Client, error)
+	DiscoveryClient    func() (discovery.DiscoveryInterface, error)
 
 	Logger testutils.Logger
 }
@@ -555,6 +556,7 @@ func (s *Step) LoadYAML(file string) error {
 				exKubeconfig := env.Expand(s.Step.Kubeconfig)
 				s.Kubeconfig = cleanPath(exKubeconfig, s.Dir)
 			}
+			s.LazyLoadKubeConfig = s.Step.LazyLoadKubeconfig
 		} else {
 			applies = append(applies, obj)
 		}

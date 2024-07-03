@@ -125,6 +125,9 @@ type TestStep struct {
 
 	// Kubeconfig to use when applying and asserting for this step.
 	Kubeconfig string `json:"kubeconfig,omitempty"`
+
+	// Loads kubeconfig only when the previous steps have finished.
+	LazyLoadKubeconfig bool `json:"lazyLoadKubeconfig,omitempty"`
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
