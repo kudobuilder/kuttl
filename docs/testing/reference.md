@@ -73,6 +73,7 @@ delete   | list of object references | A list of objects to delete, if they do n
 index    | int                       | Override the test step's index.
 commands | list of [Commands](#commands) | Commands to run prior at the beginning of the test step.
 kubeconfig    | string                       | The Kubeconfig file to use to run the included steps(s).
+kubeconfigLoading    | string                       | Specifies the mode for loading Kubeconfig: Eager/Lazy. Defaults to Eager.
 unitTest    | bool                       | Indicates if the step is a unit test, safe to run without a real Kubernetes cluster.
 
 
