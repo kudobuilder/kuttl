@@ -6,6 +6,8 @@ import (
 	"k8s.io/client-go/rest"
 )
 
+const KubeconfigLoadingLazy = "Lazy"
+
 // Create embedded struct to implement custom DeepCopyInto method
 type RestConfig struct {
 	RC *rest.Config
@@ -126,8 +128,10 @@ type TestStep struct {
 	// Kubeconfig to use when applying and asserting for this step.
 	Kubeconfig string `json:"kubeconfig,omitempty"`
 
-	// Loads kubeconfig only when the previous steps have finished.
-	LazyLoadKubeconfig bool `json:"lazyLoadKubeconfig,omitempty"`
+	// Specifies the mode for loading Kubeconfig: Eager/Lazy. Defaults to Eager.
+	// +kubebuilder:default=Eager
+	// +kubebuilder:validation:Enum=Eager;Lazy
+	KubeconfigLoading string `json:"kubeconfigLoading,omitempty"`
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object

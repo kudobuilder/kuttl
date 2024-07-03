@@ -25,6 +25,7 @@ import (
 
 	"k8s.io/client-go/tools/clientcmd"
 
+	"github.com/kudobuilder/kuttl/pkg/apis/testharness/v1beta1"
 	"github.com/kudobuilder/kuttl/pkg/report"
 	testutils "github.com/kudobuilder/kuttl/pkg/test/utils"
 )
@@ -333,7 +334,7 @@ func (t *Case) Run(test *testing.T, ts *report.Testsuite) {
 	clients := map[string]client.Client{"": cl}
 
 	for _, testStep := range t.Steps {
-		if clients[testStep.Kubeconfig] != nil || testStep.LazyLoadKubeConfig {
+		if clients[testStep.Kubeconfig] != nil || testStep.KubeconfigLoading != v1beta1.KubeconfigLoadingLazy {
 			continue
 		}
 
@@ -370,17 +371,18 @@ func (t *Case) Run(test *testing.T, ts *report.Testsuite) {
 		tc.Assertions += len(testStep.Asserts)
 		tc.Assertions += len(testStep.Errors)
 
-		if testStep.LazyLoadKubeConfig {
+		errs := []error{}
+
+		if testStep.KubeconfigLoading == v1beta1.KubeconfigLoadingLazy {
 			cl, err = newClient(testStep.Kubeconfig)(false)
 			if err != nil {
-				setupReport.Failure = report.NewFailure(err.Error(), nil)
-				ts.AddTestcase(setupReport)
-				test.Fatal(err)
+				errs = append(errs, fmt.Errorf("failed to lazy-load kubeconfig '%v': %w", testStep.Kubeconfig, err))
+			} else {
+				clients[testStep.Kubeconfig] = cl
 			}
-			clients[testStep.Kubeconfig] = cl
 		}
 
-		errs := testStep.Run(test, ns.Name)
+		errs = append(errs, testStep.Run(test, ns.Name)...)
 		if len(errs) > 0 {
 			caseErr := fmt.Errorf("failed in step %s", testStep.String())
 			tc.Failure = report.NewFailure(caseErr.Error(), errs)
