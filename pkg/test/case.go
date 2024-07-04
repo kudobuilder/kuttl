@@ -349,8 +349,8 @@ func (t *Case) Run(test *testing.T, ts *report.Testsuite) {
 	}
 
 	for _, c := range clients {
-		if err := t.CreateNamespace(test, c, ns); err != nil {
-			setupReport.Failure = report.NewFailure(err.Error(), nil)
+		if err = t.CreateNamespace(test, c, ns); err != nil {
+			setupReport.Failure = report.NewFailure("failed to create test namespace", []error{err})
 			ts.AddTestcase(setupReport)
 			test.Fatal(err)
 		}
@@ -373,13 +373,13 @@ func (t *Case) Run(test *testing.T, ts *report.Testsuite) {
 
 		errs := []error{}
 
-		// Set-up client for lazy-loaded Kubeconfigs
+		// Set-up client/namespace for lazy-loaded Kubeconfig
 		if testStep.KubeconfigLoading == v1beta1.KubeconfigLoadingLazy {
-			cl, err = newClient(testStep.Kubeconfig)(false)
+			cl, err = testStep.Client(false)
 			if err != nil {
-				errs = append(errs, fmt.Errorf("failed to lazy-load kubeconfig %q: %w", testStep.Kubeconfig, err))
-			} else {
-				clients[testStep.Kubeconfig] = cl
+				errs = append(errs, fmt.Errorf("failed to lazy-load kubeconfig: %w", err))
+			} else if err = t.CreateNamespace(test, cl, ns); err != nil {
+				errs = append(errs, fmt.Errorf("failed to create test namespace: %w", err))
 			}
 		}
 
