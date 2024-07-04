@@ -373,6 +373,7 @@ func (t *Case) Run(test *testing.T, ts *report.Testsuite) {
 
 		errs := []error{}
 
+		// Set-up client for lazy-loaded Kubeconfigs
 		if testStep.KubeconfigLoading == v1beta1.KubeconfigLoadingLazy {
 			cl, err = newClient(testStep.Kubeconfig)(false)
 			if err != nil {
@@ -382,7 +383,11 @@ func (t *Case) Run(test *testing.T, ts *report.Testsuite) {
 			}
 		}
 
-		errs = append(errs, testStep.Run(test, ns.Name)...)
+		// Run test case only if no setup errors are encountered
+		if len(errs) == 0 {
+			errs = append(errs, testStep.Run(test, ns.Name)...)
+		}
+
 		if len(errs) > 0 {
 			caseErr := fmt.Errorf("failed in step %s", testStep.String())
 			tc.Failure = report.NewFailure(caseErr.Error(), errs)
