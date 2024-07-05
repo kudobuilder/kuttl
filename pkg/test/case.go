@@ -16,7 +16,6 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	eventsv1 "k8s.io/api/events/v1"
 	eventsbeta1 "k8s.io/api/events/v1beta1"
-	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
@@ -350,7 +349,7 @@ func (t *Case) Run(test *testing.T, ts *report.Testsuite) {
 	}
 
 	for kc, c := range clients {
-		if err = t.CreateNamespace(test, c, ns); apierrors.IsAlreadyExists(err) {
+		if err = t.CreateNamespace(test, c, ns); k8serrors.IsAlreadyExists(err) {
 			t.Logger.Logf("namespace %q already exists, using kubeconfig %q", ns.Name, kc)
 		} else if err != nil {
 			setupReport.Failure = report.NewFailure("failed to create test namespace", []error{err})
@@ -381,7 +380,7 @@ func (t *Case) Run(test *testing.T, ts *report.Testsuite) {
 			cl, err = testStep.Client(false)
 			if err != nil {
 				errs = append(errs, fmt.Errorf("failed to lazy-load kubeconfig: %w", err))
-			} else if err = t.CreateNamespace(test, cl, ns); apierrors.IsAlreadyExists(err) {
+			} else if err = t.CreateNamespace(test, cl, ns); k8serrors.IsAlreadyExists(err) {
 				t.Logger.Logf("namespace %q already exists", ns.Name)
 			} else if err != nil {
 				errs = append(errs, fmt.Errorf("failed to create test namespace: %w", err))
