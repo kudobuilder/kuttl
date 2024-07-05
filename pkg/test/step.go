@@ -51,9 +51,10 @@ type Step struct {
 
 	Timeout int
 
-	Kubeconfig      string
-	Client          func(forceNew bool) (client.Client, error)
-	DiscoveryClient func() (discovery.DiscoveryInterface, error)
+	Kubeconfig        string
+	KubeconfigLoading string
+	Client            func(forceNew bool) (client.Client, error)
+	DiscoveryClient   func() (discovery.DiscoveryInterface, error)
 
 	Logger testutils.Logger
 }
@@ -554,6 +555,13 @@ func (s *Step) LoadYAML(file string) error {
 			if s.Step.Kubeconfig != "" {
 				exKubeconfig := env.Expand(s.Step.Kubeconfig)
 				s.Kubeconfig = cleanPath(exKubeconfig, s.Dir)
+			}
+
+			switch s.Step.KubeconfigLoading {
+			case "", harness.KubeconfigLoadingEager, harness.KubeconfigLoadingLazy:
+				s.KubeconfigLoading = s.Step.KubeconfigLoading
+			default:
+				return fmt.Errorf("attribute 'kubeconfigLoading' has invalid value %q", s.Step.KubeconfigLoading)
 			}
 		} else {
 			applies = append(applies, obj)

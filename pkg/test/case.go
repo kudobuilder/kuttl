@@ -25,6 +25,7 @@ import (
 
 	"k8s.io/client-go/tools/clientcmd"
 
+	"github.com/kudobuilder/kuttl/pkg/apis/testharness/v1beta1"
 	"github.com/kudobuilder/kuttl/pkg/report"
 	testutils "github.com/kudobuilder/kuttl/pkg/test/utils"
 )
@@ -333,11 +334,11 @@ func (t *Case) Run(test *testing.T, ts *report.Testsuite) {
 	clients := map[string]client.Client{"": cl}
 
 	for _, testStep := range t.Steps {
-		if clients[testStep.Kubeconfig] != nil {
+		if clients[testStep.Kubeconfig] != nil || testStep.KubeconfigLoading == v1beta1.KubeconfigLoadingLazy {
 			continue
 		}
 
-		cl, err := newClient(testStep.Kubeconfig)(false)
+		cl, err = newClient(testStep.Kubeconfig)(false)
 		if err != nil {
 			setupReport.Failure = report.NewFailure(err.Error(), nil)
 			ts.AddTestcase(setupReport)
@@ -347,9 +348,11 @@ func (t *Case) Run(test *testing.T, ts *report.Testsuite) {
 		clients[testStep.Kubeconfig] = cl
 	}
 
-	for _, c := range clients {
-		if err := t.CreateNamespace(test, c, ns); err != nil {
-			setupReport.Failure = report.NewFailure(err.Error(), nil)
+	for kc, c := range clients {
+		if err = t.CreateNamespace(test, c, ns); k8serrors.IsAlreadyExists(err) {
+			t.Logger.Logf("namespace %q already exists, using kubeconfig %q", ns.Name, kc)
+		} else if err != nil {
+			setupReport.Failure = report.NewFailure("failed to create test namespace", []error{err})
 			ts.AddTestcase(setupReport)
 			test.Fatal(err)
 		}
@@ -370,7 +373,25 @@ func (t *Case) Run(test *testing.T, ts *report.Testsuite) {
 		tc.Assertions += len(testStep.Asserts)
 		tc.Assertions += len(testStep.Errors)
 
-		errs := testStep.Run(test, ns.Name)
+		errs := []error{}
+
+		// Set-up client/namespace for lazy-loaded Kubeconfig
+		if testStep.KubeconfigLoading == v1beta1.KubeconfigLoadingLazy {
+			cl, err = testStep.Client(false)
+			if err != nil {
+				errs = append(errs, fmt.Errorf("failed to lazy-load kubeconfig: %w", err))
+			} else if err = t.CreateNamespace(test, cl, ns); k8serrors.IsAlreadyExists(err) {
+				t.Logger.Logf("namespace %q already exists", ns.Name)
+			} else if err != nil {
+				errs = append(errs, fmt.Errorf("failed to create test namespace: %w", err))
+			}
+		}
+
+		// Run test case only if no setup errors are encountered
+		if len(errs) == 0 {
+			errs = append(errs, testStep.Run(test, ns.Name)...)
+		}
+
 		if len(errs) > 0 {
 			caseErr := fmt.Errorf("failed in step %s", testStep.String())
 			tc.Failure = report.NewFailure(caseErr.Error(), errs)
