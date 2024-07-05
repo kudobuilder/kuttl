@@ -558,9 +558,7 @@ func (s *Step) LoadYAML(file string) error {
 			}
 
 			switch s.Step.KubeconfigLoading {
-			case "":
-				s.KubeconfigLoading = harness.KubeconfigLoadingEager
-			case harness.KubeconfigLoadingEager, harness.KubeconfigLoadingLazy:
+			case "", harness.KubeconfigLoadingEager, harness.KubeconfigLoadingLazy:
 				s.KubeconfigLoading = s.Step.KubeconfigLoading
 			default:
 				return fmt.Errorf("attribute 'kubeconfigLoading' has invalid value %q", s.Step.KubeconfigLoading)
