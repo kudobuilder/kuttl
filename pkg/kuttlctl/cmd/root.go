@@ -2,12 +2,15 @@ package cmd
 
 import (
 	"github.com/spf13/cobra"
+	"k8s.io/cli-runtime/pkg/genericclioptions"
 
 	"github.com/kudobuilder/kuttl/pkg/version"
 )
 
 // NewKuttlCmd creates a new root command for kuttlctl
 func NewKuttlCmd() *cobra.Command {
+	configFlags := genericclioptions.NewConfigFlags(true)
+
 	cmd := &cobra.Command{
 		Use:   "kubectl-kuttl",
 		Short: "CLI to Test Kubernetes",
@@ -34,6 +37,7 @@ and serves as an API aggregation layer.
 	cmd.AddCommand(newErrorsCmd())
 	cmd.AddCommand(newTestCmd())
 	cmd.AddCommand(newVersionCmd())
+	configFlags.AddFlags(cmd.PersistentFlags())
 
 	return cmd
 }
