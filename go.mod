@@ -19,7 +19,6 @@ require (
 	k8s.io/api v0.30.3
 	k8s.io/apiextensions-apiserver v0.30.3
 	k8s.io/apimachinery v0.30.3
-	k8s.io/cli-runtime v0.30.3
 	k8s.io/client-go v0.30.3
 	k8s.io/code-generator v0.30.3
 	sigs.k8s.io/controller-runtime v0.18.4
@@ -28,7 +27,6 @@ require (
 )
 
 require (
-	github.com/Azure/go-ansiterm v0.0.0-20210617225240-d185dfc1b5a1 // indirect
 	github.com/BurntSushi/toml v1.0.0 // indirect
 	github.com/Microsoft/go-winio v0.5.1 // indirect
 	github.com/alessio/shellescape v1.4.1 // indirect
@@ -42,7 +40,6 @@ require (
 	github.com/evanphx/json-patch/v5 v5.9.0 // indirect
 	github.com/fatih/color v1.16.0 // indirect
 	github.com/felixge/httpsnoop v1.0.3 // indirect
-	github.com/go-errors/errors v1.4.2 // indirect
 	github.com/go-logr/logr v1.4.1 // indirect
 	github.com/go-logr/stdr v1.2.2 // indirect
 	github.com/go-openapi/jsonpointer v0.19.6 // indirect
@@ -51,17 +48,14 @@ require (
 	github.com/gobuffalo/flect v1.0.2 // indirect
 	github.com/gogo/protobuf v1.3.2 // indirect
 	github.com/golang/protobuf v1.5.4 // indirect
-	github.com/google/btree v1.0.1 // indirect
 	github.com/google/gnostic-models v0.6.8 // indirect
 	github.com/google/gofuzz v1.2.0 // indirect
 	github.com/google/safetext v0.0.0-20220905092116-b49f7bc46da2 // indirect
 	github.com/google/uuid v1.6.0 // indirect
-	github.com/gregjones/httpcache v0.0.0-20180305231024-9cad4c3443a7 // indirect
 	github.com/imdario/mergo v0.3.12 // indirect
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect
 	github.com/josharian/intern v1.0.0 // indirect
 	github.com/json-iterator/go v1.1.12 // indirect
-	github.com/liggitt/tabwriter v0.0.0-20181228230101-89fcab3d43de // indirect
 	github.com/mailru/easyjson v0.7.7 // indirect
 	github.com/mattn/go-colorable v0.1.13 // indirect
 	github.com/mattn/go-isatty v0.0.20 // indirect
@@ -69,23 +63,19 @@ require (
 	github.com/moby/term v0.0.0-20221205130635-1aeaba878587 // indirect
 	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect
 	github.com/modern-go/reflect2 v1.0.2 // indirect
-	github.com/monochromegane/go-gitignore v0.0.0-20200626010858-205db1a8cc00 // indirect
 	github.com/morikuni/aec v1.0.0 // indirect
 	github.com/munnerz/goautoneg v0.0.0-20191010083416-a7dc8b61c822 // indirect
 	github.com/opencontainers/go-digest v1.0.0 // indirect
 	github.com/opencontainers/image-spec v1.0.2 // indirect
 	github.com/pelletier/go-toml v1.9.4 // indirect
-	github.com/peterbourgon/diskv v2.0.1+incompatible // indirect
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/rogpeppe/go-internal v1.12.0 // indirect
-	github.com/xlab/treeprint v1.2.0 // indirect
 	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.44.0 // indirect
 	go.opentelemetry.io/otel v1.27.0 // indirect
 	go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracehttp v1.27.0 // indirect
 	go.opentelemetry.io/otel/metric v1.27.0 // indirect
 	go.opentelemetry.io/otel/sdk v1.27.0 // indirect
 	go.opentelemetry.io/otel/trace v1.27.0 // indirect
-	go.starlark.net v0.0.0-20230525235612-a134d8f9ddca // indirect
 	golang.org/x/mod v0.17.0 // indirect
 	golang.org/x/net v0.25.0 // indirect
 	golang.org/x/oauth2 v0.20.0 // indirect
@@ -104,8 +94,6 @@ require (
 	k8s.io/kube-openapi v0.0.0-20240228011516-70dd3763d340 // indirect
 	k8s.io/utils v0.0.0-20230726121419-3b25d923346b // indirect
 	sigs.k8s.io/json v0.0.0-20221116044647-bc3834ca7abd // indirect
-	sigs.k8s.io/kustomize/api v0.13.5-0.20230601165947-6ce0bf390ce3 // indirect
-	sigs.k8s.io/kustomize/kyaml v0.14.3-0.20230601165947-6ce0bf390ce3 // indirect
 	sigs.k8s.io/structured-merge-diff/v4 v4.4.1 // indirect
 	sigs.k8s.io/yaml v1.4.0 // indirect
 )
