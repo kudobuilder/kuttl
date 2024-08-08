@@ -13,7 +13,7 @@ import (
 )
 
 // Assert checks all provided assert files against a namespace.  Upon assert failure, it prints the failures and returns an error
-func Assert(namespace string, timeout int, assertFiles ...string) error {
+func Assert(namespace string, timeout int, as string, assertFiles ...string) error {
 	var objects []client.Object
 
 	for _, file := range assertFiles {
@@ -104,11 +104,16 @@ func Errors(namespace string, timeout int, errorFiles ...string) error {
 	return errors.New("error asserts not valid")
 }
 
-func Client(_ bool) (client.Client, error) {
+func Client(_ bool, as string) (client.Client, error) {
 	cfg, err := config.GetConfig()
 	if err != nil {
 		return nil, err
 	}
+
+	if as != "" {
+		cfg.Impersonate.UserName = as
+	}
+
 	client, err := testutils.NewRetryClient(cfg, client.Options{
 		Scheme: testutils.Scheme(),
 	})
@@ -118,8 +123,13 @@ func Client(_ bool) (client.Client, error) {
 	return client, nil
 }
 
-func DiscoveryClient() (discovery.DiscoveryInterface, error) {
+func DiscoveryClient(as string) (discovery.DiscoveryInterface, error) {
 	cfg, err := config.GetConfig()
+
+	if as != "" {
+		cfg.Impersonate.UserName = as
+	}
+
 	if err != nil {
 		return nil, err
 	}

@@ -307,7 +307,7 @@ func (h *Harness) waitForFunctionalCluster() error {
 }
 
 // Client returns the current Kubernetes client for the test harness.
-func (h *Harness) Client(forceNew bool) (client.Client, error) {
+func (h *Harness) Client(forceNew bool, as string) (client.Client, error) {
 	h.clientLock.Lock()
 	defer h.clientLock.Unlock()
 
@@ -327,7 +327,7 @@ func (h *Harness) Client(forceNew bool) (client.Client, error) {
 }
 
 // DiscoveryClient returns the current Kubernetes discovery client for the test harness.
-func (h *Harness) DiscoveryClient() (discovery.DiscoveryInterface, error) {
+func (h *Harness) DiscoveryClient(as string) (discovery.DiscoveryInterface, error) {
 	h.clientLock.Lock()
 	defer h.clientLock.Unlock()
 
@@ -463,12 +463,12 @@ func (h *Harness) Setup() {
 	h.report = report.NewSuiteCollection(h.TestSuite.Name)
 	h.T.Log("starting setup")
 
-	cl, err := h.Client(false)
+	cl, err := h.Client(false, "")
 	if err != nil {
 		h.fatal(fmt.Errorf("fatal error getting client: %v", err))
 	}
 
-	dClient, err := h.DiscoveryClient()
+	dClient, err := h.DiscoveryClient("")
 	if err != nil {
 		h.fatal(fmt.Errorf("fatal error getting discovery client: %v", err))
 	}
@@ -491,7 +491,7 @@ func (h *Harness) Setup() {
 	}
 
 	// Create a new client to bust the client's CRD cache.
-	cl, err = h.Client(true)
+	cl, err = h.Client(true, "")
 	if err != nil {
 		h.fatal(fmt.Errorf("fatal error getting client after crd update: %v", err))
 	}
