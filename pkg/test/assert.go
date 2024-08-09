@@ -5,11 +5,8 @@ import (
 	"fmt"
 	"time"
 
-	"k8s.io/client-go/discovery"
+	"github.com/kudobuilder/kuttl/pkg/impersonation"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-	"sigs.k8s.io/controller-runtime/pkg/client/config"
-
-	testutils "github.com/kudobuilder/kuttl/pkg/test/utils"
 )
 
 // Assert checks all provided assert files against a namespace.  Upon assert failure, it prints the failures and returns an error
@@ -27,8 +24,8 @@ func Assert(namespace string, timeout int, assertFiles ...string) error {
 	// feels like the wrong abstraction, need to do some refactoring
 	s := &Step{
 		Timeout:         0,
-		Client:          Client,
-		DiscoveryClient: DiscoveryClient,
+		Client:          impersonation.Client,
+		DiscoveryClient: impersonation.DiscoveryClient,
 	}
 
 	var testErrors []error
@@ -72,8 +69,8 @@ func Errors(namespace string, timeout int, errorFiles ...string) error {
 	// feels like the wrong abstraction, need to do some refactoring
 	s := &Step{
 		Timeout:         0,
-		Client:          Client,
-		DiscoveryClient: DiscoveryClient,
+		Client:          impersonation.Client,
+		DiscoveryClient: impersonation.DiscoveryClient,
 	}
 
 	var testErrors []error
@@ -102,30 +99,4 @@ func Errors(namespace string, timeout int, errorFiles ...string) error {
 		fmt.Println(testError)
 	}
 	return errors.New("error asserts not valid")
-}
-
-func Client(_ bool) (client.Client, error) {
-	cfg, err := config.GetConfig()
-	if err != nil {
-		return nil, err
-	}
-	client, err := testutils.NewRetryClient(cfg, client.Options{
-		Scheme: testutils.Scheme(),
-	})
-	if err != nil {
-		return nil, fmt.Errorf("fatal error getting client: %v", err)
-	}
-	return client, nil
-}
-
-func DiscoveryClient() (discovery.DiscoveryInterface, error) {
-	cfg, err := config.GetConfig()
-	if err != nil {
-		return nil, err
-	}
-	dclient, err := discovery.NewDiscoveryClientForConfig(cfg)
-	if err != nil {
-		return nil, fmt.Errorf("fatal error getting discovery client: %v", err)
-	}
-	return dclient, nil
 }

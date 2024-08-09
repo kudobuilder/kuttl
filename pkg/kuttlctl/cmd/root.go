@@ -3,6 +3,7 @@ package cmd
 import (
 	"github.com/spf13/cobra"
 
+	"github.com/kudobuilder/kuttl/pkg/impersonation"
 	"github.com/kudobuilder/kuttl/pkg/version"
 )
 
@@ -30,6 +31,7 @@ and serves as an API aggregation layer.
 		Version: version.Get().GitVersion,
 	}
 
+	cmd.PersistentFlags().StringVar(&impersonation.AsUserName, "as", "", "The user you wish to impersonate")
 	cmd.AddCommand(newAssertCmd())
 	cmd.AddCommand(newErrorsCmd())
 	cmd.AddCommand(newTestCmd())
