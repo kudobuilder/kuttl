@@ -44,8 +44,8 @@ type Case struct {
 	PreferredNamespace string
 	RunLabels          labels.Set
 
-	Client          func(forceNew bool,  as string) (client.Client, error)
-	DiscoveryClient func(as string) (discovery.DiscoveryInterface, error)
+	Client          func(forceNew bool) (client.Client, error)
+	DiscoveryClient func() (discovery.DiscoveryInterface, error)
 
 	Logger testutils.Logger
 	// Suppress is used to suppress logs
@@ -131,7 +131,7 @@ func (t *Case) CreateNamespace(test *testing.T, cl client.Client, ns *namespace)
 
 // NamespaceExists gets namespace and returns true if it exists
 func (t *Case) NamespaceExists(namespace string) (bool, error) {
-	cl, err := t.Client(false, "")
+	cl, err := t.Client(false)
 	if err != nil {
 		return false, err
 	}
@@ -184,7 +184,7 @@ func (o byFirstTimestampCoreV1) Less(i, j int) bool {
 
 // CollectEvents gathers all events from namespace and prints it out to log
 func (t *Case) CollectEvents(namespace string) {
-	cl, err := t.Client(false, "")
+	cl, err := t.Client(false)
 	if err != nil {
 		t.Logger.Log("Failed to collect events for %s in ns %s: %v", t.Name, namespace, err)
 		return
@@ -324,7 +324,7 @@ func (t *Case) Run(test *testing.T, ts *report.Testsuite) {
 		test.Fatal(err)
 	}
 
-	cl, err := t.Client(false, "")
+	cl, err := t.Client(false)
 	if err != nil {
 		setupReport.Failure = report.NewFailure(err.Error(), nil)
 		ts.AddTestcase(setupReport)
@@ -338,7 +338,7 @@ func (t *Case) Run(test *testing.T, ts *report.Testsuite) {
 			continue
 		}
 
-		cl, err = newClient(testStep.Kubeconfig)(false, "")
+		cl, err = newClient(testStep.Kubeconfig)(false)
 		if err != nil {
 			setupReport.Failure = report.NewFailure(err.Error(), nil)
 			ts.AddTestcase(setupReport)
@@ -377,7 +377,7 @@ func (t *Case) Run(test *testing.T, ts *report.Testsuite) {
 
 		// Set-up client/namespace for lazy-loaded Kubeconfig
 		if testStep.KubeconfigLoading == v1beta1.KubeconfigLoadingLazy {
-			cl, err = testStep.Client(false, "")
+			cl, err = testStep.Client(false)
 			if err != nil {
 				errs = append(errs, fmt.Errorf("failed to lazy-load kubeconfig: %w", err))
 			} else if err = t.CreateNamespace(test, cl, ns); k8serrors.IsAlreadyExists(err) {
@@ -531,8 +531,8 @@ func (t *Case) LoadTestSteps() error {
 	return nil
 }
 
-func newClient(kubeconfig string) func(bool, string) (client.Client, error) {
-	return func(bool, string) (client.Client, error) {
+func newClient(kubeconfig string) func(bool) (client.Client, error) {
+	return func(bool) (client.Client, error) {
 		config, err := clientcmd.BuildConfigFromFlags("", kubeconfig)
 		if err != nil {
 			return nil, err
@@ -544,8 +544,8 @@ func newClient(kubeconfig string) func(bool, string) (client.Client, error) {
 	}
 }
 
-func newDiscoveryClient(kubeconfig string) func(string) (discovery.DiscoveryInterface, error) {
-	return func(string) (discovery.DiscoveryInterface, error) {
+func newDiscoveryClient(kubeconfig string) func() (discovery.DiscoveryInterface, error) {
+	return func() (discovery.DiscoveryInterface, error) {
 		config, err := clientcmd.BuildConfigFromFlags("", kubeconfig)
 		if err != nil {
 			return nil, err

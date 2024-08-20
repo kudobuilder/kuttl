@@ -53,20 +53,20 @@ type Step struct {
 
 	Kubeconfig        string
 	KubeconfigLoading string
-	Client            func(forceNew bool, as string) (client.Client, error)
-	DiscoveryClient   func(as string) (discovery.DiscoveryInterface, error)
+	Client            func(forceNew bool) (client.Client, error)
+	DiscoveryClient   func() (discovery.DiscoveryInterface, error)
 
 	Logger testutils.Logger
 }
 
 // Clean deletes all resources defined in the Apply list.
 func (s *Step) Clean(namespace string) error {
-	cl, err := s.Client(false, "")
+	cl, err := s.Client(false, )
 	if err != nil {
 		return err
 	}
 
-	dClient, err := s.DiscoveryClient("")
+	dClient, err := s.DiscoveryClient()
 	if err != nil {
 		return err
 	}
@@ -87,12 +87,12 @@ func (s *Step) Clean(namespace string) error {
 
 // DeleteExisting deletes any resources in the TestStep.Delete list prior to running the tests.
 func (s *Step) DeleteExisting(namespace string) error {
-	cl, err := s.Client(false, "")
+	cl, err := s.Client(false, )
 	if err != nil {
 		return err
 	}
 
-	dClient, err := s.DiscoveryClient("")
+	dClient, err := s.DiscoveryClient()
 	if err != nil {
 		return err
 	}
@@ -175,12 +175,12 @@ func (s *Step) DeleteExisting(namespace string) error {
 
 // Create applies all resources defined in the Apply list.
 func (s *Step) Create(test *testing.T, namespace string) []error {
-	cl, err := s.Client(true, "")
+	cl, err := s.Client(true )
 	if err != nil {
 		return []error{err}
 	}
 
-	dClient, err := s.DiscoveryClient("")
+	dClient, err := s.DiscoveryClient()
 	if err != nil {
 		return []error{err}
 	}
@@ -254,12 +254,12 @@ func list(cl client.Client, gvk schema.GroupVersionKind, namespace string, label
 
 // CheckResource checks if the expected resource's state in Kubernetes is correct.
 func (s *Step) CheckResource(expected runtime.Object, namespace string) []error {
-	cl, err := s.Client(false, "")
+	cl, err := s.Client(false)
 	if err != nil {
 		return []error{err}
 	}
 
-	dClient, err := s.DiscoveryClient("")
+	dClient, err := s.DiscoveryClient()
 	if err != nil {
 		return []error{err}
 	}
@@ -333,12 +333,12 @@ func (s *Step) CheckResource(expected runtime.Object, namespace string) []error 
 
 // CheckResourceAbsent checks if the expected resource's state is absent in Kubernetes.
 func (s *Step) CheckResourceAbsent(expected runtime.Object, namespace string) error {
-	cl, err := s.Client(false, "")
+	cl, err := s.Client(false)
 	if err != nil {
 		return err
 	}
 
-	dClient, err := s.DiscoveryClient("")
+	dClient, err := s.DiscoveryClient()
 	if err != nil {
 		return err
 	}

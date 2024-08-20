@@ -5,15 +5,13 @@ import (
 	"fmt"
 	"time"
 
-	"k8s.io/client-go/discovery"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-	"sigs.k8s.io/controller-runtime/pkg/client/config"
 
-	testutils "github.com/kudobuilder/kuttl/pkg/test/utils"
+	"github.com/kudobuilder/kuttl/pkg/impersonation"
 )
 
 // Assert checks all provided assert files against a namespace.  Upon assert failure, it prints the failures and returns an error
-func Assert(namespace string, timeout int, as string, assertFiles ...string) error {
+func Assert(namespace string, timeout int, assertFiles ...string) error {
 	var objects []client.Object
 
 	for _, file := range assertFiles {
@@ -27,8 +25,8 @@ func Assert(namespace string, timeout int, as string, assertFiles ...string) err
 	// feels like the wrong abstraction, need to do some refactoring
 	s := &Step{
 		Timeout:         0,
-		Client:          Client,
-		DiscoveryClient: DiscoveryClient,
+		Client:          impersonation.Client,
+		DiscoveryClient: impersonation.DiscoveryClient,
 	}
 
 	var testErrors []error
@@ -72,8 +70,8 @@ func Errors(namespace string, timeout int, errorFiles ...string) error {
 	// feels like the wrong abstraction, need to do some refactoring
 	s := &Step{
 		Timeout:         0,
-		Client:          Client,
-		DiscoveryClient: DiscoveryClient,
+		Client:          impersonation.Client,
+		DiscoveryClient: impersonation.DiscoveryClient,
 	}
 
 	var testErrors []error
@@ -104,38 +102,3 @@ func Errors(namespace string, timeout int, errorFiles ...string) error {
 	return errors.New("error asserts not valid")
 }
 
-func Client(_ bool, as string) (client.Client, error) {
-	cfg, err := config.GetConfig()
-	if err != nil {
-		return nil, err
-	}
-
-	if as != "" {
-		cfg.Impersonate.UserName = as
-	}
-
-	client, err := testutils.NewRetryClient(cfg, client.Options{
-		Scheme: testutils.Scheme(),
-	})
-	if err != nil {
-		return nil, fmt.Errorf("fatal error getting client: %v", err)
-	}
-	return client, nil
-}
-
-func DiscoveryClient(as string) (discovery.DiscoveryInterface, error) {
-	cfg, err := config.GetConfig()
-
-	if as != "" {
-		cfg.Impersonate.UserName = as
-	}
-
-	if err != nil {
-		return nil, err
-	}
-	dclient, err := discovery.NewDiscoveryClientForConfig(cfg)
-	if err != nil {
-		return nil, fmt.Errorf("fatal error getting discovery client: %v", err)
-	}
-	return dclient, nil
-}

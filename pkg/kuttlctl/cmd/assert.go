@@ -17,7 +17,6 @@ var (
 func newAssertCmd() *cobra.Command {
 	timeout := 5
 	namespace := "default"
-	as := ""
 
 	assertCmd := &cobra.Command{
 		Use:     "assert",
@@ -28,13 +27,12 @@ func newAssertCmd() *cobra.Command {
 			if len(args) == 0 {
 				return errors.New("one file argument is required")
 			}
-			return test.Assert(namespace, timeout, as, args...)
+			return test.Assert(namespace, timeout, args...)
 		},
 	}
 
 	assertCmd.Flags().IntVar(&timeout, "timeout", 5, "The timeout to use as default for TestSuite configuration.")
 	assertCmd.Flags().StringVarP(&namespace, "namespace", "n", "default", "Namespace to use for test assert.")
-	assertCmd.Flags().StringVar(&as, "as", "", "The user you wish to impersonate")
 
 	return assertCmd
 }
