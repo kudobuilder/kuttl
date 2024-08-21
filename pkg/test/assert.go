@@ -8,8 +8,8 @@ import (
 	"k8s.io/client-go/discovery"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
-	testutils "github.com/kudobuilder/kuttl/pkg/test/utils"
 	"github.com/kudobuilder/kuttl/pkg/k8s"
+	testutils "github.com/kudobuilder/kuttl/pkg/test/utils"
 )
 
 // Assert checks all provided assert files against a namespace.  Upon assert failure, it prints the failures and returns an error
@@ -103,7 +103,6 @@ func Errors(namespace string, timeout int, errorFiles ...string) error {
 	}
 	return errors.New("error asserts not valid")
 }
-
 
 func Client(_ bool) (client.Client, error) {
 	cfg, err := k8s.GetConfig()
