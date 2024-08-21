@@ -4,7 +4,7 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/kudobuilder/kuttl/pkg/version"
-	"github.com/kudobuilder/kuttl/pkg/impersonation"
+	"github.com/kudobuilder/kuttl/pkg/k8s"
 
 )
 
@@ -32,7 +32,7 @@ and serves as an API aggregation layer.
 		Version: version.Get().GitVersion,
 	}
 
-	cmd.PersistentFlags().StringVar(&impersonation.ImpersonateAs, "as", "", "the username that you wish to impersonate")
+	cmd.PersistentFlags().StringVar(&k8s.ImpersonateAs, "as", "", "the username that you wish to impersonate")
 	cmd.AddCommand(newAssertCmd())
 	cmd.AddCommand(newErrorsCmd())
 	cmd.AddCommand(newTestCmd())

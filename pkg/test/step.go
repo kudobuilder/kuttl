@@ -61,7 +61,7 @@ type Step struct {
 
 // Clean deletes all resources defined in the Apply list.
 func (s *Step) Clean(namespace string) error {
-	cl, err := s.Client(false, )
+	cl, err := s.Client(false)
 	if err != nil {
 		return err
 	}
@@ -87,7 +87,7 @@ func (s *Step) Clean(namespace string) error {
 
 // DeleteExisting deletes any resources in the TestStep.Delete list prior to running the tests.
 func (s *Step) DeleteExisting(namespace string) error {
-	cl, err := s.Client(false, )
+	cl, err := s.Client(false)
 	if err != nil {
 		return err
 	}
@@ -175,7 +175,7 @@ func (s *Step) DeleteExisting(namespace string) error {
 
 // Create applies all resources defined in the Apply list.
 func (s *Step) Create(test *testing.T, namespace string) []error {
-	cl, err := s.Client(true )
+	cl, err := s.Client(true)
 	if err != nil {
 		return []error{err}
 	}
