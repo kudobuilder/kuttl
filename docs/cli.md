@@ -61,6 +61,10 @@ Flags are:
 
   Directory to output kind logs to (if not specified, the current working directory).
 
+* **`--as`**
+
+  The kubernetes user to impersonate for the operation. User could be a regular user or a service account in a namespace.
+
 * **`--config (string)`**
 
   Path to file to load test settings from. This is usually the `kuttl-test.yaml` file.
