@@ -32,7 +32,7 @@ and serves as an API aggregation layer.
 		Version: version.Get().GitVersion,
 	}
 
-	cmd.PersistentFlags().StringVar(&k8s.ImpersonateAs, "as", "", "the username that you wish to impersonate")
+	cmd.PersistentFlags().StringVar(&k8s.ImpersonateAs, "as", "", "Username to impersonate for the operation. User could be a regular user or a service account in a namespace.")
 	cmd.AddCommand(newAssertCmd())
 	cmd.AddCommand(newErrorsCmd())
 	cmd.AddCommand(newTestCmd())
