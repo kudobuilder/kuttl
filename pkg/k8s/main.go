@@ -9,9 +9,8 @@ var ImpersonateAs = ""
 
 func GetConfig() (*rest.Config, error) {
 	cfg, err := config.GetConfig()
-
 	if err != nil {
-		return &rest.Config{}, err
+		return nil, err
 	}
 
 	if ImpersonateAs != "" {

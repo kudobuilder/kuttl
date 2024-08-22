@@ -61,7 +61,7 @@ Flags are:
 
   Directory to output kind logs to (if not specified, the current working directory).
 
-* **`--as`**
+* **`--as (string)`**
 
   The kubernetes user to impersonate for the operation. User could be a regular user or a service account in a namespace.
 
