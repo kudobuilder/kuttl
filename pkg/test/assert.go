@@ -106,7 +106,6 @@ func Errors(namespace string, timeout int, errorFiles ...string) error {
 
 func Client(_ bool) (client.Client, error) {
 	cfg, err := k8s.GetConfig()
-
 	if err != nil {
 		return nil, err
 	}
@@ -114,7 +113,6 @@ func Client(_ bool) (client.Client, error) {
 	client, err := testutils.NewRetryClient(cfg, client.Options{
 		Scheme: testutils.Scheme(),
 	})
-
 	if err != nil {
 		return nil, fmt.Errorf("fatal error getting client: %v", err)
 	}
@@ -124,13 +122,11 @@ func Client(_ bool) (client.Client, error) {
 
 func DiscoveryClient() (discovery.DiscoveryInterface, error) {
 	cfg, err := k8s.GetConfig()
-
 	if err != nil {
 		return nil, err
 	}
 
 	dclient, err := discovery.NewDiscoveryClientForConfig(cfg)
-
 	if err != nil {
 		return nil, fmt.Errorf("fatal error getting discovery client: %v", err)
 	}
