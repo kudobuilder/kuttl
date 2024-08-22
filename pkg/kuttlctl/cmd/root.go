@@ -3,6 +3,7 @@ package cmd
 import (
 	"github.com/spf13/cobra"
 
+	"github.com/kudobuilder/kuttl/pkg/k8s"
 	"github.com/kudobuilder/kuttl/pkg/version"
 )
 
@@ -30,6 +31,7 @@ and serves as an API aggregation layer.
 		Version: version.Get().GitVersion,
 	}
 
+	cmd.PersistentFlags().StringVar(&k8s.ImpersonateAs, "as", "", "Username to impersonate for the operation. User could be a regular user or a service account in a namespace.")
 	cmd.AddCommand(newAssertCmd())
 	cmd.AddCommand(newErrorsCmd())
 	cmd.AddCommand(newTestCmd())

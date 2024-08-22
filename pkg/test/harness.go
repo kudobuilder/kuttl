@@ -24,13 +24,13 @@ import (
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-	"sigs.k8s.io/controller-runtime/pkg/client/config"
 	"sigs.k8s.io/controller-runtime/pkg/envtest"
 	kindConfig "sigs.k8s.io/kind/pkg/apis/config/v1alpha4"
 
 	harness "github.com/kudobuilder/kuttl/pkg/apis/testharness/v1beta1"
 	"github.com/kudobuilder/kuttl/pkg/file"
 	"github.com/kudobuilder/kuttl/pkg/http"
+	"github.com/kudobuilder/kuttl/pkg/k8s"
 	"github.com/kudobuilder/kuttl/pkg/report"
 	testutils "github.com/kudobuilder/kuttl/pkg/test/utils"
 )
@@ -253,7 +253,7 @@ func (h *Harness) Config() (*rest.Config, error) {
 		h.config, err = h.RunKIND()
 	default:
 		h.T.Log("running tests using configured kubeconfig.")
-		h.config, err = config.GetConfig()
+		h.config, err = k8s.GetConfig()
 		if err != nil {
 			return nil, err
 		}
