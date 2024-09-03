@@ -21,6 +21,7 @@ import (
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/discovery"
+	"k8s.io/client-go/rest"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"k8s.io/client-go/tools/clientcmd"
@@ -338,7 +339,7 @@ func (t *Case) Run(test *testing.T, ts *report.Testsuite) {
 			continue
 		}
 
-		cl, err = newClient(testStep.Kubeconfig)(false)
+		cl, err = newClient(testStep.Kubeconfig, testStep.Context)(false)
 		if err != nil {
 			setupReport.Failure = report.NewFailure(err.Error(), nil)
 			ts.AddTestcase(setupReport)
@@ -363,11 +364,11 @@ func (t *Case) Run(test *testing.T, ts *report.Testsuite) {
 		tc := report.NewCase("step " + testStep.String())
 		testStep.Client = t.Client
 		if testStep.Kubeconfig != "" {
-			testStep.Client = newClient(testStep.Kubeconfig)
+			testStep.Client = newClient(testStep.Kubeconfig, testStep.Context)
 		}
 		testStep.DiscoveryClient = t.DiscoveryClient
 		if testStep.Kubeconfig != "" {
-			testStep.DiscoveryClient = newDiscoveryClient(testStep.Kubeconfig)
+			testStep.DiscoveryClient = newDiscoveryClient(testStep.Kubeconfig, testStep.Context)
 		}
 		testStep.Logger = t.Logger.WithPrefix(testStep.String())
 		tc.Assertions += len(testStep.Asserts)
@@ -531,9 +532,9 @@ func (t *Case) LoadTestSteps() error {
 	return nil
 }
 
-func newClient(kubeconfig string) func(bool) (client.Client, error) {
+func newClient(kubeconfig, context string) func(bool) (client.Client, error) {
 	return func(bool) (client.Client, error) {
-		config, err := clientcmd.BuildConfigFromFlags("", kubeconfig)
+		config, err := buildConfigWithContext(kubeconfig, context)
 		if err != nil {
 			return nil, err
 		}
@@ -544,13 +545,24 @@ func newClient(kubeconfig string) func(bool) (client.Client, error) {
 	}
 }
 
-func newDiscoveryClient(kubeconfig string) func() (discovery.DiscoveryInterface, error) {
+func newDiscoveryClient(kubeconfig, context string) func() (discovery.DiscoveryInterface, error) {
 	return func() (discovery.DiscoveryInterface, error) {
-		config, err := clientcmd.BuildConfigFromFlags("", kubeconfig)
+		config, err := buildConfigWithContext(kubeconfig, context)
 		if err != nil {
 			return nil, err
 		}
 
 		return discovery.NewDiscoveryClientForConfig(config)
 	}
+}
+
+func buildConfigWithContext(kubeconfig, context string) (*rest.Config, error) {
+	if context == "" {
+		// Use default context
+		return clientcmd.BuildConfigFromFlags("", kubeconfig)
+	}
+
+	return clientcmd.NewNonInteractiveDeferredLoadingClientConfig(
+		&clientcmd.ClientConfigLoadingRules{ExplicitPath: kubeconfig},
+		&clientcmd.ConfigOverrides{CurrentContext: context}).ClientConfig()
 }

@@ -53,8 +53,10 @@ type Step struct {
 
 	Kubeconfig        string
 	KubeconfigLoading string
-	Client            func(forceNew bool) (client.Client, error)
-	DiscoveryClient   func() (discovery.DiscoveryInterface, error)
+	Context           string
+
+	Client          func(forceNew bool) (client.Client, error)
+	DiscoveryClient func() (discovery.DiscoveryInterface, error)
 
 	Logger testutils.Logger
 }
@@ -556,6 +558,7 @@ func (s *Step) LoadYAML(file string) error {
 				exKubeconfig := env.Expand(s.Step.Kubeconfig)
 				s.Kubeconfig = cleanPath(exKubeconfig, s.Dir)
 			}
+			s.Context = s.Step.Context
 
 			switch s.Step.KubeconfigLoading {
 			case "", harness.KubeconfigLoadingEager, harness.KubeconfigLoadingLazy:
