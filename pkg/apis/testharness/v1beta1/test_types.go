@@ -135,7 +135,7 @@ type TestStep struct {
 	KubeconfigLoading string `json:"kubeconfigLoading,omitempty"`
 
 	// Specifies the context to use in the Kubeconfig.
-	Context string `json:"kubeconfigLoading,omitempty"`
+	Context string `json:"context,omitempty"`
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
