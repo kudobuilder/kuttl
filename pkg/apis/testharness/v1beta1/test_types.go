@@ -133,6 +133,9 @@ type TestStep struct {
 	// +kubebuilder:default=Eager
 	// +kubebuilder:validation:Enum=Eager;Lazy
 	KubeconfigLoading string `json:"kubeconfigLoading,omitempty"`
+
+	// Specifies the context to use in the Kubeconfig.
+	Context string `json:"kubeconfigLoading,omitempty"`
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
