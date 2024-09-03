@@ -134,7 +134,7 @@ type TestStep struct {
 	// +kubebuilder:validation:Enum=Eager;Lazy
 	KubeconfigLoading string `json:"kubeconfigLoading,omitempty"`
 
-	// Specifies the context to use in the Kubeconfig.
+	// Specifies the context to use from the Kubeconfig.
 	Context string `json:"context,omitempty"`
 }
 
