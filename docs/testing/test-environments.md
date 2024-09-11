@@ -8,10 +8,10 @@ A default environment for the tests can be defined in `kuttl-test.yaml` allowing
 
 If no configuration is provided, the tests will run against your default cluster context using whatever Kubernetes cluster is configured in your kubeconfig.
 
-You can also provide an alternative kubeconfig file by either setting `$KUBECONFIG` or the `--kubeconfig` flag:
+You can also provide an alternative kubeconfig file by setting the `$KUBECONFIG` environment variable:
 
 ```bash
-kubectl kuttl test --kubeconfig=mycluster.yaml
+KUBECONFIG=mycluster.yaml kubectl kuttl test
 ```
 
 ## Kubernetes-in-docker
