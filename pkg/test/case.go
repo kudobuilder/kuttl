@@ -21,12 +21,10 @@ import (
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/discovery"
-	"k8s.io/client-go/rest"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
-	"k8s.io/client-go/tools/clientcmd"
-
 	"github.com/kudobuilder/kuttl/pkg/apis/testharness/v1beta1"
+	"github.com/kudobuilder/kuttl/pkg/k8s"
 	"github.com/kudobuilder/kuttl/pkg/report"
 	testutils "github.com/kudobuilder/kuttl/pkg/test/utils"
 )
@@ -534,7 +532,7 @@ func (t *Case) LoadTestSteps() error {
 
 func newClient(kubeconfig, context string) func(bool) (client.Client, error) {
 	return func(bool) (client.Client, error) {
-		config, err := buildConfigWithContext(kubeconfig, context)
+		config, err := k8s.BuildConfigWithContext(kubeconfig, context)
 		if err != nil {
 			return nil, err
 		}
@@ -547,22 +545,11 @@ func newClient(kubeconfig, context string) func(bool) (client.Client, error) {
 
 func newDiscoveryClient(kubeconfig, context string) func() (discovery.DiscoveryInterface, error) {
 	return func() (discovery.DiscoveryInterface, error) {
-		config, err := buildConfigWithContext(kubeconfig, context)
+		config, err := k8s.BuildConfigWithContext(kubeconfig, context)
 		if err != nil {
 			return nil, err
 		}
 
 		return discovery.NewDiscoveryClientForConfig(config)
 	}
-}
-
-func buildConfigWithContext(kubeconfig, context string) (*rest.Config, error) {
-	if context == "" {
-		// Use default context
-		return clientcmd.BuildConfigFromFlags("", kubeconfig)
-	}
-
-	return clientcmd.NewNonInteractiveDeferredLoadingClientConfig(
-		&clientcmd.ClientConfigLoadingRules{ExplicitPath: kubeconfig},
-		&clientcmd.ConfigOverrides{CurrentContext: context}).ClientConfig()
 }
