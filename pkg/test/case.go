@@ -81,7 +81,9 @@ func (t *Case) DeleteNamespace(cl client.Client, ns *namespace) error {
 		},
 	}
 
-	if err := cl.Delete(ctx, nsObj); err != nil {
+	if err := cl.Delete(ctx, nsObj); k8serrors.IsNotFound(err) {
+		t.Logger.Logf("Namespace already cleaned up.")
+	} else if err != nil {
 		return err
 	}
 
