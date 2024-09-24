@@ -68,13 +68,13 @@ celAssert:
 
   # Success if any expression evaluates to true
   any:
-  - expression: "resource.status.readyReplicas > 1"
+  - expression: "resource1.status.readyReplicas > 1"
   - expression: ...
   - ...
 
   # Success only if all expressions evaluate to true
   all:
-  - expression: "resource.status.readyReplicas > 0"
+  - expression: "resource2.status.readyReplicas > 0"
   - expression: ...
   - ...
 ```
