@@ -22,7 +22,7 @@ require (
 	k8s.io/client-go v0.31.2
 	k8s.io/code-generator v0.31.2
 	sigs.k8s.io/controller-runtime v0.19.1
-	sigs.k8s.io/controller-tools v0.16.4
+	sigs.k8s.io/controller-tools v0.16.5
 	sigs.k8s.io/kind v0.24.0
 )
 
@@ -37,7 +37,7 @@ require (
 	github.com/docker/go-units v0.4.0 // indirect
 	github.com/emicklei/go-restful/v3 v3.11.0 // indirect
 	github.com/evanphx/json-patch/v5 v5.9.0 // indirect
-	github.com/fatih/color v1.17.0 // indirect
+	github.com/fatih/color v1.18.0 // indirect
 	github.com/felixge/httpsnoop v1.0.4 // indirect
 	github.com/fxamacker/cbor/v2 v2.7.0 // indirect
 	github.com/go-logr/logr v1.4.2 // indirect
