@@ -8,8 +8,8 @@ owners:
     - "@kumar-mallikarjuna"
     - "@porridge"
 creation-date: 2024-09-23
-last-updated: 2024-09-23
-status: provisional
+last-updated: 2024-11-19
+status: implementable
 ---
 
 # Expression-Based Assertions
