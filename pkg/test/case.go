@@ -316,19 +316,18 @@ func shortString(obj *corev1.ObjectReference) string {
 }
 
 // Run runs a test case including all of its steps.
-func (t *Case) Run(test *testing.T, ts *report.Testsuite) {
-	setupReport := report.NewCase("setup")
+func (t *Case) Run(test *testing.T, rep report.TestReporter) {
+	defer rep.Done()
+	setupReport := rep.Step("setup")
 	ns, err := t.determineNamespace()
 	if err != nil {
-		setupReport.Failure = report.NewFailure(err.Error(), nil)
-		ts.AddTestcase(setupReport)
+		setupReport.Failure(err.Error())
 		test.Fatal(err)
 	}
 
 	cl, err := t.Client(false)
 	if err != nil {
-		setupReport.Failure = report.NewFailure(err.Error(), nil)
-		ts.AddTestcase(setupReport)
+		setupReport.Failure(err.Error())
 		test.Fatal(err)
 	}
 
@@ -341,8 +340,7 @@ func (t *Case) Run(test *testing.T, ts *report.Testsuite) {
 
 		cl, err = newClient(testStep.Kubeconfig, testStep.Context)(false)
 		if err != nil {
-			setupReport.Failure = report.NewFailure(err.Error(), nil)
-			ts.AddTestcase(setupReport)
+			setupReport.Failure(err.Error())
 			test.Fatal(err)
 		}
 
@@ -353,15 +351,13 @@ func (t *Case) Run(test *testing.T, ts *report.Testsuite) {
 		if err = t.CreateNamespace(test, c, ns); k8serrors.IsAlreadyExists(err) {
 			t.Logger.Logf("namespace %q already exists, using kubeconfig %q", ns.Name, kc)
 		} else if err != nil {
-			setupReport.Failure = report.NewFailure("failed to create test namespace", []error{err})
-			ts.AddTestcase(setupReport)
+			setupReport.Failure("failed to create test namespace", err)
 			test.Fatal(err)
 		}
 	}
-	ts.AddTestcase(setupReport)
 
 	for _, testStep := range t.Steps {
-		tc := report.NewCase("step " + testStep.String())
+		stepReport := rep.Step("step " + testStep.String())
 		testStep.Client = t.Client
 		if testStep.Kubeconfig != "" {
 			testStep.Client = newClient(testStep.Kubeconfig, testStep.Context)
@@ -371,8 +367,8 @@ func (t *Case) Run(test *testing.T, ts *report.Testsuite) {
 			testStep.DiscoveryClient = newDiscoveryClient(testStep.Kubeconfig, testStep.Context)
 		}
 		testStep.Logger = t.Logger.WithPrefix(testStep.String())
-		tc.Assertions += len(testStep.Asserts)
-		tc.Assertions += len(testStep.Errors)
+		stepReport.AddAssertions(len(testStep.Asserts))
+		stepReport.AddAssertions(len(testStep.Errors))
 
 		errs := []error{}
 
@@ -395,15 +391,12 @@ func (t *Case) Run(test *testing.T, ts *report.Testsuite) {
 
 		if len(errs) > 0 {
 			caseErr := fmt.Errorf("failed in step %s", testStep.String())
-			tc.Failure = report.NewFailure(caseErr.Error(), errs)
+			stepReport.Failure(caseErr.Error(), errs...)
 
 			test.Error(caseErr)
 			for _, err := range errs {
 				test.Error(err)
 			}
-		}
-		ts.AddTestcase(tc)
-		if len(errs) > 0 {
 			break
 		}
 	}

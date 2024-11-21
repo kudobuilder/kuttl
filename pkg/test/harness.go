@@ -397,8 +397,8 @@ func (h *Harness) RunTests() {
 						t.Fatal(err)
 					}
 
-					testReport := suiteReport.NewSubSuite(test.Name)
-					test.Run(t, testReport)
+					testReporter := suiteReport.NewTest(test.Name)
+					test.Run(t, testReporter)
 				})
 			}
 		}
