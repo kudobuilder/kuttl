@@ -223,9 +223,14 @@ func (ts *Testsuite) summarize() time.Time {
 	return end
 }
 
-func (ts *Testsuite) NewTest(name string) TestReporter {
+func (ts *Testsuite) NewReporterStepGranularity(name string) TestReporter {
 	subSuite := ts.NewSubSuite(name)
 	return &testReporter{suite: subSuite}
+}
+
+func (ts *Testsuite) NewReporterTestGranularity(name string) TestReporter {
+	tc := NewCase(name)
+	return &testReporter{testCase: tc, suite: ts}
 }
 
 type stepReport struct {
@@ -249,6 +254,7 @@ func (s *stepReport) AddAssertions(i int) {
 type testReporter struct {
 	suite       *Testsuite
 	stepReports []*stepReport
+	testCase    *Testcase
 }
 
 func (r *testReporter) Step(stepName string) StepReporter {
@@ -258,6 +264,16 @@ func (r *testReporter) Step(stepName string) StepReporter {
 }
 
 func (r *testReporter) Done() {
+	if r.testCase != nil {
+		for _, report := range r.stepReports {
+			if report.failed {
+				r.testCase.Failure = NewFailure(report.failureMsg, report.errors)
+			}
+			r.testCase.Assertions += report.assertions
+		}
+		r.suite.AddTestcase(r.testCase)
+		return
+	}
 	for _, report := range r.stepReports {
 		testCase := NewCase(report.name)
 		if report.failed {

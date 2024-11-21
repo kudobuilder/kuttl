@@ -397,7 +397,13 @@ func (h *Harness) RunTests() {
 						t.Fatal(err)
 					}
 
-					testReporter := suiteReport.NewTest(test.Name)
+					var testReporter report.TestReporter
+					switch h.TestSuite.ReportGranularity {
+					case "test":
+						testReporter = suiteReport.NewReporterTestGranularity(test.Name)
+					default:
+						testReporter = suiteReport.NewReporterStepGranularity(test.Name)
+					}
 					test.Run(t, testReporter)
 				})
 			}
