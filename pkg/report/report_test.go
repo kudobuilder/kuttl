@@ -67,9 +67,9 @@ AssertionError`,
 		},
 	}
 
-	x, _ := xml.MarshalIndent(suites, " ", "  ")
+	x, _ := xml.MarshalIndent(suites, " ", "  ") //nolint:govet
 	xout := string(x)
-	j, _ := json.MarshalIndent(suites, " ", "  ")
+	j, _ := json.MarshalIndent(suites, " ", "  ") //nolint:govet
 	jout := string(j)
 
 	xmlFile := filepath.Join("testdata", goldenXML+".golden")

@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"sort"
 	"sync"
 	"time"
 )
@@ -110,6 +111,7 @@ type Testsuites struct {
 	// communicate test infra failures, such as failed auth, or connection issues.
 	Failure *Failure `xml:"failure" json:"failure,omitempty"`
 	start   time.Time
+	lock    sync.Mutex
 }
 
 // NewSuiteCollection returns the address of a newly created TestSuites
@@ -178,6 +180,10 @@ func (ts *Testsuite) NewSubSuite(name string) *Testsuite {
 	ts.lock.Lock()
 	defer ts.lock.Unlock()
 	ts.SubSuites = append(ts.SubSuites, s)
+	// Ensure consistent ordering to make testing easier.
+	sort.Slice(ts.SubSuites, func(i, j int) bool {
+		return ts.SubSuites[i].Name < ts.SubSuites[j].Name
+	})
 	return s
 }
 
@@ -206,7 +212,13 @@ func (ts *Testsuite) summarize() time.Time {
 // AddTestSuite is a convenience method to add a testsuite to the collection in testsuites
 func (ts *Testsuites) AddTestSuite(testsuite *Testsuite) {
 	// testsuite is added prior to stat availability, stat management in the close of the testsuites
+	ts.lock.Lock()
+	defer ts.lock.Unlock()
 	ts.Testsuite = append(ts.Testsuite, testsuite)
+	// Ensure consistent ordering to make testing easier.
+	sort.Slice(ts.Testsuite, func(i, j int) bool {
+		return ts.Testsuite[i].Name < ts.Testsuite[j].Name
+	})
 }
 
 // AddProperty adds a property to a testsuites
