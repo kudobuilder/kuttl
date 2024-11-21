@@ -114,6 +114,20 @@ type Testsuites struct {
 	lock    sync.Mutex
 }
 
+// StepReporter is an interface for reporting status of a test step.
+type StepReporter interface {
+	Failure(message string, errors ...error)
+	AddAssertions(i int)
+}
+
+// TestReporter is an interface for reporting status of a test.
+// For each step, call Step and use the returned step reporter.
+// Make sure to call Done when a test ends (preferably using defer).
+type TestReporter interface {
+	Step(stepName string) StepReporter
+	Done()
+}
+
 // NewSuiteCollection returns the address of a newly created TestSuites
 func NewSuiteCollection(name string) *Testsuites {
 	start := time.Now()
@@ -208,6 +222,54 @@ func (ts *Testsuite) summarize() time.Time {
 	ts.Time = fmt.Sprintf("%.3f", elapsed.Seconds())
 	return end
 }
+
+func (ts *Testsuite) NewTest(name string) TestReporter {
+	subSuite := ts.NewSubSuite(name)
+	return &testReporter{suite: subSuite}
+}
+
+type stepReport struct {
+	name       string
+	failed     bool
+	failureMsg string
+	errors     []error
+	assertions int
+}
+
+func (s *stepReport) Failure(message string, errors ...error) {
+	s.failed = true
+	s.failureMsg = message
+	s.errors = append(s.errors, errors...)
+}
+
+func (s *stepReport) AddAssertions(i int) {
+	s.assertions += i
+}
+
+type testReporter struct {
+	suite       *Testsuite
+	stepReports []*stepReport
+}
+
+func (r *testReporter) Step(stepName string) StepReporter {
+	step := &stepReport{name: stepName}
+	r.stepReports = append(r.stepReports, step)
+	return step
+}
+
+func (r *testReporter) Done() {
+	for _, report := range r.stepReports {
+		testCase := NewCase(report.name)
+		if report.failed {
+			testCase.Failure = NewFailure(report.failureMsg, report.errors)
+		}
+		testCase.Assertions += report.assertions
+		r.suite.AddTestcase(testCase)
+	}
+}
+
+var _ TestReporter = (*testReporter)(nil)
+var _ StepReporter = (*stepReport)(nil)
 
 // AddTestSuite is a convenience method to add a testsuite to the collection in testsuites
 func (ts *Testsuites) AddTestSuite(testsuite *Testsuite) {
