@@ -1,0 +1,44 @@
+ <testsuites name="" tests="18" failures="4" time="1.0">
+   <testsuite tests="9" failures="2" timestamp="2000-01-01T00:00:00.00000000+00:00" time="1.0" name="suite1">
+     <testsuite tests="2" failures="0" timestamp="2000-01-01T00:00:00.00000000+00:00" time="1.0" name="test0">
+       <testcase classname="test0" name="setup" timestamp="2000-01-01T00:00:00.00000000+00:00" time="1.0" assertions="0"></testcase>
+       <testcase classname="test0" name="step 0-run" timestamp="2000-01-01T00:00:00.00000000+00:00" time="1.0" assertions="0"></testcase>
+     </testsuite>
+     <testsuite tests="4" failures="1" timestamp="2000-01-01T00:00:00.00000000+00:00" time="1.0" name="test1">
+       <testcase classname="test1" name="setup" timestamp="2000-01-01T00:00:00.00000000+00:00" time="1.0" assertions="0"></testcase>
+       <testcase classname="test1" name="step 0-run" timestamp="2000-01-01T00:00:00.00000000+00:00" time="1.0" assertions="0"></testcase>
+       <testcase classname="test1" name="step 1-run" timestamp="2000-01-01T00:00:00.00000000+00:00" time="1.0" assertions="0"></testcase>
+       <testcase classname="test1" name="step 2-run" timestamp="2000-01-01T00:00:00.00000000+00:00" time="1.0" assertions="0">
+         <failure message="failed in step 2-run" type="">command &#34;echo step stdout\\n echo &gt;&amp;2 step stderr\\n false&#34; failed, exit status 1</failure>
+       </testcase>
+     </testsuite>
+     <testsuite tests="3" failures="1" timestamp="2000-01-01T00:00:00.00000000+00:00" time="1.0" name="test2">
+       <testcase classname="test2" name="setup" timestamp="2000-01-01T00:00:00.00000000+00:00" time="1.0" assertions="0"></testcase>
+       <testcase classname="test2" name="step 0-run" timestamp="2000-01-01T00:00:00.00000000+00:00" time="1.0" assertions="0"></testcase>
+       <testcase classname="test2" name="step 1-run" timestamp="2000-01-01T00:00:00.00000000+00:00" time="1.0" assertions="0">
+         <failure message="failed in step 1-run" type="">command &#34;echo assert stdout\\n echo &gt;&amp;2 assert stderr\\n false&#34; failed, exit status 1</failure>
+       </testcase>
+     </testsuite>
+   </testsuite>
+   <testsuite tests="9" failures="2" timestamp="2000-01-01T00:00:00.00000000+00:00" time="1.0" name="suite2">
+     <testsuite tests="2" failures="0" timestamp="2000-01-01T00:00:00.00000000+00:00" time="1.0" name="test0">
+       <testcase classname="test0" name="setup" timestamp="2000-01-01T00:00:00.00000000+00:00" time="1.0" assertions="0"></testcase>
+       <testcase classname="test0" name="step 0-run" timestamp="2000-01-01T00:00:00.00000000+00:00" time="1.0" assertions="0"></testcase>
+     </testsuite>
+     <testsuite tests="4" failures="1" timestamp="2000-01-01T00:00:00.00000000+00:00" time="1.0" name="test1">
+       <testcase classname="test1" name="setup" timestamp="2000-01-01T00:00:00.00000000+00:00" time="1.0" assertions="0"></testcase>
+       <testcase classname="test1" name="step 0-run" timestamp="2000-01-01T00:00:00.00000000+00:00" time="1.0" assertions="0"></testcase>
+       <testcase classname="test1" name="step 1-run" timestamp="2000-01-01T00:00:00.00000000+00:00" time="1.0" assertions="0"></testcase>
+       <testcase classname="test1" name="step 2-run" timestamp="2000-01-01T00:00:00.00000000+00:00" time="1.0" assertions="0">
+         <failure message="failed in step 2-run" type="">command &#34;echo step stdout\\n echo &gt;&amp;2 step stderr\\n false&#34; failed, exit status 1</failure>
+       </testcase>
+     </testsuite>
+     <testsuite tests="3" failures="1" timestamp="2000-01-01T00:00:00.00000000+00:00" time="1.0" name="test2">
+       <testcase classname="test2" name="setup" timestamp="2000-01-01T00:00:00.00000000+00:00" time="1.0" assertions="0"></testcase>
+       <testcase classname="test2" name="step 0-run" timestamp="2000-01-01T00:00:00.00000000+00:00" time="1.0" assertions="0"></testcase>
+       <testcase classname="test2" name="step 1-run" timestamp="2000-01-01T00:00:00.00000000+00:00" time="1.0" assertions="0">
+         <failure message="failed in step 1-run" type="">command &#34;echo assert stdout\\n echo &gt;&amp;2 assert stderr\\n false&#34; failed, exit status 1</failure>
+       </testcase>
+     </testsuite>
+   </testsuite>
+ </testsuites>
