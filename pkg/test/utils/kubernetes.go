@@ -19,6 +19,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/google/cel-go/cel"
 	"github.com/google/shlex"
 	"github.com/pmezard/go-difflib/difflib"
 	"github.com/spf13/pflag"
@@ -57,6 +58,7 @@ import (
 	"github.com/kudobuilder/kuttl/pkg/apis"
 	harness "github.com/kudobuilder/kuttl/pkg/apis/testharness/v1beta1"
 	"github.com/kudobuilder/kuttl/pkg/env"
+	"github.com/kudobuilder/kuttl/pkg/k8s"
 )
 
 // ensure that we only add to the scheme once.
@@ -1217,6 +1219,81 @@ func RunAssertCommands(ctx context.Context, logger Logger, namespace string, com
 	return RunCommands(ctx, logger, namespace, convertAssertCommand(commands, timeout), workdir, timeout, kubeconfigOverride)
 }
 
+// RunAssertExpressions evaluates a set of CEL expressions specified as AnyAllExpressions
+func RunAssertExpressions(
+	ctx context.Context,
+	logger Logger,
+	resourceRefs []harness.TestResourceRef,
+	expressions harness.AnyAllExpressions,
+	kubeconfigOverride string,
+) []error {
+	errs := []error{}
+
+	actualDir, err := os.Getwd()
+	if err != nil {
+		return []error{fmt.Errorf("failed to get current working director: %w", err)}
+	}
+
+	kubeconfig := kubeconfigPath(actualDir, kubeconfigOverride)
+	cl, err := NewClient(kubeconfig, "")(false)
+	if err != nil {
+		return []error{fmt.Errorf("failed to construct client: %w", err)}
+	}
+
+	variables := make(map[string]interface{})
+	for _, resourceRef := range resourceRefs {
+		gvk := constructGVK(resourceRef.ApiVersion, resourceRef.Kind)
+		referencedResource := &unstructured.Unstructured{}
+		referencedResource.SetGroupVersionKind(gvk)
+
+		if err := cl.Get(
+			ctx,
+			types.NamespacedName{Namespace: resourceRef.Namespace, Name: resourceRef.Name},
+			referencedResource,
+		); err != nil {
+			return []error{fmt.Errorf("failed to get referenced resource '%v': %w", gvk, err)}
+		}
+
+		variables[resourceRef.Id] = referencedResource.Object
+	}
+
+	env, err := cel.NewEnv()
+	if err != nil {
+		return []error{fmt.Errorf("failed to create environment: %w", err)}
+	}
+
+	for k := range variables {
+		env, err = env.Extend(cel.Variable(k, cel.DynType))
+		if err != nil {
+			return []error{fmt.Errorf("failed to add resource parameter '%v' to environment: %w", k, err)}
+		}
+	}
+
+	for _, expr := range expressions.Any {
+		ast, issues := env.Compile(expr)
+		if issues != nil && issues.Err() != nil {
+			return []error{fmt.Errorf("type-check error: %s", issues.Err())}
+		}
+
+		prg, err := env.Program(ast)
+		if err != nil {
+			return []error{fmt.Errorf("program constuction error: %w", err)}
+		}
+
+		out, _, err := prg.Eval(variables)
+		if err != nil {
+			return []error{fmt.Errorf("failed to evaluate program: %w", err)}
+		}
+
+		logger.Logf("expression '%v' evaluated to '%v'", expr, out.Value())
+		if out.Value() != true {
+			errs = append(errs, fmt.Errorf("failed validation, expression '%v' evaluated to '%v'", expr, out.Value()))
+		}
+	}
+
+	return errs
+}
+
 // RunCommands runs a set of commands, returning any errors.
 // If any (non-background) command fails, the following commands are skipped
 // commands running in the background are returned
@@ -1320,4 +1397,30 @@ func Kubeconfig(cfg *rest.Config, w io.Writer) error {
 			},
 		},
 	}, w)
+}
+
+func constructGVK(apiVersion, kind string) schema.GroupVersionKind {
+	apiVersionSplit := strings.Split(apiVersion, "/")
+	gvk := schema.GroupVersionKind{
+		Version: apiVersionSplit[len(apiVersionSplit)-1],
+		Kind:    kind,
+	}
+	if len(apiVersion) > 1 {
+		gvk.Group = apiVersionSplit[0]
+	}
+
+	return gvk
+}
+
+func NewClient(kubeconfig, context string) func(bool) (client.Client, error) {
+	return func(bool) (client.Client, error) {
+		config, err := k8s.BuildConfigWithContext(kubeconfig, context)
+		if err != nil {
+			return nil, err
+		}
+
+		return NewRetryClient(config, client.Options{
+			Scheme: Scheme(),
+		})
+	}
 }

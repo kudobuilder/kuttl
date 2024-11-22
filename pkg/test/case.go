@@ -339,7 +339,7 @@ func (t *Case) Run(test *testing.T, ts *report.Testsuite) {
 			continue
 		}
 
-		cl, err = newClient(testStep.Kubeconfig, testStep.Context)(false)
+		cl, err = testutils.NewClient(testStep.Kubeconfig, testStep.Context)(false)
 		if err != nil {
 			setupReport.Failure = report.NewFailure(err.Error(), nil)
 			ts.AddTestcase(setupReport)
@@ -364,7 +364,7 @@ func (t *Case) Run(test *testing.T, ts *report.Testsuite) {
 		tc := report.NewCase("step " + testStep.String())
 		testStep.Client = t.Client
 		if testStep.Kubeconfig != "" {
-			testStep.Client = newClient(testStep.Kubeconfig, testStep.Context)
+			testStep.Client = testutils.NewClient(testStep.Kubeconfig, testStep.Context)
 		}
 		testStep.DiscoveryClient = t.DiscoveryClient
 		if testStep.Kubeconfig != "" {
@@ -530,19 +530,6 @@ func (t *Case) LoadTestSteps() error {
 
 	t.Steps = testSteps
 	return nil
-}
-
-func newClient(kubeconfig, context string) func(bool) (client.Client, error) {
-	return func(bool) (client.Client, error) {
-		config, err := k8s.BuildConfigWithContext(kubeconfig, context)
-		if err != nil {
-			return nil, err
-		}
-
-		return testutils.NewRetryClient(config, client.Options{
-			Scheme: testutils.Scheme(),
-		})
-	}
 }
 
 func newDiscoveryClient(kubeconfig, context string) func() (discovery.DiscoveryInterface, error) {
