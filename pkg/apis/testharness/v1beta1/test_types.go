@@ -157,6 +157,10 @@ type TestAssert struct {
 	Collectors []*TestCollector `json:"collectors,omitempty"`
 	// Commands is a set of commands to be run as assertions for the current step
 	Commands []TestAssertCommand `json:"commands,omitempty"`
+
+	ResourceRefs []TestResourceRef `json:"resourceRefs,omitempty"`
+
+	AssertExpressions AnyAllExpressions `json:"assertExpressions,omitempty"`
 }
 
 // TestAssertCommand an assertion based on the result of the execution of a command
@@ -225,6 +229,19 @@ type TestCollector struct {
 	Tail int `json:"tail,omitempty"`
 	// Cmd is a command to run for collection.  It requires an empty Type or Type=command
 	Cmd string `json:"command,omitempty"`
+}
+
+type TestResourceRef struct {
+	ApiVersion string `json:"apiVersion,omitempty"`
+	Kind       string `json:"kind,omitempty"`
+	Namespace  string `json:"namespace,omitempty"`
+	Name       string `json:"name,omitempty"`
+	Id         string `json:"id,omitempty"`
+}
+
+type AnyAllExpressions struct {
+	Any []string `json:"any,omitempty"`
+	All []string `json:"all,omitempty"`
 }
 
 // DefaultKINDContext defines the default kind context to use.
