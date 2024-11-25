@@ -1,0 +1,7 @@
+apiVersion: kuttl.dev/v1beta1
+kind: TestAssert
+commands:
+- script: |
+    echo assert stdout
+    echo >&2 assert stderr
+    false
