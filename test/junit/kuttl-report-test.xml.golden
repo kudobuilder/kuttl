@@ -1,0 +1,20 @@
+ <testsuites name="" tests="6" failures="4" time="1.0">
+   <testsuite tests="3" failures="2" timestamp="2000-01-01T00:00:00.00000000+00:00" time="1.0" name="suite1">
+     <testcase classname="suite1" name="test0" timestamp="2000-01-01T00:00:00.00000000+00:00" time="1.0" assertions="0"></testcase>
+     <testcase classname="suite1" name="test1" timestamp="2000-01-01T00:00:00.00000000+00:00" time="1.0" assertions="0">
+       <failure message="failed in step 2-run" type="">command &#34;echo step stdout\\n echo &gt;&amp;2 step stderr\\n false&#34; failed, exit status 1</failure>
+     </testcase>
+     <testcase classname="suite1" name="test2" timestamp="2000-01-01T00:00:00.00000000+00:00" time="1.0" assertions="0">
+       <failure message="failed in step 1-run" type="">command &#34;echo assert stdout\\n echo &gt;&amp;2 assert stderr\\n false&#34; failed, exit status 1</failure>
+     </testcase>
+   </testsuite>
+   <testsuite tests="3" failures="2" timestamp="2000-01-01T00:00:00.00000000+00:00" time="1.0" name="suite2">
+     <testcase classname="suite2" name="test0" timestamp="2000-01-01T00:00:00.00000000+00:00" time="1.0" assertions="0"></testcase>
+     <testcase classname="suite2" name="test1" timestamp="2000-01-01T00:00:00.00000000+00:00" time="1.0" assertions="0">
+       <failure message="failed in step 2-run" type="">command &#34;echo step stdout\\n echo &gt;&amp;2 step stderr\\n false&#34; failed, exit status 1</failure>
+     </testcase>
+     <testcase classname="suite2" name="test2" timestamp="2000-01-01T00:00:00.00000000+00:00" time="1.0" assertions="0">
+       <failure message="failed in step 1-run" type="">command &#34;echo assert stdout\\n echo &gt;&amp;2 assert stderr\\n false&#34; failed, exit status 1</failure>
+     </testcase>
+   </testsuite>
+ </testsuites>

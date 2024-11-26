@@ -87,8 +87,9 @@ type Testsuite struct {
 	// Testcases is a collection of test cases.
 	Testcases []*Testcase `xml:"testcase" json:"testcase,omitempty"`
 	// SubSuites is a collection of child test suites.
-	SubSuites []*Testsuite `xml:"testsuite" json:"testsuite,omitempty"`
-	lock      sync.Mutex
+	SubSuites         []*Testsuite `xml:"testsuite" json:"testsuite,omitempty"`
+	lock              sync.Mutex
+	reportGranularity string
 }
 
 // Testsuites is a collection of Testsuite and defines the rollup summary of all stats.
@@ -135,9 +136,9 @@ func NewSuiteCollection(name string) *Testsuites {
 }
 
 // NewSuite returns the address of a newly created TestSuite
-func NewSuite(name string) *Testsuite {
+func NewSuite(name string, reportGranularity string) *Testsuite {
 	start := time.Now()
-	return &Testsuite{Name: name, Timestamp: start}
+	return &Testsuite{Name: name, Timestamp: start, reportGranularity: reportGranularity}
 }
 
 // NewCase returns the address of a newly create Testcase
@@ -190,7 +191,7 @@ func (ts *Testsuite) AddProperty(property Property) {
 
 // NewSubSuite creates a new child suite and returns it.
 func (ts *Testsuite) NewSubSuite(name string) *Testsuite {
-	s := NewSuite(name)
+	s := NewSuite(name, "")
 	ts.lock.Lock()
 	defer ts.lock.Unlock()
 	ts.SubSuites = append(ts.SubSuites, s)
@@ -223,9 +224,15 @@ func (ts *Testsuite) summarize() time.Time {
 	return end
 }
 
-func (ts *Testsuite) NewTest(name string) TestReporter {
-	subSuite := ts.NewSubSuite(name)
-	return &testReporter{suite: subSuite}
+func (ts *Testsuite) NewTestReporter(name string) TestReporter {
+	switch ts.reportGranularity {
+	case "test":
+		tc := NewCase(name)
+		return &testReporter{testCase: tc, suite: ts}
+	default:
+		subSuite := ts.NewSubSuite(name)
+		return &testReporter{suite: subSuite}
+	}
 }
 
 type stepReport struct {
@@ -246,9 +253,17 @@ func (s *stepReport) AddAssertions(i int) {
 	s.assertions += i
 }
 
+func (s *stepReport) populate(testCase *Testcase) {
+	if s.failed {
+		testCase.Failure = NewFailure(s.failureMsg, s.errors)
+	}
+	testCase.Assertions += s.assertions
+}
+
 type testReporter struct {
 	suite       *Testsuite
 	stepReports []*stepReport
+	testCase    *Testcase
 }
 
 func (r *testReporter) Step(stepName string) StepReporter {
@@ -258,12 +273,18 @@ func (r *testReporter) Step(stepName string) StepReporter {
 }
 
 func (r *testReporter) Done() {
+	if r.testCase != nil {
+		// Reporting with test granularity.
+		for _, report := range r.stepReports {
+			report.populate(r.testCase)
+		}
+		r.suite.AddTestcase(r.testCase)
+		return
+	}
+	// Reporting with step granularity.
 	for _, report := range r.stepReports {
 		testCase := NewCase(report.name)
-		if report.failed {
-			testCase.Failure = NewFailure(report.failureMsg, report.errors)
-		}
-		testCase.Assertions += report.assertions
+		report.populate(testCase)
 		r.suite.AddTestcase(testCase)
 	}
 }
@@ -344,13 +365,6 @@ func ensureDir(dir string) error {
 		//	no need for error check, it is always returned and handled by caller
 	}
 	return err
-}
-
-// NewSuite creates and assigns a TestSuite to the TestSuites (then returns the suite)
-func (ts *Testsuites) NewSuite(name string) *Testsuite {
-	suite := NewSuite(name)
-	ts.AddTestSuite(suite)
-	return suite
 }
 
 // SetFailure adds a failure to the TestSuites collection for startup failures in the test harness

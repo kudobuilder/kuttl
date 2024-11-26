@@ -59,6 +59,7 @@ func newTestCmd() *cobra.Command { //nolint:gocyclo
 	timeout := 30
 	reportFormat := ""
 	reportName := "kuttl-report"
+	reportGranularity := "kuttl-report"
 	namespace := ""
 	suppress := []string{}
 	var runLabels labelSetValue
@@ -183,6 +184,13 @@ For more detailed documentation, visit: https://kuttl.dev`,
 				options.ReportName = reportName
 			}
 
+			if isSet(flags, "report-granularity") {
+				if reportGranularity != "step" && reportGranularity != "test" {
+					return fmt.Errorf("unrecognized report granularity %q", reportGranularity)
+				}
+				options.ReportGranularity = reportGranularity
+			}
+
 			if isSet(flags, "artifacts-dir") {
 				options.ArtifactsDir = artifactsDir
 			}
@@ -257,6 +265,7 @@ For more detailed documentation, visit: https://kuttl.dev`,
 	testCmd.Flags().IntVar(&timeout, "timeout", 30, "The timeout to use as default for TestSuite configuration.")
 	testCmd.Flags().StringVar(&reportFormat, "report", "", "Specify JSON|XML for report.  Report location determined by --artifacts-dir.")
 	testCmd.Flags().StringVar(&reportName, "report-name", "kuttl-report", "Name for the report.  Report location determined by --artifacts-dir and report file type determined by --report.")
+	testCmd.Flags().StringVar(&reportGranularity, "report-granularity", "step", "Report granularity. Can be 'step' (default) or 'test'.")
 	testCmd.Flags().StringVarP(&namespace, "namespace", "n", "", "Namespace to use for tests. Provided namespaces must exist prior to running tests.")
 	testCmd.Flags().StringSliceVar(&suppress, "suppress-log", []string{}, "Suppress logging for these kinds of logs (events).")
 	testCmd.Flags().Var(&runLabels, "test-run-labels", "Labels to use for this test run.")
