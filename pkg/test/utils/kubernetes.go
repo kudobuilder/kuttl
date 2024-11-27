@@ -1224,11 +1224,12 @@ func RunAssertExpressions(
 	ctx context.Context,
 	logger Logger,
 	resourceRefs []harness.TestResourceRef,
-	expressions harness.AnyAllExpressions,
+	assertAny,
+	assertAll []harness.Assertion,
 	kubeconfigOverride string,
 ) []error {
 	errs := []error{}
-	if len(expressions.Any) == 0 && len(expressions.All) == 0 {
+	if len(assertAny) == 0 && len(assertAll) == 0 {
 		return errs
 	}
 
@@ -1269,8 +1270,8 @@ func RunAssertExpressions(
 		}
 	}
 
-	for _, expr := range expressions.Any {
-		ast, issues := env.Compile(expr)
+	for _, expr := range assertAny {
+		ast, issues := env.Compile(string(expr.CELExpression))
 		if issues != nil && issues.Err() != nil {
 			return []error{fmt.Errorf("type-check error: %s", issues.Err())}
 		}
