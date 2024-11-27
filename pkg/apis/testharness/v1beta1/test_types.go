@@ -232,11 +232,11 @@ type TestCollector struct {
 }
 
 type TestResourceRef struct {
-	ApiVersion string `json:"apiVersion,omitempty"`
+	APIVersion string `json:"apiVersion,omitempty"`
 	Kind       string `json:"kind,omitempty"`
 	Namespace  string `json:"namespace,omitempty"`
 	Name       string `json:"name,omitempty"`
-	Id         string `json:"id,omitempty"`
+	Ref        string `json:"ref,omitempty"`
 }
 
 type AnyAllExpressions struct {
