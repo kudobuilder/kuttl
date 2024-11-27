@@ -1245,16 +1245,14 @@ func RunAssertExpressions(
 
 	variables := make(map[string]interface{})
 	for _, resourceRef := range resourceRefs {
-		gvk := constructGVK(resourceRef.APIVersion, resourceRef.Kind)
-		referencedResource := &unstructured.Unstructured{}
-		referencedResource.SetGroupVersionKind(gvk)
+		namespacedName, referencedResource := resourceRef.BuildResourceReference()
 
 		if err := cl.Get(
 			ctx,
-			types.NamespacedName{Namespace: resourceRef.Namespace, Name: resourceRef.Name},
+			namespacedName,
 			referencedResource,
 		); err != nil {
-			return []error{fmt.Errorf("failed to get referenced resource '%v': %w", gvk, err)}
+			return []error{fmt.Errorf("failed to get referenced resource '%v': %w", namespacedName, err)}
 		}
 
 		variables[resourceRef.Ref] = referencedResource.Object
@@ -1400,19 +1398,6 @@ func Kubeconfig(cfg *rest.Config, w io.Writer) error {
 			},
 		},
 	}, w)
-}
-
-func constructGVK(apiVersion, kind string) schema.GroupVersionKind {
-	apiVersionSplit := strings.Split(apiVersion, "/")
-	gvk := schema.GroupVersionKind{
-		Version: apiVersionSplit[len(apiVersionSplit)-1],
-		Kind:    kind,
-	}
-	if len(apiVersion) > 1 {
-		gvk.Group = apiVersionSplit[0]
-	}
-
-	return gvk
 }
 
 func NewClient(kubeconfig, context string) func(bool) (client.Client, error) {
