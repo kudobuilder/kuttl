@@ -542,6 +542,17 @@ func (s *Step) LoadYAML(file string) error {
 			} else {
 				return fmt.Errorf("failed to load TestAssert object from %s: it contains an object of type %T", file, obj)
 			}
+
+			var errs []error
+			for _, resourceRef := range s.Assert.ResourceRefs {
+				if err := resourceRef.ValidateResourceReference(); err != nil {
+					errs = append(errs, fmt.Errorf("validation failed for reference '%v': %w", resourceRef.String(), err))
+				}
+			}
+
+			if len(errs) > 0 {
+				return fmt.Errorf("failed to load TestAssert object from %s: %w", file, errors.Join(errs...))
+			}
 		} else {
 			asserts = append(asserts, obj)
 		}

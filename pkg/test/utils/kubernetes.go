@@ -1246,7 +1246,6 @@ func RunAssertExpressions(
 	variables := make(map[string]interface{})
 	for _, resourceRef := range resourceRefs {
 		namespacedName, referencedResource := resourceRef.BuildResourceReference()
-
 		if err := cl.Get(
 			ctx,
 			namespacedName,
