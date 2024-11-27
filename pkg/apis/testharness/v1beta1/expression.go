@@ -30,7 +30,7 @@ func (t *TestResourceRef) BuildResourceReference() (namespacedName types.Namespa
 	return
 }
 
-func (t *TestResourceRef) ValidateResourceReference() error {
+func (t *TestResourceRef) Validate() error {
 	apiVersionSplit := strings.Split(t.APIVersion, "/")
 	if t.APIVersion == "" || (len(apiVersionSplit) != 1 && len(apiVersionSplit) != 2) {
 		return fmt.Errorf("apiVersion '%v' not of the format (<group>/)<version>", t.APIVersion)
