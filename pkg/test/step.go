@@ -415,9 +415,10 @@ func (s *Step) CheckAssertCommands(ctx context.Context, namespace string, comman
 func (s *Step) CheckAssertExpressions(
 	ctx context.Context,
 	resourceRefs []harness.TestResourceRef,
-	expressions harness.AnyAllExpressions,
+	assertAny,
+	assertAll []harness.Assertion,
 ) []error {
-	return testutils.RunAssertExpressions(ctx, s.Logger, resourceRefs, expressions, s.Kubeconfig)
+	return testutils.RunAssertExpressions(ctx, s.Logger, resourceRefs, assertAny, assertAll, s.Kubeconfig)
 }
 
 // Check checks if the resources defined in Asserts and Errors are in the correct state.
@@ -430,7 +431,7 @@ func (s *Step) Check(namespace string, timeout int) []error {
 
 	if s.Assert != nil {
 		testErrors = append(testErrors, s.CheckAssertCommands(context.TODO(), namespace, s.Assert.Commands, timeout)...)
-		testErrors = append(testErrors, s.CheckAssertExpressions(context.TODO(), s.Assert.ResourceRefs, s.Assert.AssertExpressions)...)
+		testErrors = append(testErrors, s.CheckAssertExpressions(context.TODO(), s.Assert.ResourceRefs, s.Assert.AssertAny, s.Assert.AssertAll)...)
 	}
 
 	for _, expected := range s.Errors {
