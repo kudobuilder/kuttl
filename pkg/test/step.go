@@ -546,7 +546,7 @@ func (s *Step) LoadYAML(file string) error {
 
 			var errs []error
 			for _, resourceRef := range s.Assert.ResourceRefs {
-				if err := resourceRef.ValidateResourceReference(); err != nil {
+				if err := resourceRef.Validate(); err != nil {
 					errs = append(errs, fmt.Errorf("validation failed for reference '%v': %w", resourceRef.String(), err))
 				}
 			}
