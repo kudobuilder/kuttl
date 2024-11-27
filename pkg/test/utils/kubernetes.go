@@ -1228,6 +1228,9 @@ func RunAssertExpressions(
 	kubeconfigOverride string,
 ) []error {
 	errs := []error{}
+	if len(expressions.Any) == 0 && len(expressions.All) == 0 {
+		return errs
+	}
 
 	actualDir, err := os.Getwd()
 	if err != nil {
