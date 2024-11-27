@@ -1245,7 +1245,7 @@ func RunAssertExpressions(
 
 	variables := make(map[string]interface{})
 	for _, resourceRef := range resourceRefs {
-		gvk := constructGVK(resourceRef.ApiVersion, resourceRef.Kind)
+		gvk := constructGVK(resourceRef.APIVersion, resourceRef.Kind)
 		referencedResource := &unstructured.Unstructured{}
 		referencedResource.SetGroupVersionKind(gvk)
 
@@ -1257,7 +1257,7 @@ func RunAssertExpressions(
 			return []error{fmt.Errorf("failed to get referenced resource '%v': %w", gvk, err)}
 		}
 
-		variables[resourceRef.Id] = referencedResource.Object
+		variables[resourceRef.Ref] = referencedResource.Object
 	}
 
 	env, err := cel.NewEnv()
@@ -1280,7 +1280,7 @@ func RunAssertExpressions(
 
 		prg, err := env.Program(ast)
 		if err != nil {
-			return []error{fmt.Errorf("program constuction error: %w", err)}
+			return []error{fmt.Errorf("program construction error: %w", err)}
 		}
 
 		out, _, err := prg.Eval(variables)
