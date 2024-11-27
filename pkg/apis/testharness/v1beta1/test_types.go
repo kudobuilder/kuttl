@@ -9,6 +9,8 @@ import (
 const KubeconfigLoadingEager = "Eager"
 const KubeconfigLoadingLazy = "Lazy"
 
+type CELExpression string
+
 // Create embedded struct to implement custom DeepCopyInto method
 type RestConfig struct {
 	RC *rest.Config
@@ -160,7 +162,8 @@ type TestAssert struct {
 
 	ResourceRefs []TestResourceRef `json:"resourceRefs,omitempty"`
 
-	AssertExpressions AnyAllExpressions `json:"assertExpressions,omitempty"`
+	AssertAny []Assertion `json:"assertAny,omitempty"`
+	AssertAll []Assertion `json:"assertAll,omitempty"`
 }
 
 // TestAssertCommand an assertion based on the result of the execution of a command
@@ -239,9 +242,8 @@ type TestResourceRef struct {
 	Ref        string `json:"ref,omitempty"`
 }
 
-type AnyAllExpressions struct {
-	Any []string `json:"any,omitempty"`
-	All []string `json:"all,omitempty"`
+type Assertion struct {
+	CELExpression CELExpression `json:"celExpr,omitempty"`
 }
 
 // DefaultKINDContext defines the default kind context to use.
