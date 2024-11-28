@@ -111,5 +111,14 @@ func TestMultiClusterCase(t *testing.T) {
 		},
 	}
 
-	c.Run(t, &report.Testsuite{})
+	c.Run(t, &noOpReporter{})
 }
+
+type noOpReporter struct{}
+
+func (r *noOpReporter) Done() {}
+func (r *noOpReporter) Step(string) report.StepReporter {
+	return r
+}
+func (r *noOpReporter) AddAssertions(int)        {}
+func (r *noOpReporter) Failure(string, ...error) {}
