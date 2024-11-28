@@ -379,7 +379,7 @@ func (h *Harness) RunTests() {
 
 	h.T.Run("harness", func(t *testing.T) {
 		for testDir, tests := range realTestSuite {
-			suiteReport := h.report.NewSuite(testDir)
+			suiteReport := h.NewSuiteReport(testDir)
 			for _, test := range tests {
 				test := test
 
@@ -397,8 +397,7 @@ func (h *Harness) RunTests() {
 						t.Fatal(err)
 					}
 
-					testReporter := suiteReport.NewTest(test.Name)
-					test.Run(t, testReporter)
+					test.Run(t, suiteReport.NewTestReporter(test.Name))
 				})
 			}
 		}
@@ -610,6 +609,13 @@ func (h *Harness) Report() {
 	if err := h.report.Report(h.TestSuite.ArtifactsDir, h.reportName(), report.Type(h.TestSuite.ReportFormat)); err != nil {
 		h.fatal(fmt.Errorf("fatal error writing report: %v", err))
 	}
+}
+
+// NewSuiteReport creates and assigns a TestSuite to the TestSuites (then returns the suite),
+func (h *Harness) NewSuiteReport(name string) *report.Testsuite {
+	suite := report.NewSuite(name, h.TestSuite.ReportGranularity)
+	h.report.AddTestSuite(suite)
+	return suite
 }
 
 // reportName returns the configured ReportName.

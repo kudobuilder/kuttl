@@ -1,0 +1,78 @@
+{
+   "name": "",
+   "tests": 6,
+   "failures": 4,
+   "time": "1.0",
+   "testsuite": [
+     {
+       "tests": 3,
+       "failures": 2,
+       "timestamp": "2000-01-01T00:00:00.00000000+00:00",
+       "time": "1.0",
+       "name": "suite1",
+       "testcase": [
+         {
+           "classname": "suite1",
+           "name": "test0",
+           "timestamp": "2000-01-01T00:00:00.00000000+00:00",
+           "time": "1.0"
+         },
+         {
+           "classname": "suite1",
+           "name": "test1",
+           "timestamp": "2000-01-01T00:00:00.00000000+00:00",
+           "time": "1.0",
+           "failure": {
+             "text": "command \"echo step stdout\\\\n echo \u003e\u00262 step stderr\\\\n false\" failed, exit status 1",
+             "message": "failed in step 2-run"
+           }
+         },
+         {
+           "classname": "suite1",
+           "name": "test2",
+           "timestamp": "2000-01-01T00:00:00.00000000+00:00",
+           "time": "1.0",
+           "failure": {
+             "text": "command \"echo assert stdout\\\\n echo \u003e\u00262 assert stderr\\\\n false\" failed, exit status 1",
+             "message": "failed in step 1-run"
+           }
+         }
+       ]
+     },
+     {
+       "tests": 3,
+       "failures": 2,
+       "timestamp": "2000-01-01T00:00:00.00000000+00:00",
+       "time": "1.0",
+       "name": "suite2",
+       "testcase": [
+         {
+           "classname": "suite2",
+           "name": "test0",
+           "timestamp": "2000-01-01T00:00:00.00000000+00:00",
+           "time": "1.0"
+         },
+         {
+           "classname": "suite2",
+           "name": "test1",
+           "timestamp": "2000-01-01T00:00:00.00000000+00:00",
+           "time": "1.0",
+           "failure": {
+             "text": "command \"echo step stdout\\\\n echo \u003e\u00262 step stderr\\\\n false\" failed, exit status 1",
+             "message": "failed in step 2-run"
+           }
+         },
+         {
+           "classname": "suite2",
+           "name": "test2",
+           "timestamp": "2000-01-01T00:00:00.00000000+00:00",
+           "time": "1.0",
+           "failure": {
+             "text": "command \"echo assert stdout\\\\n echo \u003e\u00262 assert stderr\\\\n false\" failed, exit status 1",
+             "message": "failed in step 1-run"
+           }
+         }
+       ]
+     }
+   ]
+ }

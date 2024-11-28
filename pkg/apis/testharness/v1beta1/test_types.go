@@ -84,6 +84,10 @@ type TestSuite struct {
 
 	// ReportName defines the name of report to create.  It defaults to "kuttl-report" and is not used unless ReportFormat is defined.
 	ReportName string `json:"reportName"`
+
+	// ReportGranularity defines the granularity at which failures are reported. It defaults to "step".
+	ReportGranularity string `json:"reportGranularity"`
+
 	// Namespace defines the namespace to use for tests
 	// The value "" means to auto-generate tests namespaces, these namespaces will be created and removed for each test
 	// Any other value is the name of the namespace to use.  This namespace will be created if it does not exist and will

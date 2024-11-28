@@ -1,6 +1,12 @@
 /kuttl-ouput-step-json.txt
 /kuttl-ouput-step-xml.txt
+/kuttl-ouput-test-json.txt
+/kuttl-ouput-test-xml.txt
 /kuttl-report-step.json
 /kuttl-report-step.json.normalized
 /kuttl-report-step.xml
 /kuttl-report-step.xml.normalized
+/kuttl-report-test.json
+/kuttl-report-test.json.normalized
+/kuttl-report-test.xml
+/kuttl-report-test.xml.normalized

@@ -35,6 +35,7 @@ artifactsDir      | string           | The directory to output artifacts to (cur
 commands          | list of [Commands](#commands) | Commands to run prior to running the tests.                                   | []
 kindContainers    | list of strings  | List of Docker images to load into the KIND cluster once it is started.                  | []
 reportFormat      | string           | Determines the report format. If empty, no report is generated. One of: JSON, XML.       |
+reportGranularity | string           | What granularity to report failures at. One of: `step`, `test`.                          | `step`
 reportName        | string           | The name of report to create. This field is not used unless reportFormat is set.         | "kuttl-test"
 namespace         | string           | The namespace to use for tests. This namespace will be created if it does not exist and removed if it was created (unless `skipDelete` is set). If no namespace is set, one will be auto-generated. |
 suppress          | list of strings  | Suppresses log collection of the specified types. Currently only `events` is supported.  |

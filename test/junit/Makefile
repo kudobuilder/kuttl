@@ -2,18 +2,28 @@
 test:
 	$(MAKE) -C ../../ cli
 	rm -f kuttl-report-step.xml.normalized kuttl-report-step.json.normalized
-	../../bin/kubectl-kuttl test --config /dev/null --start-control-plane --report-name kuttl-report-step --timeout 10 --report xml suite1 suite2 > kuttl-ouput-step-xml.txt 2>&1 || true # this is meant to fail
+	rm -f kuttl-report-test.xml.normalized kuttl-report-test.json.normalized
+	../../bin/kubectl-kuttl test --config /dev/null --start-control-plane --report-name kuttl-report-step --report-granularity step --timeout 10 --report xml suite1 suite2 > kuttl-ouput-step-xml.txt 2>&1 || true # this is meant to fail
 	if [ ! -e kuttl-report-step.xml ]; then cat kuttl-output-step-xml.txt; exit 1; fi
-	../../bin/kubectl-kuttl test --config /dev/null --start-control-plane --report-name kuttl-report-step --timeout 10 --report json suite1 suite2 > kuttl-ouput-step-json.txt 2>&1 || true # this is meant to fail
+	../../bin/kubectl-kuttl test --config /dev/null --start-control-plane --report-name kuttl-report-step --report-granularity step --timeout 10 --report json suite1 suite2 > kuttl-ouput-step-json.txt 2>&1 || true # this is meant to fail
 	if [ ! -e kuttl-report-step.json ]; then cat kuttl-output-step-json.txt; exit 1; fi
+	../../bin/kubectl-kuttl test --config /dev/null --start-control-plane --report-name kuttl-report-test --report-granularity test --timeout 10 --report xml suite1 suite2 > kuttl-ouput-test-xml.txt 2>&1 || true # this is meant to fail
+	if [ ! -e kuttl-report-test.xml ]; then cat kuttl-output-test-xml.txt; exit 1; fi
+	../../bin/kubectl-kuttl test --config /dev/null --start-control-plane --report-name kuttl-report-test --report-granularity test --timeout 10 --report json suite1 suite2 > kuttl-ouput-test-json.txt 2>&1 || true # this is meant to fail
+	if [ ! -e kuttl-report-test.json ]; then cat kuttl-output-test-json.txt; exit 1; fi
 	$(MAKE) kuttl-report-step.xml.normalized kuttl-report-step.json.normalized
+	$(MAKE) kuttl-report-test.xml.normalized kuttl-report-test.json.normalized
 	diff -u kuttl-report-step.xml.golden kuttl-report-step.xml.normalized
 	diff -u kuttl-report-step.json.golden kuttl-report-step.json.normalized
+	diff -u kuttl-report-test.xml.golden kuttl-report-test.xml.normalized
+	diff -u kuttl-report-test.json.golden kuttl-report-test.json.normalized
 
 .PHONY: update-golden
 update-golden:
 	cp kuttl-report-step.json.normalized kuttl-report-step.json.golden
 	cp kuttl-report-step.xml.normalized kuttl-report-step.xml.golden
+	cp kuttl-report-test.json.normalized kuttl-report-test.json.golden
+	cp kuttl-report-test.xml.normalized kuttl-report-test.xml.golden
 
 # The following targets replace all timestamps and durations with dummy values to make comparisons easy.
 
