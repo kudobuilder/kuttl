@@ -1,8 +1,6 @@
 module github.com/kudobuilder/kuttl
 
-go 1.22.0
-
-toolchain go1.22.1
+go 1.22.7
 
 require (
 	github.com/Masterminds/semver/v3 v3.3.1
