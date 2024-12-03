@@ -67,7 +67,7 @@ func newTestCmd() *cobra.Command { //nolint:gocyclo
 	options := harness.TestSuite{}
 
 	testCmd := &cobra.Command{
-		Use:   "test [flags]... [test directories]...",
+		Use:   "test [flags]... [test suite]...",
 		Short: "Test KUTTL and Operators.",
 		Long: `Runs integration tests against a Kubernetes cluster.
 
@@ -249,7 +249,7 @@ For more detailed documentation, visit: https://kuttl.dev`,
 	testCmd.Flags().StringVar(&configPath, "config", "", "Path to file to load base test settings from (these may be overridden with command-line arguments).")
 	testCmd.Flags().StringVar(&crdDir, "crd-dir", "", "Directory to load CustomResourceDefinitions from prior to running the tests.")
 	testCmd.Flags().StringSliceVar(&manifestDirs, "manifest-dir", []string{}, "One or more directories containing manifests to apply before running the tests.")
-	testCmd.Flags().StringVar(&testToRun, "test", "", "If set, the specific test case to run.")
+	testCmd.Flags().StringVar(&testToRun, "test", "", "If set, the specific test case to run (basename of the test case dir).")
 	testCmd.Flags().BoolVar(&startControlPlane, "start-control-plane", false, "Start a local Kubernetes control plane for the tests (requires etcd and kube-apiserver binaries, cannot be used with --start-kind).")
 	testCmd.Flags().BoolVar(&attachControlPlaneOutput, "attach-control-plane-output", false, "Attaches control plane to stdout when using --start-control-plane.")
 	// TODO: remove after v0.16.0 deprecated mockControllerFile is not supported in the latest testenv
