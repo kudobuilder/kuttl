@@ -6,10 +6,11 @@ import (
 
 	"github.com/google/cel-go/cel"
 
-	"github.com/kudobuilder/kuttl/pkg/apis/testharness/v1beta1"
+	harness "github.com/kudobuilder/kuttl/pkg/apis/testharness/v1beta1"
+	"github.com/kudobuilder/kuttl/pkg/test"
 )
 
-func BuildProgram(expr string, env *cel.Env) (cel.Program, error) {
+func buildProgram(expr string, env *cel.Env) (cel.Program, error) {
 	ast, issues := env.Compile(expr)
 	if issues != nil && issues.Err() != nil {
 		return nil, fmt.Errorf("type-check error: %s", issues.Err())
@@ -23,7 +24,7 @@ func BuildProgram(expr string, env *cel.Env) (cel.Program, error) {
 	return prg, nil
 }
 
-func BuildEnv(resourceRefs []v1beta1.TestResourceRef) (*cel.Env, error) {
+func buildEnv(resourceRefs []harness.TestResourceRef) (*cel.Env, error) {
 	env, err := cel.NewEnv()
 	if err != nil {
 		return nil, fmt.Errorf("failed to create environment: %w", err)
@@ -44,7 +45,7 @@ func RunAssertExpressions(
 	programs map[string]cel.Program,
 	variables map[string]interface{},
 	assertAny,
-	assertAll []*v1beta1.Assertion,
+	assertAll []*harness.Assertion,
 ) []error {
 	var errs []error
 	if len(assertAny) == 0 && len(assertAll) == 0 {
@@ -91,4 +92,44 @@ func RunAssertExpressions(
 	}
 
 	return errs
+}
+
+func LoadPrograms(s *test.Step) error {
+	var errs []error
+	for _, resourceRef := range s.Assert.ResourceRefs {
+		if err := resourceRef.Validate(); err != nil {
+			errs = append(errs, fmt.Errorf("validation failed for reference '%v': %w", resourceRef.String(), err))
+		}
+	}
+
+	if len(errs) > 0 {
+		return fmt.Errorf("failed to load resource reference(s): %w", errors.Join(errs...))
+	}
+
+	var assertions []*harness.Assertion
+	assertions = append(assertions, s.Assert.AssertAny...)
+	assertions = append(assertions, s.Assert.AssertAll...)
+
+	env, err := buildEnv(s.Assert.ResourceRefs)
+	if err != nil {
+		return fmt.Errorf("failed to build environment: %w", err)
+	}
+
+	if len(assertions) > 0 {
+		s.Programs = make(map[string]cel.Program)
+	}
+
+	for _, assertion := range assertions {
+		if prg, err := buildProgram(assertion.CELExpression, env); err != nil {
+			errs = append(errs, err)
+		} else {
+			s.Programs[assertion.CELExpression] = prg
+		}
+	}
+
+	if len(errs) > 0 {
+		return fmt.Errorf("failed to build program(s): %w", errors.Join(errs...))
+	}
+
+	return nil
 }
