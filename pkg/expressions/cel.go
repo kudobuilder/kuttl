@@ -7,7 +7,6 @@ import (
 	"github.com/google/cel-go/cel"
 
 	harness "github.com/kudobuilder/kuttl/pkg/apis/testharness/v1beta1"
-	"github.com/kudobuilder/kuttl/pkg/test"
 )
 
 func buildProgram(expr string, env *cel.Env) (cel.Program, error) {
@@ -94,42 +93,43 @@ func RunAssertExpressions(
 	return errs
 }
 
-func LoadPrograms(s *test.Step) error {
+func LoadPrograms(testAssert *harness.TestAssert) (map[string]cel.Program, error) {
 	var errs []error
-	for _, resourceRef := range s.Assert.ResourceRefs {
+	for _, resourceRef := range testAssert.ResourceRefs {
 		if err := resourceRef.Validate(); err != nil {
 			errs = append(errs, fmt.Errorf("validation failed for reference '%v': %w", resourceRef.String(), err))
 		}
 	}
 
 	if len(errs) > 0 {
-		return fmt.Errorf("failed to load resource reference(s): %w", errors.Join(errs...))
+		return nil, fmt.Errorf("failed to load resource reference(s): %w", errors.Join(errs...))
 	}
 
 	var assertions []*harness.Assertion
-	assertions = append(assertions, s.Assert.AssertAny...)
-	assertions = append(assertions, s.Assert.AssertAll...)
+	assertions = append(assertions, testAssert.AssertAny...)
+	assertions = append(assertions, testAssert.AssertAll...)
 
-	env, err := buildEnv(s.Assert.ResourceRefs)
+	env, err := buildEnv(testAssert.ResourceRefs)
 	if err != nil {
-		return fmt.Errorf("failed to build environment: %w", err)
+		return nil, fmt.Errorf("failed to build environment: %w", err)
 	}
 
+	var programs map[string]cel.Program
 	if len(assertions) > 0 {
-		s.Programs = make(map[string]cel.Program)
+		programs = make(map[string]cel.Program)
 	}
 
 	for _, assertion := range assertions {
 		if prg, err := buildProgram(assertion.CELExpression, env); err != nil {
 			errs = append(errs, err)
 		} else {
-			s.Programs[assertion.CELExpression] = prg
+			programs[assertion.CELExpression] = prg
 		}
 	}
 
 	if len(errs) > 0 {
-		return fmt.Errorf("failed to build program(s): %w", errors.Join(errs...))
+		return nil, fmt.Errorf("failed to build program(s): %w", errors.Join(errs...))
 	}
 
-	return nil
+	return programs, nil
 }
