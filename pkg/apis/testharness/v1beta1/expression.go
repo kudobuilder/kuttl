@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/google/cel-go/cel"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
@@ -18,7 +17,7 @@ func (t *TestResourceRef) BuildResourceReference() (namespacedName types.Namespa
 		Version: apiVersionSplit[len(apiVersionSplit)-1],
 		Kind:    t.Kind,
 	}
-	if len(t.APIVersion) > 1 {
+	if len(apiVersionSplit) > 1 {
 		gvk.Group = apiVersionSplit[0]
 	}
 	referencedResource.SetGroupVersionKind(gvk)
@@ -38,8 +37,6 @@ func (t *TestResourceRef) Validate() error {
 		return fmt.Errorf("apiVersion '%v' not of the format (<group>/)<version>", t.APIVersion)
 	case t.Kind == "":
 		return errors.New("kind not specified")
-	case t.Namespace == "":
-		return errors.New("namespace not specified")
 	case t.Name == "":
 		return errors.New("name not specified")
 	case t.Ref == "":
@@ -58,18 +55,4 @@ func (t *TestResourceRef) String() string {
 		t.Name,
 		t.Ref,
 	)
-}
-
-func (t *Assertion) BuildProgram(env *cel.Env) (cel.Program, error) {
-	ast, issues := env.Compile(t.CELExpression)
-	if issues != nil && issues.Err() != nil {
-		return nil, fmt.Errorf("type-check error: %s", issues.Err())
-	}
-
-	prg, err := env.Program(ast)
-	if err != nil {
-		return nil, fmt.Errorf("program construction error: %w", err)
-	}
-
-	return prg, nil
 }
