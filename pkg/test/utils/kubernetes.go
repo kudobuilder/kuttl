@@ -58,7 +58,6 @@ import (
 	"github.com/kudobuilder/kuttl/pkg/apis"
 	harness "github.com/kudobuilder/kuttl/pkg/apis/testharness/v1beta1"
 	"github.com/kudobuilder/kuttl/pkg/env"
-	"github.com/kudobuilder/kuttl/pkg/k8s"
 )
 
 // ensure that we only add to the scheme once.
@@ -1114,7 +1113,7 @@ func RunCommand(ctx context.Context, namespace string, cmd harness.Command, cwd 
 
 	kuttlENV := make(map[string]string)
 	kuttlENV["NAMESPACE"] = namespace
-	kuttlENV["KUBECONFIG"] = KubeconfigPath(actualDir, kubeconfigOverride)
+	kuttlENV["KUBECONFIG"] = kubeconfigPath(actualDir, kubeconfigOverride)
 	kuttlENV["PATH"] = fmt.Sprintf("%s/bin/:%s", actualDir, os.Getenv("PATH"))
 
 	// by default testsuite timeout is the command timeout
@@ -1183,7 +1182,7 @@ func RunCommand(ctx context.Context, namespace string, cmd harness.Command, cwd 
 	return nil, nil
 }
 
-func KubeconfigPath(actualDir, override string) string {
+func kubeconfigPath(actualDir, override string) string {
 	if override != "" {
 		if filepath.IsAbs(override) {
 			return override
@@ -1221,30 +1220,14 @@ func RunAssertCommands(ctx context.Context, logger Logger, namespace string, com
 
 // RunAssertExpressions evaluates a set of CEL expressions specified as AnyAllExpressions
 func RunAssertExpressions(
-	ctx context.Context,
-	cl client.Client,
 	programs map[string]cel.Program,
-	resourceRefs []harness.TestResourceRef,
+	variables map[string]interface{},
 	assertAny,
 	assertAll []*harness.Assertion,
 ) []error {
-	errs := []error{}
+	var errs []error
 	if len(assertAny) == 0 && len(assertAll) == 0 {
 		return errs
-	}
-
-	variables := make(map[string]interface{})
-	for _, resourceRef := range resourceRefs {
-		namespacedName, referencedResource := resourceRef.BuildResourceReference()
-		if err := cl.Get(
-			ctx,
-			namespacedName,
-			referencedResource,
-		); err != nil {
-			return []error{fmt.Errorf("failed to get referenced resource '%v': %w", namespacedName, err)}
-		}
-
-		variables[resourceRef.Ref] = referencedResource.Object
 	}
 
 	var anyExpressionsEvaluation, allExpressionsEvaluation []error
@@ -1392,17 +1375,4 @@ func Kubeconfig(cfg *rest.Config, w io.Writer) error {
 			},
 		},
 	}, w)
-}
-
-func NewClient(kubeconfig, context string) func(bool) (client.Client, error) {
-	return func(bool) (client.Client, error) {
-		config, err := k8s.BuildConfigWithContext(kubeconfig, context)
-		if err != nil {
-			return nil, err
-		}
-
-		return NewRetryClient(config, client.Options{
-			Scheme: Scheme(),
-		})
-	}
 }
