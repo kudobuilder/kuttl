@@ -166,10 +166,15 @@ func (ts *Testsuite) AddTestcase(testcase *Testcase) {
 	// this is needed to calc elapse time of testsuite in a async work
 	testcase.end = time.Now()
 	elapsed := time.Since(testcase.Timestamp)
+	ts.lock.Lock()
+	defer ts.lock.Unlock()
 	testcase.Time = fmt.Sprintf("%.3f", elapsed.Seconds())
 	testcase.Classname = filepath.Base(ts.Name)
 
 	ts.Testcases = append(ts.Testcases, testcase)
+	sort.Slice(ts.Testcases, func(i, j int) bool {
+		return ts.Testcases[i].Name < ts.Testcases[j].Name
+	})
 	ts.Tests++
 	if testcase.Failure != nil {
 		ts.Failures++
