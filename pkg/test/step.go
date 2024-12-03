@@ -567,40 +567,9 @@ func (s *Step) LoadYAML(file string) error {
 				return fmt.Errorf("failed to load TestAssert object from %s: it contains an object of type %T", file, obj)
 			}
 
-			var errs []error
-			for _, resourceRef := range s.Assert.ResourceRefs {
-				if err := resourceRef.Validate(); err != nil {
-					errs = append(errs, fmt.Errorf("validation failed for reference '%v': %w", resourceRef.String(), err))
-				}
-			}
-
-			if len(errs) > 0 {
-				return fmt.Errorf("failed to load TestAssert object from %s: %w", file, errors.Join(errs...))
-			}
-
-			var assertions []*harness.Assertion
-			assertions = append(assertions, s.Assert.AssertAny...)
-			assertions = append(assertions, s.Assert.AssertAll...)
-
-			env, err := expressions.BuildEnv(s.Assert.ResourceRefs)
+			err := expressions.LoadPrograms(s)
 			if err != nil {
-				return fmt.Errorf("failed to load TestAssert object from %s: %w", file, err)
-			}
-
-			if len(assertions) > 0 {
-				s.Programs = make(map[string]cel.Program)
-			}
-
-			for _, assertion := range assertions {
-				if prg, err := expressions.BuildProgram(assertion.CELExpression, env); err != nil {
-					errs = append(errs, err)
-				} else {
-					s.Programs[assertion.CELExpression] = prg
-				}
-			}
-
-			if len(errs) > 0 {
-				return fmt.Errorf("failed to load TestAssert object from %s: %w", file, errors.Join(errs...))
+				return fmt.Errorf("failed to load programs: %w", err)
 			}
 		} else {
 			asserts = append(asserts, obj)
