@@ -426,7 +426,7 @@ func (s *Step) CheckAssertExpressions(
 		return []error{err}
 	}
 
-	return testutils.RunAssertExpressions(ctx, s.Logger, client, s.Programs, resourceRefs, assertAny, assertAll)
+	return testutils.RunAssertExpressions(ctx, client, s.Programs, resourceRefs, assertAny, assertAll)
 }
 
 // Check checks if the resources defined in Asserts and Errors are in the correct state.
@@ -533,8 +533,6 @@ func (s *Step) String() string {
 //     if seen, mark a test immediately failed.
 //   - All other YAML files are considered resources to create.
 func (s *Step) LoadYAML(file string) error {
-	s.Programs = make(map[string]cel.Program)
-
 	skipFile, objects, err := s.loadOrSkipFile(file)
 	if skipFile || err != nil {
 		return err
@@ -572,6 +570,10 @@ func (s *Step) LoadYAML(file string) error {
 			env, err := testutils.BuildEnv(s.Assert.ResourceRefs)
 			if err != nil {
 				return fmt.Errorf("failed to load TestAssert object from %s: %w", file, err)
+			}
+
+			if len(assertions) > 0 {
+				s.Programs = make(map[string]cel.Program)
 			}
 
 			for _, assertion := range assertions {
