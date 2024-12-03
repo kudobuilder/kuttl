@@ -1222,7 +1222,6 @@ func RunAssertCommands(ctx context.Context, logger Logger, namespace string, com
 // RunAssertExpressions evaluates a set of CEL expressions specified as AnyAllExpressions
 func RunAssertExpressions(
 	ctx context.Context,
-	logger Logger,
 	cl client.Client,
 	programs map[string]cel.Program,
 	resourceRefs []harness.TestResourceRef,
