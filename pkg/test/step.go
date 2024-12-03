@@ -567,7 +567,7 @@ func (s *Step) LoadYAML(file string) error {
 				return fmt.Errorf("failed to load TestAssert object from %s: it contains an object of type %T", file, obj)
 			}
 
-			err := expressions.LoadPrograms(s)
+			s.Programs, err = expressions.LoadPrograms(s.Assert)
 			if err != nil {
 				return fmt.Errorf("failed to load programs: %w", err)
 			}
