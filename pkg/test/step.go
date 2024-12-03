@@ -24,6 +24,7 @@ import (
 
 	harness "github.com/kudobuilder/kuttl/pkg/apis/testharness/v1beta1"
 	"github.com/kudobuilder/kuttl/pkg/env"
+	"github.com/kudobuilder/kuttl/pkg/expressions"
 	kfile "github.com/kudobuilder/kuttl/pkg/file"
 	"github.com/kudobuilder/kuttl/pkg/http"
 	"github.com/kudobuilder/kuttl/pkg/kubernetes"
@@ -426,7 +427,21 @@ func (s *Step) CheckAssertExpressions(
 		return []error{err}
 	}
 
-	return testutils.RunAssertExpressions(ctx, client, s.Programs, resourceRefs, assertAny, assertAll)
+	variables := make(map[string]interface{})
+	for _, resourceRef := range resourceRefs {
+		namespacedName, referencedResource := resourceRef.BuildResourceReference()
+		if err := client.Get(
+			ctx,
+			namespacedName,
+			referencedResource,
+		); err != nil {
+			return []error{fmt.Errorf("failed to get referenced resource '%v': %w", namespacedName, err)}
+		}
+
+		variables[resourceRef.Ref] = referencedResource.Object
+	}
+
+	return testutils.RunAssertExpressions(s.Programs, variables, assertAny, assertAll)
 }
 
 // Check checks if the resources defined in Asserts and Errors are in the correct state.
@@ -567,7 +582,7 @@ func (s *Step) LoadYAML(file string) error {
 			assertions = append(assertions, s.Assert.AssertAny...)
 			assertions = append(assertions, s.Assert.AssertAll...)
 
-			env, err := testutils.BuildEnv(s.Assert.ResourceRefs)
+			env, err := expressions.BuildEnv(s.Assert.ResourceRefs)
 			if err != nil {
 				return fmt.Errorf("failed to load TestAssert object from %s: %w", file, err)
 			}
@@ -577,7 +592,7 @@ func (s *Step) LoadYAML(file string) error {
 			}
 
 			for _, assertion := range assertions {
-				if prg, err := assertion.BuildProgram(env); err != nil {
+				if prg, err := expressions.BuildProgram(assertion.CELExpression, env); err != nil {
 					errs = append(errs, err)
 				} else {
 					s.Programs[assertion.CELExpression] = prg
