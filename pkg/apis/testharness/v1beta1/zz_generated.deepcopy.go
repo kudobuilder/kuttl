@@ -118,13 +118,25 @@ func (in *TestAssert) DeepCopyInto(out *TestAssert) {
 	}
 	if in.AssertAny != nil {
 		in, out := &in.AssertAny, &out.AssertAny
-		*out = make([]Assertion, len(*in))
-		copy(*out, *in)
+		*out = make([]*Assertion, len(*in))
+		for i := range *in {
+			if (*in)[i] != nil {
+				in, out := &(*in)[i], &(*out)[i]
+				*out = new(Assertion)
+				**out = **in
+			}
+		}
 	}
 	if in.AssertAll != nil {
 		in, out := &in.AssertAll, &out.AssertAll
-		*out = make([]Assertion, len(*in))
-		copy(*out, *in)
+		*out = make([]*Assertion, len(*in))
+		for i := range *in {
+			if (*in)[i] != nil {
+				in, out := &(*in)[i], &(*out)[i]
+				*out = new(Assertion)
+				**out = **in
+			}
+		}
 	}
 	return
 }

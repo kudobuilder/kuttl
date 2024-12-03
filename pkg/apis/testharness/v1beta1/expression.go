@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/google/cel-go/cel"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
@@ -56,4 +57,18 @@ func (t *TestResourceRef) String() string {
 		t.Name,
 		t.Ref,
 	)
+}
+
+func (t *Assertion) BuildProgram(env *cel.Env) (cel.Program, error) {
+	ast, issues := env.Compile(t.CELExpression)
+	if issues != nil && issues.Err() != nil {
+		return nil, fmt.Errorf("type-check error: %s", issues.Err())
+	}
+
+	prg, err := env.Program(ast)
+	if err != nil {
+		return nil, fmt.Errorf("program construction error: %w", err)
+	}
+
+	return prg, nil
 }

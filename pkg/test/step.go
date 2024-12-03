@@ -10,6 +10,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/google/cel-go/cel"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -45,6 +46,8 @@ type Step struct {
 
 	Step   *harness.TestStep
 	Assert *harness.TestAssert
+
+	Programs map[string]cel.Program
 
 	Asserts []client.Object
 	Apply   []client.Object
@@ -416,9 +419,14 @@ func (s *Step) CheckAssertExpressions(
 	ctx context.Context,
 	resourceRefs []harness.TestResourceRef,
 	assertAny,
-	assertAll []harness.Assertion,
+	assertAll []*harness.Assertion,
 ) []error {
-	return testutils.RunAssertExpressions(ctx, s.Logger, resourceRefs, assertAny, assertAll, s.Kubeconfig)
+	client, err := s.Client(false)
+	if err != nil {
+		return []error{err}
+	}
+
+	return testutils.RunAssertExpressions(ctx, s.Logger, client, s.Programs, resourceRefs, assertAny, assertAll)
 }
 
 // Check checks if the resources defined in Asserts and Errors are in the correct state.
@@ -525,6 +533,8 @@ func (s *Step) String() string {
 //     if seen, mark a test immediately failed.
 //   - All other YAML files are considered resources to create.
 func (s *Step) LoadYAML(file string) error {
+	s.Programs = make(map[string]cel.Program)
+
 	skipFile, objects, err := s.loadOrSkipFile(file)
 	if skipFile || err != nil {
 		return err
@@ -548,6 +558,27 @@ func (s *Step) LoadYAML(file string) error {
 			for _, resourceRef := range s.Assert.ResourceRefs {
 				if err := resourceRef.Validate(); err != nil {
 					errs = append(errs, fmt.Errorf("validation failed for reference '%v': %w", resourceRef.String(), err))
+				}
+			}
+
+			if len(errs) > 0 {
+				return fmt.Errorf("failed to load TestAssert object from %s: %w", file, errors.Join(errs...))
+			}
+
+			var assertions []*harness.Assertion
+			assertions = append(assertions, s.Assert.AssertAny...)
+			assertions = append(assertions, s.Assert.AssertAll...)
+
+			env, err := testutils.BuildEnv(s.Assert.ResourceRefs)
+			if err != nil {
+				return fmt.Errorf("failed to load TestAssert object from %s: %w", file, err)
+			}
+
+			for _, assertion := range assertions {
+				if prg, err := assertion.BuildProgram(env); err != nil {
+					errs = append(errs, err)
+				} else {
+					s.Programs[assertion.CELExpression] = prg
 				}
 			}
 
