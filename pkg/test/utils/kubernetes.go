@@ -1114,7 +1114,7 @@ func RunCommand(ctx context.Context, namespace string, cmd harness.Command, cwd 
 
 	kuttlENV := make(map[string]string)
 	kuttlENV["NAMESPACE"] = namespace
-	kuttlENV["KUBECONFIG"] = kubeconfigPath(actualDir, kubeconfigOverride)
+	kuttlENV["KUBECONFIG"] = KubeconfigPath(actualDir, kubeconfigOverride)
 	kuttlENV["PATH"] = fmt.Sprintf("%s/bin/:%s", actualDir, os.Getenv("PATH"))
 
 	// by default testsuite timeout is the command timeout
@@ -1183,7 +1183,7 @@ func RunCommand(ctx context.Context, namespace string, cmd harness.Command, cwd 
 	return nil, nil
 }
 
-func kubeconfigPath(actualDir, override string) string {
+func KubeconfigPath(actualDir, override string) string {
 	if override != "" {
 		if filepath.IsAbs(override) {
 			return override
@@ -1223,25 +1223,15 @@ func RunAssertCommands(ctx context.Context, logger Logger, namespace string, com
 func RunAssertExpressions(
 	ctx context.Context,
 	logger Logger,
+	cl client.Client,
+	programs map[string]cel.Program,
 	resourceRefs []harness.TestResourceRef,
 	assertAny,
-	assertAll []harness.Assertion,
-	kubeconfigOverride string,
+	assertAll []*harness.Assertion,
 ) []error {
 	errs := []error{}
 	if len(assertAny) == 0 && len(assertAll) == 0 {
 		return errs
-	}
-
-	actualDir, err := os.Getwd()
-	if err != nil {
-		return []error{fmt.Errorf("failed to get current working director: %w", err)}
-	}
-
-	kubeconfig := kubeconfigPath(actualDir, kubeconfigOverride)
-	cl, err := NewClient(kubeconfig, "")(false)
-	if err != nil {
-		return []error{fmt.Errorf("failed to construct client: %w", err)}
 	}
 
 	variables := make(map[string]interface{})
@@ -1258,38 +1248,43 @@ func RunAssertExpressions(
 		variables[resourceRef.Ref] = referencedResource.Object
 	}
 
-	env, err := cel.NewEnv()
-	if err != nil {
-		return []error{fmt.Errorf("failed to create environment: %w", err)}
-	}
-
-	for k := range variables {
-		env, err = env.Extend(cel.Variable(k, cel.DynType))
-		if err != nil {
-			return []error{fmt.Errorf("failed to add resource parameter '%v' to environment: %w", k, err)}
-		}
-	}
-
+	var anyExpressionsEvaluation, allExpressionsEvaluation []error
 	for _, expr := range assertAny {
-		ast, issues := env.Compile(string(expr.CELExpression))
-		if issues != nil && issues.Err() != nil {
-			return []error{fmt.Errorf("type-check error: %s", issues.Err())}
+		prg, ok := programs[expr.CELExpression]
+		if !ok {
+			return []error{fmt.Errorf("couldn't find pre-built program for expression: %v", expr.CELExpression)}
 		}
-
-		prg, err := env.Program(ast)
-		if err != nil {
-			return []error{fmt.Errorf("program construction error: %w", err)}
-		}
-
 		out, _, err := prg.Eval(variables)
 		if err != nil {
 			return []error{fmt.Errorf("failed to evaluate program: %w", err)}
 		}
 
-		logger.Logf("expression '%v' evaluated to '%v'", expr, out.Value())
 		if out.Value() != true {
-			errs = append(errs, fmt.Errorf("failed validation, expression '%v' evaluated to '%v'", expr, out.Value()))
+			anyExpressionsEvaluation = append(anyExpressionsEvaluation, fmt.Errorf("expression '%v' evaluated to '%v'", expr.CELExpression, out.Value()))
 		}
+	}
+
+	for _, expr := range assertAll {
+		prg, ok := programs[expr.CELExpression]
+		if !ok {
+			return []error{fmt.Errorf("couldn't find pre-built program for expression: %v", expr.CELExpression)}
+		}
+		out, _, err := prg.Eval(variables)
+		if err != nil {
+			return []error{fmt.Errorf("failed to evaluate program: %w", err)}
+		}
+
+		if out.Value() != true {
+			allExpressionsEvaluation = append(allExpressionsEvaluation, fmt.Errorf("expression '%v' evaluated to '%v'", expr.CELExpression, out.Value()))
+		}
+	}
+
+	if len(assertAny) != 0 && len(anyExpressionsEvaluation) == len(assertAny) {
+		errs = append(errs, fmt.Errorf("no expression evaluated to true: %w", errors.Join(anyExpressionsEvaluation...)))
+	}
+
+	if len(allExpressionsEvaluation) != len(assertAll) {
+		errs = append(errs, fmt.Errorf("not all expressions evaluated to true: %w", errors.Join(allExpressionsEvaluation...)))
 	}
 
 	return errs
