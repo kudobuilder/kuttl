@@ -441,7 +441,7 @@ func (s *Step) CheckAssertExpressions(
 		variables[resourceRef.Ref] = referencedResource.Object
 	}
 
-	return testutils.RunAssertExpressions(s.Programs, variables, assertAny, assertAll)
+	return expressions.RunAssertExpressions(s.Programs, variables, assertAny, assertAll)
 }
 
 // Check checks if the resources defined in Asserts and Errors are in the correct state.
