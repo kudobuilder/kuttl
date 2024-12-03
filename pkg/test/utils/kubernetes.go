@@ -19,7 +19,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/google/cel-go/cel"
 	"github.com/google/shlex"
 	"github.com/pmezard/go-difflib/difflib"
 	"github.com/spf13/pflag"
@@ -1216,60 +1215,6 @@ func convertAssertCommand(assertCommands []harness.TestAssertCommand, timeout in
 // RunAssertCommands runs a set of commands specified as TestAssertCommand
 func RunAssertCommands(ctx context.Context, logger Logger, namespace string, commands []harness.TestAssertCommand, workdir string, timeout int, kubeconfigOverride string) ([]*exec.Cmd, error) {
 	return RunCommands(ctx, logger, namespace, convertAssertCommand(commands, timeout), workdir, timeout, kubeconfigOverride)
-}
-
-// RunAssertExpressions evaluates a set of CEL expressions specified as AnyAllExpressions
-func RunAssertExpressions(
-	programs map[string]cel.Program,
-	variables map[string]interface{},
-	assertAny,
-	assertAll []*harness.Assertion,
-) []error {
-	var errs []error
-	if len(assertAny) == 0 && len(assertAll) == 0 {
-		return errs
-	}
-
-	var anyExpressionsEvaluation, allExpressionsEvaluation []error
-	for _, expr := range assertAny {
-		prg, ok := programs[expr.CELExpression]
-		if !ok {
-			return []error{fmt.Errorf("couldn't find pre-built program for expression: %v", expr.CELExpression)}
-		}
-		out, _, err := prg.Eval(variables)
-		if err != nil {
-			return []error{fmt.Errorf("failed to evaluate program: %w", err)}
-		}
-
-		if out.Value() != true {
-			anyExpressionsEvaluation = append(anyExpressionsEvaluation, fmt.Errorf("expression '%v' evaluated to '%v'", expr.CELExpression, out.Value()))
-		}
-	}
-
-	for _, expr := range assertAll {
-		prg, ok := programs[expr.CELExpression]
-		if !ok {
-			return []error{fmt.Errorf("couldn't find pre-built program for expression: %v", expr.CELExpression)}
-		}
-		out, _, err := prg.Eval(variables)
-		if err != nil {
-			return []error{fmt.Errorf("failed to evaluate program: %w", err)}
-		}
-
-		if out.Value() != true {
-			allExpressionsEvaluation = append(allExpressionsEvaluation, fmt.Errorf("expression '%v' evaluated to '%v'", expr.CELExpression, out.Value()))
-		}
-	}
-
-	if len(assertAny) != 0 && len(anyExpressionsEvaluation) == len(assertAny) {
-		errs = append(errs, fmt.Errorf("no expression evaluated to true: %w", errors.Join(anyExpressionsEvaluation...)))
-	}
-
-	if len(allExpressionsEvaluation) != len(assertAll) {
-		errs = append(errs, fmt.Errorf("not all expressions evaluated to true: %w", errors.Join(allExpressionsEvaluation...)))
-	}
-
-	return errs
 }
 
 // RunCommands runs a set of commands, returning any errors.
