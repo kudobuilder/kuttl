@@ -10,7 +10,6 @@ import (
 	"k8s.io/apimachinery/pkg/api/meta"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	harness "github.com/kudobuilder/kuttl/pkg/apis/testharness/v1beta1"
 	"github.com/kudobuilder/kuttl/pkg/kubernetes"
@@ -65,24 +64,6 @@ func TestNamespaced(t *testing.T) {
 			assert.Equal(t, test.namespace, m.GetNamespace())
 		})
 	}
-}
-
-func TestGETAPIResource(t *testing.T) {
-	fake := kubernetes.FakeDiscoveryClient()
-
-	apiResource, err := GetAPIResource(fake, schema.GroupVersionKind{
-		Kind:    "Pod",
-		Version: "v1",
-	})
-	assert.Nil(t, err)
-	assert.Equal(t, apiResource.Kind, "Pod")
-
-	_, err = GetAPIResource(fake, schema.GroupVersionKind{
-		Kind:    "NonExistentResourceType",
-		Version: "v1",
-	})
-	assert.NotNil(t, err)
-	assert.Equal(t, err.Error(), "resource type not found")
 }
 
 func TestKubeconfigPath(t *testing.T) {

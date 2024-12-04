@@ -20,7 +20,7 @@ import (
 	"github.com/kudobuilder/kuttl/pkg/kubernetes"
 )
 
-var testenv TestEnvironment
+var testenv kubernetes.TestEnvironment
 
 func TestMain(m *testing.M) {
 	var err error

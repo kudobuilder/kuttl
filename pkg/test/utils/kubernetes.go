@@ -10,59 +10,18 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
-	"strings"
 	"time"
 
 	"github.com/google/shlex"
 	"github.com/spf13/pflag"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/runtime/serializer/json"
-	"k8s.io/apimachinery/pkg/watch"
-	"k8s.io/client-go/discovery"
 	_ "k8s.io/client-go/plugin/pkg/client/auth" // package needed for auth providers like GCP
 	"k8s.io/client-go/rest"
 	api "k8s.io/client-go/tools/clientcmd/api/v1"
-	"sigs.k8s.io/controller-runtime/pkg/client"
-	"sigs.k8s.io/controller-runtime/pkg/envtest"
 
 	harness "github.com/kudobuilder/kuttl/pkg/apis/testharness/v1beta1"
 	"github.com/kudobuilder/kuttl/pkg/env"
 )
-
-// GetAPIResource returns the APIResource object for a specific GroupVersionKind.
-func GetAPIResource(dClient discovery.DiscoveryInterface, gvk schema.GroupVersionKind) (metav1.APIResource, error) {
-	resourceTypes, err := dClient.ServerResourcesForGroupVersion(gvk.GroupVersion().String())
-	if err != nil {
-		return metav1.APIResource{}, err
-	}
-
-	for _, resource := range resourceTypes.APIResources {
-		if !strings.EqualFold(resource.Kind, gvk.Kind) {
-			continue
-		}
-
-		return resource, nil
-	}
-
-	return metav1.APIResource{}, errors.New("resource type not found")
-}
-
-// Client is the controller-runtime Client interface with an added Watch method.
-type Client interface {
-	client.Client
-	// Watch watches a specific object and returns all events for it.
-	Watch(ctx context.Context, obj runtime.Object) (watch.Interface, error)
-}
-
-// TestEnvironment is a struct containing the envtest environment, Kubernetes config and clients.
-type TestEnvironment struct {
-	Environment     *envtest.Environment
-	Config          *rest.Config
-	Client          Client
-	DiscoveryClient discovery.DiscoveryInterface
-}
 
 // GetArgs parses a command line string into its arguments and appends a namespace if it is not already set.
 func GetArgs(ctx context.Context, cmd harness.Command, namespace string, envMap map[string]string) (*exec.Cmd, error) {

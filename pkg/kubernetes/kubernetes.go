@@ -1,7 +1,9 @@
 package kubernetes
 
 import (
+	"errors"
 	"fmt"
+	"strings"
 
 	v13 "k8s.io/api/apps/v1"
 	v14 "k8s.io/api/batch/v1"
@@ -20,8 +22,6 @@ import (
 	"k8s.io/client-go/tools/clientcmd"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/config"
-
-	"github.com/kudobuilder/kuttl/pkg/test/utils"
 )
 
 var ImpersonateAs = ""
@@ -75,7 +75,7 @@ func Namespaced(dClient discovery.DiscoveryInterface, obj runtime.Object, namesp
 		return m.GetName(), m.GetNamespace(), nil
 	}
 
-	resource, err := utils.GetAPIResource(dClient, obj.GetObjectKind().GroupVersionKind())
+	resource, err := GetAPIResource(dClient, obj.GetObjectKind().GroupVersionKind())
 	if err != nil {
 		return "", "", fmt.Errorf("retrieving API resource for %v failed: %v", obj.GetObjectKind().GroupVersionKind(), err)
 	}
@@ -179,4 +179,22 @@ func FakeDiscoveryClient() discovery.DiscoveryInterface {
 			},
 		},
 	}
+}
+
+// GetAPIResource returns the APIResource object for a specific GroupVersionKind.
+func GetAPIResource(dClient discovery.DiscoveryInterface, gvk schema.GroupVersionKind) (v12.APIResource, error) {
+	resourceTypes, err := dClient.ServerResourcesForGroupVersion(gvk.GroupVersion().String())
+	if err != nil {
+		return v12.APIResource{}, err
+	}
+
+	for _, resource := range resourceTypes.APIResources {
+		if !strings.EqualFold(resource.Kind, gvk.Kind) {
+			continue
+		}
+
+		return resource, nil
+	}
+
+	return v12.APIResource{}, errors.New("resource type not found")
 }
