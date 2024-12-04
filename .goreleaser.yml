@@ -1,3 +1,4 @@
+version: 2
 env:
   - GO111MODULE=on
   - CGO_ENABLED=0
@@ -68,7 +69,7 @@ brews:
       name: kudoreleasebot
       email: release@kudo.dev
     skip_upload: auto
-    folder: Formula
+    directory: Formula
     homepage: https://kuttl.dev
     description: Interact with KUTTL via the kubectl plugin
     dependencies:
@@ -78,7 +79,7 @@ brews:
 checksum:
   name_template: "checksums.txt"
 snapshot:
-  name_template: "{{ .Tag }}-next"
+  version_template: "{{ .Tag }}-next"
 
 release:
   github:

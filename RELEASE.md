@@ -41,6 +41,7 @@ The KUTTL Project is aiming to do monthly minor releases but the period could be
 1. Every release should have an appointed release manager (RM)
 1. RM is responsible for following the process below
 1. RM should announce the release in the public [#kudo slack channel](https://kubernetes.slack.com/messages/kudo/) at least two days prior to the date
+1. RM should make sure the installed `goreleaser` is compatible with the checked-in configuration, by running `goreleaser check` and `goreleaser healthcheck`
 1. RM makes sure all PRs that need to go into the release are:
    1. labeled with the `release/*` labels as appropriate (the release drafter GitHub Action depends on these)
    2. merged prior to the process starting
