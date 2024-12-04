@@ -1290,6 +1290,7 @@ func Kubeconfig(cfg *rest.Config, w io.Writer) error {
 					Server:                   cfg.Host,
 					CertificateAuthorityData: cfg.TLSClientConfig.CAData,
 					InsecureSkipTLSVerify:    cfg.TLSClientConfig.Insecure,
+					TLSServerName:            cfg.TLSClientConfig.ServerName,
 				},
 			},
 		},
