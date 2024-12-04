@@ -26,7 +26,7 @@ func TestValidate(t *testing.T) {
 				Ref:       "testPod",
 			},
 			errored:       true,
-			expectedError: apiVersionInvalidErr,
+			expectedError: errAPIVersionInvalid,
 		},
 		{
 			name: "apiVersion is invalid",
@@ -38,7 +38,7 @@ func TestValidate(t *testing.T) {
 				Ref:        "testPod",
 			},
 			errored:       true,
-			expectedError: apiVersionInvalidErr,
+			expectedError: errAPIVersionInvalid,
 		},
 		{
 			name: "apiVersion is valid and group is vacuous",
@@ -71,7 +71,7 @@ func TestValidate(t *testing.T) {
 				Ref:        "testDeployment",
 			},
 			errored:       true,
-			expectedError: kindNotSpecifiedErr,
+			expectedError: errKindNotSpecified,
 		},
 		{
 			name: "name is not specified",
@@ -82,7 +82,7 @@ func TestValidate(t *testing.T) {
 				Ref:        "testDeployment",
 			},
 			errored:       true,
-			expectedError: nameNotSpecifiedErr,
+			expectedError: errNameNotSpecified,
 		},
 		{
 			name: "ref is not specified",
@@ -93,7 +93,7 @@ func TestValidate(t *testing.T) {
 				Name:       "test-deployment",
 			},
 			errored:       true,
-			expectedError: refNotSpecifiedErr,
+			expectedError: errRefNotSpecified,
 		},
 		{
 			name: "all attributes are present and valid",
