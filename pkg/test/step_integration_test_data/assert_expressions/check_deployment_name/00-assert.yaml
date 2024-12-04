@@ -1,0 +1,11 @@
+apiVersion: kuttl.dev/v1beta1
+kind: TestAssert
+resourceRefs:
+  - apiVersion: apps/v1
+    kind: Deployment
+    namespace: kube-system
+    name: coredns
+    ref: coredns
+assertAll:
+  - celExpr: "coredns.metadata.name == 'coredns'"
+timeout: 1
