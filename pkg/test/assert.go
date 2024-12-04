@@ -9,7 +9,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/kudobuilder/kuttl/pkg/kubernetes"
-	testutils "github.com/kudobuilder/kuttl/pkg/test/utils"
 )
 
 // Assert checks all provided assert files against a namespace.  Upon assert failure, it prints the failures and returns an error
@@ -110,8 +109,8 @@ func Client(_ bool) (client.Client, error) {
 		return nil, err
 	}
 
-	client, err := testutils.NewRetryClient(cfg, client.Options{
-		Scheme: testutils.Scheme(),
+	client, err := kubernetes.NewRetryClient(cfg, client.Options{
+		Scheme: kubernetes.Scheme(),
 	})
 	if err != nil {
 		return nil, fmt.Errorf("fatal error getting client: %v", err)

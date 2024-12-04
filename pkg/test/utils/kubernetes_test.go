@@ -3,12 +3,8 @@ package utils
 import (
 	"bytes"
 	"context"
-	"errors"
 	"os"
 	"testing"
-	"time"
-
-	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/stretchr/testify/assert"
 	"k8s.io/apimachinery/pkg/api/meta"
@@ -17,10 +13,11 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	harness "github.com/kudobuilder/kuttl/pkg/apis/testharness/v1beta1"
+	"github.com/kudobuilder/kuttl/pkg/kubernetes"
 )
 
 func TestNamespaced(t *testing.T) {
-	fake := FakeDiscoveryClient()
+	fake := kubernetes.FakeDiscoveryClient()
 
 	for _, test := range []struct {
 		testName    string
@@ -30,22 +27,22 @@ func TestNamespaced(t *testing.T) {
 	}{
 		{
 			testName:  "namespaced resource",
-			resource:  NewPod("hello", ""),
+			resource:  kubernetes.NewPod("hello", ""),
 			namespace: "set-the-namespace",
 		},
 		{
 			testName:  "namespace already set",
-			resource:  NewPod("hello", "other"),
+			resource:  kubernetes.NewPod("hello", "other"),
 			namespace: "other",
 		},
 		{
 			testName:  "not-namespaced resource",
-			resource:  NewResource("v1", "Namespace", "hello", ""),
+			resource:  kubernetes.NewResource("v1", "Namespace", "hello", ""),
 			namespace: "",
 		},
 		{
 			testName:    "non-existent resource",
-			resource:    NewResource("v1", "Blah", "hello", ""),
+			resource:    kubernetes.NewResource("v1", "Blah", "hello", ""),
 			shouldError: true,
 		},
 	} {
@@ -54,7 +51,7 @@ func TestNamespaced(t *testing.T) {
 		t.Run(test.testName, func(t *testing.T) {
 			m, _ := meta.Accessor(test.resource)
 
-			actualName, actualNamespace, err := Namespaced(fake, test.resource, "set-the-namespace")
+			actualName, actualNamespace, err := kubernetes.Namespaced(fake, test.resource, "set-the-namespace")
 
 			if test.shouldError {
 				assert.NotNil(t, err)
@@ -71,7 +68,7 @@ func TestNamespaced(t *testing.T) {
 }
 
 func TestGETAPIResource(t *testing.T) {
-	fake := FakeDiscoveryClient()
+	fake := kubernetes.FakeDiscoveryClient()
 
 	apiResource, err := GetAPIResource(fake, schema.GroupVersionKind{
 		Kind:    "Pod",
@@ -86,37 +83,6 @@ func TestGETAPIResource(t *testing.T) {
 	})
 	assert.NotNil(t, err)
 	assert.Equal(t, err.Error(), "resource type not found")
-}
-
-func TestRetry(t *testing.T) {
-	index := 0
-
-	assert.Nil(t, retry(context.TODO(), func(context.Context) error {
-		index++
-		if index == 1 {
-			return errors.New("ignore this error")
-		}
-		return nil
-	}, func(err error) bool { return false }, func(err error) bool {
-		return err.Error() == "ignore this error"
-	}))
-
-	assert.Equal(t, 2, index)
-}
-
-func TestRetryWithUnexpectedError(t *testing.T) {
-	index := 0
-
-	assert.Equal(t, errors.New("bad error"), retry(context.TODO(), func(context.Context) error {
-		index++
-		if index == 1 {
-			return errors.New("bad error")
-		}
-		return nil
-	}, func(err error) bool { return false }, func(err error) bool {
-		return err.Error() == "ignore this error"
-	}))
-	assert.Equal(t, 1, index)
 }
 
 func TestKubeconfigPath(t *testing.T) {
@@ -138,33 +104,6 @@ func TestKubeconfigPath(t *testing.T) {
 			assert.Equal(t, tt.expected, result)
 		})
 	}
-}
-
-func TestRetryWithNil(t *testing.T) {
-	assert.Equal(t, nil, retry(context.TODO(), nil, isJSONSyntaxError))
-}
-
-func TestRetryWithNilFromFn(t *testing.T) {
-	assert.Equal(t, nil, retry(context.TODO(), func(ctx context.Context) error {
-		return nil
-	}, isJSONSyntaxError))
-}
-
-func TestRetryWithNilInFn(t *testing.T) {
-	c := RetryClient{}
-	var list client.ObjectList
-	assert.Error(t, retry(context.TODO(), func(ctx context.Context) error {
-		return c.Client.List(ctx, list)
-	}, isJSONSyntaxError))
-}
-
-func TestRetryWithTimeout(t *testing.T) {
-	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
-	defer cancel()
-
-	assert.Equal(t, errors.New("error"), retry(ctx, func(context.Context) error {
-		return errors.New("error")
-	}, func(err error) bool { return true }))
 }
 
 func TestLoadYAML(t *testing.T) {
@@ -198,7 +137,7 @@ spec:
 		t.Fatal(err)
 	}
 
-	objs, err := LoadYAMLFromFile(tmpfile.Name())
+	objs, err := kubernetes.LoadYAMLFromFile(tmpfile.Name())
 	assert.Nil(t, err)
 
 	assert.Equal(t, &unstructured.Unstructured{
@@ -267,24 +206,24 @@ metadata:
 		t.Fatal(err)
 	}
 
-	objs, err := LoadYAMLFromFile(tmpfile.Name())
+	objs, err := kubernetes.LoadYAMLFromFile(tmpfile.Name())
 	assert.Nil(t, err)
 
-	crd := NewResource("apiextensions.k8s.io/v1beta1", "CustomResourceDefinition", "", "")
-	pod := NewResource("v1", "Pod", "", "")
-	svc := NewResource("v1", "Service", "", "")
+	crd := kubernetes.NewResource("apiextensions.k8s.io/v1beta1", "CustomResourceDefinition", "", "")
+	pod := kubernetes.NewResource("v1", "Pod", "", "")
+	svc := kubernetes.NewResource("v1", "Service", "", "")
 
-	assert.False(t, MatchesKind(objs[0], crd))
-	assert.True(t, MatchesKind(objs[0], pod))
-	assert.True(t, MatchesKind(objs[0], pod, crd))
-	assert.True(t, MatchesKind(objs[0], crd, pod))
-	assert.False(t, MatchesKind(objs[0], crd, svc))
+	assert.False(t, kubernetes.MatchesKind(objs[0], crd))
+	assert.True(t, kubernetes.MatchesKind(objs[0], pod))
+	assert.True(t, kubernetes.MatchesKind(objs[0], pod, crd))
+	assert.True(t, kubernetes.MatchesKind(objs[0], crd, pod))
+	assert.False(t, kubernetes.MatchesKind(objs[0], crd, svc))
 
-	assert.True(t, MatchesKind(objs[1], crd))
-	assert.False(t, MatchesKind(objs[1], pod))
-	assert.True(t, MatchesKind(objs[1], pod, crd))
-	assert.True(t, MatchesKind(objs[1], crd, pod))
-	assert.False(t, MatchesKind(objs[1], svc, pod))
+	assert.True(t, kubernetes.MatchesKind(objs[1], crd))
+	assert.False(t, kubernetes.MatchesKind(objs[1], pod))
+	assert.True(t, kubernetes.MatchesKind(objs[1], pod, crd))
+	assert.True(t, kubernetes.MatchesKind(objs[1], crd, pod))
+	assert.False(t, kubernetes.MatchesKind(objs[1], svc, pod))
 }
 
 func TestGetKubectlArgs(t *testing.T) {
@@ -517,14 +456,14 @@ func TestRunScript(t *testing.T) {
 }
 
 func TestPrettyDiff(t *testing.T) {
-	actual, err := LoadYAMLFromFile("test_data/prettydiff-actual.yaml")
+	actual, err := kubernetes.LoadYAMLFromFile("test_data/prettydiff-actual.yaml")
 	assert.NoError(t, err)
 	assert.Len(t, actual, 1)
-	expected, err := LoadYAMLFromFile("test_data/prettydiff-expected.yaml")
+	expected, err := kubernetes.LoadYAMLFromFile("test_data/prettydiff-expected.yaml")
 	assert.NoError(t, err)
 	assert.Len(t, expected, 1)
 
-	result, err := PrettyDiff(expected[0].(*unstructured.Unstructured), actual[0].(*unstructured.Unstructured))
+	result, err := kubernetes.PrettyDiff(expected[0].(*unstructured.Unstructured), actual[0].(*unstructured.Unstructured))
 	assert.NoError(t, err)
 	assert.Equal(t, `--- Deployment:/central
 +++ Deployment:kuttl-test-thorough-hermit/central

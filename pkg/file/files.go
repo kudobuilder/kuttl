@@ -8,7 +8,7 @@ import (
 
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
-	testutils "github.com/kudobuilder/kuttl/pkg/test/utils"
+	"github.com/kudobuilder/kuttl/pkg/kubernetes"
 )
 
 // from a list of paths, returns an array of runtime objects
@@ -16,7 +16,7 @@ func ToObjects(paths []string) ([]client.Object, error) {
 	apply := []client.Object{}
 
 	for _, path := range paths {
-		objs, err := testutils.LoadYAMLFromFile(path)
+		objs, err := kubernetes.LoadYAMLFromFile(path)
 		if err != nil {
 			return nil, fmt.Errorf("file %q load yaml error: %w", path, err)
 		}

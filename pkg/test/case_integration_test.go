@@ -9,6 +9,7 @@ import (
 	"k8s.io/client-go/discovery"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
+	"github.com/kudobuilder/kuttl/pkg/kubernetes"
 	"github.com/kudobuilder/kuttl/pkg/report"
 	testutils "github.com/kudobuilder/kuttl/pkg/test/utils"
 )
@@ -16,7 +17,7 @@ import (
 // Create two test environments, ensure that the second environment is used when
 // Kubeconfig is set on a Step.
 func TestMultiClusterCase(t *testing.T) {
-	testenv, err := testutils.StartTestEnvironment(false)
+	testenv, err := kubernetes.StartTestEnvironment(false)
 	if err != nil {
 		t.Error(err)
 		return
@@ -27,7 +28,7 @@ func TestMultiClusterCase(t *testing.T) {
 		}
 	})
 
-	testenv2, err := testutils.StartTestEnvironment(false)
+	testenv2, err := kubernetes.StartTestEnvironment(false)
 	if err != nil {
 		t.Error(err)
 		return
@@ -69,10 +70,10 @@ func TestMultiClusterCase(t *testing.T) {
 				Name:  "initialize-testenv",
 				Index: 0,
 				Apply: []client.Object{
-					testutils.WithSpec(t, testutils.NewPod("hello", ""), podSpec),
+					kubernetes.WithSpec(t, kubernetes.NewPod("hello", ""), podSpec),
 				},
 				Asserts: []client.Object{
-					testutils.WithSpec(t, testutils.NewPod("hello", ""), podSpec),
+					kubernetes.WithSpec(t, kubernetes.NewPod("hello", ""), podSpec),
 				},
 				Timeout: 2,
 			},
@@ -80,13 +81,13 @@ func TestMultiClusterCase(t *testing.T) {
 				Name:  "use-testenv2",
 				Index: 1,
 				Apply: []client.Object{
-					testutils.WithSpec(t, testutils.NewPod("hello2", ""), podSpec),
+					kubernetes.WithSpec(t, kubernetes.NewPod("hello2", ""), podSpec),
 				},
 				Asserts: []client.Object{
-					testutils.WithSpec(t, testutils.NewPod("hello2", ""), podSpec),
+					kubernetes.WithSpec(t, kubernetes.NewPod("hello2", ""), podSpec),
 				},
 				Errors: []client.Object{
-					testutils.WithSpec(t, testutils.NewPod("hello", ""), podSpec),
+					kubernetes.WithSpec(t, kubernetes.NewPod("hello", ""), podSpec),
 				},
 				Timeout:    2,
 				Kubeconfig: tmpfile.Name(),
@@ -95,10 +96,10 @@ func TestMultiClusterCase(t *testing.T) {
 				Name:  "verify-testenv-does-not-have-testenv2-resources",
 				Index: 2,
 				Asserts: []client.Object{
-					testutils.WithSpec(t, testutils.NewPod("hello", ""), podSpec),
+					kubernetes.WithSpec(t, kubernetes.NewPod("hello", ""), podSpec),
 				},
 				Errors: []client.Object{
-					testutils.WithSpec(t, testutils.NewPod("hello2", ""), podSpec),
+					kubernetes.WithSpec(t, kubernetes.NewPod("hello2", ""), podSpec),
 				},
 				Timeout: 2,
 			},

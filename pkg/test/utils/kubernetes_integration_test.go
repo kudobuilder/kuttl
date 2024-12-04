@@ -17,6 +17,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	harness "github.com/kudobuilder/kuttl/pkg/apis/testharness/v1beta1"
+	"github.com/kudobuilder/kuttl/pkg/kubernetes"
 )
 
 var testenv TestEnvironment
@@ -24,7 +25,7 @@ var testenv TestEnvironment
 func TestMain(m *testing.M) {
 	var err error
 
-	testenv, err = StartTestEnvironment(false)
+	testenv, err = kubernetes.StartTestEnvironment(false)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -38,12 +39,12 @@ func TestCreateOrUpdate(t *testing.T) {
 	// Run the test a bunch of times to try to trigger a conflict and ensure that it handles conflicts properly.
 	for i := 0; i < 10; i++ {
 		namespaceName := fmt.Sprintf("default-%d", i)
-		namespaceObj := NewResource("v1", "Namespace", namespaceName, "default")
+		namespaceObj := kubernetes.NewResource("v1", "Namespace", namespaceName, "default")
 
-		_, err := CreateOrUpdate(context.TODO(), testenv.Client, namespaceObj, true)
+		_, err := kubernetes.CreateOrUpdate(context.TODO(), testenv.Client, namespaceObj, true)
 		assert.Nil(t, err)
 
-		depToUpdate := WithSpec(t, NewPod("update-me", namespaceName), map[string]interface{}{
+		depToUpdate := kubernetes.WithSpec(t, kubernetes.NewPod("update-me", namespaceName), map[string]interface{}{
 			"containers": []map[string]interface{}{
 				{
 					"image": "nginx",
@@ -52,7 +53,7 @@ func TestCreateOrUpdate(t *testing.T) {
 			},
 		})
 
-		_, err = CreateOrUpdate(context.TODO(), testenv.Client, SetAnnotation(depToUpdate, "test", "hi"), true)
+		_, err = kubernetes.CreateOrUpdate(context.TODO(), testenv.Client, kubernetes.SetAnnotation(depToUpdate, "test", "hi"), true)
 		assert.Nil(t, err)
 
 		quit := make(chan bool)
@@ -63,7 +64,7 @@ func TestCreateOrUpdate(t *testing.T) {
 				case <-quit:
 					return
 				default:
-					CreateOrUpdate(context.TODO(), testenv.Client, SetAnnotation(depToUpdate, "test", fmt.Sprintf("%d", i)), false)
+					kubernetes.CreateOrUpdate(context.TODO(), testenv.Client, kubernetes.SetAnnotation(depToUpdate, "test", fmt.Sprintf("%d", i)), false)
 					time.Sleep(time.Millisecond * 75)
 				}
 			}
@@ -71,7 +72,7 @@ func TestCreateOrUpdate(t *testing.T) {
 
 		time.Sleep(time.Millisecond * 50)
 
-		_, err = CreateOrUpdate(context.TODO(), testenv.Client, SetAnnotation(depToUpdate, "test", "hello"), true)
+		_, err = kubernetes.CreateOrUpdate(context.TODO(), testenv.Client, kubernetes.SetAnnotation(depToUpdate, "test", "hello"), true)
 		assert.Nil(t, err)
 
 		quit <- true
@@ -79,7 +80,7 @@ func TestCreateOrUpdate(t *testing.T) {
 }
 
 func TestClientWatch(t *testing.T) {
-	pod := WithSpec(t, NewPod("my-pod", "default"), map[string]interface{}{
+	pod := kubernetes.WithSpec(t, kubernetes.NewPod("my-pod", "default"), map[string]interface{}{
 		"containers": []map[string]interface{}{
 			{
 				"image": "nginx",
@@ -103,17 +104,17 @@ func TestClientWatch(t *testing.T) {
 	event := <-eventCh
 	assert.Equal(t, watch.EventType("ADDED"), event.Type)
 	assert.Equal(t, gvk, event.Object.GetObjectKind().GroupVersionKind())
-	assert.Equal(t, client.ObjectKey{Namespace: "default", Name: "my-pod"}, ObjectKey(event.Object))
+	assert.Equal(t, client.ObjectKey{Namespace: "default", Name: "my-pod"}, kubernetes.ObjectKey(event.Object))
 
 	event = <-eventCh
 	assert.Equal(t, watch.EventType("MODIFIED"), event.Type)
 	assert.Equal(t, gvk, event.Object.GetObjectKind().GroupVersionKind())
-	assert.Equal(t, client.ObjectKey{Namespace: "default", Name: "my-pod"}, ObjectKey(event.Object))
+	assert.Equal(t, client.ObjectKey{Namespace: "default", Name: "my-pod"}, kubernetes.ObjectKey(event.Object))
 
 	event = <-eventCh
 	assert.Equal(t, watch.EventType("DELETED"), event.Type)
 	assert.Equal(t, gvk, event.Object.GetObjectKind().GroupVersionKind())
-	assert.Equal(t, client.ObjectKey{Namespace: "default", Name: "my-pod"}, ObjectKey(event.Object))
+	assert.Equal(t, client.ObjectKey{Namespace: "default", Name: "my-pod"}, kubernetes.ObjectKey(event.Object))
 
 	events.Stop()
 }

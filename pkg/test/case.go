@@ -532,8 +532,8 @@ func newClient(kubeconfig, context string) func(bool) (client.Client, error) {
 			return nil, err
 		}
 
-		return testutils.NewRetryClient(config, client.Options{
-			Scheme: testutils.Scheme(),
+		return kubernetes.NewRetryClient(config, client.Options{
+			Scheme: kubernetes.Scheme(),
 		})
 	}
 }

@@ -25,6 +25,7 @@ import (
 	"github.com/kudobuilder/kuttl/pkg/env"
 	kfile "github.com/kudobuilder/kuttl/pkg/file"
 	"github.com/kudobuilder/kuttl/pkg/http"
+	"github.com/kudobuilder/kuttl/pkg/kubernetes"
 	testutils "github.com/kudobuilder/kuttl/pkg/test/utils"
 )
 
@@ -74,7 +75,7 @@ func (s *Step) Clean(namespace string) error {
 	}
 
 	for _, obj := range s.Apply {
-		_, _, err := testutils.Namespaced(dClient, obj, namespace)
+		_, _, err := kubernetes.Namespaced(dClient, obj, namespace)
 		if err != nil {
 			return err
 		}
@@ -108,14 +109,14 @@ func (s *Step) DeleteExisting(namespace string) error {
 	for _, ref := range s.Step.Delete {
 		gvk := ref.GroupVersionKind()
 
-		obj := testutils.NewResource(gvk.GroupVersion().String(), gvk.Kind, ref.Name, "")
+		obj := kubernetes.NewResource(gvk.GroupVersion().String(), gvk.Kind, ref.Name, "")
 
 		objNs := namespace
 		if ref.Namespace != "" {
 			objNs = ref.Namespace
 		}
 
-		_, objNs, err := testutils.Namespaced(dClient, obj, objNs)
+		_, objNs, err := kubernetes.Namespaced(dClient, obj, objNs)
 		if err != nil {
 			return err
 		}
@@ -165,7 +166,7 @@ func (s *Step) DeleteExisting(namespace string) error {
 		for _, obj := range toDelete {
 			actual := &unstructured.Unstructured{}
 			actual.SetGroupVersionKind(obj.GetObjectKind().GroupVersionKind())
-			err = cl.Get(ctx, testutils.ObjectKey(obj), actual)
+			err = cl.Get(ctx, kubernetes.ObjectKey(obj), actual)
 			if err == nil || !k8serrors.IsNotFound(err) {
 				return false, err
 			}
@@ -190,7 +191,7 @@ func (s *Step) Create(test *testing.T, namespace string) []error {
 	errors := []error{}
 
 	for _, obj := range s.Apply {
-		_, _, err := testutils.Namespaced(dClient, obj, namespace)
+		_, _, err := kubernetes.Namespaced(dClient, obj, namespace)
 		if err != nil {
 			errors = append(errors, err)
 			continue
@@ -202,7 +203,7 @@ func (s *Step) Create(test *testing.T, namespace string) []error {
 			defer cancel()
 		}
 
-		if updated, err := testutils.CreateOrUpdate(ctx, cl, obj, true); err != nil {
+		if updated, err := kubernetes.CreateOrUpdate(ctx, cl, obj, true); err != nil {
 			errors = append(errors, err)
 		} else {
 			// if the object was created, register cleanup
@@ -218,7 +219,7 @@ func (s *Step) Create(test *testing.T, namespace string) []error {
 			if updated {
 				action = "updated"
 			}
-			s.Logger.Log(testutils.ResourceID(obj), action)
+			s.Logger.Log(kubernetes.ResourceID(obj), action)
 		}
 	}
 
@@ -268,7 +269,7 @@ func (s *Step) CheckResource(expected runtime.Object, namespace string) []error 
 
 	testErrors := []error{}
 
-	name, namespace, err := testutils.Namespaced(dClient, expected, namespace)
+	name, namespace, err := kubernetes.Namespaced(dClient, expected, namespace)
 	if err != nil {
 		return append(testErrors, err)
 	}
@@ -312,7 +313,7 @@ func (s *Step) CheckResource(expected runtime.Object, namespace string) []error 
 		tmpTestErrors := []error{}
 
 		if err := testutils.IsSubset(expectedObj, actual.UnstructuredContent()); err != nil {
-			diff, diffErr := testutils.PrettyDiff(
+			diff, diffErr := kubernetes.PrettyDiff(
 				&unstructured.Unstructured{Object: expectedObj}, &actual)
 			if diffErr == nil {
 				tmpTestErrors = append(tmpTestErrors, fmt.Errorf(diff))
@@ -320,7 +321,7 @@ func (s *Step) CheckResource(expected runtime.Object, namespace string) []error 
 				tmpTestErrors = append(tmpTestErrors, diffErr)
 			}
 
-			tmpTestErrors = append(tmpTestErrors, fmt.Errorf("resource %s: %s", testutils.ResourceID(expected), err))
+			tmpTestErrors = append(tmpTestErrors, fmt.Errorf("resource %s: %s", kubernetes.ResourceID(expected), err))
 		}
 
 		if len(tmpTestErrors) == 0 {
@@ -345,7 +346,7 @@ func (s *Step) CheckResourceAbsent(expected runtime.Object, namespace string) er
 		return err
 	}
 
-	name, namespace, err := testutils.Namespaced(dClient, expected, namespace)
+	name, namespace, err := kubernetes.Namespaced(dClient, expected, namespace)
 	if err != nil {
 		return err
 	}
@@ -608,7 +609,7 @@ func (s *Step) LoadYAML(file string) error {
 }
 
 func (s *Step) loadOrSkipFile(file string) (bool, []client.Object, error) {
-	loadedObjects, err := testutils.LoadYAMLFromFile(file)
+	loadedObjects, err := kubernetes.LoadYAMLFromFile(file)
 	if err != nil {
 		return false, nil, fmt.Errorf("loading %s: %s", file, err)
 	}
