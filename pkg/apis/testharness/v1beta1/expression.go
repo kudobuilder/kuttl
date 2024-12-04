@@ -10,6 +10,13 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 )
 
+var (
+	apiVersionInvalidErr = errors.New("apiVersion not of the format (<group>/)<version>")
+	kindNotSpecifiedErr  = errors.New("kind not specified")
+	nameNotSpecifiedErr  = errors.New("name not specified")
+	refNotSpecifiedErr   = errors.New("ref not specified")
+)
+
 func (t *TestResourceRef) BuildResourceReference() (namespacedName types.NamespacedName, referencedResource *unstructured.Unstructured) {
 	referencedResource = &unstructured.Unstructured{}
 	apiVersionSplit := strings.Split(t.APIVersion, "/")
@@ -34,13 +41,13 @@ func (t *TestResourceRef) Validate() error {
 	apiVersionSplit := strings.Split(t.APIVersion, "/")
 	switch {
 	case t.APIVersion == "" || (len(apiVersionSplit) != 1 && len(apiVersionSplit) != 2):
-		return fmt.Errorf("apiVersion '%v' not of the format (<group>/)<version>", t.APIVersion)
+		return apiVersionInvalidErr
 	case t.Kind == "":
-		return errors.New("kind not specified")
+		return kindNotSpecifiedErr
 	case t.Name == "":
-		return errors.New("name not specified")
+		return nameNotSpecifiedErr
 	case t.Ref == "":
-		return errors.New("ref not specified")
+		return refNotSpecifiedErr
 	}
 
 	return nil
