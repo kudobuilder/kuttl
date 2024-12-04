@@ -11,10 +11,10 @@ import (
 )
 
 var (
-	apiVersionInvalidErr = errors.New("apiVersion not of the format (<group>/)<version>")
-	kindNotSpecifiedErr  = errors.New("kind not specified")
-	nameNotSpecifiedErr  = errors.New("name not specified")
-	refNotSpecifiedErr   = errors.New("ref not specified")
+	errAPIVersionInvalid = errors.New("apiVersion not of the format (<group>/)<version>")
+	errKindNotSpecified  = errors.New("kind not specified")
+	errNameNotSpecified  = errors.New("name not specified")
+	errRefNotSpecified   = errors.New("ref not specified")
 )
 
 func (t *TestResourceRef) BuildResourceReference() (namespacedName types.NamespacedName, referencedResource *unstructured.Unstructured) {
@@ -41,13 +41,13 @@ func (t *TestResourceRef) Validate() error {
 	apiVersionSplit := strings.Split(t.APIVersion, "/")
 	switch {
 	case t.APIVersion == "" || (len(apiVersionSplit) != 1 && len(apiVersionSplit) != 2):
-		return apiVersionInvalidErr
+		return errAPIVersionInvalid
 	case t.Kind == "":
-		return kindNotSpecifiedErr
+		return errKindNotSpecified
 	case t.Name == "":
-		return nameNotSpecifiedErr
+		return errNameNotSpecified
 	case t.Ref == "":
-		return refNotSpecifiedErr
+		return errRefNotSpecified
 	}
 
 	return nil

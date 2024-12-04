@@ -95,7 +95,7 @@ func TestAssertExpressions(t *testing.T) {
 
 			fName := fmt.Sprintf(
 				"step_integration_test_data/assert_expressions/%s/00-assert.yaml",
-				strings.Replace(tc.name, " ", "_", -1),
+				strings.ReplaceAll(tc.name, " ", "_"),
 			)
 
 			// Load test that has an invalid expression
