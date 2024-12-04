@@ -3,9 +3,9 @@ package kubernetes
 import (
 	"testing"
 
-	"k8s.io/api/rbac/v1"
+	rbacv1 "k8s.io/api/rbac/v1"
 	"k8s.io/apimachinery/pkg/api/meta"
-	v12 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 )
@@ -33,16 +33,16 @@ func NewResource(apiVersion, kind, name, namespace string) *unstructured.Unstruc
 
 // NewClusterRoleBinding Create a clusterrolebinding for the serviceAccount passed
 func NewClusterRoleBinding(apiVersion, kind, name, namespace string, serviceAccount string, roleName string) runtime.Object {
-	sa := &v1.ClusterRoleBinding{
-		ObjectMeta: v12.ObjectMeta{
+	sa := &rbacv1.ClusterRoleBinding{
+		ObjectMeta: metav1.ObjectMeta{
 			Name: name,
 		},
-		RoleRef: v1.RoleRef{
+		RoleRef: rbacv1.RoleRef{
 			APIGroup: "rbac.authorization.k8s.io",
 			Kind:     "ClusterRole",
 			Name:     roleName,
 		},
-		Subjects: []v1.Subject{{
+		Subjects: []rbacv1.Subject{{
 			Kind:      "ServiceAccount",
 			Name:      serviceAccount,
 			Namespace: namespace,

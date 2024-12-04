@@ -4,7 +4,7 @@ import (
 	"context"
 	"time"
 
-	"k8s.io/api/core/v1"
+	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -39,7 +39,7 @@ func WaitForSA(config *rest.Config, name, namespace string) error {
 		return err
 	}
 
-	obj := &v1.ServiceAccount{}
+	obj := &corev1.ServiceAccount{}
 
 	key := client.ObjectKey{
 		Namespace: namespace,

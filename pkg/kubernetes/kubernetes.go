@@ -5,14 +5,14 @@ import (
 	"fmt"
 	"strings"
 
-	v13 "k8s.io/api/apps/v1"
-	v14 "k8s.io/api/batch/v1"
+	appsv1 "k8s.io/api/apps/v1"
+	batchv1 "k8s.io/api/batch/v1"
 	"k8s.io/api/batch/v1beta1"
-	"k8s.io/api/core/v1"
-	v15 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
-	v1beta12 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1beta1"
+	corev1 "k8s.io/api/core/v1"
+	apiextv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
+	apiextv1beta1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1beta1"
 	"k8s.io/apimachinery/pkg/api/meta"
-	v12 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/discovery"
@@ -112,8 +112,8 @@ func ObjectKey(obj runtime.Object) client.ObjectKey {
 
 // NewV1Pod returns a new corev1.Pod object.
 // Each of name, namespace and serviceAccountName are set if non-empty.
-func NewV1Pod(name, namespace, serviceAccountName string) *v1.Pod {
-	pod := v1.Pod{}
+func NewV1Pod(name, namespace, serviceAccountName string) *corev1.Pod {
+	pod := corev1.Pod{}
 	pod.SetGroupVersionKind(schema.GroupVersionKind{
 		Group:   "",
 		Version: "v1",
@@ -136,43 +136,43 @@ func NewV1Pod(name, namespace, serviceAccountName string) *v1.Pod {
 func FakeDiscoveryClient() discovery.DiscoveryInterface {
 	return &fake.FakeDiscovery{
 		Fake: &testing.Fake{
-			Resources: []*v12.APIResourceList{
+			Resources: []*metav1.APIResourceList{
 				{
-					GroupVersion: v1.SchemeGroupVersion.String(),
-					APIResources: []v12.APIResource{
+					GroupVersion: corev1.SchemeGroupVersion.String(),
+					APIResources: []metav1.APIResource{
 						{Name: "pod", Namespaced: true, Kind: "Pod"},
 						{Name: "namespace", Namespaced: false, Kind: "Namespace"},
 						{Name: "service", Namespaced: true, Kind: "Service"},
 					},
 				},
 				{
-					GroupVersion: v13.SchemeGroupVersion.String(),
-					APIResources: []v12.APIResource{
+					GroupVersion: appsv1.SchemeGroupVersion.String(),
+					APIResources: []metav1.APIResource{
 						{Name: "statefulset", Namespaced: true, Kind: "StatefulSet"},
 						{Name: "deployment", Namespaced: true, Kind: "Deployment"},
 					},
 				},
 				{
-					GroupVersion: v14.SchemeGroupVersion.String(),
-					APIResources: []v12.APIResource{
+					GroupVersion: batchv1.SchemeGroupVersion.String(),
+					APIResources: []metav1.APIResource{
 						{Name: "job", Namespaced: true, Kind: "Job"},
 					},
 				},
 				{
 					GroupVersion: v1beta1.SchemeGroupVersion.String(),
-					APIResources: []v12.APIResource{
+					APIResources: []metav1.APIResource{
 						{Name: "job", Namespaced: true, Kind: "CronJob"},
 					},
 				},
 				{
-					GroupVersion: v15.SchemeGroupVersion.String(),
-					APIResources: []v12.APIResource{
+					GroupVersion: apiextv1.SchemeGroupVersion.String(),
+					APIResources: []metav1.APIResource{
 						{Name: "customresourcedefinitions", Namespaced: false, Kind: "CustomResourceDefinition"},
 					},
 				},
 				{
-					GroupVersion: v1beta12.SchemeGroupVersion.String(),
-					APIResources: []v12.APIResource{
+					GroupVersion: apiextv1beta1.SchemeGroupVersion.String(),
+					APIResources: []metav1.APIResource{
 						{Name: "customresourcedefinitions", Namespaced: false, Kind: "CustomResourceDefinition"},
 					},
 				},
@@ -182,10 +182,10 @@ func FakeDiscoveryClient() discovery.DiscoveryInterface {
 }
 
 // GetAPIResource returns the APIResource object for a specific GroupVersionKind.
-func GetAPIResource(dClient discovery.DiscoveryInterface, gvk schema.GroupVersionKind) (v12.APIResource, error) {
+func GetAPIResource(dClient discovery.DiscoveryInterface, gvk schema.GroupVersionKind) (metav1.APIResource, error) {
 	resourceTypes, err := dClient.ServerResourcesForGroupVersion(gvk.GroupVersion().String())
 	if err != nil {
-		return v12.APIResource{}, err
+		return metav1.APIResource{}, err
 	}
 
 	for _, resource := range resourceTypes.APIResources {
@@ -196,5 +196,5 @@ func GetAPIResource(dClient discovery.DiscoveryInterface, gvk schema.GroupVersio
 		return resource, nil
 	}
 
-	return v12.APIResource{}, errors.New("resource type not found")
+	return metav1.APIResource{}, errors.New("resource type not found")
 }

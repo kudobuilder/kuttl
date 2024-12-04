@@ -11,7 +11,7 @@ import (
 
 	"github.com/pmezard/go-difflib/difflib"
 	"k8s.io/apimachinery/pkg/api/meta"
-	"k8s.io/apimachinery/pkg/apis/meta/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/serializer/json"
@@ -151,7 +151,7 @@ func cleanObjectForMarshalling(o runtime.Object) (runtime.Object, error) {
 	}
 
 	meta.SetResourceVersion("")
-	meta.SetCreationTimestamp(v1.Time{})
+	meta.SetCreationTimestamp(metav1.Time{})
 	meta.SetSelfLink("")
 	meta.SetUID(types.UID(""))
 	meta.SetGeneration(0)

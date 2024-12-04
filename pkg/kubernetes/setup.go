@@ -8,8 +8,8 @@ import (
 	"path/filepath"
 	"strings"
 
-	"k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
-	v12 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	apiextv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/watch"
 	"k8s.io/client-go/discovery"
@@ -19,8 +19,8 @@ import (
 )
 
 // InstallManifests recurses over ManifestsDir to install all resources defined in YAML manifests.
-func InstallManifests(ctx context.Context, c client.Client, dClient discovery.DiscoveryInterface, manifestsDir string, kinds ...runtime.Object) ([]*v1.CustomResourceDefinition, error) {
-	crds := []*v1.CustomResourceDefinition{}
+func InstallManifests(ctx context.Context, c client.Client, dClient discovery.DiscoveryInterface, manifestsDir string, kinds ...runtime.Object) ([]*apiextv1.CustomResourceDefinition, error) {
+	crds := []*apiextv1.CustomResourceDefinition{}
 
 	if manifestsDir == "" {
 		return crds, nil
@@ -80,12 +80,12 @@ func InstallManifests(ctx context.Context, c client.Client, dClient discovery.Di
 			// TODO: use test logger instead of Go logger
 			log.Println(ResourceID(obj), action)
 
-			newCrd := v1.CustomResourceDefinition{
-				TypeMeta: v12.TypeMeta{
+			newCrd := apiextv1.CustomResourceDefinition{
+				TypeMeta: metav1.TypeMeta{
 					Kind:       obj.GetObjectKind().GroupVersionKind().Kind,
 					APIVersion: obj.GetObjectKind().GroupVersionKind().Version,
 				},
-				ObjectMeta: v12.ObjectMeta{
+				ObjectMeta: metav1.ObjectMeta{
 					Name: obj.GetName(),
 				},
 			}

@@ -6,9 +6,9 @@ import (
 	"errors"
 	"log"
 
-	errors2 "k8s.io/apimachinery/pkg/api/errors"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/meta"
-	"k8s.io/apimachinery/pkg/apis/meta/v1"
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -296,10 +296,10 @@ func patchObject(actual, expected runtime.Object) error {
 func CreateOrUpdate(ctx context.Context, cl client.Client, obj client.Object, retryOnError bool) (updated bool, err error) {
 	orig := obj.DeepCopyObject()
 
-	validators := []func(err error) bool{errors2.IsAlreadyExists}
+	validators := []func(err error) bool{apierrors.IsAlreadyExists}
 
 	if retryOnError {
-		validators = append(validators, errors2.IsConflict)
+		validators = append(validators, apierrors.IsConflict)
 	}
 	err = retry(ctx, func(ctx context.Context) error {
 		expected := orig.DeepCopyObject()
@@ -320,7 +320,7 @@ func CreateOrUpdate(ctx context.Context, cl client.Client, obj client.Object, re
 
 			err = cl.Patch(ctx, actual, client.RawPatch(types.MergePatchType, expectedBytes))
 			updated = true
-		} else if errors2.IsNotFound(err) {
+		} else if apierrors.IsNotFound(err) {
 			err = cl.Create(ctx, obj)
 			updated = false
 		}
