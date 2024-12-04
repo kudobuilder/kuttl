@@ -64,15 +64,15 @@ var schemeLock sync.Once
 
 // TODO (kensipe): need to consider options around AlwaysAdmin https://github.com/kudobuilder/kudo/pull/1420/files#r391449597
 
-// IsJSONSyntaxError returns true if the error is a JSON syntax error.
-func IsJSONSyntaxError(err error) bool {
+// isJSONSyntaxError returns true if the error is a JSON syntax error.
+func isJSONSyntaxError(err error) bool {
 	_, ok := err.(*ejson.SyntaxError)
 	return ok
 }
 
-// ValidateErrors accepts an error as its first argument and passes it to each function in the errValidationFuncs slice,
+// validateErrors accepts an error as its first argument and passes it to each function in the errValidationFuncs slice,
 // if any of the methods returns true, the method returns nil, otherwise it returns the original error.
-func ValidateErrors(err error, errValidationFuncs ...func(error) bool) error {
+func validateErrors(err error, errValidationFuncs ...func(error) bool) error {
 	for _, errFunc := range errValidationFuncs {
 		if errFunc(err) {
 			return nil
@@ -82,8 +82,8 @@ func ValidateErrors(err error, errValidationFuncs ...func(error) bool) error {
 	return err
 }
 
-// Retry retries a method until the context expires or the method returns an unvalidated error.
-func Retry(ctx context.Context, fn func(context.Context) error, errValidationFuncs ...func(error) bool) error {
+// retry retries a method until the context expires or the method returns an unvalidated error.
+func retry(ctx context.Context, fn func(context.Context) error, errValidationFuncs ...func(error) bool) error {
 	var lastErr error
 	errCh := make(chan error)
 	doneCh := make(chan struct{})
@@ -120,7 +120,7 @@ func Retry(ctx context.Context, fn func(context.Context) error, errValidationFun
 			lastErr = nil
 		case err := <-errCh:
 			// check if we tolerate the error, return it if not.
-			if e := ValidateErrors(err, errValidationFuncs...); e != nil {
+			if e := validateErrors(err, errValidationFuncs...); e != nil {
 				return e
 			}
 			lastErr = err
@@ -205,57 +205,57 @@ func (r *RetryClient) IsObjectNamespaced(obj runtime.Object) (bool, error) {
 
 // Create saves the object obj in the Kubernetes cluster.
 func (r *RetryClient) Create(ctx context.Context, obj client.Object, opts ...client.CreateOption) error {
-	return Retry(ctx, func(ctx context.Context) error {
+	return retry(ctx, func(ctx context.Context) error {
 		return r.Client.Create(ctx, obj, opts...)
-	}, IsJSONSyntaxError)
+	}, isJSONSyntaxError)
 }
 
 // Delete deletes the given obj from Kubernetes cluster.
 func (r *RetryClient) Delete(ctx context.Context, obj client.Object, opts ...client.DeleteOption) error {
-	return Retry(ctx, func(ctx context.Context) error {
+	return retry(ctx, func(ctx context.Context) error {
 		return r.Client.Delete(ctx, obj, opts...)
-	}, IsJSONSyntaxError)
+	}, isJSONSyntaxError)
 }
 
 // DeleteAllOf deletes the given obj from Kubernetes cluster.
 func (r *RetryClient) DeleteAllOf(ctx context.Context, obj client.Object, opts ...client.DeleteAllOfOption) error {
-	return Retry(ctx, func(ctx context.Context) error {
+	return retry(ctx, func(ctx context.Context) error {
 		return r.Client.DeleteAllOf(ctx, obj, opts...)
-	}, IsJSONSyntaxError)
+	}, isJSONSyntaxError)
 }
 
 // Update updates the given obj in the Kubernetes cluster. obj must be a
 // struct pointer so that obj can be updated with the content returned by the Server.
 func (r *RetryClient) Update(ctx context.Context, obj client.Object, opts ...client.UpdateOption) error {
-	return Retry(ctx, func(ctx context.Context) error {
+	return retry(ctx, func(ctx context.Context) error {
 		return r.Client.Update(ctx, obj, opts...)
-	}, IsJSONSyntaxError)
+	}, isJSONSyntaxError)
 }
 
 // Patch patches the given obj in the Kubernetes cluster. obj must be a
 // struct pointer so that obj can be updated with the content returned by the Server.
 func (r *RetryClient) Patch(ctx context.Context, obj client.Object, patch client.Patch, opts ...client.PatchOption) error {
-	return Retry(ctx, func(ctx context.Context) error {
+	return retry(ctx, func(ctx context.Context) error {
 		return r.Client.Patch(ctx, obj, patch, opts...)
-	}, IsJSONSyntaxError)
+	}, isJSONSyntaxError)
 }
 
 // Get retrieves an obj for the given object key from the Kubernetes Cluster.
 // obj must be a struct pointer so that obj can be updated with the response
 // returned by the Server.
 func (r *RetryClient) Get(ctx context.Context, key client.ObjectKey, obj client.Object, opts ...client.GetOption) error {
-	return Retry(ctx, func(ctx context.Context) error {
+	return retry(ctx, func(ctx context.Context) error {
 		return r.Client.Get(ctx, key, obj, opts...)
-	}, IsJSONSyntaxError)
+	}, isJSONSyntaxError)
 }
 
 // List retrieves list of objects for a given namespace and list options. On a
 // successful call, Items field in the list will be populated with the
 // result returned from the server.
 func (r *RetryClient) List(ctx context.Context, list client.ObjectList, opts ...client.ListOption) error {
-	return Retry(ctx, func(ctx context.Context) error {
+	return retry(ctx, func(ctx context.Context) error {
 		return r.Client.List(ctx, list, opts...)
-	}, IsJSONSyntaxError)
+	}, isJSONSyntaxError)
 }
 
 // Watch watches a specific object and returns all events for it.
@@ -293,25 +293,25 @@ func (r *RetryClient) Status() client.StatusWriter {
 // Create saves the subResource object in the Kubernetes cluster. obj must be a
 // struct pointer so that obj can be updated with the content returned by the Server.
 func (r *RetryStatusWriter) Create(ctx context.Context, obj client.Object, subResource client.Object, opts ...client.SubResourceCreateOption) error {
-	return Retry(ctx, func(ctx context.Context) error {
+	return retry(ctx, func(ctx context.Context) error {
 		return r.StatusWriter.Create(ctx, obj, subResource, opts...)
-	}, IsJSONSyntaxError)
+	}, isJSONSyntaxError)
 }
 
 // Update updates the given obj in the Kubernetes cluster. obj must be a
 // struct pointer so that obj can be updated with the content returned by the Server.
 func (r *RetryStatusWriter) Update(ctx context.Context, obj client.Object, opts ...client.SubResourceUpdateOption) error {
-	return Retry(ctx, func(ctx context.Context) error {
+	return retry(ctx, func(ctx context.Context) error {
 		return r.StatusWriter.Update(ctx, obj, opts...)
-	}, IsJSONSyntaxError)
+	}, isJSONSyntaxError)
 }
 
 // Patch patches the given obj in the Kubernetes cluster. obj must be a
 // struct pointer so that obj can be updated with the content returned by the Server.
 func (r *RetryStatusWriter) Patch(ctx context.Context, obj client.Object, patch client.Patch, opts ...client.SubResourcePatchOption) error {
-	return Retry(ctx, func(ctx context.Context) error {
+	return retry(ctx, func(ctx context.Context) error {
 		return r.StatusWriter.Patch(ctx, obj, patch, opts...)
-	}, IsJSONSyntaxError)
+	}, isJSONSyntaxError)
 }
 
 // Scheme returns an initialized Kubernetes Scheme.
@@ -420,7 +420,7 @@ func countLines(k string, v interface{}) (int, error) {
 	buf := strings.Builder{}
 	dummyObj := &unstructured.Unstructured{
 		Object: map[string]interface{}{k: v}}
-	err := MarshalObject(dummyObj, &buf)
+	err := marshalObject(dummyObj, &buf)
 	if err != nil {
 		return 0, fmt.Errorf("cannot marshal field %s to compute its length in lines: %w", k, err)
 	}
@@ -434,11 +434,11 @@ func PrettyDiff(expected *unstructured.Unstructured, actual *unstructured.Unstru
 	expectedBuf := &bytes.Buffer{}
 	actualBuf := &bytes.Buffer{}
 
-	if err := MarshalObject(expected, expectedBuf); err != nil {
+	if err := marshalObject(expected, expectedBuf); err != nil {
 		return "", err
 	}
 
-	if err := MarshalObject(actualPruned, actualBuf); err != nil {
+	if err := marshalObject(actualPruned, actualBuf); err != nil {
 		return "", err
 	}
 
@@ -453,9 +453,9 @@ func PrettyDiff(expected *unstructured.Unstructured, actual *unstructured.Unstru
 	return difflib.GetUnifiedDiffString(diffed)
 }
 
-// ConvertUnstructured converts an unstructured object to the known struct. If the type is not known, then
+// convertUnstructured converts an unstructured object to the known struct. If the type is not known, then
 // the unstructured object is returned unmodified.
-func ConvertUnstructured(in client.Object) (client.Object, error) {
+func convertUnstructured(in client.Object) (client.Object, error) {
 	unstruct, err := runtime.DefaultUnstructuredConverter.ToUnstructured(in)
 	if err != nil {
 		return nil, fmt.Errorf("error converting %s to unstructured error: %w", ResourceID(in), err)
@@ -491,9 +491,9 @@ func ConvertUnstructured(in client.Object) (client.Object, error) {
 	return converted, nil
 }
 
-// PatchObject updates expected with the Resource Version from actual.
-// In the future, PatchObject may perform a strategic merge of actual into expected.
-func PatchObject(actual, expected runtime.Object) error {
+// patchObject updates expected with the Resource Version from actual.
+// In the future, patchObject may perform a strategic merge of actual into expected.
+func patchObject(actual, expected runtime.Object) error {
 	actualMeta, err := meta.Accessor(actual)
 	if err != nil {
 		return err
@@ -508,8 +508,8 @@ func PatchObject(actual, expected runtime.Object) error {
 	return nil
 }
 
-// CleanObjectForMarshalling removes unnecessary object metadata that should not be included in serialization and diffs.
-func CleanObjectForMarshalling(o runtime.Object) (runtime.Object, error) {
+// cleanObjectForMarshalling removes unnecessary object metadata that should not be included in serialization and diffs.
+func cleanObjectForMarshalling(o runtime.Object) (runtime.Object, error) {
 	copied := o.DeepCopyObject()
 
 	meta, err := meta.Accessor(copied)
@@ -535,9 +535,9 @@ func CleanObjectForMarshalling(o runtime.Object) (runtime.Object, error) {
 	return copied, nil
 }
 
-// MarshalObject marshals a Kubernetes object to a YAML string.
-func MarshalObject(o runtime.Object, w io.Writer) error {
-	copied, err := CleanObjectForMarshalling(o)
+// marshalObject marshals a Kubernetes object to a YAML string.
+func marshalObject(o runtime.Object, w io.Writer) error {
+	copied, err := cleanObjectForMarshalling(o)
 	if err != nil {
 		return err
 	}
@@ -547,7 +547,7 @@ func MarshalObject(o runtime.Object, w io.Writer) error {
 
 // MarshalObjectJSON marshals a Kubernetes object to a JSON string.
 func MarshalObjectJSON(o runtime.Object, w io.Writer) error {
-	copied, err := CleanObjectForMarshalling(o)
+	copied, err := cleanObjectForMarshalling(o)
 	if err != nil {
 		return err
 	}
@@ -588,7 +588,7 @@ func LoadYAML(path string, r io.Reader) ([]client.Object, error) {
 			return nil, fmt.Errorf("error decoding yaml %s: %w", path, err)
 		}
 
-		obj, err := ConvertUnstructured(unstructuredObj)
+		obj, err := convertUnstructured(unstructuredObj)
 		if err != nil {
 			return nil, fmt.Errorf("error converting unstructured object %s (%s): %w", ResourceID(unstructuredObj), path, err)
 		}
@@ -909,14 +909,14 @@ func CreateOrUpdate(ctx context.Context, cl client.Client, obj client.Object, re
 	if retryOnError {
 		validators = append(validators, k8serrors.IsConflict)
 	}
-	err = Retry(ctx, func(ctx context.Context) error {
+	err = retry(ctx, func(ctx context.Context) error {
 		expected := orig.DeepCopyObject()
 		actual := &unstructured.Unstructured{}
 		actual.SetGroupVersionKind(obj.GetObjectKind().GroupVersionKind())
 
 		err := cl.Get(ctx, ObjectKey(expected), actual)
 		if err == nil {
-			if err = PatchObject(actual, expected); err != nil {
+			if err = patchObject(actual, expected); err != nil {
 				return err
 			}
 

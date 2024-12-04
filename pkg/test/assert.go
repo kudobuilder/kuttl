@@ -8,7 +8,7 @@ import (
 	"k8s.io/client-go/discovery"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
-	"github.com/kudobuilder/kuttl/pkg/k8s"
+	"github.com/kudobuilder/kuttl/pkg/kubernetes"
 	testutils "github.com/kudobuilder/kuttl/pkg/test/utils"
 )
 
@@ -105,7 +105,7 @@ func Errors(namespace string, timeout int, errorFiles ...string) error {
 }
 
 func Client(_ bool) (client.Client, error) {
-	cfg, err := k8s.GetConfig()
+	cfg, err := kubernetes.GetConfig()
 	if err != nil {
 		return nil, err
 	}
@@ -121,7 +121,7 @@ func Client(_ bool) (client.Client, error) {
 }
 
 func DiscoveryClient() (discovery.DiscoveryInterface, error) {
-	cfg, err := k8s.GetConfig()
+	cfg, err := kubernetes.GetConfig()
 	if err != nil {
 		return nil, err
 	}

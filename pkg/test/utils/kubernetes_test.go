@@ -91,7 +91,7 @@ func TestGETAPIResource(t *testing.T) {
 func TestRetry(t *testing.T) {
 	index := 0
 
-	assert.Nil(t, Retry(context.TODO(), func(context.Context) error {
+	assert.Nil(t, retry(context.TODO(), func(context.Context) error {
 		index++
 		if index == 1 {
 			return errors.New("ignore this error")
@@ -107,7 +107,7 @@ func TestRetry(t *testing.T) {
 func TestRetryWithUnexpectedError(t *testing.T) {
 	index := 0
 
-	assert.Equal(t, errors.New("bad error"), Retry(context.TODO(), func(context.Context) error {
+	assert.Equal(t, errors.New("bad error"), retry(context.TODO(), func(context.Context) error {
 		index++
 		if index == 1 {
 			return errors.New("bad error")
@@ -141,28 +141,28 @@ func TestKubeconfigPath(t *testing.T) {
 }
 
 func TestRetryWithNil(t *testing.T) {
-	assert.Equal(t, nil, Retry(context.TODO(), nil, IsJSONSyntaxError))
+	assert.Equal(t, nil, retry(context.TODO(), nil, isJSONSyntaxError))
 }
 
 func TestRetryWithNilFromFn(t *testing.T) {
-	assert.Equal(t, nil, Retry(context.TODO(), func(ctx context.Context) error {
+	assert.Equal(t, nil, retry(context.TODO(), func(ctx context.Context) error {
 		return nil
-	}, IsJSONSyntaxError))
+	}, isJSONSyntaxError))
 }
 
 func TestRetryWithNilInFn(t *testing.T) {
 	c := RetryClient{}
 	var list client.ObjectList
-	assert.Error(t, Retry(context.TODO(), func(ctx context.Context) error {
+	assert.Error(t, retry(context.TODO(), func(ctx context.Context) error {
 		return c.Client.List(ctx, list)
-	}, IsJSONSyntaxError))
+	}, isJSONSyntaxError))
 }
 
 func TestRetryWithTimeout(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
 	defer cancel()
 
-	assert.Equal(t, errors.New("error"), Retry(ctx, func(context.Context) error {
+	assert.Equal(t, errors.New("error"), retry(ctx, func(context.Context) error {
 		return errors.New("error")
 	}, func(err error) bool { return true }))
 }
