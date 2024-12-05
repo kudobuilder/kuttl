@@ -14,10 +14,7 @@ import (
 
 	"github.com/google/shlex"
 	"github.com/spf13/pflag"
-	"k8s.io/apimachinery/pkg/runtime/serializer/json"
 	_ "k8s.io/client-go/plugin/pkg/client/auth" // package needed for auth providers like GCP
-	"k8s.io/client-go/rest"
-	api "k8s.io/client-go/tools/clientcmd/api/v1"
 
 	harness "github.com/kudobuilder/kuttl/pkg/apis/testharness/v1beta1"
 	"github.com/kudobuilder/kuttl/pkg/env"
@@ -219,76 +216,4 @@ func RunCommands(ctx context.Context, logger Logger, namespace string, commands 
 	}
 	// handling of errs and bg processes external to this function
 	return bgs, nil
-}
-
-// Kubeconfig converts a rest.Config into a YAML kubeconfig and writes it to w
-func Kubeconfig(cfg *rest.Config, w io.Writer) error {
-	var authProvider *api.AuthProviderConfig
-	var execConfig *api.ExecConfig
-	if cfg.AuthProvider != nil {
-		authProvider = &api.AuthProviderConfig{
-			Name:   cfg.AuthProvider.Name,
-			Config: cfg.AuthProvider.Config,
-		}
-	}
-
-	if cfg.ExecProvider != nil {
-		execConfig = &api.ExecConfig{
-			Command:    cfg.ExecProvider.Command,
-			Args:       cfg.ExecProvider.Args,
-			APIVersion: cfg.ExecProvider.APIVersion,
-			Env:        []api.ExecEnvVar{},
-		}
-
-		for _, envVar := range cfg.ExecProvider.Env {
-			execConfig.Env = append(execConfig.Env, api.ExecEnvVar{
-				Name:  envVar.Name,
-				Value: envVar.Value,
-			})
-		}
-	}
-	err := rest.LoadTLSFiles(cfg)
-	if err != nil {
-		return err
-	}
-	return json.NewYAMLSerializer(json.DefaultMetaFactory, nil, nil).Encode(&api.Config{
-		CurrentContext: "cluster",
-		Clusters: []api.NamedCluster{
-			{
-				Name: "cluster",
-				Cluster: api.Cluster{
-					Server:                   cfg.Host,
-					CertificateAuthorityData: cfg.TLSClientConfig.CAData,
-					InsecureSkipTLSVerify:    cfg.TLSClientConfig.Insecure,
-					TLSServerName:            cfg.TLSClientConfig.ServerName,
-				},
-			},
-		},
-		Contexts: []api.NamedContext{
-			{
-				Name: "cluster",
-				Context: api.Context{
-					Cluster:  "cluster",
-					AuthInfo: "user",
-				},
-			},
-		},
-		AuthInfos: []api.NamedAuthInfo{
-			{
-				Name: "user",
-				AuthInfo: api.AuthInfo{
-					ClientCertificateData: cfg.TLSClientConfig.CertData,
-					ClientKeyData:         cfg.TLSClientConfig.KeyData,
-					Token:                 cfg.BearerToken,
-					Username:              cfg.Username,
-					Password:              cfg.Password,
-					Impersonate:           cfg.Impersonate.UserName,
-					ImpersonateGroups:     cfg.Impersonate.Groups,
-					ImpersonateUserExtra:  cfg.Impersonate.Extra,
-					AuthProvider:          authProvider,
-					Exec:                  execConfig,
-				},
-			},
-		},
-	}, w)
 }

@@ -287,7 +287,7 @@ func (h *Harness) Config() (*rest.Config, error) {
 
 	defer f.Close()
 
-	return h.config, testutils.Kubeconfig(h.config, f)
+	return h.config, kubernetes.Kubeconfig(h.config, f)
 }
 
 func (h *Harness) waitForFunctionalCluster() error {

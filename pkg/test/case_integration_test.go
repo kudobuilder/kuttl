@@ -57,7 +57,7 @@ func TestMultiClusterCase(t *testing.T) {
 	t.Cleanup(func() {
 		os.Remove(tmpfile.Name())
 	})
-	if err := testutils.Kubeconfig(testenv2.Config, tmpfile); err != nil {
+	if err := kubernetes.Kubeconfig(testenv2.Config, tmpfile); err != nil {
 		t.Error(err)
 		return
 	}

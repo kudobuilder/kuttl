@@ -7,64 +7,10 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	"k8s.io/apimachinery/pkg/api/meta"
-	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
-	"k8s.io/apimachinery/pkg/runtime"
 
 	harness "github.com/kudobuilder/kuttl/pkg/apis/testharness/v1beta1"
 	"github.com/kudobuilder/kuttl/pkg/kubernetes"
 )
-
-func TestNamespaced(t *testing.T) {
-	fake := kubernetes.FakeDiscoveryClient()
-
-	for _, test := range []struct {
-		testName    string
-		resource    runtime.Object
-		namespace   string
-		shouldError bool
-	}{
-		{
-			testName:  "namespaced resource",
-			resource:  kubernetes.NewPod("hello", ""),
-			namespace: "set-the-namespace",
-		},
-		{
-			testName:  "namespace already set",
-			resource:  kubernetes.NewPod("hello", "other"),
-			namespace: "other",
-		},
-		{
-			testName:  "not-namespaced resource",
-			resource:  kubernetes.NewResource("v1", "Namespace", "hello", ""),
-			namespace: "",
-		},
-		{
-			testName:    "non-existent resource",
-			resource:    kubernetes.NewResource("v1", "Blah", "hello", ""),
-			shouldError: true,
-		},
-	} {
-		test := test
-
-		t.Run(test.testName, func(t *testing.T) {
-			m, _ := meta.Accessor(test.resource)
-
-			actualName, actualNamespace, err := kubernetes.Namespaced(fake, test.resource, "set-the-namespace")
-
-			if test.shouldError {
-				assert.NotNil(t, err)
-				assert.Equal(t, "", actualName)
-			} else {
-				assert.Nil(t, err)
-				assert.Equal(t, m.GetName(), actualName)
-			}
-
-			assert.Equal(t, test.namespace, actualNamespace)
-			assert.Equal(t, test.namespace, m.GetNamespace())
-		})
-	}
-}
 
 func TestKubeconfigPath(t *testing.T) {
 	tests := []struct {
@@ -85,82 +31,6 @@ func TestKubeconfigPath(t *testing.T) {
 			assert.Equal(t, tt.expected, result)
 		})
 	}
-}
-
-func TestLoadYAML(t *testing.T) {
-	tmpfile, err := os.CreateTemp("", "test.yaml")
-	assert.Nil(t, err)
-	defer tmpfile.Close()
-
-	err = os.WriteFile(tmpfile.Name(), []byte(`
-apiVersion: v1
-kind: Pod
-metadata:
-  labels:
-    app: nginx
-spec:
-  containers:
-  - name: nginx
-    image: nginx:1.7.9
----
-apiVersion: v1
-kind: Pod
-metadata:
-  labels:
-    app: nginx
-  name: hello
-spec:
-  containers:
-  - name: nginx
-    image: nginx:1.7.9
-`), 0600)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	objs, err := kubernetes.LoadYAMLFromFile(tmpfile.Name())
-	assert.Nil(t, err)
-
-	assert.Equal(t, &unstructured.Unstructured{
-		Object: map[string]interface{}{
-			"apiVersion": "v1",
-			"kind":       "Pod",
-			"metadata": map[string]interface{}{
-				"labels": map[string]interface{}{
-					"app": "nginx",
-				},
-			},
-			"spec": map[string]interface{}{
-				"containers": []interface{}{
-					map[string]interface{}{
-						"image": "nginx:1.7.9",
-						"name":  "nginx",
-					},
-				},
-			},
-		},
-	}, objs[0])
-
-	assert.Equal(t, &unstructured.Unstructured{
-		Object: map[string]interface{}{
-			"apiVersion": "v1",
-			"kind":       "Pod",
-			"metadata": map[string]interface{}{
-				"labels": map[string]interface{}{
-					"app": "nginx",
-				},
-				"name": "hello",
-			},
-			"spec": map[string]interface{}{
-				"containers": []interface{}{
-					map[string]interface{}{
-						"image": "nginx:1.7.9",
-						"name":  "nginx",
-					},
-				},
-			},
-		},
-	}, objs[1])
 }
 
 func TestMatchesKind(t *testing.T) {
@@ -434,56 +304,4 @@ func TestRunScript(t *testing.T) {
 			}
 		})
 	}
-}
-
-func TestPrettyDiff(t *testing.T) {
-	actual, err := kubernetes.LoadYAMLFromFile("test_data/prettydiff-actual.yaml")
-	assert.NoError(t, err)
-	assert.Len(t, actual, 1)
-	expected, err := kubernetes.LoadYAMLFromFile("test_data/prettydiff-expected.yaml")
-	assert.NoError(t, err)
-	assert.Len(t, expected, 1)
-
-	result, err := kubernetes.PrettyDiff(expected[0].(*unstructured.Unstructured), actual[0].(*unstructured.Unstructured))
-	assert.NoError(t, err)
-	assert.Equal(t, `--- Deployment:/central
-+++ Deployment:kuttl-test-thorough-hermit/central
-@@ -1,7 +1,35 @@
- apiVersion: apps/v1
- kind: Deployment
- metadata:
-+  annotations:
-+    email: support@stackrox.com
-+    meta.helm.sh/release-name: stackrox-central-services
-+    meta.helm.sh/release-namespace: kuttl-test-thorough-hermit
-+    owner: stackrox
-+  labels:
-+    app: central
-+    app.kubernetes.io/component: central
-+    app.kubernetes.io/instance: stackrox-central-services
-+    app.kubernetes.io/managed-by: Helm
-+    app.kubernetes.io/name: stackrox
-+    app.kubernetes.io/part-of: stackrox-central-services
-+    app.kubernetes.io/version: 4.3.x-160-g465d734c11
-+    helm.sh/chart: stackrox-central-services-400.3.0-160-g465d734c11
-+  managedFields: '[... elided field over 10 lines long ...]'
-   name: central
-+  namespace: kuttl-test-thorough-hermit
-+  ownerReferences:
-+  - apiVersion: platform.stackrox.io/v1alpha1
-+    blockOwnerDeletion: true
-+    controller: true
-+    kind: Central
-+    name: stackrox-central-services
-+    uid: ff834d91-0853-42b3-9460-7ebf1c659f8a
-+spec: '[... elided field over 10 lines long ...]'
- status:
--  availableReplicas: 1
-+  conditions: '[... elided field over 10 lines long ...]'
-+  observedGeneration: 2
-+  replicas: 1
-+  unavailableReplicas: 1
-+  updatedReplicas: 1
- 
-`, result)
 }
