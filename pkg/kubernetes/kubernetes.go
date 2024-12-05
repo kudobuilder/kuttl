@@ -22,7 +22,7 @@ import (
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/testing"
 	"k8s.io/client-go/tools/clientcmd"
-	"k8s.io/client-go/tools/clientcmd/api/v1"
+	api "k8s.io/client-go/tools/clientcmd/api/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/config"
 )
@@ -204,25 +204,25 @@ func GetAPIResource(dClient discovery.DiscoveryInterface, gvk schema.GroupVersio
 
 // Kubeconfig converts a rest.Config into a YAML kubeconfig and writes it to w
 func Kubeconfig(cfg *rest.Config, w io.Writer) error {
-	var authProvider *v1.AuthProviderConfig
-	var execConfig *v1.ExecConfig
+	var authProvider *api.AuthProviderConfig
+	var execConfig *api.ExecConfig
 	if cfg.AuthProvider != nil {
-		authProvider = &v1.AuthProviderConfig{
+		authProvider = &api.AuthProviderConfig{
 			Name:   cfg.AuthProvider.Name,
 			Config: cfg.AuthProvider.Config,
 		}
 	}
 
 	if cfg.ExecProvider != nil {
-		execConfig = &v1.ExecConfig{
+		execConfig = &api.ExecConfig{
 			Command:    cfg.ExecProvider.Command,
 			Args:       cfg.ExecProvider.Args,
 			APIVersion: cfg.ExecProvider.APIVersion,
-			Env:        []v1.ExecEnvVar{},
+			Env:        []api.ExecEnvVar{},
 		}
 
 		for _, envVar := range cfg.ExecProvider.Env {
-			execConfig.Env = append(execConfig.Env, v1.ExecEnvVar{
+			execConfig.Env = append(execConfig.Env, api.ExecEnvVar{
 				Name:  envVar.Name,
 				Value: envVar.Value,
 			})
@@ -232,31 +232,31 @@ func Kubeconfig(cfg *rest.Config, w io.Writer) error {
 	if err != nil {
 		return err
 	}
-	return json.NewYAMLSerializer(json.DefaultMetaFactory, nil, nil).Encode(&v1.Config{
+	return json.NewYAMLSerializer(json.DefaultMetaFactory, nil, nil).Encode(&api.Config{
 		CurrentContext: "cluster",
-		Clusters: []v1.NamedCluster{
+		Clusters: []api.NamedCluster{
 			{
 				Name: "cluster",
-				Cluster: v1.Cluster{
+				Cluster: api.Cluster{
 					Server:                   cfg.Host,
 					CertificateAuthorityData: cfg.TLSClientConfig.CAData,
 					InsecureSkipTLSVerify:    cfg.TLSClientConfig.Insecure,
 				},
 			},
 		},
-		Contexts: []v1.NamedContext{
+		Contexts: []api.NamedContext{
 			{
 				Name: "cluster",
-				Context: v1.Context{
+				Context: api.Context{
 					Cluster:  "cluster",
 					AuthInfo: "user",
 				},
 			},
 		},
-		AuthInfos: []v1.NamedAuthInfo{
+		AuthInfos: []api.NamedAuthInfo{
 			{
 				Name: "user",
-				AuthInfo: v1.AuthInfo{
+				AuthInfo: api.AuthInfo{
 					ClientCertificateData: cfg.TLSClientConfig.CertData,
 					ClientKeyData:         cfg.TLSClientConfig.KeyData,
 					Token:                 cfg.BearerToken,
