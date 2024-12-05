@@ -30,7 +30,7 @@ import (
 	harness "github.com/kudobuilder/kuttl/pkg/apis/testharness/v1beta1"
 	"github.com/kudobuilder/kuttl/pkg/file"
 	"github.com/kudobuilder/kuttl/pkg/http"
-	"github.com/kudobuilder/kuttl/pkg/k8s"
+	"github.com/kudobuilder/kuttl/pkg/kubernetes"
 	"github.com/kudobuilder/kuttl/pkg/report"
 	testutils "github.com/kudobuilder/kuttl/pkg/test/utils"
 )
@@ -215,7 +215,7 @@ func (h *Harness) addNodeCaches(dockerClient testutils.DockerClient, kindCfg *ki
 func (h *Harness) RunTestEnv() (*rest.Config, error) {
 	started := time.Now()
 
-	testenv, err := testutils.StartTestEnvironment(h.TestSuite.AttachControlPlaneOutput)
+	testenv, err := kubernetes.StartTestEnvironment(h.TestSuite.AttachControlPlaneOutput)
 	if err != nil {
 		return nil, err
 	}
@@ -253,7 +253,7 @@ func (h *Harness) Config() (*rest.Config, error) {
 		h.config, err = h.RunKIND()
 	default:
 		h.T.Log("running tests using configured kubeconfig.")
-		h.config, err = k8s.GetConfig()
+		h.config, err = kubernetes.GetConfig()
 		if err != nil {
 			return nil, err
 		}
@@ -287,17 +287,17 @@ func (h *Harness) Config() (*rest.Config, error) {
 
 	defer f.Close()
 
-	return h.config, testutils.Kubeconfig(h.config, f)
+	return h.config, kubernetes.Kubeconfig(h.config, f)
 }
 
 func (h *Harness) waitForFunctionalCluster() error {
-	err := testutils.WaitForSA(h.config, "default", "default")
+	err := kubernetes.WaitForSA(h.config, "default", "default")
 	if err == nil {
 		return nil
 	}
 	// if there is a namespace provided but no "default"/"default" SA found, also check a SA in the provided NS
 	if h.TestSuite.Namespace != "" {
-		tempErr := testutils.WaitForSA(h.config, "default", h.TestSuite.Namespace)
+		tempErr := kubernetes.WaitForSA(h.config, "default", h.TestSuite.Namespace)
 		if tempErr == nil {
 			return nil
 		}
@@ -320,8 +320,8 @@ func (h *Harness) Client(forceNew bool) (client.Client, error) {
 		return nil, err
 	}
 
-	h.client, err = testutils.NewRetryClient(cfg, client.Options{
-		Scheme: testutils.Scheme(),
+	h.client, err = kubernetes.NewRetryClient(cfg, client.Options{
+		Scheme: kubernetes.Scheme(),
 	})
 	return h.client, err
 }
@@ -474,10 +474,10 @@ func (h *Harness) Setup() {
 
 	// Install CRDs
 	crdKinds := []runtime.Object{
-		testutils.NewResource("apiextensions.k8s.io/v1", "CustomResourceDefinition", "", ""),
-		testutils.NewResource("apiextensions.k8s.io/v1beta1", "CustomResourceDefinition", "", ""),
+		kubernetes.NewResource("apiextensions.k8s.io/v1", "CustomResourceDefinition", "", ""),
+		kubernetes.NewResource("apiextensions.k8s.io/v1beta1", "CustomResourceDefinition", "", ""),
 	}
-	crds, err := testutils.InstallManifests(context.TODO(), cl, dClient, h.TestSuite.CRDDir, crdKinds...)
+	crds, err := kubernetes.InstallManifests(context.TODO(), cl, dClient, h.TestSuite.CRDDir, crdKinds...)
 	if err != nil {
 		h.fatal(fmt.Errorf("fatal error installing crds: %v", err))
 	}
@@ -497,7 +497,7 @@ func (h *Harness) Setup() {
 
 	// Install required manifests.
 	for _, manifestDir := range h.TestSuite.ManifestDirs {
-		if _, err := testutils.InstallManifests(context.TODO(), cl, dClient, manifestDir); err != nil {
+		if _, err := kubernetes.InstallManifests(context.TODO(), cl, dClient, manifestDir); err != nil {
 			h.fatal(fmt.Errorf("fatal error installing manifests: %v", err))
 		}
 	}

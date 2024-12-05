@@ -24,7 +24,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/kudobuilder/kuttl/pkg/apis/testharness/v1beta1"
-	"github.com/kudobuilder/kuttl/pkg/k8s"
+	"github.com/kudobuilder/kuttl/pkg/kubernetes"
 	"github.com/kudobuilder/kuttl/pkg/report"
 	testutils "github.com/kudobuilder/kuttl/pkg/test/utils"
 )
@@ -527,20 +527,20 @@ func (t *Case) LoadTestSteps() error {
 
 func newClient(kubeconfig, context string) func(bool) (client.Client, error) {
 	return func(bool) (client.Client, error) {
-		config, err := k8s.BuildConfigWithContext(kubeconfig, context)
+		config, err := kubernetes.BuildConfigWithContext(kubeconfig, context)
 		if err != nil {
 			return nil, err
 		}
 
-		return testutils.NewRetryClient(config, client.Options{
-			Scheme: testutils.Scheme(),
+		return kubernetes.NewRetryClient(config, client.Options{
+			Scheme: kubernetes.Scheme(),
 		})
 	}
 }
 
 func newDiscoveryClient(kubeconfig, context string) func() (discovery.DiscoveryInterface, error) {
 	return func() (discovery.DiscoveryInterface, error) {
-		config, err := k8s.BuildConfigWithContext(kubeconfig, context)
+		config, err := kubernetes.BuildConfigWithContext(kubeconfig, context)
 		if err != nil {
 			return nil, err
 		}

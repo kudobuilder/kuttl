@@ -7,7 +7,7 @@ import (
 
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
-	testutils "github.com/kudobuilder/kuttl/pkg/test/utils"
+	"github.com/kudobuilder/kuttl/pkg/kubernetes"
 )
 
 // IsURL returns true if string is an URL
@@ -26,7 +26,7 @@ func ToObjects(urlPath string) ([]client.Object, error) {
 		return nil, err
 	}
 
-	objs, err := testutils.LoadYAML(urlPath, buf)
+	objs, err := kubernetes.LoadYAML(urlPath, buf)
 	if err != nil {
 		return nil, fmt.Errorf("url %q load yaml error: %w", urlPath, err)
 	}
