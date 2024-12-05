@@ -290,7 +290,7 @@ func patchObject(actual, expected runtime.Object) error {
 	return nil
 }
 
-// CreateOrUpdate will create obj if it does not exist and update if it it does.
+// CreateOrUpdate will create obj if it does not exist and update it if it does.
 // retryonerror indicates whether we retry in case of conflict
 // Returns true if the object was updated and false if it was created.
 func CreateOrUpdate(ctx context.Context, cl client.Client, obj client.Object, retryOnError bool) (updated bool, err error) {
