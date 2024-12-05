@@ -4,6 +4,8 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"log"
+	"os"
 	"testing"
 	"time"
 
@@ -11,6 +13,21 @@ import (
 	"k8s.io/apimachinery/pkg/watch"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
+
+var testenv TestEnvironment
+
+func TestMain(m *testing.M) {
+	var err error
+
+	testenv, err = StartTestEnvironment(false)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	exitCode := m.Run()
+	testenv.Environment.Stop()
+	os.Exit(exitCode)
+}
 
 func TestRetry(t *testing.T) {
 	index := 0
