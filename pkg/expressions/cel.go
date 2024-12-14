@@ -71,7 +71,7 @@ func RunAssertExpressions(
 
 	for _, expr := range assertAll {
 		if err := evaluateExpression(expr.CELExpression, programs, variables); err != nil {
-			anyExpressionsEvaluation = append(anyExpressionsEvaluation, err)
+			allExpressionsEvaluation = append(allExpressionsEvaluation, err)
 		}
 	}
 
