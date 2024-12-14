@@ -17,7 +17,7 @@ import (
 	testutils "github.com/kudobuilder/kuttl/pkg/test/utils"
 )
 
-func buildTestStep(t *testing.T, tcName string) *Step {
+func buildTestStep(t *testing.T) *Step {
 	codednsDeployment := &appsv1.Deployment{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "coredns",
@@ -37,7 +37,7 @@ func buildTestStep(t *testing.T, tcName string) *Step {
 	return &Step{
 		Name:   t.Name(),
 		Index:  0,
-		Logger: testutils.NewTestLogger(t, tcName),
+		Logger: testutils.NewTestLogger(t, t.Name()),
 		Client: func(bool) (client.Client, error) {
 			return fake.
 				NewClientBuilder().
@@ -91,7 +91,7 @@ func TestAssertExpressions(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			step := buildTestStep(t, tc.name)
+			step := buildTestStep(t)
 
 			fName := fmt.Sprintf(
 				"step_integration_test_data/assert_expressions/%s/00-assert.yaml",
