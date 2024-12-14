@@ -430,11 +430,7 @@ func (s *Step) CheckAssertExpressions(
 	variables := make(map[string]interface{})
 	for _, resourceRef := range resourceRefs {
 		namespacedName, referencedResource := resourceRef.BuildResourceReference()
-		if err := client.Get(
-			ctx,
-			namespacedName,
-			referencedResource,
-		); err != nil {
+		if err := client.Get(ctx, namespacedName, referencedResource); err != nil {
 			return []error{fmt.Errorf("failed to get referenced resource '%v': %w", namespacedName, err)}
 		}
 

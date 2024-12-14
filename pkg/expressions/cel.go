@@ -24,6 +24,17 @@ func buildProgram(expr string, env *cel.Env) (cel.Program, error) {
 }
 
 func buildEnv(resourceRefs []harness.TestResourceRef) (*cel.Env, error) {
+	var errs []error
+	for _, resourceRef := range resourceRefs {
+		if err := resourceRef.Validate(); err != nil {
+			errs = append(errs, fmt.Errorf("validation failed for reference '%v': %w", resourceRef.String(), err))
+		}
+	}
+
+	if len(errs) > 0 {
+		return nil, fmt.Errorf("failed to load resource reference(s): %w", errors.Join(errs...))
+	}
+
 	env, err := cel.NewEnv()
 	if err != nil {
 		return nil, fmt.Errorf("failed to create environment: %w", err)
@@ -53,32 +64,14 @@ func RunAssertExpressions(
 
 	var anyExpressionsEvaluation, allExpressionsEvaluation []error
 	for _, expr := range assertAny {
-		prg, ok := programs[expr.CELExpression]
-		if !ok {
-			return []error{fmt.Errorf("couldn't find pre-built program for expression: %v", expr.CELExpression)}
-		}
-		out, _, err := prg.Eval(variables)
-		if err != nil {
-			return []error{fmt.Errorf("failed to evaluate program: %w", err)}
-		}
-
-		if out.Value() != true {
-			anyExpressionsEvaluation = append(anyExpressionsEvaluation, fmt.Errorf("expression '%v' evaluated to '%v'", expr.CELExpression, out.Value()))
+		if err := evaluateExpression(expr.CELExpression, programs, variables); err != nil {
+			anyExpressionsEvaluation = append(anyExpressionsEvaluation, err)
 		}
 	}
 
 	for _, expr := range assertAll {
-		prg, ok := programs[expr.CELExpression]
-		if !ok {
-			return []error{fmt.Errorf("couldn't find pre-built program for expression: %v", expr.CELExpression)}
-		}
-		out, _, err := prg.Eval(variables)
-		if err != nil {
-			return []error{fmt.Errorf("failed to evaluate program: %w", err)}
-		}
-
-		if out.Value() != true {
-			allExpressionsEvaluation = append(allExpressionsEvaluation, fmt.Errorf("expression '%v' evaluated to '%v'", expr.CELExpression, out.Value()))
+		if err := evaluateExpression(expr.CELExpression, programs, variables); err != nil {
+			anyExpressionsEvaluation = append(anyExpressionsEvaluation, err)
 		}
 	}
 
@@ -95,16 +88,6 @@ func RunAssertExpressions(
 
 func LoadPrograms(testAssert *harness.TestAssert) (map[string]cel.Program, error) {
 	var errs []error
-	for _, resourceRef := range testAssert.ResourceRefs {
-		if err := resourceRef.Validate(); err != nil {
-			errs = append(errs, fmt.Errorf("validation failed for reference '%v': %w", resourceRef.String(), err))
-		}
-	}
-
-	if len(errs) > 0 {
-		return nil, fmt.Errorf("failed to load resource reference(s): %w", errors.Join(errs...))
-	}
-
 	var assertions []*harness.Assertion
 	assertions = append(assertions, testAssert.AssertAny...)
 	assertions = append(assertions, testAssert.AssertAll...)
@@ -115,21 +98,45 @@ func LoadPrograms(testAssert *harness.TestAssert) (map[string]cel.Program, error
 	}
 
 	var programs map[string]cel.Program
-	if len(assertions) > 0 {
-		programs = make(map[string]cel.Program)
+	if len(assertions) == 0 {
+		return programs, nil
 	}
+	programs = make(map[string]cel.Program)
 
 	for _, assertion := range assertions {
 		if prg, err := buildProgram(assertion.CELExpression, env); err != nil {
-			errs = append(errs, err)
+			errs = append(
+				errs,
+				fmt.Errorf("failed to parse CEL expression '%v': %w", assertion.CELExpression, err),
+			)
 		} else {
 			programs[assertion.CELExpression] = prg
 		}
 	}
 
 	if len(errs) > 0 {
-		return nil, fmt.Errorf("failed to build program(s): %w", errors.Join(errs...))
+		return nil, fmt.Errorf("failed to parse expression(s): %w", errors.Join(errs...))
 	}
 
 	return programs, nil
+}
+
+func evaluateExpression(expr string,
+	programs map[string]cel.Program,
+	variables map[string]interface{},
+) error {
+	prg, ok := programs[expr]
+	if !ok {
+		return fmt.Errorf("couldn't find pre-built parsed CEL expression '%v'", expr)
+	}
+	out, _, err := prg.Eval(variables)
+	if err != nil {
+		return fmt.Errorf("failed to evaluate CEL expression: %w", err)
+	}
+
+	if out.Value() != true {
+		return fmt.Errorf("expression '%v' evaluated to '%v'", expr, out.Value())
+	}
+
+	return nil
 }
