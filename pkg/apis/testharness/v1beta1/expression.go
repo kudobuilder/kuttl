@@ -40,7 +40,7 @@ func (t *TestResourceRef) BuildResourceReference() (namespacedName types.Namespa
 func (t *TestResourceRef) Validate() error {
 	apiVersionSplit := strings.Split(t.APIVersion, "/")
 	switch {
-	case t.APIVersion == "" || (len(apiVersionSplit) != 1 && len(apiVersionSplit) != 2):
+	case t.APIVersion == "" || len(apiVersionSplit) > 2:
 		return errAPIVersionInvalid
 	case t.Kind == "":
 		return errKindNotSpecified
