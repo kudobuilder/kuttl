@@ -1,13 +1,13 @@
 package fake
 
 import (
-	v13 "k8s.io/api/apps/v1"
-	v14 "k8s.io/api/batch/v1"
+	appsv1 "k8s.io/api/apps/v1"
+	batchv1 "k8s.io/api/batch/v1"
 	"k8s.io/api/batch/v1beta1"
-	v12 "k8s.io/api/core/v1"
-	v15 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
-	v1beta12 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1beta1"
-	"k8s.io/apimachinery/pkg/apis/meta/v1"
+	corev1 "k8s.io/api/core/v1"
+	apiextv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
+	apiextv1beta1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1beta1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/discovery"
 	"k8s.io/client-go/discovery/fake"
 	"k8s.io/client-go/testing"
@@ -18,43 +18,43 @@ import (
 func DiscoveryClient() discovery.DiscoveryInterface {
 	return &fake.FakeDiscovery{
 		Fake: &testing.Fake{
-			Resources: []*v1.APIResourceList{
+			Resources: []*metav1.APIResourceList{
 				{
-					GroupVersion: v12.SchemeGroupVersion.String(),
-					APIResources: []v1.APIResource{
+					GroupVersion: corev1.SchemeGroupVersion.String(),
+					APIResources: []metav1.APIResource{
 						{Name: "pod", Namespaced: true, Kind: "Pod"},
 						{Name: "namespace", Namespaced: false, Kind: "Namespace"},
 						{Name: "service", Namespaced: true, Kind: "Service"},
 					},
 				},
 				{
-					GroupVersion: v13.SchemeGroupVersion.String(),
-					APIResources: []v1.APIResource{
+					GroupVersion: appsv1.SchemeGroupVersion.String(),
+					APIResources: []metav1.APIResource{
 						{Name: "statefulset", Namespaced: true, Kind: "StatefulSet"},
 						{Name: "deployment", Namespaced: true, Kind: "Deployment"},
 					},
 				},
 				{
-					GroupVersion: v14.SchemeGroupVersion.String(),
-					APIResources: []v1.APIResource{
+					GroupVersion: batchv1.SchemeGroupVersion.String(),
+					APIResources: []metav1.APIResource{
 						{Name: "job", Namespaced: true, Kind: "Job"},
 					},
 				},
 				{
 					GroupVersion: v1beta1.SchemeGroupVersion.String(),
-					APIResources: []v1.APIResource{
+					APIResources: []metav1.APIResource{
 						{Name: "job", Namespaced: true, Kind: "CronJob"},
 					},
 				},
 				{
-					GroupVersion: v15.SchemeGroupVersion.String(),
-					APIResources: []v1.APIResource{
+					GroupVersion: apiextv1.SchemeGroupVersion.String(),
+					APIResources: []metav1.APIResource{
 						{Name: "customresourcedefinitions", Namespaced: false, Kind: "CustomResourceDefinition"},
 					},
 				},
 				{
-					GroupVersion: v1beta12.SchemeGroupVersion.String(),
-					APIResources: []v1.APIResource{
+					GroupVersion: apiextv1beta1.SchemeGroupVersion.String(),
+					APIResources: []metav1.APIResource{
 						{Name: "customresourcedefinitions", Namespaced: false, Kind: "CustomResourceDefinition"},
 					},
 				},
