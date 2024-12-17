@@ -416,28 +416,23 @@ func (s *Step) CheckAssertCommands(ctx context.Context, namespace string, comman
 	return testErrors
 }
 
-func (s *Step) CheckAssertExpressions(
-	ctx context.Context,
-	resourceRefs []harness.TestResourceRef,
-	assertAny,
-	assertAll []*harness.Assertion,
-) []error {
+func (s *Step) CheckAssertExpressions() []error {
 	client, err := s.Client(false)
 	if err != nil {
 		return []error{err}
 	}
 
 	variables := make(map[string]interface{})
-	for _, resourceRef := range resourceRefs {
+	for _, resourceRef := range s.Assert.ResourceRefs {
 		namespacedName, referencedResource := resourceRef.BuildResourceReference()
-		if err := client.Get(ctx, namespacedName, referencedResource); err != nil {
+		if err := client.Get(context.TODO(), namespacedName, referencedResource); err != nil {
 			return []error{fmt.Errorf("failed to get referenced resource '%v': %w", namespacedName, err)}
 		}
 
 		variables[resourceRef.Ref] = referencedResource.Object
 	}
 
-	return expressions.RunAssertExpressions(s.Programs, variables, assertAny, assertAll)
+	return expressions.RunAssertExpressions(s.Programs, variables, s.Assert.AssertAny, s.Assert.AssertAll)
 }
 
 // Check checks if the resources defined in Asserts and Errors are in the correct state.
@@ -450,7 +445,7 @@ func (s *Step) Check(namespace string, timeout int) []error {
 
 	if s.Assert != nil {
 		testErrors = append(testErrors, s.CheckAssertCommands(context.TODO(), namespace, s.Assert.Commands, timeout)...)
-		testErrors = append(testErrors, s.CheckAssertExpressions(context.TODO(), s.Assert.ResourceRefs, s.Assert.AssertAny, s.Assert.AssertAll)...)
+		testErrors = append(testErrors, s.CheckAssertExpressions()...)
 	}
 
 	for _, expected := range s.Errors {
