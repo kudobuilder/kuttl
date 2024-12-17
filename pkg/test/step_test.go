@@ -18,6 +18,7 @@ import (
 
 	harness "github.com/kudobuilder/kuttl/pkg/apis/testharness/v1beta1"
 	"github.com/kudobuilder/kuttl/pkg/kubernetes"
+	k8sfake "github.com/kudobuilder/kuttl/pkg/kubernetes/fake"
 	testutils "github.com/kudobuilder/kuttl/pkg/test/utils"
 )
 
@@ -41,7 +42,7 @@ func TestStepClean(t *testing.T) {
 			pod, pod2WithDiffNamespace, kubernetes.NewPod("does-not-exist", ""),
 		},
 		Client:          func(bool) (client.Client, error) { return cl, nil },
-		DiscoveryClient: func() (discovery.DiscoveryInterface, error) { return kubernetes.FakeDiscoveryClient(), nil },
+		DiscoveryClient: func() (discovery.DiscoveryInterface, error) { return k8sfake.DiscoveryClient(), nil },
 	}
 
 	assert.Nil(t, step.Clean(testNamespace))
@@ -73,7 +74,7 @@ func TestStepCreate(t *testing.T) {
 			pod.DeepCopy(), podWithNamespace.DeepCopy(), clusterScopedResource, updateToApply,
 		},
 		Client:          func(bool) (client.Client, error) { return cl, nil },
-		DiscoveryClient: func() (discovery.DiscoveryInterface, error) { return kubernetes.FakeDiscoveryClient(), nil },
+		DiscoveryClient: func() (discovery.DiscoveryInterface, error) { return k8sfake.DiscoveryClient(), nil },
 	}
 
 	assert.Equal(t, []error{}, step.Create(t, testNamespace))
@@ -120,7 +121,7 @@ func TestStepDeleteExisting(t *testing.T) {
 			},
 		},
 		Client:          func(bool) (client.Client, error) { return cl, nil },
-		DiscoveryClient: func() (discovery.DiscoveryInterface, error) { return kubernetes.FakeDiscoveryClient(), nil },
+		DiscoveryClient: func() (discovery.DiscoveryInterface, error) { return k8sfake.DiscoveryClient(), nil },
 	}
 
 	assert.Nil(t, cl.Get(context.TODO(), kubernetes.ObjectKey(podToKeep), podToKeep))
@@ -209,7 +210,7 @@ func TestCheckResource(t *testing.T) {
 		test := test
 
 		t.Run(test.testName, func(t *testing.T) {
-			fakeDiscovery := kubernetes.FakeDiscoveryClient()
+			fakeDiscovery := k8sfake.DiscoveryClient()
 			namespace := testNamespace
 
 			for _, actualObj := range test.actual {
@@ -284,10 +285,10 @@ func TestCheckResourceAbsent(t *testing.T) {
 		test := test
 
 		t.Run(test.name, func(t *testing.T) {
-			fakeDiscovery := kubernetes.FakeDiscoveryClient()
+			fakeDiscovery := k8sfake.DiscoveryClient()
 
 			for _, object := range test.actual {
-				_, _, err := kubernetes.Namespaced(fakeDiscovery, object, testNamespace)
+				_, _, err := object.Namespaced(fakeDiscovery, object, testNamespace)
 				assert.NoError(t, err)
 			}
 
@@ -373,7 +374,7 @@ func TestRun(t *testing.T) {
 			cl := fake.NewClientBuilder().WithScheme(scheme.Scheme).Build()
 
 			test.Step.Client = func(bool) (client.Client, error) { return cl, nil }
-			test.Step.DiscoveryClient = func() (discovery.DiscoveryInterface, error) { return kubernetes.FakeDiscoveryClient(), nil }
+			test.Step.DiscoveryClient = func() (discovery.DiscoveryInterface, error) { return k8sfake.DiscoveryClient(), nil }
 			test.Step.Logger = testutils.NewTestLogger(t, "")
 
 			if test.updateMethod != nil {

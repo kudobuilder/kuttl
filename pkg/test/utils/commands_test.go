@@ -4,12 +4,12 @@ import (
 	"bytes"
 	"context"
 	"os"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 
 	harness "github.com/kudobuilder/kuttl/pkg/apis/testharness/v1beta1"
-	"github.com/kudobuilder/kuttl/pkg/kubernetes"
 )
 
 func TestKubeconfigPath(t *testing.T) {
@@ -31,50 +31,6 @@ func TestKubeconfigPath(t *testing.T) {
 			assert.Equal(t, tt.expected, result)
 		})
 	}
-}
-
-func TestMatchesKind(t *testing.T) {
-	tmpfile, err := os.CreateTemp("", "test.yaml")
-	assert.Nil(t, err)
-	defer tmpfile.Close()
-
-	err = os.WriteFile(tmpfile.Name(), []byte(`
-apiVersion: v1
-kind: Pod
-metadata:
-  name: hello
-spec:
-  containers:
-  - name: nginx
-    image: nginx:1.7.9
----
-apiVersion: apiextensions.k8s.io/v1beta1
-kind: CustomResourceDefinition
-metadata:
-  name: hello
-`), 0600)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	objs, err := kubernetes.LoadYAMLFromFile(tmpfile.Name())
-	assert.Nil(t, err)
-
-	crd := kubernetes.NewResource("apiextensions.k8s.io/v1beta1", "CustomResourceDefinition", "", "")
-	pod := kubernetes.NewResource("v1", "Pod", "", "")
-	svc := kubernetes.NewResource("v1", "Service", "", "")
-
-	assert.False(t, kubernetes.MatchesKind(objs[0], crd))
-	assert.True(t, kubernetes.MatchesKind(objs[0], pod))
-	assert.True(t, kubernetes.MatchesKind(objs[0], pod, crd))
-	assert.True(t, kubernetes.MatchesKind(objs[0], crd, pod))
-	assert.False(t, kubernetes.MatchesKind(objs[0], crd, svc))
-
-	assert.True(t, kubernetes.MatchesKind(objs[1], crd))
-	assert.False(t, kubernetes.MatchesKind(objs[1], pod))
-	assert.True(t, kubernetes.MatchesKind(objs[1], pod, crd))
-	assert.True(t, kubernetes.MatchesKind(objs[1], crd, pod))
-	assert.False(t, kubernetes.MatchesKind(objs[1], svc, pod))
 }
 
 func TestGetKubectlArgs(t *testing.T) {
@@ -304,4 +260,104 @@ func TestRunScript(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestRunCommand(t *testing.T) {
+	stdout := &bytes.Buffer{}
+	stderr := &bytes.Buffer{}
+	hcmd := harness.Command{
+		Command: "echo 'hello'",
+	}
+
+	logger := NewTestLogger(t, "")
+	// assert foreground cmd returns nil
+	cmd, err := RunCommand(context.TODO(), "", hcmd, "", stdout, stderr, logger, 0, "")
+	assert.NoError(t, err)
+	assert.Nil(t, cmd)
+	// foreground processes should have stdout
+	assert.NotEmpty(t, stdout)
+
+	hcmd.Background = true
+	stdout = &bytes.Buffer{}
+
+	// assert background cmd returns process
+	cmd, err = RunCommand(context.TODO(), "", hcmd, "", stdout, stderr, logger, 0, "")
+	assert.NoError(t, err)
+	assert.NotNil(t, cmd)
+	// no stdout for background processes
+	assert.Empty(t, strings.TrimSpace(stdout.String()))
+
+	stdout = &bytes.Buffer{}
+	hcmd.Background = false
+	hcmd.Command = "sleep 42"
+
+	// assert foreground cmd times out
+	cmd, err = RunCommand(context.TODO(), "", hcmd, "", stdout, stderr, logger, 2, "")
+	assert.Error(t, err)
+	assert.True(t, strings.Contains(err.Error(), "timeout"))
+	assert.Nil(t, cmd)
+
+	stdout = &bytes.Buffer{}
+	hcmd.Background = false
+	hcmd.Command = "sleep 42"
+	hcmd.Timeout = 2
+
+	// assert foreground cmd times out with command timeout
+	cmd, err = RunCommand(context.TODO(), "", hcmd, "", stdout, stderr, logger, 0, "")
+	assert.Error(t, err)
+	assert.True(t, strings.Contains(err.Error(), "timeout"))
+	assert.Nil(t, cmd)
+}
+
+func TestRunCommandIgnoreErrors(t *testing.T) {
+	stdout := &bytes.Buffer{}
+	stderr := &bytes.Buffer{}
+	hcmd := harness.Command{
+		Command:       "sleep -u",
+		IgnoreFailure: true,
+	}
+
+	logger := NewTestLogger(t, "")
+	// assert foreground cmd returns nil
+	cmd, err := RunCommand(context.TODO(), "", hcmd, "", stdout, stderr, logger, 0, "")
+	assert.NoError(t, err)
+	assert.Nil(t, cmd)
+
+	hcmd.IgnoreFailure = false
+	cmd, err = RunCommand(context.TODO(), "", hcmd, "", stdout, stderr, logger, 0, "")
+	assert.Error(t, err)
+	assert.Nil(t, cmd)
+
+	// bad commands have errors regardless of ignore setting
+	hcmd = harness.Command{
+		Command:       "bad-command",
+		IgnoreFailure: true,
+	}
+	cmd, err = RunCommand(context.TODO(), "", hcmd, "", stdout, stderr, logger, 0, "")
+	assert.Error(t, err)
+	assert.Nil(t, cmd)
+}
+
+func TestRunCommandSkipLogOutput(t *testing.T) {
+	stdout := &bytes.Buffer{}
+	stderr := &bytes.Buffer{}
+	hcmd := harness.Command{
+		Command: "echo 'test'",
+	}
+
+	logger := NewTestLogger(t, "")
+	// test there is a stdout
+	cmd, err := RunCommand(context.TODO(), "", hcmd, "", stdout, stderr, logger, 0, "")
+	assert.NoError(t, err)
+	assert.Nil(t, cmd)
+	assert.True(t, stdout.Len() > 0)
+
+	hcmd.SkipLogOutput = true
+	stdout = &bytes.Buffer{}
+	stderr = &bytes.Buffer{}
+	// test there is no stdout
+	cmd, err = RunCommand(context.TODO(), "", hcmd, "", stdout, stderr, logger, 0, "")
+	assert.NoError(t, err)
+	assert.Nil(t, cmd)
+	assert.True(t, stdout.Len() == 0)
 }

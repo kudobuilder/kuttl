@@ -1,6 +1,6 @@
 package utils
 
-// Contains methods helpful for interacting with and manipulating Kubernetes resources from YAML.
+// Contains functions helpful for running commands.
 
 import (
 	"context"

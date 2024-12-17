@@ -7,19 +7,21 @@ import (
 	"k8s.io/apimachinery/pkg/api/meta"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+
+	fake "github.com/kudobuilder/kuttl/pkg/kubernetes/fake"
 )
 
 func TestGETAPIResource(t *testing.T) {
-	fake := FakeDiscoveryClient()
+	fakeClient := fake.DiscoveryClient()
 
-	apiResource, err := GetAPIResource(fake, schema.GroupVersionKind{
+	apiResource, err := GetAPIResource(fakeClient, schema.GroupVersionKind{
 		Kind:    "Pod",
 		Version: "v1",
 	})
 	assert.Nil(t, err)
 	assert.Equal(t, apiResource.Kind, "Pod")
 
-	_, err = GetAPIResource(fake, schema.GroupVersionKind{
+	_, err = GetAPIResource(fakeClient, schema.GroupVersionKind{
 		Kind:    "NonExistentResourceType",
 		Version: "v1",
 	})
@@ -28,7 +30,7 @@ func TestGETAPIResource(t *testing.T) {
 }
 
 func TestNamespaced(t *testing.T) {
-	fake := FakeDiscoveryClient()
+	fakeClient := fake.DiscoveryClient()
 
 	for _, test := range []struct {
 		testName    string
@@ -62,7 +64,7 @@ func TestNamespaced(t *testing.T) {
 		t.Run(test.testName, func(t *testing.T) {
 			m, _ := meta.Accessor(test.resource)
 
-			actualName, actualNamespace, err := Namespaced(fake, test.resource, "set-the-namespace")
+			actualName, actualNamespace, err := Namespaced(fakeClient, test.resource, "set-the-namespace")
 
 			if test.shouldError {
 				assert.NotNil(t, err)
