@@ -24,12 +24,12 @@ import (
 	testutils "github.com/kudobuilder/kuttl/pkg/test/utils"
 )
 
-var testenv testutils.TestEnvironment
+var testenv kubernetes.TestEnvironment
 
 func TestMain(m *testing.M) {
 	var err error
 
-	testenv, err = testutils.StartTestEnvironment(false)
+	testenv, err = kubernetes.StartTestEnvironment(false)
 	if err != nil {
 		log.Fatal(err)
 	}
