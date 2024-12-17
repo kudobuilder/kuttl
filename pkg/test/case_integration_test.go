@@ -17,7 +17,7 @@ import (
 // Create two test environments, ensure that the second environment is used when
 // Kubeconfig is set on a Step.
 func TestMultiClusterCase(t *testing.T) {
-	testenv, err := kubernetes.StartTestEnvironment(false)
+	testenv, err := testutils.StartTestEnvironment(false)
 	if err != nil {
 		t.Error(err)
 		return
@@ -28,7 +28,7 @@ func TestMultiClusterCase(t *testing.T) {
 		}
 	})
 
-	testenv2, err := kubernetes.StartTestEnvironment(false)
+	testenv2, err := testutils.StartTestEnvironment(false)
 	if err != nil {
 		t.Error(err)
 		return

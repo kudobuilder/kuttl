@@ -9,7 +9,7 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	harness "github.com/kudobuilder/kuttl/pkg/apis/testharness/v1beta1"
-	"github.com/kudobuilder/kuttl/pkg/kubernetes"
+	"github.com/kudobuilder/kuttl/pkg/test/utils"
 )
 
 func TestHarnessRunIntegration(t *testing.T) {
@@ -28,7 +28,7 @@ func TestHarnessRunIntegration(t *testing.T) {
 }
 
 func TestHarnessRunIntegrationWithConfig(t *testing.T) {
-	testenv, err := kubernetes.StartTestEnvironment(false)
+	testenv, err := utils.StartTestEnvironment(false)
 	if err != nil {
 		t.Fatalf("fatal error starting environment: %s", err)
 	}

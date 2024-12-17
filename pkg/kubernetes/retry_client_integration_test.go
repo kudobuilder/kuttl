@@ -13,14 +13,16 @@ import (
 	"github.com/stretchr/testify/assert"
 	"k8s.io/apimachinery/pkg/watch"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+
+	"github.com/kudobuilder/kuttl/pkg/test/utils"
 )
 
-var testenv TestEnvironment
+var testenv utils.TestEnvironment
 
 func TestMain(m *testing.M) {
 	var err error
 
-	testenv, err = StartTestEnvironment(false)
+	testenv, err = utils.StartTestEnvironment(false)
 	if err != nil {
 		log.Fatal(err)
 	}
