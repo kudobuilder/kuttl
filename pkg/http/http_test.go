@@ -32,7 +32,6 @@ func TestIsURL(t *testing.T) {
 		},
 	}
 	for _, tt := range tests {
-		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			if got := IsURL(tt.path); got != tt.want {
 				t.Errorf("IsURL() = %v, want %v", got, tt.want)

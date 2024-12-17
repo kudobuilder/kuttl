@@ -23,7 +23,7 @@ func newAssertCmd() *cobra.Command {
 		Short:   "Asserts the declared state to be true.",
 		Long:    `Asserts the declared state provided as an argument to be true in the $KUBECONFIG cluster. Valid arguments are a YAML file, URL to a YAML file.`,
 		Example: assertExample,
-		RunE: func(cmd *cobra.Command, args []string) error {
+		RunE: func(_ *cobra.Command, args []string) error {
 			if len(args) == 0 {
 				return errors.New("one file argument is required")
 			}

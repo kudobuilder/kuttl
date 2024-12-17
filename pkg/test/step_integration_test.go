@@ -6,7 +6,6 @@ import (
 	"context"
 	"fmt"
 	"log"
-	"math/rand"
 	"os"
 	"testing"
 	"time"
@@ -40,8 +39,6 @@ func TestMain(m *testing.M) {
 }
 
 func TestCheckResourceIntegration(t *testing.T) {
-	rand.Seed(time.Now().UnixNano())
-
 	for _, test := range []struct {
 		testName    string
 		actual      []client.Object
@@ -231,7 +228,6 @@ func TestCheckResourceIntegration(t *testing.T) {
 			shouldError: true,
 		},
 	} {
-		test := test
 		t.Run(test.testName, func(t *testing.T) {
 			namespace := fmt.Sprintf("kuttl-test-%s", petname.Generate(2, "-"))
 
@@ -336,7 +332,6 @@ func TestCheckedTypeAssertions(t *testing.T) {
 		{"apply", "TestStep"},
 	}
 	for _, test := range tests {
-		test := test
 		t.Run(test.name, func(t *testing.T) {
 			step := Step{}
 			path := fmt.Sprintf("step_integration_test_data/error_detect/00-%s.yaml", test.name)

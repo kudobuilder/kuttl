@@ -207,8 +207,6 @@ func TestCheckResource(t *testing.T) {
 			shouldError: true,
 		},
 	} {
-		test := test
-
 		t.Run(test.testName, func(t *testing.T) {
 			fakeDiscovery := k8sfake.DiscoveryClient()
 			namespace := testNamespace
@@ -282,8 +280,6 @@ func TestCheckResourceAbsent(t *testing.T) {
 			expected: kubernetes.NewPod("hello", ""),
 		},
 	} {
-		test := test
-
 		t.Run(test.name, func(t *testing.T) {
 			fakeDiscovery := k8sfake.DiscoveryClient()
 
@@ -364,8 +360,6 @@ func TestRun(t *testing.T) {
 			},
 		},
 	} {
-		test := test
-
 		t.Run(test.testName, func(t *testing.T) {
 			test.Step.Assert = &harness.TestAssert{
 				Timeout: 1,
@@ -415,8 +409,6 @@ func TestPopulateObjectsByFileName(t *testing.T) {
 		{"00-foo-bar.yaml", false, false, true, "foo-bar", false},
 		{"00-foo-bar-baz.yaml", false, false, true, "foo-bar-baz", false},
 	} {
-		tt := tt
-
 		t.Run(tt.fileName, func(t *testing.T) {
 			step := &Step{}
 			err := step.populateObjectsByFileName(tt.fileName, []client.Object{kubernetes.NewPod("foo", "")})

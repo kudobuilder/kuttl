@@ -19,7 +19,7 @@ func TestRetry(t *testing.T) {
 			return errors.New("ignore this error")
 		}
 		return nil
-	}, func(err error) bool { return false }, func(err error) bool {
+	}, func(error) bool { return false }, func(err error) bool {
 		return err.Error() == "ignore this error"
 	}))
 
@@ -35,7 +35,7 @@ func TestRetryWithUnexpectedError(t *testing.T) {
 			return errors.New("bad error")
 		}
 		return nil
-	}, func(err error) bool { return false }, func(err error) bool {
+	}, func(error) bool { return false }, func(err error) bool {
 		return err.Error() == "ignore this error"
 	}))
 	assert.Equal(t, 1, index)
@@ -46,7 +46,7 @@ func TestRetryWithNil(t *testing.T) {
 }
 
 func TestRetryWithNilFromFn(t *testing.T) {
-	assert.Equal(t, nil, retry(context.TODO(), func(ctx context.Context) error {
+	assert.Equal(t, nil, retry(context.TODO(), func(context.Context) error {
 		return nil
 	}, isJSONSyntaxError))
 }
@@ -65,5 +65,5 @@ func TestRetryWithTimeout(t *testing.T) {
 
 	assert.Equal(t, errors.New("error"), retry(ctx, func(context.Context) error {
 		return errors.New("error")
-	}, func(err error) bool { return true }))
+	}, func(error) bool { return true }))
 }

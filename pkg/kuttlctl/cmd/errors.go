@@ -23,7 +23,7 @@ func newErrorsCmd() *cobra.Command {
 		Short:   "Asserts the declared errors state to NOT be true.",
 		Long:    `Asserts the declared errors state provided as an argument to not be true in the $KUBECONFIG cluster. Valid arguments are a YAML file, URL to a YAML file.`,
 		Example: errorsExample,
-		RunE: func(cmd *cobra.Command, args []string) error {
+		RunE: func(_ *cobra.Command, args []string) error {
 			if len(args) == 0 {
 				return errors.New("one file argument is required")
 			}

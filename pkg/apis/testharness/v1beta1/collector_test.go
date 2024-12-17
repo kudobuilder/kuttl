@@ -103,8 +103,6 @@ func TestTestCollector_String(t *testing.T) {
 		},
 	}
 	for _, tt := range tests {
-		tt := tt
-
 		t.Run(tt.name, func(t *testing.T) {
 			tc := &TestCollector{
 				Type:      tt.fields.Type,
@@ -150,7 +148,6 @@ func TestPodCommand(t *testing.T) {
 		},
 	}
 	for _, tt := range tests {
-		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			cmd := podCommand(&tt.tc)
 			assert.Equal(t, cmd.Command, tt.cmd)

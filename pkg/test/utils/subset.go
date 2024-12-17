@@ -22,7 +22,7 @@ func (e *SubsetError) AppendPath(key string) {
 
 // Error implements the error interface.
 func (e *SubsetError) Error() string {
-	if e.path == nil || len(e.path) == 0 {
+	if len(e.path) == 0 {
 		return e.message
 	}
 

@@ -327,8 +327,6 @@ func TestLoadTestSteps(t *testing.T) {
 			},
 		},
 	} {
-		tt := tt
-
 		t.Run(fmt.Sprintf("%s/%s", tt.path, tt.runLabels), func(t *testing.T) {
 			test := &Case{Dir: tt.path, Logger: testutils.NewTestLogger(t, tt.path), RunLabels: tt.runLabels}
 
@@ -392,8 +390,6 @@ func TestCollectTestStepFiles(t *testing.T) {
 			},
 		},
 	} {
-		tt := tt
-
 		t.Run(tt.path, func(t *testing.T) {
 			test := &Case{Dir: tt.path, Logger: testutils.NewTestLogger(t, tt.path)}
 			testStepFiles, err := test.CollectTestStepFiles()
@@ -417,8 +413,6 @@ func TestGetIndexFromFile(t *testing.T) {
 		{"01.yaml", -1},
 		{"foo-01.yaml", -1},
 	} {
-		tt := tt
-
 		t.Run(tt.fileName, func(t *testing.T) {
 			index, err := getIndexFromFile(tt.fileName)
 			assert.Nil(t, err)

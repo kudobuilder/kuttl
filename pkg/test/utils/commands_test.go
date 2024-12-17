@@ -25,7 +25,6 @@ func TestKubeconfigPath(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			result := kubeconfigPath(tt.path, tt.override)
 			assert.Equal(t, tt.expected, result)
@@ -171,8 +170,6 @@ func TestGetKubectlArgs(t *testing.T) {
 			},
 		},
 	} {
-		test := test
-
 		t.Run(test.testName, func(t *testing.T) {
 			if test.env != nil || len(test.env) > 0 {
 				for key, value := range test.env {
@@ -234,8 +231,6 @@ func TestRunScript(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		tt := tt
-
 		t.Run(tt.name, func(t *testing.T) {
 			stdout := &bytes.Buffer{}
 			stderr := &bytes.Buffer{}

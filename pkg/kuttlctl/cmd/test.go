@@ -234,15 +234,14 @@ For more detailed documentation, visit: https://kuttl.dev`,
 
 			return nil
 		},
-		Run: func(cmd *cobra.Command, args []string) {
+		Run: func(*cobra.Command, []string) {
 			testutils.RunTests("kuttl", testToRun, options.Parallel, func(t *testing.T) {
-				harness := test.Harness{
+				h := test.Harness{
 					TestSuite: options,
 					T:         t,
 					RunLabels: runLabels.AsLabelSet(),
 				}
-
-				harness.Run()
+				h.Run()
 			})
 		},
 	}

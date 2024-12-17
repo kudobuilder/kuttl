@@ -309,14 +309,13 @@ func (s *Step) CheckResource(expected runtime.Object, namespace string) []error 
 	}
 
 	for _, actual := range actuals {
-		actual := actual
 		tmpTestErrors := []error{}
 
 		if err := testutils.IsSubset(expectedObj, actual.UnstructuredContent()); err != nil {
 			diff, diffErr := kubernetes.PrettyDiff(
 				&unstructured.Unstructured{Object: expectedObj}, &actual)
 			if diffErr == nil {
-				tmpTestErrors = append(tmpTestErrors, fmt.Errorf(diff))
+				tmpTestErrors = append(tmpTestErrors, errors.New(diff))
 			} else {
 				tmpTestErrors = append(tmpTestErrors, diffErr)
 			}

@@ -6,13 +6,13 @@ linters:
     - bidichk
     - bodyclose
     - containedctx
+    - copyloopvar
     - decorder
     - dogsled
     - durationcheck
     - dupl
     - errcheck
     - errname
-    - exportloopref
     - gochecknoinits
     - goconst
     - gocritic
@@ -40,13 +40,6 @@ linters:
     - unused
     - wastedassign
     - whitespace
-run:
-  go: '1.17'
-  skip-dirs:
-    - hack
-    - dist
-    - keps
-    - kind-*
 
 linters-settings:
   errcheck:
@@ -60,6 +53,11 @@ linters-settings:
     # Don't use 'github.com/kudobuilder/kuttl', it'll result in unreliable output!
     local-prefixes: github.com/kudobuilder
 issues:
+  exclude-dirs:
+    - hack
+    - dist
+    - keps
+    - kind-*
   # ignore errchecks for test files
   exclude-rules:
   - path: _test\.go

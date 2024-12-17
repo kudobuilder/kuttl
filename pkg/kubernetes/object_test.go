@@ -59,8 +59,6 @@ func TestNamespaced(t *testing.T) {
 			shouldError: true,
 		},
 	} {
-		test := test
-
 		t.Run(test.testName, func(t *testing.T) {
 			m, _ := meta.Accessor(test.resource)
 

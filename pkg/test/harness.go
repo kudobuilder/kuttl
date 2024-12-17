@@ -5,7 +5,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"math/rand"
 	"os"
 	"os/exec"
 	"os/signal"
@@ -381,8 +380,6 @@ func (h *Harness) RunTests() {
 		for testDir, tests := range realTestSuite {
 			suiteReport := h.NewSuiteReport(testDir)
 			for _, test := range tests {
-				test := test
-
 				test.Client = h.Client
 				test.DiscoveryClient = h.DiscoveryClient
 
@@ -458,7 +455,6 @@ func (h *Harness) Run() {
 // Setup spins up the test env based on configuration
 // It can be used to start env which can than be modified prior to running tests, otherwise use Run().
 func (h *Harness) Setup() {
-	rand.Seed(time.Now().UTC().UnixNano())
 	h.report = report.NewSuiteCollection(h.TestSuite.Name)
 	h.T.Log("starting setup")
 
