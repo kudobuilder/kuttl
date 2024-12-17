@@ -288,7 +288,7 @@ func TestCheckResourceAbsent(t *testing.T) {
 			fakeDiscovery := k8sfake.DiscoveryClient()
 
 			for _, object := range test.actual {
-				_, _, err := object.Namespaced(fakeDiscovery, object, testNamespace)
+				_, _, err := kubernetes.Namespaced(fakeDiscovery, object, testNamespace)
 				assert.NoError(t, err)
 			}
 
