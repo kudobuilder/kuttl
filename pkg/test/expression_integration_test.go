@@ -6,8 +6,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"log"
-	"os"
 	"strings"
 	"testing"
 
@@ -15,24 +13,11 @@ import (
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/client-go/discovery"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	testutils "github.com/kudobuilder/kuttl/pkg/test/utils"
 )
-
-var testenv testutils.TestEnvironment
-
-func TestMain(m *testing.M) {
-	var err error
-
-	testenv, err = testutils.StartTestEnvironment(false)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	exitCode := m.Run()
-	testenv.Environment.Stop()
-	os.Exit(exitCode)
-}
 
 func buildTestStep(t *testing.T) *Step {
 	codednsDeployment := &appsv1.Deployment{
@@ -55,11 +40,15 @@ func buildTestStep(t *testing.T) *Step {
 	assert.NoError(t, testenv.Client.Create(context.TODO(), metricServerPod))
 
 	return &Step{
-		Name:            t.Name(),
-		Index:           0,
-		Logger:          testutils.NewTestLogger(t, t.Name()),
-		Client:          testenv.Client,
-		DiscoveryClient: testenv.DiscoveryClient,
+		Name:   t.Name(),
+		Index:  0,
+		Logger: testutils.NewTestLogger(t, t.Name()),
+		Client: func(bool) (client.Client, error) {
+			return testenv.Client, nil
+		},
+		DiscoveryClient: func() (discovery.DiscoveryInterface, error) {
+			return testenv.DiscoveryClient, nil
+		},
 	}
 }
 
