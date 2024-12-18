@@ -39,7 +39,7 @@ type Properties struct {
 	Property []Property `xml:"property" json:"property,omitempty"`
 }
 
-// Failure defines a test failure
+// Failure defines a test failure.
 type Failure struct {
 	// Text provides detailed information regarding failure.  It supports multi-line output.
 	Text string `xml:",chardata" json:"text,omitempty"`

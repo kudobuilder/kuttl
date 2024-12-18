@@ -13,7 +13,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-// Package v1beta1 contains API Schema definitions for the testharness API group
+// Package v1beta1 contains API Schema definitions for the testharness API group.
 // +k8s:openapi-gen=false
 // +k8s:deepcopy-gen=package
 // +groupName=kuttl.dev

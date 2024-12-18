@@ -38,8 +38,6 @@ func TestFromPath(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		tt := tt
-
 		t.Run(tt.name, func(t *testing.T) {
 			paths, err := FromPath(tt.path, tt.pattern)
 			assert.Equal(t, tt.wantErr, err != nil, "expected error %v, but got %v", tt.wantErr, err)
@@ -73,8 +71,6 @@ func TestTrimExt(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		tt := tt
-
 		t.Run(tt.name, func(t *testing.T) {
 			path := TrimExt(tt.path)
 			assert.Equal(t, path, tt.expected)

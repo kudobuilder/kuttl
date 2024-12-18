@@ -42,8 +42,6 @@ func TestExpand(t *testing.T) {
 
 	os.Setenv("KUTTL_TEST_123", "hello")
 	for _, tt := range tests {
-		tt := tt
-
 		t.Run(tt.name, func(t *testing.T) {
 			got := Expand(tt.in)
 			if got != tt.want {

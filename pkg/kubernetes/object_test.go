@@ -4,11 +4,12 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"k8s.io/apimachinery/pkg/api/meta"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
-	fake "github.com/kudobuilder/kuttl/pkg/kubernetes/fake"
+	"github.com/kudobuilder/kuttl/pkg/kubernetes/fake"
 )
 
 func TestGETAPIResource(t *testing.T) {
@@ -59,10 +60,9 @@ func TestNamespaced(t *testing.T) {
 			shouldError: true,
 		},
 	} {
-		test := test
-
 		t.Run(test.testName, func(t *testing.T) {
-			m, _ := meta.Accessor(test.resource)
+			m, err := meta.Accessor(test.resource)
+			require.NoError(t, err)
 
 			actualName, actualNamespace, err := Namespaced(fakeClient, test.resource, "set-the-namespace")
 

@@ -218,8 +218,8 @@ func (r *RetryClient) List(ctx context.Context, list client.ObjectList, opts ...
 }
 
 // Watch watches a specific object and returns all events for it.
-func (r *RetryClient) Watch(_ context.Context, obj runtime.Object) (watch.Interface, error) {
-	meta, err := meta.Accessor(obj)
+func (r *RetryClient) Watch(ctx context.Context, obj runtime.Object) (watch.Interface, error) {
+	objMeta, err := meta.Accessor(obj)
 	if err != nil {
 		return nil, err
 	}
@@ -236,9 +236,9 @@ func (r *RetryClient) Watch(_ context.Context, obj runtime.Object) (watch.Interf
 		return nil, err
 	}
 
-	return r.dynamic.Resource(mapping.Resource).Watch(context.TODO(), v1.SingleObject(v1.ObjectMeta{
-		Name:      meta.GetName(),
-		Namespace: meta.GetNamespace(),
+	return r.dynamic.Resource(mapping.Resource).Watch(ctx, v1.SingleObject(v1.ObjectMeta{
+		Name:      objMeta.GetName(),
+		Namespace: objMeta.GetNamespace(),
 	}))
 }
 

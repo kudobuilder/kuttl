@@ -9,6 +9,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 var updateGolden = flag.Bool("update", false, "update .golden files")
@@ -51,7 +52,7 @@ AssertionError`,
 		},
 	}
 
-	suites := Testsuites{
+	suites := &Testsuites{
 		XMLName:  xml.Name{Local: "testsuites"},
 		Name:     "",
 		Tests:    9,
@@ -67,9 +68,11 @@ AssertionError`,
 		},
 	}
 
-	x, _ := xml.MarshalIndent(suites, " ", "  ") //nolint:govet
+	x, err := xml.MarshalIndent(suites, " ", "  ")
+	require.NoError(t, err)
 	xout := string(x)
-	j, _ := json.MarshalIndent(suites, " ", "  ") //nolint:govet
+	j, err := json.MarshalIndent(suites, " ", "  ")
+	require.NoError(t, err)
 	jout := string(j)
 
 	xmlFile := filepath.Join("testdata", goldenXML+".golden")

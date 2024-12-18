@@ -5,48 +5,113 @@ linters:
     - asciicheck
     - bidichk
     - bodyclose
+    - canonicalheader
     - containedctx
+    - contextcheck
+    - copyloopvar
     - decorder
     - dogsled
-    - durationcheck
     - dupl
+    - dupword
+    - durationcheck
     - errcheck
+    - errchkjson
     - errname
-    - exportloopref
+    - exhaustive
+    - fatcontext
+    - forcetypeassert
+    - ginkgolinter
+    - gocheckcompilerdirectives
     - gochecknoinits
+    - gochecksumtype
     - goconst
     - gocritic
     - gocyclo
     - gofmt
+    - goheader
     - goimports
+    - gomoddirectives
+    - gomodguard
+    - goprintffuncname
     - gosimple
+    - gosmopolitan
     - govet
     - grouper
+    - iface
     - importas
     - ineffassign
+    - interfacebloat
     - lll
+    - loggercheck
     - makezero
+    - mirror
     - misspell
     - nakedret
+    - nilerr
     - noctx
     - nolintlint
     - nosprintfhostport
+    - predeclared
+    - promlinter
+    - protogetter
+    - reassign
+    - recvcheck
     - revive
+    - rowserrcheck
+    - sloglint
+    - spancheck
+    - sqlclosecheck
     - staticcheck
     - stylecheck
-    - typecheck
+    - tagliatelle
+    - testableexamples
+    - tparallel
     - unconvert
     - unparam
     - unused
+    - usestdlibvars
     - wastedassign
     - whitespace
-run:
-  go: '1.17'
-  skip-dirs:
-    - hack
-    - dist
-    - keps
-    - kind-*
+    - zerologlint
+  disable:
+  # These linters are disabled ONLY because fixing/investigating their complaints initially was too overwhelming.
+  # We SHOULD try and evaluate each of them eventually and either fix their reports
+  # or comment here on why we decided to not listen to them.
+    - cyclop
+    - depguard
+    - err113
+    - errorlint
+    - exhaustruct
+    - forbidigo
+    - funlen
+    - gci
+    - gocognit
+    - godot
+    - godox
+    - gofumpt
+    - gosec
+    - inamedparam
+    - intrange
+    - ireturn
+    - gochecknoglobals
+    - maintidx
+    - mnd
+    - musttag
+    - nestif
+    - nilnil
+    - nlreturn
+    - nonamedreturns
+    - paralleltest
+    - perfsprint
+    - prealloc
+    - tagalign
+    - tenv
+    - testifylint
+    - testpackage
+    - thelper
+    - varnamelen
+    - wrapcheck
+    - wsl
 
 linters-settings:
   errcheck:
@@ -60,8 +125,8 @@ linters-settings:
     # Don't use 'github.com/kudobuilder/kuttl', it'll result in unreliable output!
     local-prefixes: github.com/kudobuilder
 issues:
-  # ignore errchecks for test files
-  exclude-rules:
-  - path: _test\.go
-    linters:
-    - errcheck
+  exclude-dirs:
+    - hack
+    - dist
+    - keps
+    - kind-*

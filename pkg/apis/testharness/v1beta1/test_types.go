@@ -52,8 +52,9 @@ type TestSuite struct {
 	// AttachControlPlaneOutput if true, attaches control plane logs (api-server, etcd) into stdout. This is useful for debugging.
 	// defaults to false
 	AttachControlPlaneOutput bool `json:"attachControlPlaneOutput"`
-	// Whether or not to start a local kind cluster for the tests.
-	StartKIND bool `json:"startKIND"`
+	// Whether to start a local kind cluster for the tests
+	// TODO: fix json tag and remove nolint when bumping API version.
+	StartKIND bool `json:"startKIND"` //nolint:tagliatelle
 	// Path to the KIND configuration file to use.
 	KINDConfig string `json:"kindConfig"`
 	// KIND context to use.

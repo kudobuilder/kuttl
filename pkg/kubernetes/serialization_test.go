@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 )
 
@@ -85,15 +86,22 @@ spec:
 }
 
 func TestPrettyDiff(t *testing.T) {
-	actual, err := LoadYAMLFromFile("test_data/prettydiff-actual.yaml")
+	actualObjs, err := LoadYAMLFromFile("test_data/prettydiff-actual.yaml")
 	assert.NoError(t, err)
-	assert.Len(t, actual, 1)
-	expected, err := LoadYAMLFromFile("test_data/prettydiff-expected.yaml")
+	assert.Len(t, actualObjs, 1)
+	expectedObjs, err := LoadYAMLFromFile("test_data/prettydiff-expected.yaml")
 	assert.NoError(t, err)
-	assert.Len(t, expected, 1)
+	assert.Len(t, expectedObjs, 1)
+	expected, ok := expectedObjs[0].(*unstructured.Unstructured)
+	assert.True(t, ok, "expected object should be an *Unstructured")
+	actual, ok := actualObjs[0].(*unstructured.Unstructured)
+	assert.True(t, ok, "actual object should be an *Unstructured")
+	if t.Failed() {
+		t.FailNow()
+	}
 
-	result, err := PrettyDiff(expected[0].(*unstructured.Unstructured), actual[0].(*unstructured.Unstructured))
-	assert.NoError(t, err)
+	result, err := PrettyDiff(expected, actual)
+	require.NoError(t, err)
 	assert.Equal(t, `--- Deployment:/central
 +++ Deployment:kuttl-test-thorough-hermit/central
 @@ -1,7 +1,35 @@
