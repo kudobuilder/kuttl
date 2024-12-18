@@ -213,7 +213,7 @@ func TestRunScript(t *testing.T) {
 			wantedErr:      true,
 			expectedStdout: false,
 		},
-		// failure for script command as a command (reason we need a script script option)
+		// failure for script command as a command (reason we need a script option)
 		{
 			name:           `command has a failing script command`,
 			command:        "for i in {1..5}; do echo $NAMESPACE; done",

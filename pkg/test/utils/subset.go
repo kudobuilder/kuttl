@@ -47,7 +47,7 @@ func IsSubset(expected, actual interface{}) error {
 		return nil
 	}
 
-	switch reflect.TypeOf(expected).Kind() {
+	switch reflect.TypeOf(expected).Kind() { //nolint:exhaustive
 	case reflect.Slice:
 		if reflect.ValueOf(expected).Len() != reflect.ValueOf(actual).Len() {
 			return &SubsetError{

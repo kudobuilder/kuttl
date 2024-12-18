@@ -25,6 +25,6 @@ func (v *labelSetValue) Type() string {
 	return "labelSet"
 }
 
-func (v labelSetValue) AsLabelSet() labels.Set {
-	return labels.Set(v)
+func (v *labelSetValue) AsLabelSet() labels.Set {
+	return labels.Set(*v)
 }

@@ -23,7 +23,7 @@ type Client struct {
 
 // Get performs an HTTP get and returns the Response.  The caller is responsible for closing the response.
 func (c *Client) Get(url string) (*http.Response, error) {
-	req, err := http.NewRequestWithContext(context.Background(), "GET", url, nil)
+	req, err := http.NewRequestWithContext(context.Background(), http.MethodGet, url, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -42,7 +42,7 @@ func (c *Client) GetByteBuffer(url string) (*bytes.Buffer, error) {
 	if err != nil {
 		return buf, err
 	}
-	if resp.StatusCode != 200 {
+	if resp.StatusCode != http.StatusOK {
 		return buf, fmt.Errorf("failed to fetch %s : %s", url, resp.Status)
 	}
 
@@ -122,7 +122,7 @@ func (wc *writeCounter) Write(p []byte) (int, error) {
 }
 
 // PrintProgress prints the progress of a file write
-func (wc writeCounter) PrintProgress() {
+func (wc *writeCounter) PrintProgress() {
 	// Clear the line by using a character return to go back to the start and remove
 	// the remaining characters by filling it with spaces
 	fmt.Printf("\r%s", strings.Repeat(" ", 100))

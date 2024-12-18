@@ -12,7 +12,7 @@ const (
 	command = "command"
 )
 
-// validate checks user input and updates type if not provided
+// validate checks user input and updates type if not provided.
 // It is expected to be called prior to any other call
 func (tc *TestCollector) validate() error {
 	cleanType(tc)

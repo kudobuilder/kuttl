@@ -403,7 +403,7 @@ func (s *Step) CheckResourceAbsent(expected runtime.Object, namespace string) er
 }
 
 // CheckAssertCommands Runs the commands provided in `commands` and check if have been run successfully.
-// the errors returned can be a a failure of executing the command or the failure of the command executed.
+// the errors returned can be a failure of executing the command or the failure of the command executed.
 func (s *Step) CheckAssertCommands(ctx context.Context, namespace string, commands []harness.TestAssertCommand, timeout int) []error {
 	testErrors := []error{}
 	if _, err := testutils.RunAssertCommands(ctx, s.Logger, namespace, commands, s.Dir, timeout, s.Kubeconfig); err != nil {
