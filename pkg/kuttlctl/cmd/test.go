@@ -13,6 +13,7 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
 	harness "github.com/kudobuilder/kuttl/pkg/apis/testharness/v1beta1"
+	"github.com/kudobuilder/kuttl/pkg/kubernetes"
 	"github.com/kudobuilder/kuttl/pkg/report"
 	"github.com/kudobuilder/kuttl/pkg/test"
 	testutils "github.com/kudobuilder/kuttl/pkg/test/utils"
@@ -91,7 +92,7 @@ For more detailed documentation, visit: https://kuttl.dev`,
 
 			// Load the configuration YAML into options.
 			if configPath != "" {
-				objects, err := testutils.LoadYAMLFromFile(configPath)
+				objects, err := kubernetes.LoadYAMLFromFile(configPath)
 				if err != nil {
 					return err
 				}

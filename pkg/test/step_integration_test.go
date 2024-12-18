@@ -20,15 +20,16 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	harness "github.com/kudobuilder/kuttl/pkg/apis/testharness/v1beta1"
+	"github.com/kudobuilder/kuttl/pkg/kubernetes"
 	testutils "github.com/kudobuilder/kuttl/pkg/test/utils"
 )
 
-var testenv testutils.TestEnvironment
+var testenv kubernetes.TestEnvironment
 
 func TestMain(m *testing.M) {
 	var err error
 
-	testenv, err = testutils.StartTestEnvironment(false)
+	testenv, err = kubernetes.StartTestEnvironment(false)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -50,7 +51,7 @@ func TestCheckResourceIntegration(t *testing.T) {
 		{
 			testName: "match object by labels, first in list matches",
 			actual: []client.Object{
-				testutils.WithSpec(t, testutils.WithLabels(t, testutils.NewPod("labels-match-pod", ""), map[string]string{
+				kubernetes.WithSpec(t, kubernetes.WithLabels(t, kubernetes.NewPod("labels-match-pod", ""), map[string]string{
 					"app": "nginx",
 				}), map[string]interface{}{
 					"containers": []interface{}{
@@ -60,7 +61,7 @@ func TestCheckResourceIntegration(t *testing.T) {
 						},
 					},
 				}),
-				testutils.WithSpec(t, testutils.WithLabels(t, testutils.NewPod("bb", ""), map[string]string{
+				kubernetes.WithSpec(t, kubernetes.WithLabels(t, kubernetes.NewPod("bb", ""), map[string]string{
 					"app": "not-match",
 				}), map[string]interface{}{
 					"containers": []interface{}{
@@ -94,7 +95,7 @@ func TestCheckResourceIntegration(t *testing.T) {
 		{
 			testName: "match object by labels, last in list matches",
 			actual: []client.Object{
-				testutils.WithSpec(t, testutils.WithLabels(t, testutils.NewPod("last-in-list", ""), map[string]string{
+				kubernetes.WithSpec(t, kubernetes.WithLabels(t, kubernetes.NewPod("last-in-list", ""), map[string]string{
 					"app": "not-match",
 				}), map[string]interface{}{
 					"containers": []interface{}{
@@ -104,7 +105,7 @@ func TestCheckResourceIntegration(t *testing.T) {
 						},
 					},
 				}),
-				testutils.WithSpec(t, testutils.WithLabels(t, testutils.NewPod("bb", ""), map[string]string{
+				kubernetes.WithSpec(t, kubernetes.WithLabels(t, kubernetes.NewPod("bb", ""), map[string]string{
 					"app": "nginx",
 				}), map[string]interface{}{
 					"containers": []interface{}{
@@ -138,7 +139,7 @@ func TestCheckResourceIntegration(t *testing.T) {
 		{
 			testName: "match object by labels, does not exist",
 			actual: []client.Object{
-				testutils.WithSpec(t, testutils.WithLabels(t, testutils.NewPod("hello", ""), map[string]string{
+				kubernetes.WithSpec(t, kubernetes.WithLabels(t, kubernetes.NewPod("hello", ""), map[string]string{
 					"app": "NOT-A-MATCH",
 				}), map[string]interface{}{
 					"containers": []interface{}{
@@ -173,7 +174,7 @@ func TestCheckResourceIntegration(t *testing.T) {
 		{
 			testName: "match object by labels, field mismatch",
 			actual: []client.Object{
-				testutils.WithSpec(t, testutils.WithLabels(t, testutils.NewPod("hello", ""), map[string]string{
+				kubernetes.WithSpec(t, kubernetes.WithLabels(t, kubernetes.NewPod("hello", ""), map[string]string{
 					"app": "nginx",
 				}), map[string]interface{}{
 					"containers": []interface{}{
@@ -234,13 +235,13 @@ func TestCheckResourceIntegration(t *testing.T) {
 		t.Run(test.testName, func(t *testing.T) {
 			namespace := fmt.Sprintf("kuttl-test-%s", petname.Generate(2, "-"))
 
-			err := testenv.Client.Create(context.TODO(), testutils.NewResource("v1", "Namespace", namespace, ""))
+			err := testenv.Client.Create(context.TODO(), kubernetes.NewResource("v1", "Namespace", namespace, ""))
 			if !k8serrors.IsAlreadyExists(err) {
 				// we are ignoring already exists here because in tests we by default use retry client so this can happen
 				assert.Nil(t, err)
 			}
 			for _, actual := range test.actual {
-				_, _, err := testutils.Namespaced(testenv.DiscoveryClient, actual, namespace)
+				_, _, err := kubernetes.Namespaced(testenv.DiscoveryClient, actual, namespace)
 				assert.Nil(t, err)
 
 				assert.Nil(t, testenv.Client.Create(context.TODO(), actual))
@@ -276,15 +277,15 @@ func TestStepDeleteExistingLabelMatch(t *testing.T) {
 		},
 	}
 
-	podToDelete := testutils.WithSpec(t, testutils.WithLabels(t, testutils.NewPod("aa-delete-me", "world"), map[string]string{
+	podToDelete := kubernetes.WithSpec(t, kubernetes.WithLabels(t, kubernetes.NewPod("aa-delete-me", "world"), map[string]string{
 		"hello": "world",
 	}), podSpec)
 
-	podToKeep := testutils.WithSpec(t, testutils.WithLabels(t, testutils.NewPod("bb-dont-delete-me", "world"), map[string]string{
+	podToKeep := kubernetes.WithSpec(t, kubernetes.WithLabels(t, kubernetes.NewPod("bb-dont-delete-me", "world"), map[string]string{
 		"bye": "moon",
 	}), podSpec)
 
-	podToDelete2 := testutils.WithSpec(t, testutils.WithLabels(t, testutils.NewPod("cc-delete-me", "world"), map[string]string{
+	podToDelete2 := kubernetes.WithSpec(t, kubernetes.WithLabels(t, kubernetes.NewPod("cc-delete-me", "world"), map[string]string{
 		"hello": "world",
 	}), podSpec)
 
@@ -308,22 +309,22 @@ func TestStepDeleteExistingLabelMatch(t *testing.T) {
 		DiscoveryClient: func() (discovery.DiscoveryInterface, error) { return testenv.DiscoveryClient, nil },
 	}
 
-	namespaceObj := testutils.NewResource("v1", "Namespace", namespace, "default")
+	namespaceObj := kubernetes.NewResource("v1", "Namespace", namespace, "default")
 
 	assert.Nil(t, testenv.Client.Create(context.TODO(), namespaceObj))
 	assert.Nil(t, testenv.Client.Create(context.TODO(), podToKeep))
 	assert.Nil(t, testenv.Client.Create(context.TODO(), podToDelete))
 	assert.Nil(t, testenv.Client.Create(context.TODO(), podToDelete2))
 
-	assert.Nil(t, testenv.Client.Get(context.TODO(), testutils.ObjectKey(podToKeep), podToKeep))
-	assert.Nil(t, testenv.Client.Get(context.TODO(), testutils.ObjectKey(podToDelete), podToDelete))
-	assert.Nil(t, testenv.Client.Get(context.TODO(), testutils.ObjectKey(podToDelete2), podToDelete2))
+	assert.Nil(t, testenv.Client.Get(context.TODO(), kubernetes.ObjectKey(podToKeep), podToKeep))
+	assert.Nil(t, testenv.Client.Get(context.TODO(), kubernetes.ObjectKey(podToDelete), podToDelete))
+	assert.Nil(t, testenv.Client.Get(context.TODO(), kubernetes.ObjectKey(podToDelete2), podToDelete2))
 
 	assert.Nil(t, step.DeleteExisting(namespace))
 
-	assert.Nil(t, testenv.Client.Get(context.TODO(), testutils.ObjectKey(podToKeep), podToKeep))
-	assert.True(t, k8serrors.IsNotFound(testenv.Client.Get(context.TODO(), testutils.ObjectKey(podToDelete), podToDelete)))
-	assert.True(t, k8serrors.IsNotFound(testenv.Client.Get(context.TODO(), testutils.ObjectKey(podToDelete2), podToDelete2)))
+	assert.Nil(t, testenv.Client.Get(context.TODO(), kubernetes.ObjectKey(podToKeep), podToKeep))
+	assert.True(t, k8serrors.IsNotFound(testenv.Client.Get(context.TODO(), kubernetes.ObjectKey(podToDelete), podToDelete)))
+	assert.True(t, k8serrors.IsNotFound(testenv.Client.Get(context.TODO(), kubernetes.ObjectKey(podToDelete2), podToDelete2)))
 }
 
 func TestCheckedTypeAssertions(t *testing.T) {
@@ -425,7 +426,7 @@ func TestStepFailure(t *testing.T) {
 
 	namespace := fmt.Sprintf("kuttl-test-%s", petname.Generate(2, "-"))
 
-	err := testenv.Client.Create(context.TODO(), testutils.NewResource("v1", "Namespace", namespace, ""))
+	err := testenv.Client.Create(context.TODO(), kubernetes.NewResource("v1", "Namespace", namespace, ""))
 	if !k8serrors.IsAlreadyExists(err) {
 		// we are ignoring already exists here because in tests we by default use retry client so this can happen
 		assert.Nil(t, err)

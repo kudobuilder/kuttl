@@ -17,6 +17,8 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 
 	harness "github.com/kudobuilder/kuttl/pkg/apis/testharness/v1beta1"
+	"github.com/kudobuilder/kuttl/pkg/kubernetes"
+	k8sfake "github.com/kudobuilder/kuttl/pkg/kubernetes/fake"
 	testutils "github.com/kudobuilder/kuttl/pkg/test/utils"
 )
 
@@ -27,44 +29,44 @@ const (
 // Verify the test state as loaded from disk.
 // Each test provides a path to a set of test steps and their rendered result.
 func TestStepClean(t *testing.T) {
-	pod := testutils.NewPod("hello", "")
+	pod := kubernetes.NewPod("hello", "")
 
-	podWithNamespace := testutils.WithNamespace(pod, testNamespace)
-	pod2WithNamespace := testutils.NewPod("hello2", testNamespace)
-	pod2WithDiffNamespace := testutils.NewPod("hello2", "different-namespace")
+	podWithNamespace := kubernetes.WithNamespace(pod, testNamespace)
+	pod2WithNamespace := kubernetes.NewPod("hello2", testNamespace)
+	pod2WithDiffNamespace := kubernetes.NewPod("hello2", "different-namespace")
 
 	cl := fake.NewClientBuilder().WithObjects(pod, pod2WithNamespace, pod2WithDiffNamespace).WithScheme(scheme.Scheme).Build()
 
 	step := Step{
 		Apply: []client.Object{
-			pod, pod2WithDiffNamespace, testutils.NewPod("does-not-exist", ""),
+			pod, pod2WithDiffNamespace, kubernetes.NewPod("does-not-exist", ""),
 		},
 		Client:          func(bool) (client.Client, error) { return cl, nil },
-		DiscoveryClient: func() (discovery.DiscoveryInterface, error) { return testutils.FakeDiscoveryClient(), nil },
+		DiscoveryClient: func() (discovery.DiscoveryInterface, error) { return k8sfake.DiscoveryClient(), nil },
 	}
 
 	assert.Nil(t, step.Clean(testNamespace))
 
-	assert.True(t, k8serrors.IsNotFound(cl.Get(context.TODO(), testutils.ObjectKey(podWithNamespace), podWithNamespace)))
-	assert.Nil(t, cl.Get(context.TODO(), testutils.ObjectKey(pod2WithNamespace), pod2WithNamespace))
-	assert.True(t, k8serrors.IsNotFound(cl.Get(context.TODO(), testutils.ObjectKey(pod2WithDiffNamespace), pod2WithDiffNamespace)))
+	assert.True(t, k8serrors.IsNotFound(cl.Get(context.TODO(), kubernetes.ObjectKey(podWithNamespace), podWithNamespace)))
+	assert.Nil(t, cl.Get(context.TODO(), kubernetes.ObjectKey(pod2WithNamespace), pod2WithNamespace))
+	assert.True(t, k8serrors.IsNotFound(cl.Get(context.TODO(), kubernetes.ObjectKey(pod2WithDiffNamespace), pod2WithDiffNamespace)))
 }
 
 // Verify the test state as loaded from disk.
 // Each test provides a path to a set of test steps and their rendered result.
 func TestStepCreate(t *testing.T) {
-	pod := testutils.NewPod("hello", "default")
-	podWithNamespace := testutils.NewPod("hello2", "different-namespace")
-	clusterScopedResource := testutils.NewResource("v1", "Namespace", "my-namespace", "default")
-	podToUpdate := testutils.NewPod("update-me", "default")
+	pod := kubernetes.NewPod("hello", "default")
+	podWithNamespace := kubernetes.NewPod("hello2", "different-namespace")
+	clusterScopedResource := kubernetes.NewResource("v1", "Namespace", "my-namespace", "default")
+	podToUpdate := kubernetes.NewPod("update-me", "default")
 	specToApply := map[string]interface{}{
 		"containers":    nil,
 		"restartPolicy": "OnFailure",
 	}
 
-	updateToApply := testutils.WithSpec(t, podToUpdate, specToApply)
+	updateToApply := kubernetes.WithSpec(t, podToUpdate, specToApply)
 
-	cl := fake.NewClientBuilder().WithScheme(scheme.Scheme).WithRuntimeObjects(testutils.WithNamespace(podToUpdate, testNamespace)).Build()
+	cl := fake.NewClientBuilder().WithScheme(scheme.Scheme).WithRuntimeObjects(kubernetes.WithNamespace(podToUpdate, testNamespace)).Build()
 
 	step := Step{
 		Logger: testutils.NewTestLogger(t, ""),
@@ -72,28 +74,28 @@ func TestStepCreate(t *testing.T) {
 			pod.DeepCopy(), podWithNamespace.DeepCopy(), clusterScopedResource, updateToApply,
 		},
 		Client:          func(bool) (client.Client, error) { return cl, nil },
-		DiscoveryClient: func() (discovery.DiscoveryInterface, error) { return testutils.FakeDiscoveryClient(), nil },
+		DiscoveryClient: func() (discovery.DiscoveryInterface, error) { return k8sfake.DiscoveryClient(), nil },
 	}
 
 	assert.Equal(t, []error{}, step.Create(t, testNamespace))
 
-	assert.Nil(t, cl.Get(context.TODO(), testutils.ObjectKey(pod), pod))
-	assert.Nil(t, cl.Get(context.TODO(), testutils.ObjectKey(clusterScopedResource), clusterScopedResource))
+	assert.Nil(t, cl.Get(context.TODO(), kubernetes.ObjectKey(pod), pod))
+	assert.Nil(t, cl.Get(context.TODO(), kubernetes.ObjectKey(clusterScopedResource), clusterScopedResource))
 
 	updatedPod := &unstructured.Unstructured{Object: map[string]interface{}{"apiVersion": "v1", "kind": "Pod"}}
-	assert.Nil(t, cl.Get(context.TODO(), testutils.ObjectKey(podToUpdate), updatedPod))
+	assert.Nil(t, cl.Get(context.TODO(), kubernetes.ObjectKey(podToUpdate), updatedPod))
 	assert.Equal(t, specToApply, updatedPod.Object["spec"])
 
-	assert.Nil(t, cl.Get(context.TODO(), testutils.ObjectKey(podWithNamespace), podWithNamespace))
-	actual := testutils.NewPod("hello2", testNamespace)
-	assert.True(t, k8serrors.IsNotFound(cl.Get(context.TODO(), testutils.ObjectKey(actual), actual)))
+	assert.Nil(t, cl.Get(context.TODO(), kubernetes.ObjectKey(podWithNamespace), podWithNamespace))
+	actual := kubernetes.NewPod("hello2", testNamespace)
+	assert.True(t, k8serrors.IsNotFound(cl.Get(context.TODO(), kubernetes.ObjectKey(actual), actual)))
 }
 
 // Verify that the DeleteExisting method properly cleans up resources during a test step.
 func TestStepDeleteExisting(t *testing.T) {
-	podToDelete := testutils.NewPod("delete-me", testNamespace)
-	podToDeleteDefaultNS := testutils.NewPod("also-delete-me", "default")
-	podToKeep := testutils.NewPod("keep-me", testNamespace)
+	podToDelete := kubernetes.NewPod("delete-me", testNamespace)
+	podToDeleteDefaultNS := kubernetes.NewPod("also-delete-me", "default")
+	podToKeep := kubernetes.NewPod("keep-me", testNamespace)
 
 	cl := fake.NewClientBuilder().WithScheme(scheme.Scheme).WithRuntimeObjects(podToDelete, podToKeep, podToDeleteDefaultNS).Build()
 
@@ -119,18 +121,18 @@ func TestStepDeleteExisting(t *testing.T) {
 			},
 		},
 		Client:          func(bool) (client.Client, error) { return cl, nil },
-		DiscoveryClient: func() (discovery.DiscoveryInterface, error) { return testutils.FakeDiscoveryClient(), nil },
+		DiscoveryClient: func() (discovery.DiscoveryInterface, error) { return k8sfake.DiscoveryClient(), nil },
 	}
 
-	assert.Nil(t, cl.Get(context.TODO(), testutils.ObjectKey(podToKeep), podToKeep))
-	assert.Nil(t, cl.Get(context.TODO(), testutils.ObjectKey(podToDelete), podToDelete))
-	assert.Nil(t, cl.Get(context.TODO(), testutils.ObjectKey(podToDeleteDefaultNS), podToDeleteDefaultNS))
+	assert.Nil(t, cl.Get(context.TODO(), kubernetes.ObjectKey(podToKeep), podToKeep))
+	assert.Nil(t, cl.Get(context.TODO(), kubernetes.ObjectKey(podToDelete), podToDelete))
+	assert.Nil(t, cl.Get(context.TODO(), kubernetes.ObjectKey(podToDeleteDefaultNS), podToDeleteDefaultNS))
 
 	assert.Nil(t, step.DeleteExisting(testNamespace))
 
-	assert.Nil(t, cl.Get(context.TODO(), testutils.ObjectKey(podToKeep), podToKeep))
-	assert.True(t, k8serrors.IsNotFound(cl.Get(context.TODO(), testutils.ObjectKey(podToDelete), podToDelete)))
-	assert.True(t, k8serrors.IsNotFound(cl.Get(context.TODO(), testutils.ObjectKey(podToDeleteDefaultNS), podToDeleteDefaultNS)))
+	assert.Nil(t, cl.Get(context.TODO(), kubernetes.ObjectKey(podToKeep), podToKeep))
+	assert.True(t, k8serrors.IsNotFound(cl.Get(context.TODO(), kubernetes.ObjectKey(podToDelete), podToDelete)))
+	assert.True(t, k8serrors.IsNotFound(cl.Get(context.TODO(), kubernetes.ObjectKey(podToDeleteDefaultNS), podToDeleteDefaultNS)))
 }
 
 func TestCheckResource(t *testing.T) {
@@ -143,23 +145,23 @@ func TestCheckResource(t *testing.T) {
 		{
 			testName: "resource matches",
 			actual: []runtime.Object{
-				testutils.NewPod("hello", ""),
+				kubernetes.NewPod("hello", ""),
 			},
-			expected: testutils.NewPod("hello", ""),
+			expected: kubernetes.NewPod("hello", ""),
 		},
 		{
 			testName: "resource matches with labels",
 			actual: []runtime.Object{
-				testutils.WithSpec(t, testutils.NewPod("deploy-8b2d", ""),
+				kubernetes.WithSpec(t, kubernetes.NewPod("deploy-8b2d", ""),
 					map[string]interface{}{
 						"containers":         nil,
 						"serviceAccountName": "invalid",
 					}),
-				testutils.WithSpec(
+				kubernetes.WithSpec(
 					t,
-					testutils.WithLabels(
+					kubernetes.WithLabels(
 						t,
-						testutils.NewPod("deploy-8c2z", ""),
+						kubernetes.NewPod("deploy-8c2z", ""),
 						map[string]string{"label": "my-label"},
 					),
 					map[string]interface{}{
@@ -169,11 +171,11 @@ func TestCheckResource(t *testing.T) {
 				),
 			},
 
-			expected: testutils.WithSpec(
+			expected: kubernetes.WithSpec(
 				t,
-				testutils.WithLabels(
+				kubernetes.WithLabels(
 					t,
-					testutils.NewPod("", ""),
+					kubernetes.NewPod("", ""),
 					map[string]string{"label": "my-label"},
 				),
 				map[string]interface{}{
@@ -184,35 +186,35 @@ func TestCheckResource(t *testing.T) {
 		},
 		{
 			testName:    "resource mis-match",
-			actual:      []runtime.Object{testutils.NewPod("hello", "")},
-			expected:    testutils.WithSpec(t, testutils.NewPod("hello", ""), map[string]interface{}{"invalid": "key"}),
+			actual:      []runtime.Object{kubernetes.NewPod("hello", "")},
+			expected:    kubernetes.WithSpec(t, kubernetes.NewPod("hello", ""), map[string]interface{}{"invalid": "key"}),
 			shouldError: true,
 		},
 		{
 			testName: "resource subset match",
-			actual: []runtime.Object{testutils.WithSpec(t, testutils.NewPod("hello", ""), map[string]interface{}{
+			actual: []runtime.Object{kubernetes.WithSpec(t, kubernetes.NewPod("hello", ""), map[string]interface{}{
 				"containers":    nil,
 				"restartPolicy": "OnFailure",
 			})},
-			expected: testutils.WithSpec(t, testutils.NewPod("hello", ""), map[string]interface{}{
+			expected: kubernetes.WithSpec(t, kubernetes.NewPod("hello", ""), map[string]interface{}{
 				"restartPolicy": "OnFailure",
 			}),
 		},
 		{
 			testName:    "resource does not exist",
-			actual:      []runtime.Object{testutils.NewPod("other", "")},
-			expected:    testutils.NewPod("hello", ""),
+			actual:      []runtime.Object{kubernetes.NewPod("other", "")},
+			expected:    kubernetes.NewPod("hello", ""),
 			shouldError: true,
 		},
 	} {
 		test := test
 
 		t.Run(test.testName, func(t *testing.T) {
-			fakeDiscovery := testutils.FakeDiscoveryClient()
+			fakeDiscovery := k8sfake.DiscoveryClient()
 			namespace := testNamespace
 
 			for _, actualObj := range test.actual {
-				_, _, err := testutils.Namespaced(fakeDiscovery, actualObj, namespace)
+				_, _, err := kubernetes.Namespaced(fakeDiscovery, actualObj, namespace)
 				assert.Nil(t, err)
 			}
 
@@ -244,49 +246,49 @@ func TestCheckResourceAbsent(t *testing.T) {
 	}{
 		{
 			name:        "resource matches",
-			actual:      []runtime.Object{testutils.NewPod("hello", "")},
-			expected:    testutils.NewPod("hello", ""),
+			actual:      []runtime.Object{kubernetes.NewPod("hello", "")},
+			expected:    kubernetes.NewPod("hello", ""),
 			shouldError: true,
 		},
 		{
 			name: "one of more resources matches",
 			actual: []runtime.Object{
-				testutils.NewV1Pod("pod1", "", "val1"),
-				testutils.NewV1Pod("pod2", "", "val2"),
+				kubernetes.NewV1Pod("pod1", "", "val1"),
+				kubernetes.NewV1Pod("pod2", "", "val2"),
 			},
-			expected:    testutils.WithSpec(t, testutils.NewPod("", ""), map[string]interface{}{"serviceAccountName": "val1"}),
+			expected:    kubernetes.WithSpec(t, kubernetes.NewPod("", ""), map[string]interface{}{"serviceAccountName": "val1"}),
 			shouldError: true,
 			expectedErr: "resource /v1, Kind=Pod pod1 matched error assertion",
 		},
 		{
 			name: "multiple of more resources matches",
 			actual: []runtime.Object{
-				testutils.NewV1Pod("pod1", "", "val1"),
-				testutils.NewV1Pod("pod2", "", "val1"),
-				testutils.NewV1Pod("pod3", "", "val2"),
+				kubernetes.NewV1Pod("pod1", "", "val1"),
+				kubernetes.NewV1Pod("pod2", "", "val1"),
+				kubernetes.NewV1Pod("pod3", "", "val2"),
 			},
-			expected:    testutils.WithSpec(t, testutils.NewPod("", ""), map[string]interface{}{"serviceAccountName": "val1"}),
+			expected:    kubernetes.WithSpec(t, kubernetes.NewPod("", ""), map[string]interface{}{"serviceAccountName": "val1"}),
 			shouldError: true,
 			expectedErr: "resource /v1, Kind=Pod pod1 (and 1 other resources) matched error assertion",
 		},
 		{
 			name:     "resource mis-match",
-			actual:   []runtime.Object{testutils.NewPod("hello", "")},
-			expected: testutils.WithSpec(t, testutils.NewPod("hello", ""), map[string]interface{}{"invalid": "key"}),
+			actual:   []runtime.Object{kubernetes.NewPod("hello", "")},
+			expected: kubernetes.WithSpec(t, kubernetes.NewPod("hello", ""), map[string]interface{}{"invalid": "key"}),
 		},
 		{
 			name:     "resource does not exist",
-			actual:   []runtime.Object{testutils.NewPod("other", "")},
-			expected: testutils.NewPod("hello", ""),
+			actual:   []runtime.Object{kubernetes.NewPod("other", "")},
+			expected: kubernetes.NewPod("hello", ""),
 		},
 	} {
 		test := test
 
 		t.Run(test.name, func(t *testing.T) {
-			fakeDiscovery := testutils.FakeDiscoveryClient()
+			fakeDiscovery := k8sfake.DiscoveryClient()
 
 			for _, object := range test.actual {
-				_, _, err := testutils.Namespaced(fakeDiscovery, object, testNamespace)
+				_, _, err := kubernetes.Namespaced(fakeDiscovery, object, testNamespace)
 				assert.NoError(t, err)
 			}
 
@@ -322,20 +324,20 @@ func TestRun(t *testing.T) {
 		{
 			testName: "successful run", Step: Step{
 				Apply: []client.Object{
-					testutils.NewPod("hello", ""),
+					kubernetes.NewPod("hello", ""),
 				},
 				Asserts: []client.Object{
-					testutils.NewPod("hello", ""),
+					kubernetes.NewPod("hello", ""),
 				},
 			},
 		},
 		{
 			"failed run", true, Step{
 				Apply: []client.Object{
-					testutils.NewPod("hello", ""),
+					kubernetes.NewPod("hello", ""),
 				},
 				Asserts: []client.Object{
-					testutils.WithStatus(t, testutils.NewPod("hello", ""), map[string]interface{}{
+					kubernetes.WithStatus(t, kubernetes.NewPod("hello", ""), map[string]interface{}{
 						"phase": "Ready",
 					}),
 				},
@@ -344,19 +346,19 @@ func TestRun(t *testing.T) {
 		{
 			"delayed run", false, Step{
 				Apply: []client.Object{
-					testutils.NewPod("hello", ""),
+					kubernetes.NewPod("hello", ""),
 				},
 				Asserts: []client.Object{
-					testutils.WithStatus(t, testutils.NewPod("hello", ""), map[string]interface{}{
+					kubernetes.WithStatus(t, kubernetes.NewPod("hello", ""), map[string]interface{}{
 						"phase": "Ready",
 					}),
 				},
 			}, func(t *testing.T, client client.Client) {
-				pod := testutils.NewPod("hello", testNamespace)
+				pod := kubernetes.NewPod("hello", testNamespace)
 				assert.Nil(t, client.Get(context.TODO(), types.NamespacedName{Namespace: testNamespace, Name: "hello"}, pod))
 
 				// mock kubelet to set the pod status
-				assert.Nil(t, client.Status().Update(context.TODO(), testutils.WithStatus(t, pod, map[string]interface{}{
+				assert.Nil(t, client.Status().Update(context.TODO(), kubernetes.WithStatus(t, pod, map[string]interface{}{
 					"phase": "Ready",
 				})))
 			},
@@ -372,7 +374,7 @@ func TestRun(t *testing.T) {
 			cl := fake.NewClientBuilder().WithScheme(scheme.Scheme).Build()
 
 			test.Step.Client = func(bool) (client.Client, error) { return cl, nil }
-			test.Step.DiscoveryClient = func() (discovery.DiscoveryInterface, error) { return testutils.FakeDiscoveryClient(), nil }
+			test.Step.DiscoveryClient = func() (discovery.DiscoveryInterface, error) { return k8sfake.DiscoveryClient(), nil }
 			test.Step.Logger = testutils.NewTestLogger(t, "")
 
 			if test.updateMethod != nil {
@@ -417,7 +419,7 @@ func TestPopulateObjectsByFileName(t *testing.T) {
 
 		t.Run(tt.fileName, func(t *testing.T) {
 			step := &Step{}
-			err := step.populateObjectsByFileName(tt.fileName, []client.Object{testutils.NewPod("foo", "")})
+			err := step.populateObjectsByFileName(tt.fileName, []client.Object{kubernetes.NewPod("foo", "")})
 			assert.Nil(t, err)
 			assert.Equal(t, tt.isAssert, len(step.Asserts) != 0)
 			assert.Equal(t, tt.isError, len(step.Errors) != 0)

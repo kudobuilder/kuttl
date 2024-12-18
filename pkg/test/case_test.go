@@ -12,6 +12,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	harness "github.com/kudobuilder/kuttl/pkg/apis/testharness/v1beta1"
+	"github.com/kudobuilder/kuttl/pkg/kubernetes"
 	testutils "github.com/kudobuilder/kuttl/pkg/test/utils"
 )
 
@@ -41,7 +42,7 @@ func TestLoadTestSteps(t *testing.T) {
 						Index: 0,
 					},
 					Apply: []client.Object{
-						testutils.WithSpec(t, testutils.NewPod("test", ""), map[string]interface{}{
+						kubernetes.WithSpec(t, kubernetes.NewPod("test", ""), map[string]interface{}{
 							"restartPolicy": "Never",
 							"containers": []map[string]interface{}{
 								{
@@ -52,7 +53,7 @@ func TestLoadTestSteps(t *testing.T) {
 						}),
 					},
 					Asserts: []client.Object{
-						testutils.WithStatus(t, testutils.NewPod("test", ""), map[string]interface{}{
+						kubernetes.WithStatus(t, kubernetes.NewPod("test", ""), map[string]interface{}{
 							"qosClass": "BestEffort",
 						}),
 					},
@@ -86,7 +87,7 @@ func TestLoadTestSteps(t *testing.T) {
 						Timeout: 20,
 					},
 					Apply: []client.Object{
-						testutils.WithSpec(t, testutils.NewPod("test2", ""), map[string]interface{}{
+						kubernetes.WithSpec(t, kubernetes.NewPod("test2", ""), map[string]interface{}{
 							"restartPolicy": "Never",
 							"containers": []map[string]interface{}{
 								{
@@ -97,7 +98,7 @@ func TestLoadTestSteps(t *testing.T) {
 						}),
 					},
 					Asserts: []client.Object{
-						testutils.WithStatus(t, testutils.NewPod("test2", ""), map[string]interface{}{
+						kubernetes.WithStatus(t, kubernetes.NewPod("test2", ""), map[string]interface{}{
 							"qosClass": "BestEffort",
 						}),
 					},
@@ -108,7 +109,7 @@ func TestLoadTestSteps(t *testing.T) {
 					Name:  "pod",
 					Index: 2,
 					Apply: []client.Object{
-						testutils.WithSpec(t, testutils.NewPod("test4", ""), map[string]interface{}{
+						kubernetes.WithSpec(t, kubernetes.NewPod("test4", ""), map[string]interface{}{
 							"containers": []map[string]interface{}{
 								{
 									"name":  "nginx",
@@ -116,7 +117,7 @@ func TestLoadTestSteps(t *testing.T) {
 								},
 							},
 						}),
-						testutils.WithSpec(t, testutils.NewPod("test3", ""), map[string]interface{}{
+						kubernetes.WithSpec(t, kubernetes.NewPod("test3", ""), map[string]interface{}{
 							"containers": []map[string]interface{}{
 								{
 									"name":  "nginx",
@@ -126,7 +127,7 @@ func TestLoadTestSteps(t *testing.T) {
 						}),
 					},
 					Asserts: []client.Object{
-						testutils.WithStatus(t, testutils.NewPod("test3", ""), map[string]interface{}{
+						kubernetes.WithStatus(t, kubernetes.NewPod("test3", ""), map[string]interface{}{
 							"qosClass": "BestEffort",
 						}),
 					},
@@ -147,7 +148,7 @@ func TestLoadTestSteps(t *testing.T) {
 						Index: 3,
 					},
 					Apply: []client.Object{
-						testutils.WithSpec(t, testutils.NewPod("test6", ""), map[string]interface{}{
+						kubernetes.WithSpec(t, kubernetes.NewPod("test6", ""), map[string]interface{}{
 							"restartPolicy": "Never",
 							"containers": []map[string]interface{}{
 								{
@@ -156,7 +157,7 @@ func TestLoadTestSteps(t *testing.T) {
 								},
 							},
 						}),
-						testutils.WithSpec(t, testutils.NewPod("test5", ""), map[string]interface{}{
+						kubernetes.WithSpec(t, kubernetes.NewPod("test5", ""), map[string]interface{}{
 							"restartPolicy": "Never",
 							"containers": []map[string]interface{}{
 								{
@@ -167,7 +168,7 @@ func TestLoadTestSteps(t *testing.T) {
 						}),
 					},
 					Asserts: []client.Object{
-						testutils.WithSpec(t, testutils.NewPod("test5", ""), map[string]interface{}{
+						kubernetes.WithSpec(t, kubernetes.NewPod("test5", ""), map[string]interface{}{
 							"restartPolicy": "Never",
 						}),
 					},

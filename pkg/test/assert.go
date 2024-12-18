@@ -8,8 +8,7 @@ import (
 	"k8s.io/client-go/discovery"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
-	"github.com/kudobuilder/kuttl/pkg/k8s"
-	testutils "github.com/kudobuilder/kuttl/pkg/test/utils"
+	"github.com/kudobuilder/kuttl/pkg/kubernetes"
 )
 
 // Assert checks all provided assert files against a namespace.  Upon assert failure, it prints the failures and returns an error
@@ -105,13 +104,13 @@ func Errors(namespace string, timeout int, errorFiles ...string) error {
 }
 
 func Client(_ bool) (client.Client, error) {
-	cfg, err := k8s.GetConfig()
+	cfg, err := kubernetes.GetConfig()
 	if err != nil {
 		return nil, err
 	}
 
-	client, err := testutils.NewRetryClient(cfg, client.Options{
-		Scheme: testutils.Scheme(),
+	client, err := kubernetes.NewRetryClient(cfg, client.Options{
+		Scheme: kubernetes.Scheme(),
 	})
 	if err != nil {
 		return nil, fmt.Errorf("fatal error getting client: %v", err)
@@ -121,7 +120,7 @@ func Client(_ bool) (client.Client, error) {
 }
 
 func DiscoveryClient() (discovery.DiscoveryInterface, error) {
-	cfg, err := k8s.GetConfig()
+	cfg, err := kubernetes.GetConfig()
 	if err != nil {
 		return nil, err
 	}
