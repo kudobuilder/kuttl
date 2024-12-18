@@ -34,7 +34,10 @@ func TestMain(m *testing.M) {
 	}
 
 	exitCode := m.Run()
-	testenv.Environment.Stop()
+	err = testenv.Environment.Stop()
+	if err != nil {
+		log.Fatal(err)
+	}
 	os.Exit(exitCode)
 }
 

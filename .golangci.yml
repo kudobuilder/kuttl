@@ -58,8 +58,3 @@ issues:
     - dist
     - keps
     - kind-*
-  # ignore errchecks for test files
-  exclude-rules:
-  - path: _test\.go
-    linters:
-    - errcheck

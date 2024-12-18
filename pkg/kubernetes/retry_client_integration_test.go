@@ -26,7 +26,10 @@ func TestMain(m *testing.M) {
 	}
 
 	exitCode := m.Run()
-	testenv.Environment.Stop()
+	err = testenv.Environment.Stop()
+	if err != nil {
+		log.Fatal(err)
+	}
 	os.Exit(exitCode)
 }
 
@@ -59,7 +62,7 @@ func TestCreateOrUpdate(t *testing.T) {
 				case <-quit:
 					return
 				default:
-					CreateOrUpdate(context.TODO(), testenv.Client, SetAnnotation(depToUpdate, "test", fmt.Sprintf("%d", i)), false)
+					CreateOrUpdate(context.TODO(), testenv.Client, SetAnnotation(depToUpdate, "test", fmt.Sprintf("%d", i)), false) //nolint:errcheck
 					time.Sleep(time.Millisecond * 75)
 				}
 			}
