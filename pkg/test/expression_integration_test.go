@@ -20,25 +20,6 @@ import (
 )
 
 func buildTestStep(t *testing.T) *Step {
-	codednsDeployment := &appsv1.Deployment{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      "coredns",
-			Namespace: "kube-system",
-		},
-	}
-	metricServerPod := &corev1.Pod{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      "metrics-server-xyz-pqr",
-			Namespace: "kube-system",
-			Labels: map[string]string{
-				"app": "metrics-server",
-			},
-		},
-	}
-
-	assert.NoError(t, testenv.Client.Create(context.TODO(), codednsDeployment))
-	assert.NoError(t, testenv.Client.Create(context.TODO(), metricServerPod))
-
 	return &Step{
 		Name:   t.Name(),
 		Index:  0,
@@ -53,6 +34,52 @@ func buildTestStep(t *testing.T) *Step {
 }
 
 func TestAssertExpressions(t *testing.T) {
+	codednsDeployment := &appsv1.Deployment{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "coredns",
+			Namespace: "kube-system",
+			Labels:    map[string]string{"k8s-app": "kube-dns"},
+		},
+		Spec: appsv1.DeploymentSpec{
+			Selector: &metav1.LabelSelector{
+				MatchLabels: map[string]string{"k8s-app": "kube-dns"},
+			},
+			Template: corev1.PodTemplateSpec{
+				ObjectMeta: metav1.ObjectMeta{
+					Labels: map[string]string{"k8s-app": "kube-dns"},
+				},
+				Spec: corev1.PodSpec{
+					Containers: []corev1.Container{
+						{
+							Name:  "coredns",
+							Image: "registry.k8s.io/coredns/coredns:v1.11.1",
+						},
+					},
+				},
+			},
+		},
+	}
+	metricServerPod := &corev1.Pod{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "metrics-server-xyz-pqr",
+			Namespace: "kube-system",
+			Labels: map[string]string{
+				"k8s-app": "metrics-server",
+			},
+		},
+		Spec: corev1.PodSpec{
+			Containers: []corev1.Container{
+				{
+					Name:  "metrics-server",
+					Image: "registry.k8s.io/metrics-server/metrics-server:v0.7.2",
+				},
+			},
+		},
+	}
+
+	assert.NoError(t, testenv.Client.Create(context.TODO(), codednsDeployment))
+	assert.NoError(t, testenv.Client.Create(context.TODO(), metricServerPod))
+
 	testCases := []struct {
 		name          string
 		loadingFailed bool

@@ -13,5 +13,5 @@ resourceRefs:
     ref: metricsServer
 assertAll:
   - celExpr: "coredns.metadata.name == 'metrics-server'"
-  - celExpr: "metricsServer.metadata.labels['app'] == 'metrics-server'"
+  - celExpr: "metricsServer.metadata.labels['k8s-app'] == 'metrics-server'"
 timeout: 1
