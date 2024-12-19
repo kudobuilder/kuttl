@@ -98,7 +98,7 @@ func TestAssertExpressions(t *testing.T) {
 		{
 			name:                 "check incorrect deployment name",
 			expectRunFailure:     true,
-			expectedErrorMessage: "not all expressions evaluated to true",
+			expectedErrorMessage: "not all assertAll expressions evaluated to true",
 		},
 		{
 			name: "check multiple assert all",
@@ -106,7 +106,7 @@ func TestAssertExpressions(t *testing.T) {
 		{
 			name:                 "check multiple assert all with one failing",
 			expectRunFailure:     true,
-			expectedErrorMessage: "not all expressions evaluated to true",
+			expectedErrorMessage: "not all assertAll expressions evaluated to true",
 		},
 		{
 			name: "check multiple assert any",
