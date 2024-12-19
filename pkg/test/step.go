@@ -563,7 +563,7 @@ func (s *Step) LoadYAML(file string) error {
 
 			s.Programs, err = expressions.LoadPrograms(s.Assert)
 			if err != nil {
-				return fmt.Errorf("failed to load programs: %w", err)
+				return fmt.Errorf("failed to prepare expression evaluation: %w", err)
 			}
 		} else {
 			asserts = append(asserts, obj)

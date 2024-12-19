@@ -82,39 +82,39 @@ func TestAssertExpressions(t *testing.T) {
 	assert.NoError(t, testenv.Client.Create(context.TODO(), metricServerPod))
 
 	testCases := []struct {
-		name          string
-		loadingFailed bool
-		runFailed     bool
-		errorMessage  string
+		name                 string
+		expectLoadFailure    bool
+		expectRunFailure     bool
+		expectedErrorMessage string
 	}{
 		{
-			name:          "invalid expression",
-			loadingFailed: true,
-			errorMessage:  "undeclared reference",
+			name:                 "invalid expression",
+			expectLoadFailure:    true,
+			expectedErrorMessage: "undeclared reference",
 		},
 		{
 			name: "check deployment name",
 		},
 		{
-			name:         "check incorrect deployment name",
-			runFailed:    true,
-			errorMessage: "not all expressions evaluated to true",
+			name:                 "check incorrect deployment name",
+			expectRunFailure:     true,
+			expectedErrorMessage: "not all expressions evaluated to true",
 		},
 		{
 			name: "check multiple assert all",
 		},
 		{
-			name:         "check multiple assert all with one failing",
-			runFailed:    true,
-			errorMessage: "not all expressions evaluated to true",
+			name:                 "check multiple assert all with one failing",
+			expectRunFailure:     true,
+			expectedErrorMessage: "not all expressions evaluated to true",
 		},
 		{
 			name: "check multiple assert any",
 		},
 		{
-			name:         "check multiple assert any with all failing",
-			runFailed:    true,
-			errorMessage: "no expression evaluated to true",
+			name:                 "check multiple assert any with all failing",
+			expectRunFailure:     true,
+			expectedErrorMessage: "no expression evaluated to true",
 		},
 		{
 			name: "check expression for ephemeral namespace",
@@ -152,20 +152,19 @@ func TestAssertExpressions(t *testing.T) {
 
 			fName := fmt.Sprintf("%s/%s", dirName, files[len(files)-1].Name())
 
-			// Load test that has an invalid expression
 			err = step.LoadYAML(fName)
-			if !tc.loadingFailed {
+			if !tc.expectLoadFailure {
 				assert.NoError(t, err)
 			} else {
-				assert.ErrorContains(t, err, tc.errorMessage)
+				assert.ErrorContains(t, err, tc.expectedErrorMessage)
 				return
 			}
 
 			err = errors.Join(step.Run(t, testNamespace)...)
-			if !tc.runFailed {
+			if !tc.expectRunFailure {
 				assert.NoError(t, err)
 			} else {
-				assert.ErrorContains(t, err, tc.errorMessage)
+				assert.ErrorContains(t, err, tc.expectedErrorMessage)
 			}
 		})
 	}
