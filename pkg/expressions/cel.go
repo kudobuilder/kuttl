@@ -62,25 +62,25 @@ func RunAssertExpressions(
 		return errs
 	}
 
-	var anyExpressionsEvaluation, allExpressionsEvaluation []error
+	var anyExprErrors, allExprErrors []error
 	for _, expr := range assertAny {
 		if err := evaluateExpression(expr.CELExpression, programs, variables); err != nil {
-			anyExpressionsEvaluation = append(anyExpressionsEvaluation, err)
+			anyExprErrors = append(anyExprErrors, err)
 		}
 	}
 
 	for _, expr := range assertAll {
 		if err := evaluateExpression(expr.CELExpression, programs, variables); err != nil {
-			allExpressionsEvaluation = append(allExpressionsEvaluation, err)
+			allExprErrors = append(allExprErrors, err)
 		}
 	}
 
-	if len(assertAny) != 0 && len(anyExpressionsEvaluation) == len(assertAny) {
-		errs = append(errs, fmt.Errorf("no expression evaluated to true: %w", errors.Join(anyExpressionsEvaluation...)))
+	if len(assertAny) != 0 && len(anyExprErrors) == len(assertAny) {
+		errs = append(errs, fmt.Errorf("no expression evaluated to true: %w", errors.Join(anyExprErrors...)))
 	}
 
-	if len(allExpressionsEvaluation) > 0 {
-		errs = append(errs, fmt.Errorf("not all expressions evaluated to true: %w", errors.Join(allExpressionsEvaluation...)))
+	if len(allExprErrors) > 0 {
+		errs = append(errs, fmt.Errorf("not all assertAll evaluated to true: %w", errors.Join(allExprErrors...)))
 	}
 
 	return errs
@@ -94,20 +94,19 @@ func LoadPrograms(testAssert *harness.TestAssert) (map[string]cel.Program, error
 
 	env, err := buildEnv(testAssert.ResourceRefs)
 	if err != nil {
-		return nil, fmt.Errorf("failed to build environment: %w", err)
+		return nil, fmt.Errorf("failed to build CEL environment: %w", err)
 	}
 
-	var programs map[string]cel.Program
 	if len(assertions) == 0 {
-		return programs, nil
+		return nil, nil
 	}
-	programs = make(map[string]cel.Program)
+	programs := make(map[string]cel.Program)
 
 	for _, assertion := range assertions {
 		if prg, err := buildProgram(assertion.CELExpression, env); err != nil {
 			errs = append(
 				errs,
-				fmt.Errorf("failed to parse CEL expression '%v': %w", assertion.CELExpression, err),
+				fmt.Errorf("failed to build CEL program from expression %q: %w", assertion.CELExpression, err),
 			)
 		} else {
 			programs[assertion.CELExpression] = prg
@@ -115,7 +114,7 @@ func LoadPrograms(testAssert *harness.TestAssert) (map[string]cel.Program, error
 	}
 
 	if len(errs) > 0 {
-		return nil, fmt.Errorf("failed to parse expression(s): %w", errors.Join(errs...))
+		return nil, fmt.Errorf("failed to load expression(s): %w", errors.Join(errs...))
 	}
 
 	return programs, nil
