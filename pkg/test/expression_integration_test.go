@@ -6,6 +6,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"os"
 	"strings"
 	"testing"
 
@@ -115,19 +116,44 @@ func TestAssertExpressions(t *testing.T) {
 			runFailed:    true,
 			errorMessage: "no expression evaluated to true",
 		},
+		{
+			name: "check expression for ephemeral namespace",
+		},
 	}
+
+	const testNamespace = "kuttl-ephemeral-xyz"
+	assert.NoError(t, testenv.Client.Create(context.TODO(), &corev1.Namespace{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: testNamespace,
+		},
+		TypeMeta: metav1.TypeMeta{
+			Kind: "Namespace",
+		},
+	}))
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			step := buildTestStep(t)
-
-			fName := fmt.Sprintf(
-				"step_integration_test_data/assert_expressions/%s/00-assert.yaml",
+			dirName := fmt.Sprintf(
+				"step_integration_test_data/assert_expressions/%s",
 				strings.ReplaceAll(tc.name, " ", "_"),
 			)
 
+			files, err := os.ReadDir(dirName)
+			assert.NoError(t, err)
+
+			for i := 0; i < len(files)-1; i++ {
+				fName := fmt.Sprintf("%s/%s", dirName, files[i].Name())
+				step := buildTestStep(t)
+				assert.NoError(t, step.LoadYAML(fName))
+				assert.NoError(t, errors.Join(errors.Join(step.Run(t, testNamespace)...)))
+			}
+
+			step := buildTestStep(t)
+
+			fName := fmt.Sprintf("%s/%s", dirName, files[len(files)-1].Name())
+
 			// Load test that has an invalid expression
-			err := step.LoadYAML(fName)
+			err = step.LoadYAML(fName)
 			if !tc.loadingFailed {
 				assert.NoError(t, err)
 			} else {
@@ -135,7 +161,7 @@ func TestAssertExpressions(t *testing.T) {
 				return
 			}
 
-			err = errors.Join(step.Run(t, "")...)
+			err = errors.Join(step.Run(t, testNamespace)...)
 			if !tc.runFailed {
 				assert.NoError(t, err)
 			} else {

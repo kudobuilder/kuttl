@@ -416,7 +416,7 @@ func (s *Step) CheckAssertCommands(ctx context.Context, namespace string, comman
 	return testErrors
 }
 
-func (s *Step) CheckAssertExpressions() []error {
+func (s *Step) CheckAssertExpressions(namespace string) []error {
 	client, err := s.Client(false)
 	if err != nil {
 		return []error{err}
@@ -424,6 +424,9 @@ func (s *Step) CheckAssertExpressions() []error {
 
 	variables := make(map[string]interface{})
 	for _, resourceRef := range s.Assert.ResourceRefs {
+		if resourceRef.Namespace == "" {
+			resourceRef.Namespace = namespace
+		}
 		namespacedName, referencedResource := resourceRef.BuildResourceReference()
 		if err := client.Get(context.TODO(), namespacedName, referencedResource); err != nil {
 			return []error{fmt.Errorf("failed to get referenced resource '%v': %w", namespacedName, err)}
@@ -445,7 +448,7 @@ func (s *Step) Check(namespace string, timeout int) []error {
 
 	if s.Assert != nil {
 		testErrors = append(testErrors, s.CheckAssertCommands(context.TODO(), namespace, s.Assert.Commands, timeout)...)
-		testErrors = append(testErrors, s.CheckAssertExpressions()...)
+		testErrors = append(testErrors, s.CheckAssertExpressions(namespace)...)
 	}
 
 	for _, expected := range s.Errors {
