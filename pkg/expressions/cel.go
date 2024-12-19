@@ -80,7 +80,7 @@ func RunAssertExpressions(
 	}
 
 	if len(allExprErrors) > 0 {
-		errs = append(errs, fmt.Errorf("not all assertAll evaluated to true: %w", errors.Join(allExprErrors...)))
+		errs = append(errs, fmt.Errorf("not all assertAll expressions evaluated to true: %w", errors.Join(allExprErrors...)))
 	}
 
 	return errs
