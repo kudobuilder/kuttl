@@ -1,0 +1,10 @@
+apiVersion: kuttl.dev/v1beta1
+kind: TestAssert
+resourceRefs:
+  - apiVersion: v1
+    kind: Pod
+    name: nginx-pod
+    ref: nginxPod
+assertAll:
+  - celExpr: "nginxPod.metadata.name == 'nginx-pod'"
+timeout: 1
