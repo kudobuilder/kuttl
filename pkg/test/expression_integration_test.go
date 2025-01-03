@@ -9,6 +9,7 @@ import (
 	"os"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	appsv1 "k8s.io/api/apps/v1"
@@ -17,10 +18,11 @@ import (
 	"k8s.io/client-go/discovery"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
+	"github.com/kudobuilder/kuttl/pkg/kubernetes"
 	testutils "github.com/kudobuilder/kuttl/pkg/test/utils"
 )
 
-func buildTestStep(t *testing.T) *Step {
+func buildTestStep(t *testing.T, testenv kubernetes.TestEnvironment) *Step {
 	return &Step{
 		Name:   t.Name(),
 		Index:  0,
@@ -35,6 +37,10 @@ func buildTestStep(t *testing.T) *Step {
 }
 
 func TestAssertExpressions(t *testing.T) {
+	ctx := context.WithTimeout(context.Background(), 2*time.Minute)
+	testenv, err := kubernetes.StartTestEnvironment(false)
+	assert.NoError(t, err)
+
 	codednsDeployment := &appsv1.Deployment{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "coredns",
@@ -78,8 +84,8 @@ func TestAssertExpressions(t *testing.T) {
 		},
 	}
 
-	assert.NoError(t, testenv.Client.Create(context.TODO(), codednsDeployment))
-	assert.NoError(t, testenv.Client.Create(context.TODO(), metricServerPod))
+	assert.NoError(t, testenv.Client.Create(ctx, codednsDeployment))
+	assert.NoError(t, testenv.Client.Create(ctx, metricServerPod))
 
 	testCases := []struct {
 		name                 string
@@ -122,7 +128,7 @@ func TestAssertExpressions(t *testing.T) {
 	}
 
 	const testNamespace = "kuttl-ephemeral-xyz"
-	assert.NoError(t, testenv.Client.Create(context.TODO(), &corev1.Namespace{
+	assert.NoError(t, testenv.Client.Create(ctx, &corev1.Namespace{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: testNamespace,
 		},
@@ -143,12 +149,12 @@ func TestAssertExpressions(t *testing.T) {
 
 			for i := 0; i < len(files)-1; i++ {
 				fName := fmt.Sprintf("%s/%s", dirName, files[i].Name())
-				step := buildTestStep(t)
+				step := buildTestStep(t, testenv)
 				assert.NoError(t, step.LoadYAML(fName))
 				assert.NoError(t, errors.Join(errors.Join(step.Run(t, testNamespace)...)))
 			}
 
-			step := buildTestStep(t)
+			step := buildTestStep(t, testenv)
 
 			fName := fmt.Sprintf("%s/%s", dirName, files[len(files)-1].Name())
 

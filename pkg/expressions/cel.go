@@ -50,7 +50,7 @@ func buildEnv(resourceRefs []harness.TestResourceRef) (*cel.Env, error) {
 	return env, nil
 }
 
-// RunAssertExpressions evaluates a set of CEL expressions specified as AnyAllExpressions
+// RunAssertExpressions evaluates a set of CEL expressions.
 func RunAssertExpressions(
 	programs map[string]cel.Program,
 	variables map[string]interface{},
@@ -126,7 +126,7 @@ func evaluateExpression(expr string,
 ) error {
 	prg, ok := programs[expr]
 	if !ok {
-		return fmt.Errorf("couldn't find pre-built parsed CEL expression '%v'", expr)
+		return fmt.Errorf("couldn't find pre-built parsed CEL expression %q", expr)
 	}
 	out, _, err := prg.Eval(variables)
 	if err != nil {
@@ -134,7 +134,7 @@ func evaluateExpression(expr string,
 	}
 
 	if out.Value() != true {
-		return fmt.Errorf("expression '%v' evaluated to '%v'", expr, out.Value())
+		return fmt.Errorf("expression %q evaluated to %q", expr, out.Value())
 	}
 
 	return nil
