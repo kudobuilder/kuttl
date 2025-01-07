@@ -149,26 +149,22 @@ func TestAssertExpressions(t *testing.T) {
 			files, err := os.ReadDir(dirName)
 			assert.NoError(t, err)
 
-			for i := 0; i < len(files)-1; i++ {
-				fName := fmt.Sprintf("%s/%s", dirName, files[i].Name())
-				step := buildTestStep(t, testenv)
-				assert.NoError(t, step.LoadYAML(fName))
-				assert.NoError(t, errors.Join(errors.Join(step.Run(t, testNamespace)...)))
+			step := buildTestStep(t, testenv)
+			for _, file := range files {
+				fName := fmt.Sprintf("%s/%s", dirName, file.Name())
+				if err = step.LoadYAML(fName); err != nil {
+					break
+				}
 			}
 
-			step := buildTestStep(t, testenv)
-
-			fName := fmt.Sprintf("%s/%s", dirName, files[len(files)-1].Name())
-
-			err = step.LoadYAML(fName)
 			if !tc.expectLoadFailure {
 				assert.NoError(t, err)
-			} else {
+			} else if tc.expectLoadFailure {
 				assert.ErrorContains(t, err, tc.expectedErrorMessage)
 				return
 			}
 
-			err = errors.Join(step.Run(t, testNamespace)...)
+			err = errors.Join(errors.Join(step.Run(t, testNamespace)...))
 			if !tc.expectRunFailure {
 				assert.NoError(t, err)
 			} else {
