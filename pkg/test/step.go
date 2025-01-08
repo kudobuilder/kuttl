@@ -194,7 +194,6 @@ func (s *Step) Create(test *testing.T, namespace string) []error {
 
 	errors := []error{}
 
-	fmt.Println("HEREA1", len(s.Apply))
 	for _, obj := range s.Apply {
 		_, _, err := kubernetes.Namespaced(dClient, obj, namespace)
 		if err != nil {
@@ -226,10 +225,7 @@ func (s *Step) Create(test *testing.T, namespace string) []error {
 			}
 			s.Logger.Log(kubernetes.ResourceID(obj), action)
 		}
-
-		fmt.Println("HEREA", obj.GetNamespace(), obj.GetName())
 	}
-	fmt.Println("HEREB", errors)
 
 	return errors
 }
@@ -433,7 +429,6 @@ func (s *Step) CheckAssertExpressions(namespace string) []error {
 		}
 		namespacedName, referencedResource := resourceRef.BuildResourceReference()
 		if err := client.Get(context.TODO(), namespacedName, referencedResource); err != nil {
-			fmt.Println("HEREB", err)
 			return []error{fmt.Errorf("failed to get referenced resource '%v': %w", namespacedName, err)}
 		}
 
@@ -683,8 +678,6 @@ func (s *Step) populateObjectsByFileName(fileName string, objects []client.Objec
 	if len(matches) < 2 {
 		return fmt.Errorf("%s does not match file name regexp: %s", fileName, testStepRegex.String())
 	}
-
-	fmt.Println("HEREC", strings.ToLower(matches[1]))
 
 	switch fname := strings.ToLower(matches[1]); fname {
 	case "assert":
