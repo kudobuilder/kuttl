@@ -10,6 +10,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/google/cel-go/cel"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -23,6 +24,7 @@ import (
 
 	harness "github.com/kudobuilder/kuttl/pkg/apis/testharness/v1beta1"
 	"github.com/kudobuilder/kuttl/pkg/env"
+	"github.com/kudobuilder/kuttl/pkg/expressions"
 	kfile "github.com/kudobuilder/kuttl/pkg/file"
 	"github.com/kudobuilder/kuttl/pkg/http"
 	"github.com/kudobuilder/kuttl/pkg/kubernetes"
@@ -45,6 +47,8 @@ type Step struct {
 
 	Step   *harness.TestStep
 	Assert *harness.TestAssert
+
+	Programs map[string]cel.Program
 
 	Asserts []client.Object
 	Apply   []client.Object
@@ -412,6 +416,28 @@ func (s *Step) CheckAssertCommands(ctx context.Context, namespace string, comman
 	return testErrors
 }
 
+func (s *Step) CheckAssertExpressions(namespace string) []error {
+	client, err := s.Client(false)
+	if err != nil {
+		return []error{err}
+	}
+
+	variables := make(map[string]interface{})
+	for _, resourceRef := range s.Assert.ResourceRefs {
+		if resourceRef.Namespace == "" {
+			resourceRef.Namespace = namespace
+		}
+		namespacedName, referencedResource := resourceRef.BuildResourceReference()
+		if err := client.Get(context.TODO(), namespacedName, referencedResource); err != nil {
+			return []error{fmt.Errorf("failed to get referenced resource '%v': %w", namespacedName, err)}
+		}
+
+		variables[resourceRef.Ref] = referencedResource.Object
+	}
+
+	return expressions.RunAssertExpressions(s.Programs, variables, s.Assert.AssertAny, s.Assert.AssertAll)
+}
+
 // Check checks if the resources defined in Asserts and Errors are in the correct state.
 func (s *Step) Check(namespace string, timeout int) []error {
 	testErrors := []error{}
@@ -422,6 +448,7 @@ func (s *Step) Check(namespace string, timeout int) []error {
 
 	if s.Assert != nil {
 		testErrors = append(testErrors, s.CheckAssertCommands(context.TODO(), namespace, s.Assert.Commands, timeout)...)
+		testErrors = append(testErrors, s.CheckAssertExpressions(namespace)...)
 	}
 
 	for _, expected := range s.Errors {
@@ -532,6 +559,11 @@ func (s *Step) LoadYAML(file string) error {
 				s.Assert = testAssert
 			} else {
 				return fmt.Errorf("failed to load TestAssert object from %s: it contains an object of type %T", file, obj)
+			}
+
+			s.Programs, err = expressions.LoadPrograms(s.Assert)
+			if err != nil {
+				return fmt.Errorf("failed to prepare expression evaluation: %w", err)
 			}
 		} else {
 			asserts = append(asserts, obj)
