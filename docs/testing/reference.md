@@ -102,6 +102,14 @@ commands:
 collectors:
 - type: pod
   pod: nginx
+resourceRefs:
+  - apiVersion: apps/v1
+    kind: Deployment
+    namespace: kube-system
+    name: coredns
+    ref: coredns
+assertAll:
+  - celExpr: "coredns.spec.replicas >= 2"
 ```
 
 Supported settings:
