@@ -106,11 +106,14 @@ collectors:
 
 Supported settings:
 
-Field   | Type | Description                                           | Default
---------|------|-------------------------------------------------------|-------------
-timeout | int  | Number of seconds that the test is allowed to run for | 30
-collectors | list of [collectors](#collectors) | The collectors to be invoked to gather information upon step failure | N/A
-commands | list of [commands](#commands) | Commands to run prior to the beginning of the test step. | N/A
+Field   | Type                                                | Description                                                                                      | Default
+--------|-----------------------------------------------------|--------------------------------------------------------------------------------------------------|-------------
+timeout | int                                                 | Number of seconds that the test is allowed to run for.                                           | 30
+collectors | list of [collectors](#collectors)                   | The collectors to be invoked to gather information upon step failure.                            | N/A
+commands | list of [commands](#commands)                       | Commands to run prior to the beginning of the test step.                                         | N/A
+resourceRefs | list of [resource references](#resource-references) | References to resources used in the expression-based assertions.                                 | N/A
+assertAll | list of [Expressions](#expressions)         | List of expressions _all_ must evaluate to `true` for a successful assertion.                    | N/A
+assertAny | list of [Expressions](#expressions)         | List of expressions _at least_ one of which must evaluate to `true` for a successful assertion. | N/A
 
 ## TestFile
 
@@ -168,3 +171,23 @@ skipLogOutput | bool   | If set, the output from the command is *not* logged. Us
 timeout       | int    | Override the TestSuite timeout for this command (in seconds).
 
 *Note*: The current working directory (CWD) for `command`/`script` is the test directory.
+
+## Resource References
+
+The `Resource References` objects are used by `TestAssert` for declaring identifiers for expression based assertions.
+
+Field         |   Type | Description
+--------------|--------|---------------------------------------------------------------------
+apiVersion    | string | apiVersion of the target resource.
+kind    | string | Kind of the target resource.
+namespace    | string | Namespace of the target resource. When not specified, defaults to the auto-generated namespace.
+name    | string | Name of the target resource.
+ref    | string | Identifier for the resource used in the expressions.
+
+## Expressions
+
+The `Expressions` objects are used by `TestAssert` for declaring expressions used in assertions.
+
+Field         |   Type | Description
+--------------|--------|---------------------------------------------------------------------
+celExpr    | string | CEL Expression as per https://github.com/google/cel-spec/.
