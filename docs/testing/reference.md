@@ -103,13 +103,13 @@ collectors:
 - type: pod
   pod: nginx
 resourceRefs:
-  - apiVersion: apps/v1
-    kind: Deployment
-    namespace: kube-system
-    name: coredns
-    ref: coredns
+- apiVersion: apps/v1
+  kind: Deployment
+  namespace: kube-system
+  name: coredns
+  ref: coredns_deployment
 assertAll:
-  - celExpr: "coredns.spec.replicas >= 2"
+- celExpr: "coredns_deployment.spec.replicas >= 2"
 ```
 
 Supported settings:
@@ -188,7 +188,7 @@ Field         |   Type | Description
 --------------|--------|---------------------------------------------------------------------
 apiVersion    | string | apiVersion of the target resource.
 kind    | string | Kind of the target resource.
-namespace    | string | Namespace of the target resource. When not specified, defaults to the auto-generated namespace.
+namespace    | string | Namespace of the target resource. When not specified, defaults to the namespace of the current test.
 name    | string | Name of the target resource.
 ref    | string | Identifier for the resource used in the expressions.
 
