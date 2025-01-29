@@ -134,7 +134,7 @@ func evaluateExpression(expr string,
 	}
 
 	if out.Value() != true {
-		return fmt.Errorf("expression %q evaluated to %q", expr, out.Value())
+		return fmt.Errorf("expression %q evaluated to '%v'", expr, out.Value())
 	}
 
 	return nil
