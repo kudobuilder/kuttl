@@ -10,7 +10,7 @@ require (
 	github.com/google/cel-go v0.23.2
 	github.com/google/shlex v0.0.0-20191202100458-e7afc7fbc510
 	github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2
-	github.com/spf13/cobra v1.8.1
+	github.com/spf13/cobra v1.9.1
 	github.com/spf13/pflag v1.0.6
 	github.com/stretchr/testify v1.10.0
 	github.com/thoas/go-funk v0.9.3
