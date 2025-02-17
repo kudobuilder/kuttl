@@ -15,22 +15,22 @@ require (
 	github.com/stretchr/testify v1.10.0
 	github.com/thoas/go-funk v0.9.3
 	gopkg.in/yaml.v2 v2.4.0
-	k8s.io/api v0.32.1
-	k8s.io/apiextensions-apiserver v0.32.1
-	k8s.io/apimachinery v0.32.1
-	k8s.io/client-go v0.32.1
-	k8s.io/code-generator v0.32.1
-	sigs.k8s.io/controller-runtime v0.20.1
-	sigs.k8s.io/controller-tools v0.17.1
-	sigs.k8s.io/kind v0.26.0
+	k8s.io/api v0.32.2
+	k8s.io/apiextensions-apiserver v0.32.2
+	k8s.io/apimachinery v0.32.2
+	k8s.io/client-go v0.32.2
+	k8s.io/code-generator v0.32.2
+	sigs.k8s.io/controller-runtime v0.20.2
+	sigs.k8s.io/controller-tools v0.17.2
+	sigs.k8s.io/kind v0.27.0
 )
 
 require (
+	al.essio.dev/pkg/shellescape v1.5.1 // indirect
 	cel.dev/expr v0.19.1 // indirect
 	github.com/Azure/go-ansiterm v0.0.0-20230124172434-306776ec8161 // indirect
 	github.com/BurntSushi/toml v1.4.0 // indirect
 	github.com/Microsoft/go-winio v0.5.1 // indirect
-	github.com/alessio/shellescape v1.4.2 // indirect
 	github.com/antlr4-go/antlr/v4 v4.13.0 // indirect
 	github.com/containerd/log v0.1.0 // indirect
 	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc // indirect
@@ -38,7 +38,7 @@ require (
 	github.com/docker/go-connections v0.4.0 // indirect
 	github.com/docker/go-units v0.4.0 // indirect
 	github.com/emicklei/go-restful/v3 v3.11.0 // indirect
-	github.com/evanphx/json-patch/v5 v5.9.0 // indirect
+	github.com/evanphx/json-patch/v5 v5.9.11 // indirect
 	github.com/fatih/color v1.18.0 // indirect
 	github.com/felixge/httpsnoop v1.0.4 // indirect
 	github.com/fxamacker/cbor/v2 v2.7.0 // indirect
