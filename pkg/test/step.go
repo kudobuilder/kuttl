@@ -676,7 +676,7 @@ func (s *Step) loadOrSkipFile(file string) (bool, []client.Object, error) {
 func (s *Step) populateObjectsByFileName(fileName string, objects []client.Object) error {
 	matches := fileNameRegex.FindStringSubmatch(fileName)
 	if len(matches) < 2 {
-		return fmt.Errorf("%s does not match file name regexp: %s", fileName, testStepRegex.String())
+		return fmt.Errorf("%s does not match file name regexp: %s", fileName, fileNameRegex.String())
 	}
 
 	switch fname := strings.ToLower(matches[1]); fname {
