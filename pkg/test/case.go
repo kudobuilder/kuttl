@@ -49,18 +49,18 @@ type namespace struct {
 	AutoCreated bool
 }
 
-func (t *Case) deleteNamespace(cl client.Client, ns *namespace) error {
+func (c *Case) deleteNamespace(cl client.Client, ns *namespace) error {
 	if !ns.AutoCreated {
-		t.Logger.Log("Skipping deletion of user-supplied namespace:", ns.Name)
+		c.Logger.Log("Skipping deletion of user-supplied namespace:", ns.Name)
 		return nil
 	}
 
-	t.Logger.Log("Deleting namespace:", ns.Name)
+	c.Logger.Log("Deleting namespace:", ns.Name)
 
 	ctx := context.Background()
-	if t.Timeout > 0 {
+	if c.Timeout > 0 {
 		var cancel context.CancelFunc
-		ctx, cancel = context.WithTimeout(ctx, time.Duration(t.Timeout)*time.Second)
+		ctx, cancel = context.WithTimeout(ctx, time.Duration(c.Timeout)*time.Second)
 		defer cancel()
 	}
 
@@ -74,7 +74,7 @@ func (t *Case) deleteNamespace(cl client.Client, ns *namespace) error {
 	}
 
 	if err := cl.Delete(ctx, nsObj); k8serrors.IsNotFound(err) {
-		t.Logger.Logf("Namespace already cleaned up.")
+		c.Logger.Logf("Namespace already cleaned up.")
 	} else if err != nil {
 		return err
 	}
@@ -89,23 +89,23 @@ func (t *Case) deleteNamespace(cl client.Client, ns *namespace) error {
 	})
 }
 
-func (t *Case) createNamespace(test *testing.T, cl client.Client, ns *namespace) error {
+func (c *Case) createNamespace(test *testing.T, cl client.Client, ns *namespace) error {
 	if !ns.AutoCreated {
-		t.Logger.Log("Skipping creation of user-supplied namespace:", ns.Name)
+		c.Logger.Log("Skipping creation of user-supplied namespace:", ns.Name)
 		return nil
 	}
-	t.Logger.Log("Creating namespace:", ns.Name)
+	c.Logger.Log("Creating namespace:", ns.Name)
 
 	ctx := context.Background()
-	if t.Timeout > 0 {
+	if c.Timeout > 0 {
 		var cancel context.CancelFunc
-		ctx, cancel = context.WithTimeout(ctx, time.Duration(t.Timeout)*time.Second)
+		ctx, cancel = context.WithTimeout(ctx, time.Duration(c.Timeout)*time.Second)
 		defer cancel()
 	}
 
-	if !t.SkipDelete {
+	if !c.SkipDelete {
 		test.Cleanup(func() {
-			if err := t.deleteNamespace(cl, ns); err != nil {
+			if err := c.deleteNamespace(cl, ns); err != nil {
 				test.Error(err)
 			}
 		})
@@ -121,8 +121,8 @@ func (t *Case) createNamespace(test *testing.T, cl client.Client, ns *namespace)
 	})
 }
 
-func (t *Case) namespaceExists(namespace string) (bool, error) {
-	cl, err := t.Client(false)
+func (c *Case) namespaceExists(namespace string) (bool, error) {
+	cl, err := c.Client(false)
 	if err != nil {
 		return false, err
 	}
@@ -134,27 +134,27 @@ func (t *Case) namespaceExists(namespace string) (bool, error) {
 	return ns.Name == namespace, nil
 }
 
-func (t *Case) reportEvents(namespace string) {
+func (c *Case) reportEvents(namespace string) {
 	ctx := context.TODO()
-	cl, err := t.Client(false)
+	cl, err := c.Client(false)
 	if err != nil {
-		t.Logger.Log("Failed to collect events for %s in ns %s: %v", t.Name, namespace, err)
+		c.Logger.Log("Failed to collect events for %s in ns %s: %v", c.Name, namespace, err)
 		return
 	}
-	eventutils.CollectAndLog(ctx, cl, namespace, t.Name, t.Logger)
+	eventutils.CollectAndLog(ctx, cl, namespace, c.Name, c.Logger)
 }
 
 // Run runs a test case including all of its steps.
-func (t *Case) Run(test *testing.T, rep report.TestReporter) {
+func (c *Case) Run(test *testing.T, rep report.TestReporter) {
 	defer rep.Done()
 	setupReport := rep.Step("setup")
-	ns, err := t.determineNamespace()
+	ns, err := c.determineNamespace()
 	if err != nil {
 		setupReport.Failure(err.Error())
 		test.Fatal(err)
 	}
 
-	cl, err := t.Client(false)
+	cl, err := c.Client(false)
 	if err != nil {
 		setupReport.Failure(err.Error())
 		test.Fatal(err)
@@ -162,7 +162,7 @@ func (t *Case) Run(test *testing.T, rep report.TestReporter) {
 
 	clients := map[string]client.Client{"": cl}
 
-	for _, testStep := range t.Steps {
+	for _, testStep := range c.Steps {
 		if clients[testStep.Kubeconfig] != nil || testStep.KubeconfigLoading == v1beta1.KubeconfigLoadingLazy {
 			continue
 		}
@@ -176,26 +176,26 @@ func (t *Case) Run(test *testing.T, rep report.TestReporter) {
 		clients[testStep.Kubeconfig] = cl
 	}
 
-	for kc, c := range clients {
-		if err = t.createNamespace(test, c, ns); k8serrors.IsAlreadyExists(err) {
-			t.Logger.Logf("namespace %q already exists, using kubeconfig %q", ns.Name, kc)
+	for kubeConfig, cl := range clients {
+		if err = c.createNamespace(test, cl, ns); k8serrors.IsAlreadyExists(err) {
+			c.Logger.Logf("namespace %q already exists, using kubeconfig %q", ns.Name, kubeConfig)
 		} else if err != nil {
 			setupReport.Failure("failed to create test namespace", err)
 			test.Fatal(err)
 		}
 	}
 
-	for _, testStep := range t.Steps {
+	for _, testStep := range c.Steps {
 		stepReport := rep.Step("step " + testStep.String())
-		testStep.Client = t.Client
+		testStep.Client = c.Client
 		if testStep.Kubeconfig != "" {
 			testStep.Client = newClient(testStep.Kubeconfig, testStep.Context)
 		}
-		testStep.DiscoveryClient = t.DiscoveryClient
+		testStep.DiscoveryClient = c.DiscoveryClient
 		if testStep.Kubeconfig != "" {
 			testStep.DiscoveryClient = newDiscoveryClient(testStep.Kubeconfig, testStep.Context)
 		}
-		testStep.Logger = t.Logger.WithPrefix(testStep.String())
+		testStep.Logger = c.Logger.WithPrefix(testStep.String())
 		stepReport.AddAssertions(len(testStep.Asserts))
 		stepReport.AddAssertions(len(testStep.Errors))
 
@@ -206,8 +206,8 @@ func (t *Case) Run(test *testing.T, rep report.TestReporter) {
 			cl, err = testStep.Client(false)
 			if err != nil {
 				errs = append(errs, fmt.Errorf("failed to lazy-load kubeconfig: %w", err))
-			} else if err = t.createNamespace(test, cl, ns); k8serrors.IsAlreadyExists(err) {
-				t.Logger.Logf("namespace %q already exists", ns.Name)
+			} else if err = c.createNamespace(test, cl, ns); k8serrors.IsAlreadyExists(err) {
+				c.Logger.Logf("namespace %q already exists", ns.Name)
 			} else if err != nil {
 				errs = append(errs, fmt.Errorf("failed to create test namespace: %w", err))
 			}
@@ -230,26 +230,26 @@ func (t *Case) Run(test *testing.T, rep report.TestReporter) {
 		}
 	}
 
-	if funk.Contains(t.Suppress, "events") {
-		t.Logger.Logf("skipping kubernetes event logging")
+	if funk.Contains(c.Suppress, "events") {
+		c.Logger.Logf("skipping kubernetes event logging")
 	} else {
-		t.reportEvents(ns.Name)
+		c.reportEvents(ns.Name)
 	}
 }
 
-func (t *Case) determineNamespace() (*namespace, error) {
+func (c *Case) determineNamespace() (*namespace, error) {
 	ns := &namespace{
-		Name:        t.PreferredNamespace,
+		Name:        c.PreferredNamespace,
 		AutoCreated: false,
 	}
 	// no preferred ns, means we auto-create with petnames
-	if t.PreferredNamespace == "" {
+	if c.PreferredNamespace == "" {
 		ns.Name = fmt.Sprintf("kuttl-test-%s", petname.Generate(2, "-"))
 		ns.AutoCreated = true
 	} else {
-		exist, err := t.namespaceExists(t.PreferredNamespace)
+		exist, err := c.namespaceExists(c.PreferredNamespace)
 		if err != nil {
-			return nil, fmt.Errorf("failed to determine existence of namespace %q: %w", t.PreferredNamespace, err)
+			return nil, fmt.Errorf("failed to determine existence of namespace %q: %w", c.PreferredNamespace, err)
 		}
 		if !exist {
 			ns.AutoCreated = true
@@ -260,8 +260,8 @@ func (t *Case) determineNamespace() (*namespace, error) {
 }
 
 // LoadTestSteps loads all the test steps for a test case.
-func (t *Case) LoadTestSteps() error {
-	testStepFiles, err := files.CollectTestStepFiles(t.Dir, t.Logger)
+func (c *Case) LoadTestSteps() error {
+	testStepFiles, err := files.CollectTestStepFiles(c.Dir, c.Logger)
 	if err != nil {
 		return err
 	}
@@ -270,11 +270,11 @@ func (t *Case) LoadTestSteps() error {
 
 	for index, files := range testStepFiles {
 		testStep := &Step{
-			Timeout:       t.Timeout,
+			Timeout:       c.Timeout,
 			Index:         int(index),
-			SkipDelete:    t.SkipDelete,
-			Dir:           t.Dir,
-			TestRunLabels: t.RunLabels,
+			SkipDelete:    c.SkipDelete,
+			Dir:           c.Dir,
+			TestRunLabels: c.RunLabels,
 			Asserts:       []client.Object{},
 			Apply:         []client.Object{},
 			Errors:        []client.Object{},
@@ -293,7 +293,7 @@ func (t *Case) LoadTestSteps() error {
 		return testSteps[i].Index < testSteps[j].Index
 	})
 
-	t.Steps = testSteps
+	c.Steps = testSteps
 	return nil
 }
 
