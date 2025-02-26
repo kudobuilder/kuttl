@@ -134,7 +134,11 @@ func (c *Case) namespaceExists(namespace string) (bool, error) {
 	return ns.Name == namespace, nil
 }
 
-func (c *Case) reportEvents(namespace string) {
+func (c *Case) maybeReportEvents(namespace string) {
+	if funk.Contains(c.Suppress, "events") {
+		c.Logger.Logf("skipping kubernetes event logging")
+		return
+	}
 	ctx := context.TODO()
 	cl, err := c.Client(false)
 	if err != nil {
@@ -230,11 +234,7 @@ func (c *Case) Run(test *testing.T, rep report.TestReporter) {
 		}
 	}
 
-	if funk.Contains(c.Suppress, "events") {
-		c.Logger.Logf("skipping kubernetes event logging")
-	} else {
-		c.reportEvents(ns.Name)
-	}
+	c.maybeReportEvents(ns.Name)
 }
 
 func (c *Case) determineNamespace() (*namespace, error) {
