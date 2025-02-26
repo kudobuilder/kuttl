@@ -151,6 +151,58 @@ func (c *Case) maybeReportEvents(namespace string) {
 // Run runs a test case including all of its steps.
 func (c *Case) Run(test *testing.T, rep report.TestReporter) {
 	defer rep.Done()
+
+	ns := c.setup(test, rep)
+
+	for _, testStep := range c.Steps {
+		stepReport := rep.Step("step " + testStep.String())
+		testStep.Client = c.Client
+		if testStep.Kubeconfig != "" {
+			testStep.Client = newClient(testStep.Kubeconfig, testStep.Context)
+		}
+		testStep.DiscoveryClient = c.DiscoveryClient
+		if testStep.Kubeconfig != "" {
+			testStep.DiscoveryClient = newDiscoveryClient(testStep.Kubeconfig, testStep.Context)
+		}
+		testStep.Logger = c.Logger.WithPrefix(testStep.String())
+		stepReport.AddAssertions(len(testStep.Asserts))
+		stepReport.AddAssertions(len(testStep.Errors))
+
+		var errs []error
+
+		// Set-up client/namespace for lazy-loaded Kubeconfig
+		if testStep.KubeconfigLoading == v1beta1.KubeconfigLoadingLazy {
+			cl, err := testStep.Client(false)
+			if err != nil {
+				errs = append(errs, fmt.Errorf("failed to lazy-load kubeconfig: %w", err))
+			} else if err = c.createNamespace(test, cl, ns); k8serrors.IsAlreadyExists(err) {
+				c.Logger.Logf("namespace %q already exists", ns.Name)
+			} else if err != nil {
+				errs = append(errs, fmt.Errorf("failed to create test namespace: %w", err))
+			}
+		}
+
+		// Run test case only if no setup errors are encountered
+		if len(errs) == 0 {
+			errs = append(errs, testStep.Run(test, ns.Name)...)
+		}
+
+		if len(errs) > 0 {
+			caseErr := fmt.Errorf("failed in step %s", testStep.String())
+			stepReport.Failure(caseErr.Error(), errs...)
+
+			test.Error(caseErr)
+			for _, err := range errs {
+				test.Error(err)
+			}
+			break
+		}
+	}
+
+	c.maybeReportEvents(ns.Name)
+}
+
+func (c *Case) setup(test *testing.T, rep report.TestReporter) *namespace {
 	setupReport := rep.Step("setup")
 	ns, err := c.determineNamespace()
 	if err != nil {
@@ -188,53 +240,7 @@ func (c *Case) Run(test *testing.T, rep report.TestReporter) {
 			test.Fatal(err)
 		}
 	}
-
-	for _, testStep := range c.Steps {
-		stepReport := rep.Step("step " + testStep.String())
-		testStep.Client = c.Client
-		if testStep.Kubeconfig != "" {
-			testStep.Client = newClient(testStep.Kubeconfig, testStep.Context)
-		}
-		testStep.DiscoveryClient = c.DiscoveryClient
-		if testStep.Kubeconfig != "" {
-			testStep.DiscoveryClient = newDiscoveryClient(testStep.Kubeconfig, testStep.Context)
-		}
-		testStep.Logger = c.Logger.WithPrefix(testStep.String())
-		stepReport.AddAssertions(len(testStep.Asserts))
-		stepReport.AddAssertions(len(testStep.Errors))
-
-		var errs []error
-
-		// Set-up client/namespace for lazy-loaded Kubeconfig
-		if testStep.KubeconfigLoading == v1beta1.KubeconfigLoadingLazy {
-			cl, err = testStep.Client(false)
-			if err != nil {
-				errs = append(errs, fmt.Errorf("failed to lazy-load kubeconfig: %w", err))
-			} else if err = c.createNamespace(test, cl, ns); k8serrors.IsAlreadyExists(err) {
-				c.Logger.Logf("namespace %q already exists", ns.Name)
-			} else if err != nil {
-				errs = append(errs, fmt.Errorf("failed to create test namespace: %w", err))
-			}
-		}
-
-		// Run test case only if no setup errors are encountered
-		if len(errs) == 0 {
-			errs = append(errs, testStep.Run(test, ns.Name)...)
-		}
-
-		if len(errs) > 0 {
-			caseErr := fmt.Errorf("failed in step %s", testStep.String())
-			stepReport.Failure(caseErr.Error(), errs...)
-
-			test.Error(caseErr)
-			for _, err := range errs {
-				test.Error(err)
-			}
-			break
-		}
-	}
-
-	c.maybeReportEvents(ns.Name)
+	return ns
 }
 
 func (c *Case) determineNamespace() (*namespace, error) {
