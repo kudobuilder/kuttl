@@ -699,6 +699,18 @@ func (s *Step) populateObjectsByFileName(fileName string, objects []client.Objec
 	return nil
 }
 
+// Setup prepares the step by configuring its logger and client provider methods.
+func (s *Step) Setup(caseLogger testutils.Logger, defaultClientFunc func(forceNew bool) (client.Client, error), defaultDiscoveryClientFunc func() (discovery.DiscoveryInterface, error)) {
+	s.Logger = caseLogger.WithPrefix(s.String())
+	if s.Kubeconfig != "" {
+		s.Client = kubernetes.NewClientFunc(s.Kubeconfig, s.Context)
+		s.DiscoveryClient = kubernetes.NewDiscoveryClientFunc(s.Kubeconfig, s.Context)
+	} else {
+		s.Client = defaultClientFunc
+		s.DiscoveryClient = defaultDiscoveryClientFunc
+	}
+}
+
 // ObjectsFromPath returns an array of runtime.Objects for files / urls provided
 func ObjectsFromPath(path, dir string) ([]client.Object, error) {
 	if http.IsURL(path) {

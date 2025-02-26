@@ -36,8 +36,8 @@ type Case struct {
 	PreferredNamespace string
 	RunLabels          labels.Set
 
-	Client          func(forceNew bool) (client.Client, error)
-	DiscoveryClient func() (discovery.DiscoveryInterface, error)
+	GetClient          func(forceNew bool) (client.Client, error)
+	GetDiscoveryClient func() (discovery.DiscoveryInterface, error)
 
 	Logger testutils.Logger
 	// Suppress is used to suppress logs
@@ -122,7 +122,7 @@ func (c *Case) createNamespace(test *testing.T, cl client.Client, ns *namespace)
 }
 
 func (c *Case) namespaceExists(namespace string) (bool, error) {
-	cl, err := c.Client(false)
+	cl, err := c.GetClient(false)
 	if err != nil {
 		return false, err
 	}
@@ -140,7 +140,7 @@ func (c *Case) maybeReportEvents(namespace string) {
 		return
 	}
 	ctx := context.TODO()
-	cl, err := c.Client(false)
+	cl, err := c.GetClient(false)
 	if err != nil {
 		c.Logger.Log("Failed to collect events for %s in ns %s: %v", c.Name, namespace, err)
 		return
@@ -156,15 +156,7 @@ func (c *Case) Run(test *testing.T, rep report.TestReporter) {
 
 	for _, testStep := range c.Steps {
 		stepReport := rep.Step("step " + testStep.String())
-		testStep.Client = c.Client
-		if testStep.Kubeconfig != "" {
-			testStep.Client = newClient(testStep.Kubeconfig, testStep.Context)
-		}
-		testStep.DiscoveryClient = c.DiscoveryClient
-		if testStep.Kubeconfig != "" {
-			testStep.DiscoveryClient = newDiscoveryClient(testStep.Kubeconfig, testStep.Context)
-		}
-		testStep.Logger = c.Logger.WithPrefix(testStep.String())
+		testStep.Setup(c.Logger, c.GetClient, c.GetDiscoveryClient)
 		stepReport.AddAssertions(len(testStep.Asserts))
 		stepReport.AddAssertions(len(testStep.Errors))
 
@@ -210,7 +202,7 @@ func (c *Case) setup(test *testing.T, rep report.TestReporter) *namespace {
 		test.Fatal(err)
 	}
 
-	cl, err := c.Client(false)
+	cl, err := c.GetClient(false)
 	if err != nil {
 		setupReport.Failure(err.Error())
 		test.Fatal(err)
@@ -223,7 +215,7 @@ func (c *Case) setup(test *testing.T, rep report.TestReporter) *namespace {
 			continue
 		}
 
-		cl, err = newClient(testStep.Kubeconfig, testStep.Context)(false)
+		cl, err = kubernetes.NewClientFunc(testStep.Kubeconfig, testStep.Context)(false)
 		if err != nil {
 			setupReport.Failure(err.Error())
 			test.Fatal(err)
@@ -232,9 +224,9 @@ func (c *Case) setup(test *testing.T, rep report.TestReporter) *namespace {
 		clients[testStep.Kubeconfig] = cl
 	}
 
-	for kubeConfig, cl := range clients {
+	for kubeConfigPath, cl := range clients {
 		if err = c.createNamespace(test, cl, ns); k8serrors.IsAlreadyExists(err) {
-			c.Logger.Logf("namespace %q already exists, using kubeconfig %q", ns.Name, kubeConfig)
+			c.Logger.Logf("namespace %q already exists, using kubeconfig %q", ns.Name, kubeConfigPath)
 		} else if err != nil {
 			setupReport.Failure("failed to create test namespace", err)
 			test.Fatal(err)
@@ -301,28 +293,4 @@ func (c *Case) LoadTestSteps() error {
 
 	c.Steps = testSteps
 	return nil
-}
-
-func newClient(kubeconfig, context string) func(bool) (client.Client, error) {
-	return func(bool) (client.Client, error) {
-		config, err := kubernetes.BuildConfigWithContext(kubeconfig, context)
-		if err != nil {
-			return nil, err
-		}
-
-		return kubernetes.NewRetryClient(config, client.Options{
-			Scheme: kubernetes.Scheme(),
-		})
-	}
-}
-
-func newDiscoveryClient(kubeconfig, context string) func() (discovery.DiscoveryInterface, error) {
-	return func() (discovery.DiscoveryInterface, error) {
-		config, err := kubernetes.BuildConfigWithContext(kubeconfig, context)
-		if err != nil {
-			return nil, err
-		}
-
-		return discovery.NewDiscoveryClientForConfig(config)
-	}
 }

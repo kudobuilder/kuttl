@@ -25,14 +25,14 @@ func GetConfig() (*rest.Config, error) {
 	return cfg, nil
 }
 
-func BuildConfigWithContext(kubeconfig, context string) (*rest.Config, error) {
+func BuildConfigWithContext(kubeconfigPath, context string) (*rest.Config, error) {
 	if context == "" {
 		// Use default context
-		return clientcmd.BuildConfigFromFlags("", kubeconfig)
+		return clientcmd.BuildConfigFromFlags("", kubeconfigPath)
 	}
 
 	return clientcmd.NewNonInteractiveDeferredLoadingClientConfig(
-		&clientcmd.ClientConfigLoadingRules{ExplicitPath: kubeconfig},
+		&clientcmd.ClientConfigLoadingRules{ExplicitPath: kubeconfigPath},
 		&clientcmd.ConfigOverrides{CurrentContext: context}).ClientConfig()
 }
 
