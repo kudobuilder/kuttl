@@ -38,6 +38,7 @@ type Case struct {
 
 	GetClient          func(forceNew bool) (client.Client, error)
 	GetDiscoveryClient func() (discovery.DiscoveryInterface, error)
+	ns                 *namespace
 
 	Logger testutils.Logger
 	// Suppress is used to suppress logs
@@ -45,17 +46,17 @@ type Case struct {
 }
 
 type namespace struct {
-	Name        string
-	AutoCreated bool
+	name         string
+	userSupplied bool
 }
 
-func (c *Case) deleteNamespace(cl client.Client, ns *namespace) error {
-	if !ns.AutoCreated {
-		c.Logger.Log("Skipping deletion of user-supplied namespace:", ns.Name)
+func (c *Case) maybeDeleteNamespace(cl client.Client, kubeconfigPath string) error {
+	if c.SkipDelete {
+		c.Logger.Logf(maybeAppendKubeConfigInfo(
+			"Skipping namespace deletion as requested with skipDelete=true.", kubeconfigPath))
 		return nil
 	}
-
-	c.Logger.Log("Deleting namespace:", ns.Name)
+	c.Logger.Log(maybeAppendKubeConfigInfo("Deleting namespace %s", kubeconfigPath), c.ns.name)
 
 	ctx := context.Background()
 	if c.Timeout > 0 {
@@ -66,7 +67,7 @@ func (c *Case) deleteNamespace(cl client.Client, ns *namespace) error {
 
 	nsObj := &corev1.Namespace{
 		ObjectMeta: metav1.ObjectMeta{
-			Name: ns.Name,
+			Name: c.ns.name,
 		},
 		TypeMeta: metav1.TypeMeta{
 			Kind: "Namespace",
@@ -74,14 +75,14 @@ func (c *Case) deleteNamespace(cl client.Client, ns *namespace) error {
 	}
 
 	if err := cl.Delete(ctx, nsObj); k8serrors.IsNotFound(err) {
-		c.Logger.Logf("Namespace already cleaned up.")
+		c.Logger.Logf("Namespace %s already cleaned up.", c.ns.name)
 	} else if err != nil {
 		return err
 	}
 
 	return wait.PollUntilContextCancel(ctx, 100*time.Millisecond, true, func(ctx context.Context) (done bool, err error) {
 		actual := &corev1.Namespace{}
-		err = cl.Get(ctx, client.ObjectKey{Name: ns.Name}, actual)
+		err = cl.Get(ctx, client.ObjectKey{Name: c.ns.name}, actual)
 		if k8serrors.IsNotFound(err) {
 			return true, nil
 		}
@@ -89,12 +90,8 @@ func (c *Case) deleteNamespace(cl client.Client, ns *namespace) error {
 	})
 }
 
-func (c *Case) createNamespace(test *testing.T, cl client.Client, ns *namespace) error {
-	if !ns.AutoCreated {
-		c.Logger.Log("Skipping creation of user-supplied namespace:", ns.Name)
-		return nil
-	}
-	c.Logger.Log("Creating namespace:", ns.Name)
+func (c *Case) createNamespace(test *testing.T, cl client.Client, kubeconfigPath string) error {
+	c.Logger.Log("Creating namespace:", c.ns.name)
 
 	ctx := context.Background()
 	if c.Timeout > 0 {
@@ -103,38 +100,42 @@ func (c *Case) createNamespace(test *testing.T, cl client.Client, ns *namespace)
 		defer cancel()
 	}
 
-	if !c.SkipDelete {
-		test.Cleanup(func() {
-			if err := c.deleteNamespace(cl, ns); err != nil {
-				test.Error(err)
-			}
-		})
-	}
-
-	return cl.Create(ctx, &corev1.Namespace{
+	err := cl.Create(ctx, &corev1.Namespace{
 		ObjectMeta: metav1.ObjectMeta{
-			Name: ns.Name,
+			Name: c.ns.name,
 		},
 		TypeMeta: metav1.TypeMeta{
 			Kind: "Namespace",
 		},
 	})
+
+	if c.ns.userSupplied && k8serrors.IsAlreadyExists(err) {
+		// For backwards compatibility this is the only case where we do not schedule namespace deletion.
+		// Arguably, if the namespace name was not user-supplied and yet existed before the test case,
+		// it's possible that we're clashing with a different test case, and should abort this whole test case
+		// early, not even mentioning namespace deletion. However, it is hard to be sure - this might also
+		// be a valid use case, e.g. different kubeconfigs that yet refer to the same cluster,
+		// especially combined with lazy kubeconfig loading.
+		test.Cleanup(func() {
+			c.Logger.Logf(maybeAppendKubeConfigInfo(
+				"Skipping deletion of pre-existing user supplied namespace %s", kubeconfigPath), c.ns.name)
+		})
+	} else {
+		test.Cleanup(func() {
+			if err := c.maybeDeleteNamespace(cl, kubeconfigPath); err != nil {
+				test.Error(err)
+			}
+		})
+	}
+
+	if k8serrors.IsAlreadyExists(err) {
+		c.Logger.Logf(maybeAppendKubeConfigInfo("namespace %q already exists", kubeconfigPath), c.ns.name)
+		return nil
+	}
+	return err
 }
 
-func (c *Case) namespaceExists(namespace string) (bool, error) {
-	cl, err := c.GetClient(false)
-	if err != nil {
-		return false, err
-	}
-	ns := &corev1.Namespace{}
-	err = cl.Get(context.TODO(), client.ObjectKey{Name: namespace}, ns)
-	if err != nil && !k8serrors.IsNotFound(err) {
-		return false, err
-	}
-	return ns.Name == namespace, nil
-}
-
-func (c *Case) maybeReportEvents(namespace string) {
+func (c *Case) maybeReportEvents() {
 	if funk.Contains(c.Suppress, "events") {
 		c.Logger.Logf("skipping kubernetes event logging")
 		return
@@ -142,17 +143,17 @@ func (c *Case) maybeReportEvents(namespace string) {
 	ctx := context.TODO()
 	cl, err := c.GetClient(false)
 	if err != nil {
-		c.Logger.Log("Failed to collect events for %s in ns %s: %v", c.Name, namespace, err)
+		c.Logger.Log("Failed to collect events for %s in ns %s: %v", c.Name, c.ns.name, err)
 		return
 	}
-	eventutils.CollectAndLog(ctx, cl, namespace, c.Name, c.Logger)
+	eventutils.CollectAndLog(ctx, cl, c.ns.name, c.Name, c.Logger)
 }
 
 // Run runs a test case including all of its steps.
 func (c *Case) Run(test *testing.T, rep report.TestReporter) {
 	defer rep.Done()
 
-	ns := c.setup(test, rep)
+	c.setup(test, rep)
 
 	for _, testStep := range c.Steps {
 		stepReport := rep.Step("step " + testStep.String())
@@ -162,21 +163,19 @@ func (c *Case) Run(test *testing.T, rep report.TestReporter) {
 
 		var errs []error
 
-		// Set-up client/namespace for lazy-loaded Kubeconfig
+		// Set-up client/namespace for lazy-loaded Kubeconfig.
 		if testStep.KubeconfigLoading == v1beta1.KubeconfigLoadingLazy {
 			cl, err := testStep.Client(false)
 			if err != nil {
 				errs = append(errs, fmt.Errorf("failed to lazy-load kubeconfig: %w", err))
-			} else if err = c.createNamespace(test, cl, ns); k8serrors.IsAlreadyExists(err) {
-				c.Logger.Logf("namespace %q already exists", ns.Name)
-			} else if err != nil {
+			} else if err = c.createNamespace(test, cl, testStep.Kubeconfig); err != nil {
 				errs = append(errs, fmt.Errorf("failed to create test namespace: %w", err))
 			}
 		}
 
-		// Run test case only if no setup errors are encountered
+		// Run test case only if no setup errors are encountered.
 		if len(errs) == 0 {
-			errs = append(errs, testStep.Run(test, ns.Name)...)
+			errs = append(errs, testStep.Run(test, c.ns.name)...)
 		}
 
 		if len(errs) > 0 {
@@ -191,16 +190,11 @@ func (c *Case) Run(test *testing.T, rep report.TestReporter) {
 		}
 	}
 
-	c.maybeReportEvents(ns.Name)
+	c.maybeReportEvents()
 }
 
-func (c *Case) setup(test *testing.T, rep report.TestReporter) *namespace {
+func (c *Case) setup(test *testing.T, rep report.TestReporter) {
 	setupReport := rep.Step("setup")
-	ns, err := c.determineNamespace()
-	if err != nil {
-		setupReport.Failure(err.Error())
-		test.Fatal(err)
-	}
 
 	cl, err := c.GetClient(false)
 	if err != nil {
@@ -225,40 +219,38 @@ func (c *Case) setup(test *testing.T, rep report.TestReporter) *namespace {
 	}
 
 	for kubeConfigPath, cl := range clients {
-		if err = c.createNamespace(test, cl, ns); k8serrors.IsAlreadyExists(err) {
-			c.Logger.Logf("namespace %q already exists, using kubeconfig %q", ns.Name, kubeConfigPath)
-		} else if err != nil {
-			setupReport.Failure("failed to create test namespace", err)
+		if err = c.createNamespace(test, cl, kubeConfigPath); err != nil {
+			setupReport.Failure(maybeAppendKubeConfigInfo("failed to create test namespace", kubeConfigPath), err)
 			test.Fatal(err)
 		}
 	}
-	return ns
 }
 
-func (c *Case) determineNamespace() (*namespace, error) {
-	ns := &namespace{
-		Name:        c.PreferredNamespace,
-		AutoCreated: false,
+func maybeAppendKubeConfigInfo(msg, kubeconfigPath string) string {
+	if kubeconfigPath == "" {
+		return msg
 	}
-	// no preferred ns, means we auto-create with petnames
+	return msg + fmt.Sprintf(" (using kubeconfig %q)", kubeconfigPath)
+}
+
+func (c *Case) determineNamespace() {
 	if c.PreferredNamespace == "" {
-		ns.Name = fmt.Sprintf("kuttl-test-%s", petname.Generate(2, "-"))
-		ns.AutoCreated = true
-	} else {
-		exist, err := c.namespaceExists(c.PreferredNamespace)
-		if err != nil {
-			return nil, fmt.Errorf("failed to determine existence of namespace %q: %w", c.PreferredNamespace, err)
+		c.ns = &namespace{
+			name:         fmt.Sprintf("kuttl-test-%s", petname.Generate(2, "-")),
+			userSupplied: false,
 		}
-		if !exist {
-			ns.AutoCreated = true
+	} else {
+		c.ns = &namespace{
+			name:         c.PreferredNamespace,
+			userSupplied: true,
 		}
 	}
-	// if we have a preferred namespace, and it already exists, we do NOT auto-create
-	return ns, nil
 }
 
 // LoadTestSteps loads all the test steps for a test case.
 func (c *Case) LoadTestSteps() error {
+	c.determineNamespace()
+
 	testStepFiles, err := files.CollectTestStepFiles(c.Dir, c.Logger)
 	if err != nil {
 		return err
