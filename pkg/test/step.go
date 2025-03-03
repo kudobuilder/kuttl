@@ -676,7 +676,7 @@ func (s *Step) loadOrSkipFile(file string) (bool, []client.Object, error) {
 func (s *Step) populateObjectsByFileName(fileName string, objects []client.Object) error {
 	matches := fileNameRegex.FindStringSubmatch(fileName)
 	if len(matches) < 2 {
-		return fmt.Errorf("%s does not match file name regexp: %s", fileName, testStepRegex.String())
+		return fmt.Errorf("%s does not match file name regexp: %s", fileName, fileNameRegex.String())
 	}
 
 	switch fname := strings.ToLower(matches[1]); fname {
@@ -697,6 +697,18 @@ func (s *Step) populateObjectsByFileName(fileName string, objects []client.Objec
 	}
 
 	return nil
+}
+
+// Setup prepares the step by configuring its logger and client provider methods.
+func (s *Step) Setup(caseLogger testutils.Logger, defaultClientFunc func(forceNew bool) (client.Client, error), defaultDiscoveryClientFunc func() (discovery.DiscoveryInterface, error)) {
+	s.Logger = caseLogger.WithPrefix(s.String())
+	if s.Kubeconfig != "" {
+		s.Client = kubernetes.NewClientFunc(s.Kubeconfig, s.Context)
+		s.DiscoveryClient = kubernetes.NewDiscoveryClientFunc(s.Kubeconfig, s.Context)
+	} else {
+		s.Client = defaultClientFunc
+		s.DiscoveryClient = defaultDiscoveryClientFunc
+	}
 }
 
 // ObjectsFromPath returns an array of runtime.Objects for files / urls provided

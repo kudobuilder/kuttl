@@ -3,19 +3,13 @@ package test
 import (
 	"context"
 	"fmt"
-	"os"
-	"path/filepath"
-	"regexp"
 	"sort"
-	"strconv"
 	"testing"
 	"time"
 
 	petname "github.com/dustinkirkland/golang-petname"
 	"github.com/thoas/go-funk"
 	corev1 "k8s.io/api/core/v1"
-	eventsv1 "k8s.io/api/events/v1"
-	eventsbeta1 "k8s.io/api/events/v1beta1"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
@@ -27,12 +21,11 @@ import (
 	"github.com/kudobuilder/kuttl/pkg/kubernetes"
 	"github.com/kudobuilder/kuttl/pkg/report"
 	testutils "github.com/kudobuilder/kuttl/pkg/test/utils"
+	eventutils "github.com/kudobuilder/kuttl/pkg/test/utils/events"
+	"github.com/kudobuilder/kuttl/pkg/test/utils/files"
 )
 
-// testStepRegex contains one capturing group to determine the index of a step file.
-var testStepRegex = regexp.MustCompile(`^(\d+)-(?:[^\.]+)(?:\.yaml)?$`)
-
-// Case contains all of the test steps and the Kubernetes client and other global configuration
+// Case contains all the test steps and the Kubernetes client and other global configuration
 // for a test.
 type Case struct {
 	Steps              []*Step
@@ -43,8 +36,8 @@ type Case struct {
 	PreferredNamespace string
 	RunLabels          labels.Set
 
-	Client          func(forceNew bool) (client.Client, error)
-	DiscoveryClient func() (discovery.DiscoveryInterface, error)
+	GetClient          func(forceNew bool) (client.Client, error)
+	GetDiscoveryClient func() (discovery.DiscoveryInterface, error)
 
 	Logger testutils.Logger
 	// Suppress is used to suppress logs
@@ -56,19 +49,18 @@ type namespace struct {
 	AutoCreated bool
 }
 
-// DeleteNamespace deletes a namespace in Kubernetes after we are done using it.
-func (t *Case) DeleteNamespace(cl client.Client, ns *namespace) error {
+func (c *Case) deleteNamespace(cl client.Client, ns *namespace) error {
 	if !ns.AutoCreated {
-		t.Logger.Log("Skipping deletion of user-supplied namespace:", ns.Name)
+		c.Logger.Log("Skipping deletion of user-supplied namespace:", ns.Name)
 		return nil
 	}
 
-	t.Logger.Log("Deleting namespace:", ns.Name)
+	c.Logger.Log("Deleting namespace:", ns.Name)
 
 	ctx := context.Background()
-	if t.Timeout > 0 {
+	if c.Timeout > 0 {
 		var cancel context.CancelFunc
-		ctx, cancel = context.WithTimeout(ctx, time.Duration(t.Timeout)*time.Second)
+		ctx, cancel = context.WithTimeout(ctx, time.Duration(c.Timeout)*time.Second)
 		defer cancel()
 	}
 
@@ -82,7 +74,7 @@ func (t *Case) DeleteNamespace(cl client.Client, ns *namespace) error {
 	}
 
 	if err := cl.Delete(ctx, nsObj); k8serrors.IsNotFound(err) {
-		t.Logger.Logf("Namespace already cleaned up.")
+		c.Logger.Logf("Namespace already cleaned up.")
 	} else if err != nil {
 		return err
 	}
@@ -97,24 +89,23 @@ func (t *Case) DeleteNamespace(cl client.Client, ns *namespace) error {
 	})
 }
 
-// CreateNamespace creates a namespace in Kubernetes to use for a test.
-func (t *Case) CreateNamespace(test *testing.T, cl client.Client, ns *namespace) error {
+func (c *Case) createNamespace(test *testing.T, cl client.Client, ns *namespace) error {
 	if !ns.AutoCreated {
-		t.Logger.Log("Skipping creation of user-supplied namespace:", ns.Name)
+		c.Logger.Log("Skipping creation of user-supplied namespace:", ns.Name)
 		return nil
 	}
-	t.Logger.Log("Creating namespace:", ns.Name)
+	c.Logger.Log("Creating namespace:", ns.Name)
 
 	ctx := context.Background()
-	if t.Timeout > 0 {
+	if c.Timeout > 0 {
 		var cancel context.CancelFunc
-		ctx, cancel = context.WithTimeout(ctx, time.Duration(t.Timeout)*time.Second)
+		ctx, cancel = context.WithTimeout(ctx, time.Duration(c.Timeout)*time.Second)
 		defer cancel()
 	}
 
-	if !t.SkipDelete {
+	if !c.SkipDelete {
 		test.Cleanup(func() {
-			if err := t.DeleteNamespace(cl, ns); err != nil {
+			if err := c.deleteNamespace(cl, ns); err != nil {
 				test.Error(err)
 			}
 		})
@@ -130,9 +121,8 @@ func (t *Case) CreateNamespace(test *testing.T, cl client.Client, ns *namespace)
 	})
 }
 
-// NamespaceExists gets namespace and returns true if it exists
-func (t *Case) NamespaceExists(namespace string) (bool, error) {
-	cl, err := t.Client(false)
+func (c *Case) namespaceExists(namespace string) (bool, error) {
+	cl, err := c.GetClient(false)
 	if err != nil {
 		return false, err
 	}
@@ -144,241 +134,41 @@ func (t *Case) NamespaceExists(namespace string) (bool, error) {
 	return ns.Name == namespace, nil
 }
 
-// byFirstTimestamp sorts a slice of events by first timestamp, using their involvedObject's name as a tie breaker.
-type byFirstTimestamp []eventsbeta1.Event
-
-func (o byFirstTimestamp) Len() int      { return len(o) }
-func (o byFirstTimestamp) Swap(i, j int) { o[i], o[j] = o[j], o[i] }
-
-func (o byFirstTimestamp) Less(i, j int) bool {
-	if o[i].ObjectMeta.CreationTimestamp.Equal(&o[j].ObjectMeta.CreationTimestamp) {
-		return o[i].Name < o[j].Name
-	}
-	return o[i].ObjectMeta.CreationTimestamp.Before(&o[j].ObjectMeta.CreationTimestamp)
-}
-
-// byFirstTimestampV1 sorts a slice of eventsv1 by first timestamp, using their involvedObject's name as a tie breaker.
-type byFirstTimestampV1 []eventsv1.Event
-
-func (o byFirstTimestampV1) Len() int      { return len(o) }
-func (o byFirstTimestampV1) Swap(i, j int) { o[i], o[j] = o[j], o[i] }
-
-func (o byFirstTimestampV1) Less(i, j int) bool {
-	if o[i].ObjectMeta.CreationTimestamp.Equal(&o[j].ObjectMeta.CreationTimestamp) {
-		return o[i].Name < o[j].Name
-	}
-	return o[i].ObjectMeta.CreationTimestamp.Before(&o[j].ObjectMeta.CreationTimestamp)
-}
-
-// byFirstTimestampCoreV1 sorts a slice of corev1 by first timestamp, using their involvedObject's name as a tie breaker.
-type byFirstTimestampCoreV1 []corev1.Event
-
-func (o byFirstTimestampCoreV1) Len() int      { return len(o) }
-func (o byFirstTimestampCoreV1) Swap(i, j int) { o[i], o[j] = o[j], o[i] }
-
-func (o byFirstTimestampCoreV1) Less(i, j int) bool {
-	if o[i].ObjectMeta.CreationTimestamp.Equal(&o[j].ObjectMeta.CreationTimestamp) {
-		return o[i].Name < o[j].Name
-	}
-	return o[i].ObjectMeta.CreationTimestamp.Before(&o[j].ObjectMeta.CreationTimestamp)
-}
-
-// CollectEvents gathers all events from namespace and prints it out to log
-func (t *Case) CollectEvents(namespace string) {
-	cl, err := t.Client(false)
-	if err != nil {
-		t.Logger.Log("Failed to collect events for %s in ns %s: %v", t.Name, namespace, err)
+func (c *Case) maybeReportEvents(namespace string) {
+	if funk.Contains(c.Suppress, "events") {
+		c.Logger.Logf("skipping kubernetes event logging")
 		return
 	}
-
-	err = t.collectEventsV1(cl, namespace)
+	ctx := context.TODO()
+	cl, err := c.GetClient(false)
 	if err != nil {
-		t.Logger.Log("Trying with events eventsv1beta1 API...")
-		err = t.collectEventsBeta1(cl, namespace)
-		if err != nil {
-			t.Logger.Log("Trying with events corev1 API...")
-			err = t.collectEventsCoreV1(cl, namespace)
-			if err != nil {
-				t.Logger.Log("All event APIs failed")
-			}
-		}
+		c.Logger.Log("Failed to collect events for %s in ns %s: %v", c.Name, namespace, err)
+		return
 	}
-}
-
-func (t *Case) collectEventsBeta1(cl client.Client, namespace string) error {
-	eventsList := &eventsbeta1.EventList{}
-
-	err := cl.List(context.TODO(), eventsList, client.InNamespace(namespace))
-	if err != nil {
-		t.Logger.Logf("Failed to collect events for %s in ns %s: %v", t.Name, namespace, err)
-		return err
-	}
-
-	events := eventsList.Items
-	sort.Sort(byFirstTimestamp(events))
-
-	t.Logger.Logf("%s events from ns %s:", t.Name, namespace)
-	printEventsBeta1(events, t.Logger)
-	return nil
-}
-
-func (t *Case) collectEventsV1(cl client.Client, namespace string) error {
-	eventsList := &eventsv1.EventList{}
-
-	err := cl.List(context.TODO(), eventsList, client.InNamespace(namespace))
-	if err != nil {
-		t.Logger.Logf("Failed to collect events for %s in ns %s: %v", t.Name, namespace, err)
-		return err
-	}
-
-	events := eventsList.Items
-	sort.Sort(byFirstTimestampV1(events))
-
-	t.Logger.Logf("%s events from ns %s:", t.Name, namespace)
-	printEventsV1(events, t.Logger)
-	return nil
-}
-
-func (t *Case) collectEventsCoreV1(cl client.Client, namespace string) error {
-	eventsList := &corev1.EventList{}
-
-	err := cl.List(context.TODO(), eventsList, client.InNamespace(namespace))
-	if err != nil {
-		t.Logger.Logf("Failed to collect events for %s in ns %s: %v", t.Name, namespace, err)
-		return err
-	}
-
-	events := eventsList.Items
-	sort.Sort(byFirstTimestampCoreV1(events))
-
-	t.Logger.Logf("%s events from ns %s:", t.Name, namespace)
-	printEventsCoreV1(events, t.Logger)
-	return nil
-}
-
-func printEventsBeta1(events []eventsbeta1.Event, logger testutils.Logger) {
-	for _, e := range events {
-		// time type regarding action reason note reportingController related
-		logger.Logf("%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s",
-			e.ObjectMeta.CreationTimestamp,
-			e.Type,
-			shortString(&e.Regarding),
-			e.Action,
-			e.Reason,
-			e.Note,
-			e.ReportingController,
-			shortString(e.Related))
-	}
-}
-
-func printEventsV1(events []eventsv1.Event, logger testutils.Logger) {
-	for _, e := range events {
-		// time type regarding action reason note reportingController related
-		logger.Logf("%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s",
-			e.ObjectMeta.CreationTimestamp,
-			e.Type,
-			shortString(&e.Regarding),
-			e.Action,
-			e.Reason,
-			e.Note,
-			e.ReportingController,
-			shortString(e.Related))
-	}
-}
-
-func printEventsCoreV1(events []corev1.Event, logger testutils.Logger) {
-	for _, e := range events {
-		// time type regarding action reason note reportingController related
-		logger.Logf("%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s",
-			e.ObjectMeta.CreationTimestamp,
-			e.Type,
-			shortString(&e.InvolvedObject),
-			e.Action,
-			e.Reason,
-			e.Message,
-			e.ReportingController,
-			shortString(e.Related))
-	}
-}
-
-func shortString(obj *corev1.ObjectReference) string {
-	if obj == nil {
-		return ""
-	}
-	fieldRef := ""
-	if obj.FieldPath != "" {
-		fieldRef = "." + obj.FieldPath
-	}
-	return fmt.Sprintf("%s %s%s",
-		obj.GroupVersionKind().GroupKind().String(),
-		obj.Name,
-		fieldRef)
+	eventutils.CollectAndLog(ctx, cl, namespace, c.Name, c.Logger)
 }
 
 // Run runs a test case including all of its steps.
-func (t *Case) Run(test *testing.T, rep report.TestReporter) {
+func (c *Case) Run(test *testing.T, rep report.TestReporter) {
 	defer rep.Done()
-	setupReport := rep.Step("setup")
-	ns, err := t.determineNamespace()
-	if err != nil {
-		setupReport.Failure(err.Error())
-		test.Fatal(err)
-	}
 
-	cl, err := t.Client(false)
-	if err != nil {
-		setupReport.Failure(err.Error())
-		test.Fatal(err)
-	}
+	ns := c.setup(test, rep)
 
-	clients := map[string]client.Client{"": cl}
-
-	for _, testStep := range t.Steps {
-		if clients[testStep.Kubeconfig] != nil || testStep.KubeconfigLoading == v1beta1.KubeconfigLoadingLazy {
-			continue
-		}
-
-		cl, err = newClient(testStep.Kubeconfig, testStep.Context)(false)
-		if err != nil {
-			setupReport.Failure(err.Error())
-			test.Fatal(err)
-		}
-
-		clients[testStep.Kubeconfig] = cl
-	}
-
-	for kc, c := range clients {
-		if err = t.CreateNamespace(test, c, ns); k8serrors.IsAlreadyExists(err) {
-			t.Logger.Logf("namespace %q already exists, using kubeconfig %q", ns.Name, kc)
-		} else if err != nil {
-			setupReport.Failure("failed to create test namespace", err)
-			test.Fatal(err)
-		}
-	}
-
-	for _, testStep := range t.Steps {
+	for _, testStep := range c.Steps {
 		stepReport := rep.Step("step " + testStep.String())
-		testStep.Client = t.Client
-		if testStep.Kubeconfig != "" {
-			testStep.Client = newClient(testStep.Kubeconfig, testStep.Context)
-		}
-		testStep.DiscoveryClient = t.DiscoveryClient
-		if testStep.Kubeconfig != "" {
-			testStep.DiscoveryClient = newDiscoveryClient(testStep.Kubeconfig, testStep.Context)
-		}
-		testStep.Logger = t.Logger.WithPrefix(testStep.String())
+		testStep.Setup(c.Logger, c.GetClient, c.GetDiscoveryClient)
 		stepReport.AddAssertions(len(testStep.Asserts))
 		stepReport.AddAssertions(len(testStep.Errors))
 
-		errs := []error{}
+		var errs []error
 
 		// Set-up client/namespace for lazy-loaded Kubeconfig
 		if testStep.KubeconfigLoading == v1beta1.KubeconfigLoadingLazy {
-			cl, err = testStep.Client(false)
+			cl, err := testStep.Client(false)
 			if err != nil {
 				errs = append(errs, fmt.Errorf("failed to lazy-load kubeconfig: %w", err))
-			} else if err = t.CreateNamespace(test, cl, ns); k8serrors.IsAlreadyExists(err) {
-				t.Logger.Logf("namespace %q already exists", ns.Name)
+			} else if err = c.createNamespace(test, cl, ns); k8serrors.IsAlreadyExists(err) {
+				c.Logger.Logf("namespace %q already exists", ns.Name)
 			} else if err != nil {
 				errs = append(errs, fmt.Errorf("failed to create test namespace: %w", err))
 			}
@@ -401,26 +191,63 @@ func (t *Case) Run(test *testing.T, rep report.TestReporter) {
 		}
 	}
 
-	if funk.Contains(t.Suppress, "events") {
-		t.Logger.Logf("skipping kubernetes event logging")
-	} else {
-		t.CollectEvents(ns.Name)
-	}
+	c.maybeReportEvents(ns.Name)
 }
 
-func (t *Case) determineNamespace() (*namespace, error) {
+func (c *Case) setup(test *testing.T, rep report.TestReporter) *namespace {
+	setupReport := rep.Step("setup")
+	ns, err := c.determineNamespace()
+	if err != nil {
+		setupReport.Failure(err.Error())
+		test.Fatal(err)
+	}
+
+	cl, err := c.GetClient(false)
+	if err != nil {
+		setupReport.Failure(err.Error())
+		test.Fatal(err)
+	}
+
+	clients := map[string]client.Client{"": cl}
+
+	for _, testStep := range c.Steps {
+		if clients[testStep.Kubeconfig] != nil || testStep.KubeconfigLoading == v1beta1.KubeconfigLoadingLazy {
+			continue
+		}
+
+		cl, err = kubernetes.NewClientFunc(testStep.Kubeconfig, testStep.Context)(false)
+		if err != nil {
+			setupReport.Failure(err.Error())
+			test.Fatal(err)
+		}
+
+		clients[testStep.Kubeconfig] = cl
+	}
+
+	for kubeConfigPath, cl := range clients {
+		if err = c.createNamespace(test, cl, ns); k8serrors.IsAlreadyExists(err) {
+			c.Logger.Logf("namespace %q already exists, using kubeconfig %q", ns.Name, kubeConfigPath)
+		} else if err != nil {
+			setupReport.Failure("failed to create test namespace", err)
+			test.Fatal(err)
+		}
+	}
+	return ns
+}
+
+func (c *Case) determineNamespace() (*namespace, error) {
 	ns := &namespace{
-		Name:        t.PreferredNamespace,
+		Name:        c.PreferredNamespace,
 		AutoCreated: false,
 	}
 	// no preferred ns, means we auto-create with petnames
-	if t.PreferredNamespace == "" {
+	if c.PreferredNamespace == "" {
 		ns.Name = fmt.Sprintf("kuttl-test-%s", petname.Generate(2, "-"))
 		ns.AutoCreated = true
 	} else {
-		exist, err := t.NamespaceExists(t.PreferredNamespace)
+		exist, err := c.namespaceExists(c.PreferredNamespace)
 		if err != nil {
-			return nil, fmt.Errorf("failed to determine existence of namespace %q: %w", t.PreferredNamespace, err)
+			return nil, fmt.Errorf("failed to determine existence of namespace %q: %w", c.PreferredNamespace, err)
 		}
 		if !exist {
 			ns.AutoCreated = true
@@ -430,66 +257,9 @@ func (t *Case) determineNamespace() (*namespace, error) {
 	return ns, nil
 }
 
-// CollectTestStepFiles collects a map of test steps and their associated files
-// from a directory.
-func (t *Case) CollectTestStepFiles() (map[int64][]string, error) {
-	testStepFiles := map[int64][]string{}
-
-	files, err := os.ReadDir(t.Dir)
-	if err != nil {
-		return nil, err
-	}
-
-	for _, file := range files {
-		index, err := getIndexFromFile(file.Name())
-		if err != nil {
-			return nil, err
-		}
-		if index < 0 {
-			t.Logger.Log("Ignoring", file.Name(), "as it does not match file name regexp:", testStepRegex.String())
-			continue
-		}
-
-		if testStepFiles[index] == nil {
-			testStepFiles[index] = []string{}
-		}
-
-		testStepPath := filepath.Join(t.Dir, file.Name())
-
-		if file.IsDir() {
-			testStepDir, err := os.ReadDir(testStepPath)
-			if err != nil {
-				return nil, err
-			}
-
-			for _, testStepFile := range testStepDir {
-				testStepFiles[index] = append(testStepFiles[index], filepath.Join(
-					testStepPath, testStepFile.Name(),
-				))
-			}
-		} else {
-			testStepFiles[index] = append(testStepFiles[index], testStepPath)
-		}
-	}
-
-	return testStepFiles, nil
-}
-
-// getIndexFromFile returns the index derived from fileName's prefix, ex. "01-foo.yaml" has index 1.
-// If an index isn't found, -1 is returned.
-func getIndexFromFile(fileName string) (int64, error) {
-	matches := testStepRegex.FindStringSubmatch(fileName)
-	if len(matches) != 2 {
-		return -1, nil
-	}
-
-	i, err := strconv.ParseInt(matches[1], 10, 32)
-	return i, err
-}
-
-// LoadTestSteps loads all of the test steps for a test case.
-func (t *Case) LoadTestSteps() error {
-	testStepFiles, err := t.CollectTestStepFiles()
+// LoadTestSteps loads all the test steps for a test case.
+func (c *Case) LoadTestSteps() error {
+	testStepFiles, err := files.CollectTestStepFiles(c.Dir, c.Logger)
 	if err != nil {
 		return err
 	}
@@ -498,11 +268,11 @@ func (t *Case) LoadTestSteps() error {
 
 	for index, files := range testStepFiles {
 		testStep := &Step{
-			Timeout:       t.Timeout,
+			Timeout:       c.Timeout,
 			Index:         int(index),
-			SkipDelete:    t.SkipDelete,
-			Dir:           t.Dir,
-			TestRunLabels: t.RunLabels,
+			SkipDelete:    c.SkipDelete,
+			Dir:           c.Dir,
+			TestRunLabels: c.RunLabels,
 			Asserts:       []client.Object{},
 			Apply:         []client.Object{},
 			Errors:        []client.Object{},
@@ -521,30 +291,6 @@ func (t *Case) LoadTestSteps() error {
 		return testSteps[i].Index < testSteps[j].Index
 	})
 
-	t.Steps = testSteps
+	c.Steps = testSteps
 	return nil
-}
-
-func newClient(kubeconfig, context string) func(bool) (client.Client, error) {
-	return func(bool) (client.Client, error) {
-		config, err := kubernetes.BuildConfigWithContext(kubeconfig, context)
-		if err != nil {
-			return nil, err
-		}
-
-		return kubernetes.NewRetryClient(config, client.Options{
-			Scheme: kubernetes.Scheme(),
-		})
-	}
-}
-
-func newDiscoveryClient(kubeconfig, context string) func() (discovery.DiscoveryInterface, error) {
-	return func() (discovery.DiscoveryInterface, error) {
-		config, err := kubernetes.BuildConfigWithContext(kubeconfig, context)
-		if err != nil {
-			return nil, err
-		}
-
-		return discovery.NewDiscoveryClientForConfig(config)
-	}
 }

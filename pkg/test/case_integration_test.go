@@ -104,10 +104,10 @@ func TestMultiClusterCase(t *testing.T) {
 				Timeout: 2,
 			},
 		},
-		Client: func(bool) (client.Client, error) {
+		GetClient: func(bool) (client.Client, error) {
 			return testenv.Client, nil
 		},
-		DiscoveryClient: func() (discovery.DiscoveryInterface, error) {
+		GetDiscoveryClient: func() (discovery.DiscoveryInterface, error) {
 			return testenv.DiscoveryClient, nil
 		},
 	}

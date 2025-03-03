@@ -380,8 +380,8 @@ func (h *Harness) RunTests() {
 		for testDir, tests := range realTestSuite {
 			suiteReport := h.NewSuiteReport(testDir)
 			for _, test := range tests {
-				test.Client = h.Client
-				test.DiscoveryClient = h.DiscoveryClient
+				test.GetClient = h.Client
+				test.GetDiscoveryClient = h.DiscoveryClient
 
 				t.Run(test.Name, func(t *testing.T) {
 					// testing.T.Parallel may block, so run it before we read time for our
