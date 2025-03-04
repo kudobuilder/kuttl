@@ -10,6 +10,9 @@ import (
 	"github.com/docker/docker/client"
 	"github.com/stretchr/testify/assert"
 	kindConfig "sigs.k8s.io/kind/pkg/apis/config/v1alpha4"
+
+	harness "github.com/kudobuilder/kuttl/pkg/apis/testharness/v1beta1"
+	"github.com/kudobuilder/kuttl/pkg/report"
 )
 
 func TestGetTimeout(t *testing.T) {
@@ -26,6 +29,78 @@ func TestGetReportName(t *testing.T) {
 
 	h.TestSuite.ReportName = "special-kuttl-report"
 	assert.Equal(t, "special-kuttl-report", h.reportName())
+}
+
+func TestHarnessReport(t *testing.T) {
+	type HarnessTest struct {
+		name           string
+		expectedFormat string
+		h              *Harness
+	}
+
+	tests := []HarnessTest{
+		{
+			name:           "should create an XML report when format is XML",
+			expectedFormat: "xml",
+			h: &Harness{
+				TestSuite: harness.TestSuite{
+					ReportFormat: "XML",
+				},
+				report: &report.Testsuites{},
+			},
+		}, {
+			name:           "should create an XML report when format is xml",
+			expectedFormat: "xml",
+			h: &Harness{
+				TestSuite: harness.TestSuite{
+					ReportFormat: "xml",
+				},
+				report: &report.Testsuites{},
+			},
+		}, {
+			name:           "should create an JSON report when format is JSON",
+			expectedFormat: "json",
+			h: &Harness{
+				TestSuite: harness.TestSuite{
+					ReportFormat: "JSON",
+				},
+				report: &report.Testsuites{},
+			},
+		}, {
+			name:           "should create an JSON report when format is json",
+			expectedFormat: "json",
+			h: &Harness{
+				TestSuite: harness.TestSuite{
+					ReportFormat: "json",
+				},
+				report: &report.Testsuites{},
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// set the artifacts dir for current test run
+			tt.h.TestSuite.ArtifactsDir = t.TempDir()
+			tt.h.Report()
+			assert.FileExists(t, fmt.Sprintf("%s/%s.%s", tt.h.TestSuite.ArtifactsDir, "kuttl-report", tt.expectedFormat))
+		})
+	}
+
+	// unit test for not passing any report format
+	emptyTest := HarnessTest{
+		name:           "should not create any report when format is empty",
+		expectedFormat: "json",
+		h: &Harness{
+			TestSuite: harness.TestSuite{},
+			report:    &report.Testsuites{},
+		},
+	}
+	t.Run(emptyTest.name, func(t *testing.T) {
+		emptyTest.h.TestSuite.ArtifactsDir = t.TempDir()
+		emptyTest.h.Report()
+		assert.NoFileExists(t, fmt.Sprintf("%s/%s.%s", emptyTest.h.TestSuite.ArtifactsDir, "kuttl-report", emptyTest.expectedFormat))
+	})
 }
 
 type dockerMock struct {
