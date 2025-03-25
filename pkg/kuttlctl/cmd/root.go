@@ -32,6 +32,8 @@ and serves as an API aggregation layer.
 	}
 
 	cmd.PersistentFlags().StringVar(&kubernetes.ImpersonateAs, "as", "", "Username to impersonate for the operation. User could be a regular user or a service account in a namespace.")
+	cmd.PersistentFlags().StringSliceVar(&kubernetes.ImpersonateAsGroups, "as-groups", []string{}, "Groups to impersonate for the operation.")
+
 	cmd.AddCommand(newAssertCmd())
 	cmd.AddCommand(newErrorsCmd())
 	cmd.AddCommand(newTestCmd())
