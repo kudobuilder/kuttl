@@ -2,9 +2,11 @@ module github.com/kudobuilder/kuttl
 
 go 1.23.0
 
+toolchain go1.24.1
+
 require (
 	github.com/Masterminds/semver/v3 v3.3.1
-	github.com/docker/docker v28.0.0+incompatible
+	github.com/docker/docker v28.0.4+incompatible
 	github.com/dustin/go-humanize v1.0.1
 	github.com/dustinkirkland/golang-petname v0.0.0-20191129215211-8e5a1ed0cff0
 	github.com/google/cel-go v0.23.2
