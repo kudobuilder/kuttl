@@ -11,6 +11,7 @@ import (
 )
 
 var ImpersonateAs = ""
+var ImpersonateAsGroups = []string{}
 
 func GetConfig() (*rest.Config, error) {
 	cfg, err := config.GetConfig()
@@ -20,6 +21,10 @@ func GetConfig() (*rest.Config, error) {
 
 	if ImpersonateAs != "" {
 		cfg.Impersonate.UserName = ImpersonateAs
+	}
+
+	if len(ImpersonateAsGroups) != 0 {
+		cfg.Impersonate.Groups = ImpersonateAsGroups
 	}
 
 	return cfg, nil
