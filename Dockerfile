@@ -16,7 +16,7 @@
 # artifacts by default will land in the root of the mount point.
 
 # kuttl builder
-FROM golang:1.21 as builder
+FROM golang:1.23 as builder
 
 WORKDIR /go/src/kuttl
 COPY . .
@@ -31,8 +31,8 @@ LABEL org.opencontainers.image.source="https://github.com/kudobuilder/kuttl"
 RUN microdnf install vim tar gzip
 RUN echo 'alias vi=vim' >> ~/.bashrc
 
-#  kube 1.26
-RUN curl -LO https://storage.googleapis.com/kubernetes-release/release/v1.26.0/bin/linux/amd64/kubectl
+#  kube 1.31
+RUN curl -LO https://storage.googleapis.com/kubernetes-release/release/v1.31.0/bin/linux/amd64/kubectl
 RUN chmod +x ./kubectl
 RUN mv ./kubectl /usr/local/bin/kubectl
 
