@@ -50,3 +50,14 @@ If the kubeconfig setting is set, then it will be used for all Kubernetes operat
 Note that the `kubeconfig` setting on the `TestStep` would be unaffected by the global Kubernetes configuration, so the `--kubeconfig` flag, `$KUBECONFIG` environment variable, etc, will be ignored for these steps.
 
 A namespace is generated for each `TestCase` and this needs to be created in each cluster referenced by `TestSteps` within the `TestCase`. At the beginning of the `TestCase`, the generated namespace will be created in every cluster used in the `TestCase`. The namespaces will also be deleted at the end if `--skip-delete` is not set.
+
+## Proposal - CLI
+
+Because running multi-cluster tests entails a far more complex set of configurations we propose to make use the the following command line options illegal when the `TestSuite` calls for a multi-cluster configuration:
+- --kind-config 
+- --kind-context
+
+We propose that the following CLI flags should apply across all clusters when a multi-cluster `TestSuite` is defined:
+
+- --skip-cluster-delete 
+- --start-kind
