@@ -33,20 +33,29 @@ Currently, KUTTL only supports a single test cluster. This KEP describes how we 
 * Support applying resources across more than one test cluster.
 * Support asserting on resources across more than one test cluster.
 
-## Proposal
+## Proposals - TestStep API changes
 
-The proposal is to add a new setting to the `TestStep` object: `kubeconfig`. This setting would allow the user to specify an alternative kubeconfig path to use for a given test step.
+The proposal is to add a new setting within `TestStep`. We propose this field be called `runOnCluster` and of type `[]string`. This setting would allow the user to specify a list of the clusters set up by the `TestSuite` on which to run `TestSteps`.
+
+Recall that `TestSuite` contains a map of `KindConfig`s, entries in the `runOnCluster` would refer to one of the keys in this map. Where a user has specified homogenous clusters using `GlobalKindConfig` and `NumClusters`, a uniform naming scheme should exist to make identification of the right cluster to run on possible.
+
 
 ```
 apiVersion: kudo.dev/v1alpha1
 kind: TestStep
-kubeconfig: ./secondary-cluster.yaml
+runOnCluster:
+- my-cluster-1
+- my-cluster-2
 ```
 
-If the kubeconfig setting is not set, then the global Kubernetes client is used.
+If the runOnCluster setting is not set, then the `TestStep` will be run on all clusters. 
 
-If the kubeconfig setting is set, then it will be used for all Kubernetes operations within the step: commands (the KUBECONFIG environment variable will be set to the kubeconfig setting, relative to the KUTTL CLI's working directory), applied resources, asserts, and errors. This means that a single step can only be configured to use a single kubeconfig, but multiple steps can be used if a test case needs to interact with more than one cluster. This allows, for example, a federated resource to be created in one step and then another step can be used to verify that it actually exists on the destination cluster.
+Where multiple clusters are specified (including if the `runOnCluster` field is unset), each script and command will be run in parallel on the desired clusters. 
 
-Note that the `kubeconfig` setting on the `TestStep` would be unaffected by the global Kubernetes configuration, so the `--kubeconfig` flag, `$KUBECONFIG` environment variable, etc, will be ignored for these steps.
+The kubeconfig file location, and the name of the context for the target cluster will be made available as environment variables `KUBECONFIG` and `KUBECONTEXT` in the scripts and commands.
 
 A namespace is generated for each `TestCase` and this needs to be created in each cluster referenced by `TestSteps` within the `TestCase`. At the beginning of the `TestCase`, the generated namespace will be created in every cluster used in the `TestCase`. The namespaces will also be deleted at the end if `--skip-delete` is not set.
+
+## Proposals - Reporting API changes
+
+Within the reporting structs, `Failure` may need to be modified to provide an indication of which cluster a given `TestStep failed on`. 
