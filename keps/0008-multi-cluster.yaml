@@ -33,6 +33,14 @@ Currently, KUTTL only supports a single test cluster. This KEP describes how we 
 * Support applying resources across more than one test cluster.
 * Support asserting on resources across more than one test cluster.
 
+# Proposal - Testassert and test errors
+
+There is already a `TestAssert`` API which allows the test assertions to be configured. We propose to add to this a field `runOnCluster` of type `[]string` which will specify a set of named contexts on which to run the assertion. The strings will link back to the keys of the map defined in the proposed `MultiClusterConfig` struct, or (if a global config has been specified with the `NumClusters` option), to the KinD clusters deployed by the `TestSuite` setup steps.
+
+Additionally we propose to add a special value `ALL` which will run the test assertion on all clusters.
+
+It seems that there may not currently be a `TestError` API, so it is an open question as to whether that should be implemented as part of this work to make assertions and errors consistent.
+
 ## Proposal
 
 The proposal is to add a new setting to the `TestStep` object: `kubeconfig`. This setting would allow the user to specify an alternative kubeconfig path to use for a given test step.
