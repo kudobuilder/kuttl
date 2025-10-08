@@ -26,7 +26,15 @@ import (
 )
 
 // Case contains all the test steps and the Kubernetes client and other global configuration
-// for a test.
+// for a test. It represents a leaf directory containing test step files.
+// Case lifecycle:
+//  1. gets created (directly by Harness.LoadTests()) before the test's dedicated testing.T
+//     comes to file. The following steps are in the scope of the testing.T:
+//  2. gets a .Logger assigned
+//  3. has .LoadTestSteps() called
+//  4. has .Run() called, which:
+//     4a. calls setup(), which: determines the namespace name, prepares the clients unless lazy, and prepares the namespaces
+//     4b. for each step: sets the step up, prepares its client if lazy, and runs the step
 type Case struct {
 	Steps              []*Step
 	Name               string
