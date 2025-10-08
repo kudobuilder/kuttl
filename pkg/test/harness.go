@@ -87,6 +87,8 @@ func (h *Harness) LoadTests(dir string) ([]*Case, error) {
 			SkipDelete:         h.TestSuite.SkipDelete,
 			Suppress:           h.TestSuite.Suppress,
 			RunLabels:          h.RunLabels,
+			GetClient:          h.Client,
+			GetDiscoveryClient: h.DiscoveryClient,
 		})
 	}
 
@@ -380,9 +382,6 @@ func (h *Harness) RunTests() {
 		for testDir, tests := range realTestSuite {
 			suiteReport := h.NewSuiteReport(testDir)
 			for _, test := range tests {
-				test.GetClient = h.Client
-				test.GetDiscoveryClient = h.DiscoveryClient
-
 				t.Run(test.Name, func(t *testing.T) {
 					// testing.T.Parallel may block, so run it before we read time for our
 					// elapsed time calculations.
