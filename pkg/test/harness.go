@@ -63,7 +63,7 @@ func (h *Harness) LoadTests(dir string) ([]*Case, error) {
 		return nil, err
 	}
 
-	files, err := os.ReadDir(dir)
+	dirEntries, err := os.ReadDir(dir)
 	if err != nil {
 		return nil, err
 	}
@@ -73,17 +73,17 @@ func (h *Harness) LoadTests(dir string) ([]*Case, error) {
 	timeout := h.GetTimeout()
 	h.T.Logf("going to run test suite with timeout of %d seconds for each step", timeout)
 
-	for _, file := range files {
-		if !file.IsDir() {
+	for _, dirEntry := range dirEntries {
+		if !dirEntry.IsDir() {
 			continue
 		}
 
 		tests = append(tests, &Case{
 			Timeout:            timeout,
 			Steps:              []*Step{},
-			Name:               file.Name(),
+			Name:               dirEntry.Name(),
 			PreferredNamespace: h.TestSuite.Namespace,
-			Dir:                filepath.Join(dir, file.Name()),
+			Dir:                filepath.Join(dir, dirEntry.Name()),
 			SkipDelete:         h.TestSuite.SkipDelete,
 			Suppress:           h.TestSuite.Suppress,
 			RunLabels:          h.RunLabels,
