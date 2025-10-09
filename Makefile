@@ -1,12 +1,12 @@
 SHELL=/bin/bash -o pipefail
 
 CLI := kubectl-kuttl
-GIT_VERSION_PATH := github.com/kudobuilder/kuttl/pkg/version.gitVersion
+GIT_VERSION_PATH := github.com/kudobuilder/kuttl/internal/version.gitVersion
 GIT_VERSION := $(shell git describe --abbrev=0 --tags | cut -b 2-)
-GIT_COMMIT_PATH := github.com/kudobuilder/kuttl/pkg/version.gitCommit
+GIT_COMMIT_PATH := github.com/kudobuilder/kuttl/internal/version.gitCommit
 GIT_COMMIT := $(shell git rev-parse HEAD | cut -b -8)
 SOURCE_DATE_EPOCH := $(shell git show -s --format=format:%ct HEAD)
-BUILD_DATE_PATH := github.com/kudobuilder/kuttl/pkg/version.buildDate
+BUILD_DATE_PATH := github.com/kudobuilder/kuttl/internal/version.buildDate
 DATE_FMT := "%Y-%m-%dT%H:%M:%SZ"
 BUILD_DATE := $(shell date -u -d "@$SOURCE_DATE_EPOCH" "+${DATE_FMT}" 2>/dev/null || date -u -r "${SOURCE_DATE_EPOCH}" "+${DATE_FMT}" 2>/dev/null || date -u "+${DATE_FMT}")
 LDFLAGS := -X ${GIT_VERSION_PATH}=${GIT_VERSION} -X ${GIT_COMMIT_PATH}=${GIT_COMMIT} -X ${BUILD_DATE_PATH}=${BUILD_DATE}
@@ -131,9 +131,9 @@ all: lint test integration-test e2e-test  ## Runs lint, unit, integration and e2
 test: ## Runs unit tests
 ifdef _INTELLIJ_FORCE_SET_GOFLAGS
 # Run tests from a Goland terminal. Goland already set '-mod=readonly'
-	go test ./pkg/...  -v -coverprofile cover.out
+	go test ./pkg/... ./internal/...  -v -coverprofile cover.out
 else
-	go test ./pkg/...  -v -mod=readonly -coverprofile cover.out
+	go test ./pkg/... ./internal/... -v -mod=readonly -coverprofile cover.out
 endif
 
 .PHONY: integration-test
