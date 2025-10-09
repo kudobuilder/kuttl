@@ -16,6 +16,7 @@ import (
 	"github.com/kudobuilder/kuttl/pkg/kubernetes"
 	"github.com/kudobuilder/kuttl/pkg/report"
 	"github.com/kudobuilder/kuttl/pkg/test"
+	"github.com/kudobuilder/kuttl/pkg/test/kind"
 	testutils "github.com/kudobuilder/kuttl/pkg/test/utils"
 )
 
@@ -271,7 +272,7 @@ For more detailed documentation, visit: https://kuttl.dev`,
 	testCmd.Flags().Var(&runLabels, "test-run-labels", "Labels to use for this test run.")
 	// This cannot be a global flag because pkg/test/utils.RunTests calls flag.Parse which barfs on unknown top-level flags.
 	// Putting it here at least does not advertise it on a level where using it is impossible.
-	test.SetFlags(testCmd.Flags())
+	kind.SetFlags(testCmd.Flags())
 
 	return testCmd
 }
