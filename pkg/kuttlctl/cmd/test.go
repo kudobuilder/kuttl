@@ -12,10 +12,10 @@ import (
 	"github.com/spf13/pflag"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
-	harness "github.com/kudobuilder/kuttl/pkg/apis/testharness/v1beta1"
+	harnessApi "github.com/kudobuilder/kuttl/pkg/apis/testharness/v1beta1"
 	"github.com/kudobuilder/kuttl/pkg/kubernetes"
 	"github.com/kudobuilder/kuttl/pkg/report"
-	"github.com/kudobuilder/kuttl/pkg/test"
+	"github.com/kudobuilder/kuttl/pkg/test/harness"
 	"github.com/kudobuilder/kuttl/pkg/test/kind"
 	testutils "github.com/kudobuilder/kuttl/pkg/test/utils"
 )
@@ -66,7 +66,7 @@ func newTestCmd() *cobra.Command { //nolint:gocyclo
 	suppress := []string{}
 	var runLabels labelSetValue
 
-	options := harness.TestSuite{}
+	options := harnessApi.TestSuite{}
 
 	testCmd := &cobra.Command{
 		Use:   "test [flags]... [test suite]...",
@@ -103,7 +103,7 @@ For more detailed documentation, visit: https://kuttl.dev`,
 
 					if kind == "TestSuite" {
 						switch ts := obj.(type) {
-						case *harness.TestSuite:
+						case *harnessApi.TestSuite:
 							options = *ts
 						case *unstructured.Unstructured:
 							log.Println(fmt.Errorf("bad configuration in file %q", configPath))
@@ -145,7 +145,7 @@ For more detailed documentation, visit: https://kuttl.dev`,
 			}
 
 			if options.KINDContext == "" {
-				options.KINDContext = harness.DefaultKINDContext
+				options.KINDContext = harnessApi.DefaultKINDContext
 			}
 
 			if options.StartControlPlane && options.StartKIND {
@@ -237,7 +237,7 @@ For more detailed documentation, visit: https://kuttl.dev`,
 		},
 		Run: func(*cobra.Command, []string) {
 			testutils.RunTests("kuttl", testToRun, options.Parallel, func(t *testing.T) {
-				h := test.Harness{
+				h := harness.Harness{
 					TestSuite: options,
 					T:         t,
 					RunLabels: runLabels.AsLabelSet(),
