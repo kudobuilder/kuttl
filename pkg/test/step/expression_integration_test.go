@@ -1,6 +1,6 @@
 //go:build integration
 
-package test
+package step
 
 import (
 	"context"
@@ -142,7 +142,7 @@ func TestAssertExpressions(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			dirName := fmt.Sprintf(
-				"step_integration_test_data/assert_expressions/%s",
+				"test_data/assert_expressions/%s",
 				strings.ReplaceAll(tc.name, " ", "_"),
 			)
 

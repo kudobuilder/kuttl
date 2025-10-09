@@ -1,6 +1,6 @@
 //go:build integration
 
-package test
+package step
 
 import (
 	"context"
@@ -337,7 +337,7 @@ func TestCheckedTypeAssertions(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			step := Step{}
-			path := fmt.Sprintf("step_integration_test_data/error_detect/00-%s.yaml", test.name)
+			path := fmt.Sprintf("test_data/error_detect/00-%s.yaml", test.name)
 			assert.EqualError(t, step.LoadYAML(path),
 				fmt.Sprintf("failed to load %s object from %s: it contains an object of type *unstructured.Unstructured",
 					test.typeName, path))
@@ -351,8 +351,8 @@ func TestApplyExpansion(t *testing.T) {
 		os.Unsetenv("TEST_FOO")
 	})
 
-	step := Step{Dir: "step_integration_test_data/assert_expand/"}
-	path := "step_integration_test_data/assert_expand/00-step1.yaml"
+	step := Step{Dir: "test_data/assert_expand/"}
+	path := "test_data/assert_expand/00-step1.yaml"
 	err := step.LoadYAML(path)
 	assert.NoError(t, err)
 	assert.Equal(t, 1, len(step.Apply))
@@ -363,13 +363,13 @@ func TestOverriddenKubeconfigPathResolution(t *testing.T) {
 	t.Cleanup(func() {
 		os.Unsetenv("SUBPATH")
 	})
-	stepRelativePath := &Step{Dir: "step_integration_test_data/kubeconfig_path_resolution/"}
-	err := stepRelativePath.LoadYAML("step_integration_test_data/kubeconfig_path_resolution/00-step1.yaml")
+	stepRelativePath := &Step{Dir: "test_data/kubeconfig_path_resolution/"}
+	err := stepRelativePath.LoadYAML("test_data/kubeconfig_path_resolution/00-step1.yaml")
 	assert.NoError(t, err)
-	assert.Equal(t, "step_integration_test_data/kubeconfig_path_resolution/kubeconfig-test.yaml", stepRelativePath.Kubeconfig)
+	assert.Equal(t, "test_data/kubeconfig_path_resolution/kubeconfig-test.yaml", stepRelativePath.Kubeconfig)
 
-	stepAbsPath := &Step{Dir: "step_integration_test_data/kubeconfig_path_resolution/"}
-	err = stepAbsPath.LoadYAML("step_integration_test_data/kubeconfig_path_resolution/00-step2.yaml")
+	stepAbsPath := &Step{Dir: "test_data/kubeconfig_path_resolution/"}
+	err = stepAbsPath.LoadYAML("test_data/kubeconfig_path_resolution/00-step2.yaml")
 	assert.NoError(t, err)
 	assert.Equal(t, "/absolute/kubeconfig-test.yaml", stepAbsPath.Kubeconfig)
 }
@@ -383,9 +383,9 @@ func TestTwoTestStepping(t *testing.T) {
 	}
 
 	// 2 apply files in 1 step
-	err := step.LoadYAML("step_integration_test_data/two_step/00-step1.yaml")
+	err := step.LoadYAML("test_data/two_step/00-step1.yaml")
 	assert.NoError(t, err)
-	err = step.LoadYAML("step_integration_test_data/two_step/00-step2.yaml")
+	err = step.LoadYAML("test_data/two_step/00-step2.yaml")
 	assert.Error(t, err, "more than 1 TestStep not allowed in step \"twostepping\"")
 
 	// 2 teststeps in 1 file in 1 step
@@ -394,7 +394,7 @@ func TestTwoTestStepping(t *testing.T) {
 		Index: 0,
 		Apply: apply,
 	}
-	err = step.LoadYAML("step_integration_test_data/two_step/01-step1.yaml")
+	err = step.LoadYAML("test_data/two_step/01-step1.yaml")
 	assert.Error(t, err, "more than 1 TestStep not allowed in step \"twostepping\"")
 }
 
@@ -453,7 +453,7 @@ func TestAssertCommandsValidCommandRunsOk(t *testing.T) {
 	}
 
 	// Load test that has an echo command, so it should run ok, and don't return any errors
-	err := step.LoadYAML("step_integration_test_data/assert_commands/valid_command/00-assert.yaml")
+	err := step.LoadYAML("test_data/assert_commands/valid_command/00-assert.yaml")
 	assert.NoError(t, err)
 
 	errors := step.Run(t, "irrelevant")
@@ -470,7 +470,7 @@ func TestAssertCommandsMultipleCommandRunsOk(t *testing.T) {
 	}
 
 	// Load test that has an echo command, so it should run ok, and don't return any errors
-	err := step.LoadYAML("step_integration_test_data/assert_commands/multiple_commands/00-assert.yaml")
+	err := step.LoadYAML("test_data/assert_commands/multiple_commands/00-assert.yaml")
 	assert.NoError(t, err)
 
 	errors := step.Run(t, "irrelevant")
@@ -487,7 +487,7 @@ func TestAssertCommandsMissingCommandFails(t *testing.T) {
 	}
 
 	// Load test that has an command that is not present (thiscommanddoesnotexist), so it should return an error
-	err := step.LoadYAML("step_integration_test_data/assert_commands/command_does_not_exist/00-assert.yaml")
+	err := step.LoadYAML("test_data/assert_commands/command_does_not_exist/00-assert.yaml")
 	assert.NoError(t, err)
 
 	errors := step.Run(t, "irrelevant")
@@ -504,7 +504,7 @@ func TestAssertCommandsFailingCommandFails(t *testing.T) {
 	}
 
 	// Load test that has an command that is present but will allways fail (false), so we should get back the error.
-	err := step.LoadYAML("step_integration_test_data/assert_commands/failing_comand/00-assert.yaml")
+	err := step.LoadYAML("test_data/assert_commands/failing_comand/00-assert.yaml")
 	assert.NoError(t, err)
 
 	errors := step.Run(t, "irrelevant")
@@ -522,7 +522,7 @@ func TestAssertCommandsShouldTimeout(t *testing.T) {
 
 	// Load test that has an command that sleeps for 5 seconds, while the timeout for the step is 1,
 	// so we should get back the error, and the test should run in less slightly more than 1 seconds.
-	err := step.LoadYAML("step_integration_test_data/assert_commands/timingout_command/00-assert.yaml")
+	err := step.LoadYAML("test_data/assert_commands/timingout_command/00-assert.yaml")
 	assert.NoError(t, err)
 
 	start := time.Now()
@@ -540,18 +540,18 @@ func TestAssertCommandsScriptPath(t *testing.T) {
 		Logger:          testutils.NewTestLogger(t, ""),
 		Client:          func(bool) (client.Client, error) { return testenv.Client, nil },
 		DiscoveryClient: func() (discovery.DiscoveryInterface, error) { return testenv.DiscoveryClient, nil },
-		Dir:             "step_integration_test_data/assert_commands/path_script/",
+		Dir:             "test_data/assert_commands/path_script/",
 	}
 
 	// TestAssert runs a script via absolute and relative path to the test, so it should run ok, and not return any errors.
-	err := step.LoadYAML("step_integration_test_data/assert_commands/path_script/00-assert.yaml")
+	err := step.LoadYAML("test_data/assert_commands/path_script/00-assert.yaml")
 	assert.NoError(t, err)
 
 	errors := step.Run(t, "irrelevant")
 	assert.Equal(t, len(errors), 0)
 
 	// Load the same in a TestStep should behave the same, so it should run ok, and not return any errors.
-	err = step.LoadYAML("step_integration_test_data/assert_commands/path_script/00-step.yaml")
+	err = step.LoadYAML("test_data/assert_commands/path_script/00-step.yaml")
 	assert.NoError(t, err)
 
 	errors = step.Run(t, "irrelevant")

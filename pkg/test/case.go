@@ -21,6 +21,7 @@ import (
 	"github.com/kudobuilder/kuttl/pkg/apis/testharness/v1beta1"
 	"github.com/kudobuilder/kuttl/pkg/kubernetes"
 	"github.com/kudobuilder/kuttl/pkg/report"
+	"github.com/kudobuilder/kuttl/pkg/test/step"
 	testutils "github.com/kudobuilder/kuttl/pkg/test/utils"
 	eventutils "github.com/kudobuilder/kuttl/pkg/test/utils/events"
 	"github.com/kudobuilder/kuttl/pkg/test/utils/files"
@@ -40,7 +41,7 @@ type getDiscoveryClientFuncType func() (discovery.DiscoveryInterface, error)
 //     4a. calls setup(), which: determines the namespace name, prepares the clients unless lazy, and prepares the namespaces
 //     4b. for each step: sets the step up, prepares its client if lazy, and runs the step
 type Case struct {
-	steps              []*Step
+	steps              []*step.Step
 	name               string
 	dir                string
 	skipDelete         bool
@@ -299,10 +300,10 @@ func (c *Case) LoadTestSteps() error {
 		return err
 	}
 
-	testSteps := []*Step{}
+	testSteps := []*step.Step{}
 
 	for index, files := range testStepFiles {
-		testStep := &Step{
+		testStep := &step.Step{
 			Timeout:       c.timeout,
 			Index:         int(index),
 			SkipDelete:    c.skipDelete,
