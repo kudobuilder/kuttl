@@ -1,6 +1,6 @@
 //go:build integration
 
-package test
+package kind
 
 // This test file is the only test that requires docker on the platform.  It may be worth creating a new build tag for that
 // but adds complexity for 1 case.
@@ -31,7 +31,7 @@ const (
 func TestAddContainers(t *testing.T) {
 	ctx := context.Background()
 
-	kind := newKind(kindTestContext, "kubeconfig", testutils.NewTestLogger(t, ""))
+	kind := NewKind(kindTestContext, "kubeconfig", testutils.NewTestLogger(t, ""))
 
 	config := v1alpha4.Cluster{}
 

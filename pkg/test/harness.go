@@ -31,6 +31,7 @@ import (
 	"github.com/kudobuilder/kuttl/pkg/http"
 	"github.com/kudobuilder/kuttl/pkg/kubernetes"
 	"github.com/kudobuilder/kuttl/pkg/report"
+	"github.com/kudobuilder/kuttl/pkg/test/kind"
 	"github.com/kudobuilder/kuttl/pkg/test/testcase"
 	testutils "github.com/kudobuilder/kuttl/pkg/test/utils"
 )
@@ -47,7 +48,7 @@ type Harness struct {
 	client        client.Client
 	dclient       discovery.DiscoveryInterface
 	env           *envtest.Environment
-	kind          *kind
+	kind          *kind.Kind
 	tempPath      string
 	clientLock    sync.Mutex
 	configLock    sync.Mutex
@@ -122,7 +123,7 @@ func (h *Harness) RunKIND() (*rest.Config, error) {
 			return nil, err
 		}
 
-		kind := newKind(h.TestSuite.KINDContext, h.kubeconfigPath(), h.GetLogger())
+		kind := kind.NewKind(h.TestSuite.KINDContext, h.kubeconfigPath(), h.GetLogger())
 		h.kind = &kind
 
 		if h.kind.IsRunning() {
@@ -634,7 +635,7 @@ func (h *Harness) loadKindConfig(path string) (*kindConfig.Cluster, error) {
 	if err := decoder.Decode(cluster); err != nil {
 		return nil, err
 	}
-	if !IsMinVersion(cluster.APIVersion) {
+	if !kind.IsMinVersion(cluster.APIVersion) {
 		h.T.Logf("Warning: %q in %s is not a supported version.\n", cluster.APIVersion, path)
 	}
 	return cluster, nil

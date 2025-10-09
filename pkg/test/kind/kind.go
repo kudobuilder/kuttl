@@ -1,4 +1,4 @@
-package test
+package kind
 
 import (
 	"context"
@@ -13,17 +13,17 @@ import (
 	testutils "github.com/kudobuilder/kuttl/pkg/test/utils"
 )
 
-// kind provides a thin abstraction layer for a KIND cluster.
-type kind struct {
+// Kind provides a thin abstraction layer for a KIND cluster.
+type Kind struct {
 	Provider     *cluster.Provider
 	context      string
 	explicitPath string
 }
 
-func newKind(kindContext string, explicitPath string, logger testutils.Logger) kind {
+func NewKind(kindContext string, explicitPath string, logger testutils.Logger) Kind {
 	provider := cluster.NewProvider(cluster.ProviderWithLogger(&kindLogger{logger}))
 
-	return kind{
+	return Kind{
 		Provider:     provider,
 		context:      kindContext,
 		explicitPath: explicitPath,
@@ -31,7 +31,7 @@ func newKind(kindContext string, explicitPath string, logger testutils.Logger) k
 }
 
 // Run starts a KIND cluster from a given configuration.
-func (k *kind) Run(config *v1alpha4.Cluster) error {
+func (k *Kind) Run(config *v1alpha4.Cluster) error {
 	return k.Provider.Create(
 		k.context,
 		cluster.CreateWithV1Alpha4Config(config),
@@ -41,7 +41,7 @@ func (k *kind) Run(config *v1alpha4.Cluster) error {
 }
 
 // IsRunning checks if a KIND cluster is already running for the current context.
-func (k *kind) IsRunning() bool {
+func (k *Kind) IsRunning() bool {
 	contexts, err := k.Provider.List()
 	if err != nil {
 		panic(err)
@@ -58,7 +58,7 @@ func (k *kind) IsRunning() bool {
 
 // AddContainers loads the named Docker containers into a KIND cluster.
 // The cluster must be running for this to work.
-func (k *kind) AddContainers(docker testutils.DockerClient, containers []string, t *testing.T) error {
+func (k *Kind) AddContainers(docker testutils.DockerClient, containers []string, t *testing.T) error {
 	if !k.IsRunning() {
 		panic("KIND cluster isn't running")
 	}
@@ -83,12 +83,12 @@ func (k *kind) AddContainers(docker testutils.DockerClient, containers []string,
 }
 
 // CollectLogs saves the cluster logs to a directory.
-func (k *kind) CollectLogs(dir string) error {
+func (k *Kind) CollectLogs(dir string) error {
 	return k.Provider.CollectLogs(k.context, dir)
 }
 
 // Stop stops the KIND cluster.
-func (k *kind) Stop() error {
+func (k *Kind) Stop() error {
 	return k.Provider.Delete(k.context, k.explicitPath)
 }
 
