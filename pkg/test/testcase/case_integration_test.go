@@ -1,6 +1,6 @@
 //go:build integration
 
-package test
+package testcase
 
 import (
 	"os"

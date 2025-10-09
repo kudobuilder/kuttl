@@ -31,6 +31,7 @@ import (
 	"github.com/kudobuilder/kuttl/pkg/http"
 	"github.com/kudobuilder/kuttl/pkg/kubernetes"
 	"github.com/kudobuilder/kuttl/pkg/report"
+	"github.com/kudobuilder/kuttl/pkg/test/testcase"
 	testutils "github.com/kudobuilder/kuttl/pkg/test/utils"
 )
 
@@ -57,7 +58,7 @@ type Harness struct {
 }
 
 // LoadTests loads all of the tests in a given directory.
-func (h *Harness) LoadTests(dir string) ([]*Case, error) {
+func (h *Harness) LoadTests(dir string) ([]*testcase.Case, error) {
 	dir, err := filepath.Abs(dir)
 	if err != nil {
 		return nil, err
@@ -68,7 +69,7 @@ func (h *Harness) LoadTests(dir string) ([]*Case, error) {
 		return nil, err
 	}
 
-	var tests []*Case
+	var tests []*testcase.Case
 
 	timeout := h.GetTimeout()
 	h.T.Logf("going to run test suite with timeout of %d seconds for each step", timeout)
@@ -78,7 +79,7 @@ func (h *Harness) LoadTests(dir string) ([]*Case, error) {
 			continue
 		}
 
-		tests = append(tests, NewCase(
+		tests = append(tests, testcase.NewCase(
 			dirEntry.Name(),
 			dir,
 			h.TestSuite.SkipDelete,
@@ -365,7 +366,7 @@ func (h *Harness) RunTests() {
 
 	//todo: testsuite + testsuites (extend case to have what we need (need testdir here)
 	// TestSuite is a TestSuiteCollection and should be renamed for v1beta2
-	realTestSuite := make(map[string][]*Case)
+	realTestSuite := make(map[string][]*testcase.Case)
 	for _, testDir := range testDirs {
 		tempTests, err := h.LoadTests(testDir)
 		if err != nil {
