@@ -9,6 +9,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/kudobuilder/kuttl/pkg/kubernetes"
+	"github.com/kudobuilder/kuttl/pkg/test/step"
 )
 
 // Assert checks all provided assert files against a namespace.  Upon assert failure, it prints the failures and returns an error
@@ -16,7 +17,7 @@ func Assert(namespace string, timeout int, assertFiles ...string) error {
 	var objects []client.Object
 
 	for _, file := range assertFiles {
-		o, err := ObjectsFromPath(file, "")
+		o, err := step.ObjectsFromPath(file, "")
 		if err != nil {
 			return err
 		}
@@ -24,7 +25,7 @@ func Assert(namespace string, timeout int, assertFiles ...string) error {
 	}
 
 	// feels like the wrong abstraction, need to do some refactoring
-	s := &Step{
+	s := &step.Step{
 		Timeout:         0,
 		Client:          Client,
 		DiscoveryClient: DiscoveryClient,
@@ -61,7 +62,7 @@ func Errors(namespace string, timeout int, errorFiles ...string) error {
 	var objects []client.Object
 
 	for _, file := range errorFiles {
-		o, err := ObjectsFromPath(file, "")
+		o, err := step.ObjectsFromPath(file, "")
 		if err != nil {
 			return err
 		}
@@ -69,7 +70,7 @@ func Errors(namespace string, timeout int, errorFiles ...string) error {
 	}
 
 	// feels like the wrong abstraction, need to do some refactoring
-	s := &Step{
+	s := &step.Step{
 		Timeout:         0,
 		Client:          Client,
 		DiscoveryClient: DiscoveryClient,

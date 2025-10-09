@@ -13,6 +13,7 @@ import (
 
 	harness "github.com/kudobuilder/kuttl/pkg/apis/testharness/v1beta1"
 	"github.com/kudobuilder/kuttl/pkg/kubernetes"
+	"github.com/kudobuilder/kuttl/pkg/test/step"
 	testutils "github.com/kudobuilder/kuttl/pkg/test/utils"
 )
 
@@ -22,12 +23,12 @@ func TestLoadTestSteps(t *testing.T) {
 	for _, tt := range []struct {
 		path      string
 		runLabels labels.Set
-		testSteps []Step
+		testSteps []step.Step
 	}{
 		{
 			"test_data/with-overrides",
 			labels.Set{},
-			[]Step{
+			[]step.Step{
 				{
 					Name:  "with-test-step-name-override",
 					Index: 0,
@@ -180,7 +181,7 @@ func TestLoadTestSteps(t *testing.T) {
 		{
 			"test_data/list-pods",
 			labels.Set{},
-			[]Step{
+			[]step.Step{
 				{
 					Name:  "pod",
 					Index: 0,
@@ -235,7 +236,7 @@ func TestLoadTestSteps(t *testing.T) {
 		{
 			"test_data/test-run-labels",
 			labels.Set{},
-			[]Step{
+			[]step.Step{
 				{
 					Name:          "",
 					Index:         1,
@@ -249,7 +250,7 @@ func TestLoadTestSteps(t *testing.T) {
 		{
 			"test_data/test-run-labels",
 			labels.Set{"flavor": "a"},
-			[]Step{
+			[]step.Step{
 				{
 					Name:          "create-a",
 					Index:         1,
@@ -289,7 +290,7 @@ func TestLoadTestSteps(t *testing.T) {
 		{
 			"test_data/test-run-labels",
 			labels.Set{"flavor": "b"},
-			[]Step{
+			[]step.Step{
 				{
 					Name:          "create-b",
 					Index:         1,
@@ -333,7 +334,7 @@ func TestLoadTestSteps(t *testing.T) {
 			err := test.LoadTestSteps()
 			assert.Nil(t, err)
 
-			testStepsVal := []Step{}
+			testStepsVal := []step.Step{}
 			for _, testStep := range test.steps {
 				testStepsVal = append(testStepsVal, *testStep)
 			}

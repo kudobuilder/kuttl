@@ -11,6 +11,7 @@ import (
 
 	"github.com/kudobuilder/kuttl/pkg/kubernetes"
 	"github.com/kudobuilder/kuttl/pkg/report"
+	"github.com/kudobuilder/kuttl/pkg/test/step"
 	testutils "github.com/kudobuilder/kuttl/pkg/test/utils"
 )
 
@@ -65,7 +66,7 @@ func TestMultiClusterCase(t *testing.T) {
 	c := Case{
 		logger:     testutils.NewTestLogger(t, ""),
 		skipDelete: true,
-		steps: []*Step{
+		steps: []*step.Step{
 			{
 				Name:  "initialize-testenv",
 				Index: 0,
