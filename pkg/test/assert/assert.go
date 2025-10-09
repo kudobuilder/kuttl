@@ -1,4 +1,4 @@
-package test
+package assert
 
 import (
 	"errors"
@@ -27,8 +27,8 @@ func Assert(namespace string, timeout int, assertFiles ...string) error {
 	// feels like the wrong abstraction, need to do some refactoring
 	s := &step.Step{
 		Timeout:         0,
-		Client:          Client,
-		DiscoveryClient: DiscoveryClient,
+		Client:          getClient,
+		DiscoveryClient: getDiscoveryClient,
 	}
 
 	var testErrors []error
@@ -72,8 +72,8 @@ func Errors(namespace string, timeout int, errorFiles ...string) error {
 	// feels like the wrong abstraction, need to do some refactoring
 	s := &step.Step{
 		Timeout:         0,
-		Client:          Client,
-		DiscoveryClient: DiscoveryClient,
+		Client:          getClient,
+		DiscoveryClient: getDiscoveryClient,
 	}
 
 	var testErrors []error
@@ -104,7 +104,7 @@ func Errors(namespace string, timeout int, errorFiles ...string) error {
 	return errors.New("error asserts not valid")
 }
 
-func Client(_ bool) (client.Client, error) {
+func getClient(_ bool) (client.Client, error) {
 	cfg, err := kubernetes.GetConfig()
 	if err != nil {
 		return nil, err
@@ -120,7 +120,7 @@ func Client(_ bool) (client.Client, error) {
 	return client, nil
 }
 
-func DiscoveryClient() (discovery.DiscoveryInterface, error) {
+func getDiscoveryClient() (discovery.DiscoveryInterface, error) {
 	cfg, err := kubernetes.GetConfig()
 	if err != nil {
 		return nil, err
