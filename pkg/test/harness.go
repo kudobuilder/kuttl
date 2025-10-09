@@ -78,18 +78,16 @@ func (h *Harness) LoadTests(dir string) ([]*Case, error) {
 			continue
 		}
 
-		tests = append(tests, &Case{
-			Timeout:            timeout,
-			Steps:              []*Step{},
-			Name:               dirEntry.Name(),
-			PreferredNamespace: h.TestSuite.Namespace,
-			Dir:                filepath.Join(dir, dirEntry.Name()),
-			SkipDelete:         h.TestSuite.SkipDelete,
-			Suppress:           h.TestSuite.Suppress,
-			RunLabels:          h.RunLabels,
-			GetClient:          h.Client,
-			GetDiscoveryClient: h.DiscoveryClient,
-		})
+		tests = append(tests, NewCase(
+			dirEntry.Name(),
+			dir,
+			h.TestSuite.SkipDelete,
+			h.TestSuite.Namespace,
+			timeout,
+			h.TestSuite.Suppress,
+			h.RunLabels,
+			h.Client,
+			h.DiscoveryClient))
 	}
 
 	return tests, nil
@@ -382,18 +380,18 @@ func (h *Harness) RunTests() {
 		for testDir, tests := range realTestSuite {
 			suiteReport := h.NewSuiteReport(testDir)
 			for _, test := range tests {
-				t.Run(test.Name, func(t *testing.T) {
+				t.Run(test.GetName(), func(t *testing.T) {
 					// testing.T.Parallel may block, so run it before we read time for our
 					// elapsed time calculations.
 					t.Parallel()
 
-					test.Logger = testutils.NewTestLogger(t, test.Name)
+					test.SetLogger(testutils.NewTestLogger(t, test.GetName()))
 
 					if err := test.LoadTestSteps(); err != nil {
 						t.Fatal(err)
 					}
 
-					test.Run(t, suiteReport.NewTestReporter(test.Name))
+					test.Run(t, suiteReport.NewTestReporter(test.GetName()))
 				})
 			}
 		}

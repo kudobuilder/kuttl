@@ -328,13 +328,13 @@ func TestLoadTestSteps(t *testing.T) {
 		},
 	} {
 		t.Run(fmt.Sprintf("%s/%s", tt.path, tt.runLabels), func(t *testing.T) {
-			test := &Case{Dir: tt.path, Logger: testutils.NewTestLogger(t, tt.path), RunLabels: tt.runLabels}
+			test := &Case{dir: tt.path, logger: testutils.NewTestLogger(t, tt.path), runLabels: tt.runLabels}
 
 			err := test.LoadTestSteps()
 			assert.Nil(t, err)
 
 			testStepsVal := []Step{}
-			for _, testStep := range test.Steps {
+			for _, testStep := range test.steps {
 				testStepsVal = append(testStepsVal, *testStep)
 			}
 

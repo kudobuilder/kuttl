@@ -63,9 +63,9 @@ func TestMultiClusterCase(t *testing.T) {
 	}
 
 	c := Case{
-		Logger:     testutils.NewTestLogger(t, ""),
-		SkipDelete: true,
-		Steps: []*Step{
+		logger:     testutils.NewTestLogger(t, ""),
+		skipDelete: true,
+		steps: []*Step{
 			{
 				Name:  "initialize-testenv",
 				Index: 0,
@@ -104,10 +104,10 @@ func TestMultiClusterCase(t *testing.T) {
 				Timeout: 2,
 			},
 		},
-		GetClient: func(bool) (client.Client, error) {
+		getClient: func(bool) (client.Client, error) {
 			return testenv.Client, nil
 		},
-		GetDiscoveryClient: func() (discovery.DiscoveryInterface, error) {
+		getDiscoveryClient: func() (discovery.DiscoveryInterface, error) {
 			return testenv.DiscoveryClient, nil
 		},
 	}
