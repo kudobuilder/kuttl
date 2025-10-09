@@ -235,7 +235,7 @@ func (c *Case) setup(test *testing.T, rep report.TestReporter) {
 
 	for kubeConfigPath, cl := range clients {
 		if err = c.createNamespace(test, cl); k8serrors.IsAlreadyExists(err) {
-			c.Logger.Logf("namespace %q already exists, using kubeconfig %q", c.ns.name, kubeConfigPath)
+			c.Logger.Logf(maybeAppendKubeConfigInfo("namespace %q already exists", kubeConfigPath), c.ns.name)
 		} else if err != nil {
 			setupReport.Failure("failed to create test namespace", err)
 			test.Fatal(err)
@@ -304,4 +304,12 @@ func (c *Case) LoadTestSteps() error {
 
 	c.Steps = testSteps
 	return nil
+}
+
+// maybeAppendKubeConfigInfo appends a note about kubeConfig, unless empty.
+func maybeAppendKubeConfigInfo(msg, kubeConfigPath string) string {
+	if kubeConfigPath == "" {
+		return msg
+	}
+	return msg + fmt.Sprintf(" (using kubeconfig %q)", kubeConfigPath)
 }
