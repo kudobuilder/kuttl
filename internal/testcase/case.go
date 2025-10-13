@@ -9,6 +9,7 @@ import (
 	"time"
 
 	petname "github.com/dustinkirkland/golang-petname"
+	"github.com/pkg/errors"
 	"github.com/thoas/go-funk"
 	corev1 "k8s.io/api/core/v1"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
@@ -84,13 +85,13 @@ func (c *Case) GetName() string {
 	return c.name
 }
 
-func (c *Case) deleteNamespace(cl client.Client) error {
+func (c *Case) deleteNamespace(cl client.Client, kubeconfigPath string) error {
 	if !c.ns.autoCreated {
-		c.logger.Log("Skipping deletion of user-supplied namespace:", c.ns.name)
+		c.logger.Log(maybeAppendKubeConfigInfo("Skipping deletion of user-supplied namespace %q", kubeconfigPath), c.ns.name)
 		return nil
 	}
 
-	c.logger.Log("Deleting namespace:", c.ns.name)
+	c.logger.Log(maybeAppendKubeConfigInfo("Deleting namespace %q", kubeconfigPath), c.ns.name)
 
 	ctx := context.Background()
 	if c.timeout > 0 {
@@ -109,27 +110,28 @@ func (c *Case) deleteNamespace(cl client.Client) error {
 	}
 
 	if err := cl.Delete(ctx, nsObj); k8serrors.IsNotFound(err) {
-		c.logger.Logf("Namespace already cleaned up.")
+		c.logger.Logf(maybeAppendKubeConfigInfo("Namespace %q already cleaned up.", kubeconfigPath), c.ns.name)
 	} else if err != nil {
-		return err
+		return errors.Wrapf(err, maybeAppendKubeConfigInfo("failed to delete namespace %q", kubeconfigPath), c.ns.name)
 	}
 
-	return wait.PollUntilContextCancel(ctx, 100*time.Millisecond, true, func(ctx context.Context) (done bool, err error) {
+	err := wait.PollUntilContextCancel(ctx, 100*time.Millisecond, true, func(ctx context.Context) (done bool, err error) {
 		actual := &corev1.Namespace{}
 		err = cl.Get(ctx, client.ObjectKey{Name: c.ns.name}, actual)
 		if k8serrors.IsNotFound(err) {
 			return true, nil
 		}
-		return false, err
+		return false, errors.Wrapf(err, "failed to check deletion of namespace %q", c.ns.name)
 	})
+	return errors.Wrapf(err, maybeAppendKubeConfigInfo("waiting for namespace %q to be deleted timed out", kubeconfigPath), c.ns.name)
 }
 
-func (c *Case) createNamespace(test *testing.T, cl client.Client) error {
+func (c *Case) createNamespace(test *testing.T, cl client.Client, kubeconfigPath string) error {
 	if !c.ns.autoCreated {
-		c.logger.Log("Skipping creation of user-supplied namespace:", c.ns.name)
+		c.logger.Log(maybeAppendKubeConfigInfo("Skipping creation of user-supplied namespace %q", kubeconfigPath), c.ns.name)
 		return nil
 	}
-	c.logger.Log("Creating namespace:", c.ns.name)
+	c.logger.Log(maybeAppendKubeConfigInfo("Creating namespace %q", kubeconfigPath), c.ns.name)
 
 	ctx := context.Background()
 	if c.timeout > 0 {
@@ -140,7 +142,7 @@ func (c *Case) createNamespace(test *testing.T, cl client.Client) error {
 
 	if !c.skipDelete {
 		test.Cleanup(func() {
-			if err := c.deleteNamespace(cl); err != nil {
+			if err := c.deleteNamespace(cl, kubeconfigPath); err != nil {
 				test.Error(err)
 			}
 		})
@@ -202,7 +204,7 @@ func (c *Case) Run(test *testing.T, rep report.TestReporter) {
 			cl, err := testStep.Client(false)
 			if err != nil {
 				errs = append(errs, fmt.Errorf("failed to lazy-load kubeconfig: %w", err))
-			} else if err = c.createNamespace(test, cl); k8serrors.IsAlreadyExists(err) {
+			} else if err = c.createNamespace(test, cl, testStep.Kubeconfig); k8serrors.IsAlreadyExists(err) {
 				c.logger.Logf("namespace %q already exists", c.ns.name)
 			} else if err != nil {
 				errs = append(errs, fmt.Errorf("failed to create test namespace: %w", err))
@@ -259,7 +261,7 @@ func (c *Case) setup(test *testing.T, rep report.TestReporter) {
 	}
 
 	for kubeConfigPath, cl := range clients {
-		if err = c.createNamespace(test, cl); k8serrors.IsAlreadyExists(err) {
+		if err = c.createNamespace(test, cl, kubeConfigPath); k8serrors.IsAlreadyExists(err) {
 			c.logger.Logf(maybeAppendKubeConfigInfo("namespace %q already exists", kubeConfigPath), c.ns.name)
 		} else if err != nil {
 			setupReport.Failure("failed to create test namespace", err)
