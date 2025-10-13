@@ -243,32 +243,40 @@ func (c *Case) setup(test *testing.T) error {
 		return err
 	}
 
-	cl, err := c.getClient(false)
+	clients, err := c.getEagerClients()
 	if err != nil {
 		return err
 	}
 
-	clients := map[string]client.Client{"": cl}
+	for kubeConfigPath, cl := range clients {
+		if err := c.createNamespace(test, cl, kubeConfigPath); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+// Returns clients for all steps other than the lazy loaded ones.
+func (c *Case) getEagerClients() (map[string]client.Client, error) {
+	defaultClient, err := c.getClient(false)
+	if err != nil {
+		return nil, err
+	}
+
+	clients := map[string]client.Client{"": defaultClient}
 
 	for _, testStep := range c.steps {
 		if clients[testStep.Kubeconfig] != nil || testStep.KubeconfigLoading == v1beta1.KubeconfigLoadingLazy {
 			continue
 		}
 
-		cl, err = kubernetes.NewClientFunc(testStep.Kubeconfig, testStep.Context)(false)
-		if err != nil {
-			return err
+		var cl client.Client
+		if cl, err = kubernetes.NewClientFunc(testStep.Kubeconfig, testStep.Context)(false); err != nil {
+			return nil, err
 		}
-
 		clients[testStep.Kubeconfig] = cl
 	}
-
-	for kubeConfigPath, cl := range clients {
-		if err = c.createNamespace(test, cl, kubeConfigPath); err != nil {
-			return err
-		}
-	}
-	return nil
+	return clients, nil
 }
 
 func (c *Case) determineNamespace() error {
