@@ -148,7 +148,7 @@ func (c *Case) createNamespace(test *testing.T, cl client.Client, kubeconfigPath
 		})
 	}
 
-	return cl.Create(ctx, &corev1.Namespace{
+	err := cl.Create(ctx, &corev1.Namespace{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: c.ns.name,
 		},
@@ -156,6 +156,11 @@ func (c *Case) createNamespace(test *testing.T, cl client.Client, kubeconfigPath
 			Kind: "Namespace",
 		},
 	})
+	if k8serrors.IsAlreadyExists(err) {
+		c.logger.Logf(maybeAppendKubeConfigInfo("namespace %q already exists", kubeconfigPath), c.ns.name)
+		return nil
+	}
+	return errors.Wrap(err, "failed to create test namespace")
 }
 
 func (c *Case) namespaceExists(namespace string) (bool, error) {
@@ -189,7 +194,11 @@ func (c *Case) maybeReportEvents() {
 func (c *Case) Run(test *testing.T, rep report.TestReporter) {
 	defer rep.Done()
 
-	c.setup(test, rep)
+	setupReport := rep.Step("setup")
+	if err := c.setup(test); err != nil {
+		setupReport.Failure(err.Error())
+		test.Fatal(err)
+	}
 
 	for _, testStep := range c.steps {
 		stepReport := rep.Step("step " + testStep.String())
@@ -204,10 +213,8 @@ func (c *Case) Run(test *testing.T, rep report.TestReporter) {
 			cl, err := testStep.Client(false)
 			if err != nil {
 				errs = append(errs, fmt.Errorf("failed to lazy-load kubeconfig: %w", err))
-			} else if err = c.createNamespace(test, cl, testStep.Kubeconfig); k8serrors.IsAlreadyExists(err) {
-				c.logger.Logf("namespace %q already exists", c.ns.name)
-			} else if err != nil {
-				errs = append(errs, fmt.Errorf("failed to create test namespace: %w", err))
+			} else if err = c.createNamespace(test, cl, testStep.Kubeconfig); err != nil {
+				errs = append(errs, err)
 			}
 		}
 
@@ -231,17 +238,14 @@ func (c *Case) Run(test *testing.T, rep report.TestReporter) {
 	c.maybeReportEvents()
 }
 
-func (c *Case) setup(test *testing.T, rep report.TestReporter) {
-	setupReport := rep.Step("setup")
+func (c *Case) setup(test *testing.T) error {
 	if err := c.determineNamespace(); err != nil {
-		setupReport.Failure(err.Error())
-		test.Fatal(err)
+		return err
 	}
 
 	cl, err := c.getClient(false)
 	if err != nil {
-		setupReport.Failure(err.Error())
-		test.Fatal(err)
+		return err
 	}
 
 	clients := map[string]client.Client{"": cl}
@@ -253,21 +257,18 @@ func (c *Case) setup(test *testing.T, rep report.TestReporter) {
 
 		cl, err = kubernetes.NewClientFunc(testStep.Kubeconfig, testStep.Context)(false)
 		if err != nil {
-			setupReport.Failure(err.Error())
-			test.Fatal(err)
+			return err
 		}
 
 		clients[testStep.Kubeconfig] = cl
 	}
 
 	for kubeConfigPath, cl := range clients {
-		if err = c.createNamespace(test, cl, kubeConfigPath); k8serrors.IsAlreadyExists(err) {
-			c.logger.Logf(maybeAppendKubeConfigInfo("namespace %q already exists", kubeConfigPath), c.ns.name)
-		} else if err != nil {
-			setupReport.Failure("failed to create test namespace", err)
-			test.Fatal(err)
+		if err = c.createNamespace(test, cl, kubeConfigPath); err != nil {
+			return err
 		}
 	}
+	return nil
 }
 
 func (c *Case) determineNamespace() error {
