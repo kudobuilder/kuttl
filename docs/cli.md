@@ -137,7 +137,7 @@ parallel: 4
 The default can be run as follows:
 
 ```bash
-kubectl kuttl test  pkg/test/test_data/
+kubectl kuttl test  internal/harness/test_data/
 ```
 
 When running with no defined [test environment](testing/test-environments.md), the default is a preconfigured cluster defined in `$KUBECONFIG`.
@@ -145,11 +145,11 @@ When running with no defined [test environment](testing/test-environments.md), t
 To run with the mocked control plane run:
 
 ```bash
-kubectl kuttl test --start-control-plane pkg/test/test_data/
+kubectl kuttl test --start-control-plane internal/harness/test_data/
 ```
 
 In order to run with the full kind cluster stack, run:
 
 ```bash
-kubectl kuttl test --start-kind pkg/test/test_data/
+kubectl kuttl test --start-kind internal/harness/test_data/
 ```
