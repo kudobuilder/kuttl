@@ -8,9 +8,11 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/go-logr/logr/testr"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	ctrl "sigs.k8s.io/controller-runtime"
 
 	"github.com/kudobuilder/kuttl/internal/harness"
 	"github.com/kudobuilder/kuttl/internal/kind"
@@ -242,6 +244,9 @@ For more detailed documentation, visit: https://kuttl.dev`,
 					T:         t,
 					RunLabels: runLabels.AsLabelSet(),
 				}
+				ctrl.SetLogger(testr.NewWithOptions(t, testr.Options{
+					LogTimestamp: true,
+				}))
 				h.Run()
 			})
 		},
