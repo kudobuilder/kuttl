@@ -39,9 +39,7 @@ func TestWithKuttl(t *testing.T) {
       TestSuite: options,
       T:         t,
     }
-
-    harness.Setup()
-	harness.Run()
+    harness.Run()
 }
 
 ```
