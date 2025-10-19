@@ -199,6 +199,12 @@ func (r *RetryClient) Patch(ctx context.Context, obj client.Object, patch client
 	}, isJSONSyntaxError)
 }
 
+func (r *RetryClient) Apply(ctx context.Context, obj runtime.ApplyConfiguration, opts ...client.ApplyOption) error {
+	return retry(ctx, func(ctx context.Context) error {
+		return r.Client.Apply(ctx, obj, opts...)
+	}, isJSONSyntaxError)
+}
+
 // Get retrieves an obj for the given object key from the Kubernetes Cluster.
 // obj must be a struct pointer so that obj can be updated with the response
 // returned by the Server.
