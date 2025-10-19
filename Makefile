@@ -12,7 +12,7 @@ BUILD_DATE := $(shell date -u -d "@$SOURCE_DATE_EPOCH" "+${DATE_FMT}" 2>/dev/nul
 LDFLAGS := -X ${GIT_VERSION_PATH}=${GIT_VERSION} -X ${GIT_COMMIT_PATH}=${GIT_COMMIT} -X ${BUILD_DATE_PATH}=${BUILD_DATE}
 
 # Please update the list of linters in .golagci.yml when bumping the version.
-GOLANGCI_LINT_VER = "1.62.2"
+GOLANGCI_LINT_VER = 1.64.8
 # ENVTEST_K8S_VERSION refers to the version of kubebuilder assets to be downloaded by envtest binary.
 ENVTEST_K8S_VERSION ?= 1.25.0
 
@@ -40,7 +40,7 @@ ifneq (${GOLANGCI_LINT_VER}, "$(shell test -x ./bin/golangci-lint && ./bin/golan
 	curl -sSfL "https://raw.githubusercontent.com/golangci/golangci-lint/v${GOLANGCI_LINT_VER}/install.sh" | sh -s -- -b ./bin "v${GOLANGCI_LINT_VER}"
 endif
 	./bin/golangci-lint --timeout 5m run --build-tags integration
-	
+
 .PHONY: download
 download:  ## Downloads go dependencies
 	go mod download
@@ -87,7 +87,7 @@ cli-install:  ## Installs kubectl-kuttl to GOBIN
 
 .PHONY: generate
 # Generate code
-generate: ## Generates code 
+generate: ## Generates code
 ifneq ($(shell go list -f '{{.Version}}' -m sigs.k8s.io/controller-tools), $(shell controller-gen --version 2>/dev/null | cut -b 10-))
 	@echo "(Re-)installing controller-gen. Current version:  $(controller-gen --version 2>/dev/null | cut -b 10-). Need $(go list -f '{{.Version}}' -m sigs.k8s.io/controller-tools)"
 	go get sigs.k8s.io/controller-tools/cmd/controller-gen@$$(go list -f '{{.Version}}' -m sigs.k8s.io/controller-tools)
