@@ -13,7 +13,7 @@ builds:
     binary: kubectl-kuttl
     main: cmd/kubectl-kuttl/main.go
     ldflags:
-      - -s -w -X github.com/kudobuilder/kuttl/pkg/version.gitVersion={{ .Version }} -X github.com/kudobuilder/kuttl/pkg/version.gitCommit={{ .ShortCommit }} -X github.com/kudobuilder/kuttl/pkg/version.buildDate={{ .Date }}
+      - -s -w -X github.com/kudobuilder/kuttl/internal/version.gitVersion={{ .Version }} -X github.com/kudobuilder/kuttl/internal/version.gitCommit={{ .ShortCommit }} -X github.com/kudobuilder/kuttl/internal/version.buildDate={{ .Date }}
     goos:
       - linux
       - darwin

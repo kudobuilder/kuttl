@@ -16,13 +16,10 @@ The test harness type is defined in an `apis` package similar to a Kubernetes ty
 
 The `test` package contains the `test.Harness` implementation (given the configuration of the test harness configuration type previously mentioned).  The `test.Harness` provides the "run" of the test run and needs a Go `t *testing.T`.
 
-The `testutils` package contains utilities for docker, kubernetes, loggers and testing.
-
 ```go
 import (
   harness "github.com/kudobuilder/kuttl/pkg/apis/testharness/v1beta1"
   "github.com/kudobuilder/kuttl/pkg/test"
-  testutils "github.com/kudobuilder/kuttl/pkg/test/utils"
 )
 ```
 
@@ -37,16 +34,13 @@ options := harness.TestSuite{}
 The Go `t *testing.T` and `harness.TestSuite` are provided to `test.Harness` which provides the implementation for testing.
 
 ```go
-Run: func(cmd *cobra.Command, args []string) {
-  testutils.RunTests("kudo", testToRun, options.Parallel, func(t *testing.T) {
+func TestWithKuttl(t *testing.T) {
     harness := test.Harness{
       TestSuite: options,
       T:         t,
     }
-
     harness.Run()
-  })
-},
+}
 
 ```
 

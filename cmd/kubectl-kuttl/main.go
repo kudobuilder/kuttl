@@ -17,7 +17,7 @@ package main
 import (
 	"os"
 
-	"github.com/kudobuilder/kuttl/pkg/kuttlctl/cmd"
+	"github.com/kudobuilder/kuttl/internal/kuttlctl/cmd"
 )
 
 func main() {
