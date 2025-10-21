@@ -11,17 +11,30 @@ A test step can include many YAML files and each YAML file can contain many Kube
 E.g., in a test case directory:
 
 ```text
-tests/e2e/example/00-pod.yaml
 tests/e2e/example/00-example.yaml
+tests/e2e/example/00-pod.yaml
 tests/e2e/example/01-staging.yaml
 ```
 
 There are two test steps:
 
-* `00`, which includes `00-pod.yaml` and `00-example.yaml`.
-* `01`, which includes `01-staging.yaml`.
+* `00-example`, which includes `00-example.yaml` and `00-pod.yaml`.
+* `01-staging`, which includes `01-staging.yaml`.
 
-The test harness would run test step `00` and once completed, run test step `01`.
+The name of the test is determined by default from the name of the first file of the step (sorted alphabetically).
+
+A step can alternatively be represented by a directory.
+In this case, the files inside the directory do not need to start with a number.
+For example, the following set of files are equivalent to the above example:
+
+```text
+tests/e2e/example/00-example/a-file.yaml
+tests/e2e/example/00-example/pod.yaml
+tests/e2e/example/01-staging.yaml
+```
+In this case, the name of the step is taken from the name of the directory.
+
+In the above cases, the test harness would run test step `00-example` and once completed, run test step `01-staging`.
 
 A namespace is created by the test harness for each test case, so if an object in the step does not have a namespace set, then it will be created in the test case's namespace. If a namespace is set, then that namespace will be respected throughout the tests (making it possible to test resources that reside in standardized namespaces).
 
