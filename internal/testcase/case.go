@@ -9,7 +9,6 @@ import (
 	"time"
 
 	petname "github.com/dustinkirkland/golang-petname"
-	"github.com/pkg/errors"
 	"github.com/thoas/go-funk"
 	corev1 "k8s.io/api/core/v1"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
@@ -87,11 +86,11 @@ func (c *Case) GetName() string {
 
 func (c *Case) deleteNamespace(cl client.Client, kubeconfigPath string) error {
 	if !c.ns.autoCreated {
-		c.logger.Log(maybeAppendKubeConfigInfo("Skipping deletion of user-supplied namespace %q", kubeconfigPath), c.ns.name)
+		c.logkcf(kubeconfigPath, "Skipping deletion of user-supplied namespace %q", c.ns.name)
 		return nil
 	}
 
-	c.logger.Log(maybeAppendKubeConfigInfo("Deleting namespace %q", kubeconfigPath), c.ns.name)
+	c.logkcf(kubeconfigPath, "Deleting namespace %q", c.ns.name)
 
 	ctx := context.Background()
 	if c.timeout > 0 {
@@ -110,9 +109,9 @@ func (c *Case) deleteNamespace(cl client.Client, kubeconfigPath string) error {
 	}
 
 	if err := cl.Delete(ctx, nsObj); k8serrors.IsNotFound(err) {
-		c.logger.Logf(maybeAppendKubeConfigInfo("Namespace %q already cleaned up.", kubeconfigPath), c.ns.name)
+		c.logkcf(kubeconfigPath, "Namespace %q already cleaned up.", c.ns.name)
 	} else if err != nil {
-		return errors.Wrapf(err, maybeAppendKubeConfigInfo("failed to delete namespace %q", kubeconfigPath), c.ns.name)
+		return fmt.Errorf("failed to delete namespace %q%s: %w", c.ns.name, getKubeConfigInfo(kubeconfigPath), err)
 	}
 
 	err := wait.PollUntilContextCancel(ctx, 100*time.Millisecond, true, func(ctx context.Context) (done bool, err error) {
@@ -121,17 +120,23 @@ func (c *Case) deleteNamespace(cl client.Client, kubeconfigPath string) error {
 		if k8serrors.IsNotFound(err) {
 			return true, nil
 		}
-		return false, errors.Wrapf(err, "failed to check deletion of namespace %q", c.ns.name)
+		if err != nil {
+			return false, fmt.Errorf("failed to check deletion of namespace %q: %w", c.ns.name, err)
+		}
+		return false, nil
 	})
-	return errors.Wrapf(err, maybeAppendKubeConfigInfo("waiting for namespace %q to be deleted timed out", kubeconfigPath), c.ns.name)
+	if err != nil {
+		return fmt.Errorf("waiting for namespace %q to be deleted timed out%s: %w", c.ns.name, getKubeConfigInfo(kubeconfigPath), err)
+	}
+	return nil
 }
 
 func (c *Case) createNamespace(test *testing.T, cl client.Client, kubeconfigPath string) error {
 	if !c.ns.autoCreated {
-		c.logger.Log(maybeAppendKubeConfigInfo("Skipping creation of user-supplied namespace %q", kubeconfigPath), c.ns.name)
+		c.logkcf(kubeconfigPath, "Skipping creation of user-supplied namespace %q", c.ns.name)
 		return nil
 	}
-	c.logger.Log(maybeAppendKubeConfigInfo("Creating namespace %q", kubeconfigPath), c.ns.name)
+	c.logkcf(kubeconfigPath, "Creating namespace %q", c.ns.name)
 
 	ctx := context.Background()
 	if c.timeout > 0 {
@@ -157,10 +162,13 @@ func (c *Case) createNamespace(test *testing.T, cl client.Client, kubeconfigPath
 		},
 	})
 	if k8serrors.IsAlreadyExists(err) {
-		c.logger.Logf(maybeAppendKubeConfigInfo("namespace %q already exists", kubeconfigPath), c.ns.name)
+		c.logkcf(kubeconfigPath, "namespace %q already exists", c.ns.name)
 		return nil
 	}
-	return errors.Wrap(err, "failed to create test namespace")
+	if err != nil {
+		return fmt.Errorf("failed to create test namespace %q: %w", c.ns.name, err)
+	}
+	return nil
 }
 
 func (c *Case) namespaceExists(namespace string) (bool, error) {
@@ -347,10 +355,16 @@ func (c *Case) SetLogger(logger testutils.Logger) {
 	c.logger = logger
 }
 
-// maybeAppendKubeConfigInfo appends a note about kubeConfig, unless empty.
-func maybeAppendKubeConfigInfo(msg, kubeConfigPath string) string {
+// logkcf behaves like logger.Logf, but potentially appends a note about which kubeconfig is being used.
+// See also getKubeConfigInfo.
+func (c *Case) logkcf(kubeConfigPath string, format string, args ...any) {
+	c.logger.Log(fmt.Sprintf(format, args...) + getKubeConfigInfo(kubeConfigPath))
+}
+
+// getKubeConfigInfo returns a note about kubeConfig (with a space prepended), unless empty.
+func getKubeConfigInfo(kubeConfigPath string) string {
 	if kubeConfigPath == "" {
-		return msg
+		return ""
 	}
-	return msg + fmt.Sprintf(" (using kubeconfig %q)", kubeConfigPath)
+	return fmt.Sprintf(" (using kubeconfig %q)", kubeConfigPath)
 }
