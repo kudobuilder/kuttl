@@ -124,6 +124,13 @@ linters-settings:
   goimports:
     # Don't use 'github.com/kudobuilder/kuttl', it'll result in unreliable output!
     local-prefixes: github.com/kudobuilder
+  govet:
+    settings:
+      printf:
+        funcs:
+          - (github.com/kudobuilder/kuttl/internal/utils.Logger).Logf
+          - (github.com/kudobuilder/kuttl/internal/utils.TestLogger).Logf
+          - (github.com/kudobuilder/kuttl/internal/case.Case).logkcf
 issues:
   exclude-dirs:
     - hack
