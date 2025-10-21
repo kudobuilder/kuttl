@@ -265,6 +265,10 @@ func (c *Case) setup(test *testing.T) error {
 }
 
 // Returns clients for all steps other than the lazy loaded ones.
+// The returned map will always contain at least a default client with a key of empty string.
+// However, there may be more pairs, since each step may optionally specify a path to kubeconfig that should be used.
+// This is useful for multi-cluster or multi-context tests.
+// For those, the client will be keyed with the specified path to kubeconfig file.
 func (c *Case) getEagerClients() (map[string]client.Client, error) {
 	defaultClient, err := c.getClient(false)
 	if err != nil {
