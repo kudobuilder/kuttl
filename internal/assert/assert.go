@@ -3,10 +3,13 @@ package assert
 import (
 	"errors"
 	"fmt"
+	"os"
 	"time"
 
 	"k8s.io/client-go/discovery"
+	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 
 	"github.com/kudobuilder/kuttl/internal/kubernetes"
 	"github.com/kudobuilder/kuttl/internal/step"
@@ -24,12 +27,7 @@ func Assert(namespace string, timeout int, assertFiles ...string) error {
 		objects = append(objects, o...)
 	}
 
-	// feels like the wrong abstraction, need to do some refactoring
-	s := &step.Step{
-		Timeout:         0,
-		Client:          getClient,
-		DiscoveryClient: getDiscoveryClient,
-	}
+	s := setupStep()
 
 	var testErrors []error
 	for i := 0; i < timeout; i++ {
@@ -69,12 +67,7 @@ func Errors(namespace string, timeout int, errorFiles ...string) error {
 		objects = append(objects, o...)
 	}
 
-	// feels like the wrong abstraction, need to do some refactoring
-	s := &step.Step{
-		Timeout:         0,
-		Client:          getClient,
-		DiscoveryClient: getDiscoveryClient,
-	}
+	s := setupStep()
 
 	var testErrors []error
 	for i := 0; i < timeout; i++ {
@@ -102,6 +95,19 @@ func Errors(namespace string, timeout int, errorFiles ...string) error {
 		fmt.Println(testError)
 	}
 	return errors.New("error asserts not valid")
+}
+
+func setupStep() *step.Step {
+	// Configure controller-runtime logging, before we access getClient.
+	ctrl.SetLogger(zap.New(zap.WriteTo(os.Stderr)))
+
+	// feels like the wrong abstraction, need to do some refactoring
+	s := &step.Step{
+		Timeout:         0,
+		Client:          getClient,
+		DiscoveryClient: getDiscoveryClient,
+	}
+	return s
 }
 
 func getClient(_ bool) (client.Client, error) {
