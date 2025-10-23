@@ -56,6 +56,7 @@ type Harness struct {
 	bgProcesses   []*exec.Cmd
 	report        *report.Testsuites
 	RunLabels     labels.Set
+	TemplateVars  map[string]any
 }
 
 // LoadTests loads all of the tests in a given directory.
