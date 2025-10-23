@@ -3,6 +3,7 @@ package testcase
 import (
 	"context"
 	"fmt"
+	"github.com/kudobuilder/kuttl/internal/template"
 	"path/filepath"
 	"sort"
 	"testing"
@@ -78,6 +79,12 @@ func WithRunLabels(runLabels labels.Set) CaseOption {
 	}
 }
 
+func WithTemplateVars(vars map[string]any) CaseOption {
+	return func(c *Case) {
+		c.templateEnv = template.Env{Vars: vars}
+	}
+}
+
 // WithClients sets both the client and discovery client functions.
 func WithClients(getClientFunc getClientFuncType, getDiscoveryClientFunc getDiscoveryClientFuncType) CaseOption {
 	return func(c *Case) {
@@ -112,6 +119,8 @@ type Case struct {
 	logger testutils.Logger
 	// List of log types which should be suppressed.
 	suppressions []string
+	// Caution: elements of this struct may be shared with other Case objects.
+	templateEnv template.Env
 }
 
 // namespace contains information about namespace name and its provenance.
@@ -134,6 +143,8 @@ func NewCase(name string, parentPath string, options ...CaseOption) *Case {
 			userSupplied: false,
 		}
 	}
+
+	c.templateEnv.Namespace = c.ns.name
 
 	return c
 }
@@ -374,6 +385,7 @@ func (c *Case) LoadTestSteps() error {
 			Asserts:       []client.Object{},
 			Apply:         []client.Object{},
 			Errors:        []client.Object{},
+			TemplateEnv:   c.templateEnv,
 		}
 
 		for _, file := range files {
