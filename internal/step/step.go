@@ -5,8 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"path/filepath"
-	"regexp"
-	"strings"
 	"testing"
 	"time"
 
@@ -30,10 +28,6 @@ import (
 	testutils "github.com/kudobuilder/kuttl/internal/utils"
 	harness "github.com/kudobuilder/kuttl/pkg/apis/testharness/v1beta1"
 )
-
-// fileNameRegex contains two capturing groups to determine whether a file has special
-// meaning (ex. assert) or contains an appliable object, and extra name elements.
-var fileNameRegex = regexp.MustCompile(`^(?:\d+-)?([^-\.]+)(-[^\.]+)?(?:\.yaml)?$`)
 
 // A Step contains the name of the test step, its index in the test,
 // and all of the test step's settings (including objects to apply and assert on).
@@ -535,19 +529,14 @@ func (s *Step) String() string {
 	return fmt.Sprintf("%d-%s", s.Index, s.Name)
 }
 
-// LoadYAML loads the resources from a YAML file for a test step:
-//   - If the YAML file is called "assert", then it contains objects to
-//     add to the test step's list of assertions.
-//   - If the YAML file is called "errors", then it contains objects that,
-//     if seen, mark a test immediately failed.
-//   - All other YAML files are considered resources to create.
-func (s *Step) LoadYAML(file string) error {
-	skipFile, objects, err := s.loadOrSkipFile(file)
+// LoadYAML loads the resources from a YAML file for a test step.
+func (s *Step) LoadYAML(f kfile.Info) error {
+	skipFile, objects, err := s.loadOrSkipFile(f.FullName)
 	if skipFile || err != nil {
 		return err
 	}
 
-	if err = s.populateObjectsByFileName(filepath.Base(file), objects); err != nil {
+	if err = s.populateObjectsByType(f, objects); err != nil {
 		return fmt.Errorf("populating step: %v", err)
 	}
 
@@ -558,7 +547,7 @@ func (s *Step) LoadYAML(file string) error {
 			if testAssert, ok := obj.DeepCopyObject().(*harness.TestAssert); ok {
 				s.Assert = testAssert
 			} else {
-				return fmt.Errorf("failed to load TestAssert object from %s: it contains an object of type %T", file, obj)
+				return fmt.Errorf("failed to load TestAssert object from %s: it contains an object of type %T", f.FullName, obj)
 			}
 
 			s.Programs, err = expressions.LoadPrograms(s.Assert)
@@ -580,7 +569,7 @@ func (s *Step) LoadYAML(file string) error {
 				}
 				s.Step = testStep
 			} else {
-				return fmt.Errorf("failed to load TestStep object from %s: it contains an object of type %T", file, obj)
+				return fmt.Errorf("failed to load TestStep object from %s: it contains an object of type %T", f.FullName, obj)
 			}
 			s.Step.Index = s.Index
 			if s.Step.Name != "" {
@@ -671,31 +660,23 @@ func (s *Step) loadOrSkipFile(file string) (bool, []client.Object, error) {
 	return shouldSkip, objects, nil
 }
 
-// populateObjectsByFileName populates s.Asserts, s.Errors, and/or s.Apply for files containing
-// "assert", "errors", or no special string, respectively.
-func (s *Step) populateObjectsByFileName(fileName string, objects []client.Object) error {
-	matches := fileNameRegex.FindStringSubmatch(fileName)
-	if len(matches) < 2 {
-		return fmt.Errorf("%s does not match file name regexp: %s", fileName, fileNameRegex.String())
-	}
-
-	switch fname := strings.ToLower(matches[1]); fname {
-	case "assert":
+// populateObjectsByType populates s.Asserts, s.Errors, and/or s.Apply and optionally sets step name.
+func (s *Step) populateObjectsByType(f kfile.Info, objects []client.Object) error {
+	switch f.Type {
+	case kfile.TypeAssert:
 		s.Asserts = append(s.Asserts, objects...)
-	case "errors":
+	case kfile.TypeError:
 		s.Errors = append(s.Errors, objects...)
-	default:
-		if s.Name == "" {
-			if len(matches) > 2 {
-				// The second matching group will already have a hyphen prefix.
-				s.Name = matches[1] + matches[2]
-			} else {
-				s.Name = matches[1]
-			}
-		}
+	case kfile.TypeApply:
 		s.Apply = append(s.Apply, objects...)
+		if s.Name == "" {
+			s.Name = f.StepName
+		}
+	case kfile.TypeUnknown:
+		return fmt.Errorf("unrecognized file %v", f)
+	default:
+		return fmt.Errorf("unrecognized type of file %v", f)
 	}
-
 	return nil
 }
 
