@@ -49,13 +49,17 @@ func TestMultiClusterCase(t *testing.T) {
 	})
 	require.NoError(t, kubernetes.Kubeconfig(testenv2.Config, tmpfile))
 
-	c := NewCase("multicluster", "", true, "", 20, nil, nil,
-		func(bool) (client.Client, error) {
-			return testenv.Client, nil
-		},
-		func() (discovery.DiscoveryInterface, error) {
-			return testenv.DiscoveryClient, nil
-		},
+	c := NewCase("multicluster", "",
+		WithSkipDelete(true),
+		WithTimeout(20),
+		WithClients(
+			func(bool) (client.Client, error) {
+				return testenv.Client, nil
+			},
+			func() (discovery.DiscoveryInterface, error) {
+				return testenv.DiscoveryClient, nil
+			},
+		),
 	)
 	c.SetLogger(testutils.NewTestLogger(t, ""))
 	c.steps = []*step.Step{
