@@ -66,6 +66,8 @@ func newTestCmd() *cobra.Command { //nolint:gocyclo
 	reportGranularity := "kuttl-report"
 	namespace := ""
 	suppress := []string{}
+	templateVarsStrings := map[string]string{}
+	var templateVarsParsed map[string]any
 	var runLabels labelSetValue
 
 	options := harnessApi.TestSuite{}
@@ -234,15 +236,20 @@ For more detailed documentation, visit: https://kuttl.dev`,
 			if mockControllerFile != "" {
 				log.Println("use of --control-plane-config is deprecated and no longer functions")
 			}
+			var err error
+			if templateVarsParsed, err = parseVars(templateVarsStrings); err != nil {
+				return fmt.Errorf("invalid --template-var: %w", err)
+			}
 
 			return nil
 		},
 		Run: func(*cobra.Command, []string) {
 			testutils.RunTests("kuttl", testToRun, options.Parallel, func(t *testing.T) {
 				h := harness.Harness{
-					TestSuite: options,
-					T:         t,
-					RunLabels: runLabels.AsLabelSet(),
+					TestSuite:    options,
+					T:            t,
+					RunLabels:    runLabels.AsLabelSet(),
+					TemplateVars: templateVarsParsed,
 				}
 				ctrl.SetLogger(testr.NewWithOptions(t, testr.Options{
 					LogTimestamp: true,
@@ -275,6 +282,7 @@ For more detailed documentation, visit: https://kuttl.dev`,
 	testCmd.Flags().StringVarP(&namespace, "namespace", "n", "", "Namespace to use for tests. Provided namespaces must exist prior to running tests.")
 	testCmd.Flags().StringSliceVar(&suppress, "suppress-log", []string{}, "Suppress logging for these kinds of logs (events).")
 	testCmd.Flags().Var(&runLabels, "test-run-labels", "Labels to use for this test run.")
+	testCmd.Flags().StringToStringVar(&templateVarsStrings, "template-var", map[string]string{}, "Template variables to use for this test run.")
 	// This cannot be a global flag because internal/utils.RunTests calls flag.Parse which barfs on unknown top-level flags.
 	// Putting it here at least does not advertise it on a level where using it is impossible.
 	kind.SetFlags(testCmd.Flags())
