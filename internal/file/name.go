@@ -28,9 +28,10 @@ type Info struct {
 	BaseName string
 	FullName string
 	// HasIndex is true when the file name starts with a valid index.
-	HasIndex bool
-	Index    int64
-	StepName string
+	HasIndex   bool
+	Index      int64
+	StepName   string
+	IsTemplate bool
 }
 
 // fileNameRegex is used to parse both:
@@ -41,10 +42,10 @@ type Info struct {
 //   - first (or only) name component, it is special in that if it's equal to "assert" or "errors" it denotes
 //     the file as an assert or error file, respectively.
 //   - optional additional components separated by dashes
-var fileNameRegex = regexp.MustCompile(`^(\d+-)?([^-.]+)(-[^.]+)?(?:\.yaml)?$`)
+var fileNameRegex = regexp.MustCompile(`^(\d+-)?([^-.]+)(-[^.]+)?((:?\.gotmpl)?\.yaml)?$`)
 
 // fileNamePattern is a human-readable representation of fileNameRegex.
-const fileNamePattern = "(<number>-)<name>(-<name>)(.yaml)"
+const fileNamePattern = "(<number>-)<name>(-<name>)((.gotmpl).yaml)"
 
 func Parse(fullName string) Info {
 	name := filepath.Base(fullName)
@@ -73,23 +74,26 @@ func Parse(fullName string) Info {
 		}
 		hasIndex = true
 	}
+	isTemplate := strings.HasPrefix(matches[4], ".gotmpl")
 
 	switch fname := strings.ToLower(matches[2]); fname {
 	case "assert":
 		return Info{
-			Type:     TypeAssert,
-			BaseName: name,
-			FullName: fullName,
-			HasIndex: hasIndex,
-			Index:    i,
+			Type:       TypeAssert,
+			BaseName:   name,
+			FullName:   fullName,
+			IsTemplate: isTemplate,
+			HasIndex:   hasIndex,
+			Index:      i,
 		}
 	case "errors":
 		return Info{
-			Type:     TypeError,
-			BaseName: name,
-			FullName: fullName,
-			HasIndex: hasIndex,
-			Index:    i,
+			Type:       TypeError,
+			BaseName:   name,
+			FullName:   fullName,
+			IsTemplate: isTemplate,
+			HasIndex:   hasIndex,
+			Index:      i,
 		}
 	default:
 		var stepName string
@@ -100,12 +104,13 @@ func Parse(fullName string) Info {
 			stepName = matches[2]
 		}
 		return Info{
-			Type:     TypeApply,
-			BaseName: name,
-			FullName: fullName,
-			HasIndex: hasIndex,
-			Index:    i,
-			StepName: stepName,
+			Type:       TypeApply,
+			BaseName:   name,
+			FullName:   fullName,
+			IsTemplate: isTemplate,
+			HasIndex:   hasIndex,
+			Index:      i,
+			StepName:   stepName,
 		}
 	}
 }

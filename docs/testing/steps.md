@@ -3,6 +3,7 @@
 Each test case is broken down into test steps. Test steps within a test case are run sequentially: if any of the test steps fail, the entire test case is considered failed.
 
 A test step can create, update, and delete objects as well as run any kubectl command.
+It can also perform [assertions](asserts-errors.md) on the resources in the cluster.
 
 ## Format
 
@@ -35,6 +36,9 @@ tests/e2e/example/01-staging.yaml
 In this case, the name of the step is taken from the name of the directory.
 
 In the above cases, the test harness would run test step `00-example` and once completed, run test step `01-staging`.
+
+If a file name ends with `.gotmpl.yaml`, then it will be treated as a template for expansion.
+See [templating.md](templating.md) for more information.
 
 A namespace is created by the test harness for each test case, so if an object in the step does not have a namespace set, then it will be created in the test case's namespace. If a namespace is set, then that namespace will be respected throughout the tests (making it possible to test resources that reside in standardized namespaces).
 

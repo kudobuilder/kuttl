@@ -115,6 +115,11 @@ Flags are:
   This label set can then be matched against by the `testRunSelector` in `TestFile` objects to optionally exclude selected files.
   The syntax is comma-separated list of `key=value` assignments.
 
+* **`--template-var (string)`**
+
+  A `name=value` string that sets a variable available in templated test files.
+  See [testing/templating.md](testing/templating.md) for more information.
+
 * **`-v or -vv (int)`**
   Logging verbosity level. 0=normal, 1=verbose, 2=detailed, 3 or more =trace.
 
