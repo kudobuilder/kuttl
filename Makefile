@@ -131,15 +131,15 @@ all: lint test integration-test e2e-test  ## Runs lint, unit, integration and e2
 test: ## Runs unit tests
 ifdef _INTELLIJ_FORCE_SET_GOFLAGS
 # Run tests from a Goland terminal. Goland already set '-mod=readonly'
-	go test ./pkg/... ./internal/...  -v -coverprofile cover.out
+	go test ./pkg/... ./internal/... -coverprofile cover.out $(TEST_FLAGS)
 else
-	go test ./pkg/... ./internal/... -v -mod=readonly -coverprofile cover.out
+	go test ./pkg/... ./internal/... -mod=readonly -coverprofile cover.out $(TEST_FLAGS)
 endif
 
 .PHONY: integration-test
 # Run integration tests
 integration-test: envtest  ## Runs integration tests
-	KUBEBUILDER_ASSETS="$(shell $(ENVTEST) use $(ENVTEST_K8S_VERSION) --bin-dir $(LOCALBIN) -p path)" ./hack/run-integration-tests.sh
+	KUBEBUILDER_ASSETS="$(shell $(ENVTEST) use $(ENVTEST_K8S_VERSION) --bin-dir $(LOCALBIN) -p path)" ./hack/run-integration-tests.sh $(TEST_FLAGS)
 
 .PHONY: e2e-test
 # Run e2e tests
