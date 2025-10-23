@@ -30,6 +30,60 @@ import (
 type getClientFuncType func(forceNew bool) (client.Client, error)
 type getDiscoveryClientFuncType func() (discovery.DiscoveryInterface, error)
 
+// CaseOption represents a functional option for configuring a Case.
+type CaseOption func(*Case)
+
+// WithSkipDelete sets whether to skip deletion of resources.
+func WithSkipDelete(skip bool) CaseOption {
+	return func(c *Case) {
+		c.skipDelete = skip
+	}
+}
+
+// WithNamespace sets the preferred namespace.
+// If empty or not specified, a random namespace name will be generated.
+func WithNamespace(ns string) CaseOption {
+	return func(c *Case) {
+		if ns == "" {
+			c.ns = nil // To be filled in by the constructor.
+		} else {
+			c.ns = &namespace{
+				name:         ns,
+				userSupplied: true,
+			}
+		}
+	}
+}
+
+// WithTimeout sets the timeout in seconds.
+func WithTimeout(timeout int) CaseOption {
+	return func(c *Case) {
+		c.timeout = timeout
+	}
+}
+
+// WithSuppressions sets the list of log types to suppress.
+func WithSuppressions(suppressions []string) CaseOption {
+	return func(c *Case) {
+		c.suppressions = suppressions
+	}
+}
+
+// WithRunLabels sets the run labels.
+func WithRunLabels(runLabels labels.Set) CaseOption {
+	return func(c *Case) {
+		c.runLabels = runLabels
+	}
+}
+
+// WithClients sets both the client and discovery client functions.
+func WithClients(getClientFunc getClientFuncType, getDiscoveryClientFunc getDiscoveryClientFuncType) CaseOption {
+	return func(c *Case) {
+		c.getClient = getClientFunc
+		c.getDiscoveryClient = getDiscoveryClientFunc
+	}
+}
+
 // Case contains all the test steps and the Kubernetes client and other global configuration
 // for a test. It represents a leaf directory containing test step files.
 // Case lifecycle:
@@ -65,31 +119,21 @@ type namespace struct {
 }
 
 // NewCase returns a new test case object.
-func NewCase(name string, parentPath string, skipDelete bool, preferredNamespace string, timeout int, suppressions []string, runLabels labels.Set, getClientFunc getClientFuncType, getDiscoveryClientFunc getDiscoveryClientFuncType) *Case {
-	var ns *namespace
-	if preferredNamespace == "" {
-		ns = &namespace{
+func NewCase(name string, parentPath string, options ...CaseOption) *Case {
+	c := &Case{name: name, dir: filepath.Join(parentPath, name)}
+
+	for _, option := range options {
+		option(c)
+	}
+
+	if c.ns == nil {
+		c.ns = &namespace{
 			name:         fmt.Sprintf("kuttl-test-%s", petname.Generate(2, "-")),
 			userSupplied: false,
 		}
-	} else {
-		ns = &namespace{
-			name:         preferredNamespace,
-			userSupplied: true,
-		}
 	}
 
-	return &Case{
-		name:               name,
-		dir:                filepath.Join(parentPath, name),
-		skipDelete:         skipDelete,
-		ns:                 ns,
-		timeout:            timeout,
-		suppressions:       suppressions,
-		runLabels:          runLabels,
-		getClient:          getClientFunc,
-		getDiscoveryClient: getDiscoveryClientFunc,
-	}
+	return c
 }
 
 // GetName returns the name of the test case.
