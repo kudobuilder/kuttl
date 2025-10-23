@@ -8,6 +8,8 @@ import (
 	"testing"
 	"time"
 
+	kfile "github.com/kudobuilder/kuttl/internal/file"
+
 	petname "github.com/dustinkirkland/golang-petname"
 	"github.com/pkg/errors"
 	"github.com/thoas/go-funk"
@@ -320,7 +322,7 @@ func (c *Case) LoadTestSteps() error {
 		}
 
 		for _, file := range files {
-			if err := testStep.LoadYAML(file); err != nil {
+			if err := testStep.LoadYAML(kfile.Parse(file)); err != nil {
 				return err
 			}
 		}
