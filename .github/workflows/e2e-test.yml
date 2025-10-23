@@ -19,4 +19,4 @@ jobs:
         go-version: 1.21
     - uses: actions/checkout@v2.4.0
     - name: "Run end-to-end tests"
-      run: make e2e-test
+      run: make e2e-test TEST_FLAGS=-v
