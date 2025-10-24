@@ -50,7 +50,7 @@ func TestMultiClusterCase(t *testing.T) {
 		},
 	}
 
-	tmpfile, err := os.CreateTemp("", "kubeconfig")
+	tmpfile, err := os.CreateTemp(t.TempDir(), "kubeconfig")
 	if err != nil {
 		t.Error(err)
 		return

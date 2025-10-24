@@ -2,6 +2,7 @@ package kubernetes
 
 import (
 	"os"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -10,7 +11,7 @@ import (
 )
 
 func TestLoadYAML(t *testing.T) {
-	tmpfile, err := os.CreateTemp("", "test.yaml")
+	tmpfile, err := os.CreateTemp(t.TempDir(), "test.yaml")
 	assert.Nil(t, err)
 	defer tmpfile.Close()
 
@@ -139,13 +140,11 @@ func TestPrettyDiff(t *testing.T) {
 +  observedGeneration: 2
 +  replicas: 1
 +  unavailableReplicas: 1
-+  updatedReplicas: 1
- 
-`, result)
++  updatedReplicas: 1`, strings.TrimSpace(result))
 }
 
 func TestMatchesKind(t *testing.T) {
-	tmpfile, err := os.CreateTemp("", "test.yaml")
+	tmpfile, err := os.CreateTemp(t.TempDir(), "test.yaml")
 	assert.Nil(t, err)
 	defer tmpfile.Close()
 
