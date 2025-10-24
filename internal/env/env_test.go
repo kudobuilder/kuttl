@@ -1,17 +1,13 @@
 package env
 
 import (
-	"os"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 )
 
 func TestExpandWithMap(t *testing.T) {
-	os.Setenv("KUTTL_TEST_123", "hello")
-	t.Cleanup(func() {
-		os.Unsetenv("KUTTL_TEST_123")
-	})
+	t.Setenv("KUTTL_TEST_123", "hello")
 	assert.Equal(t, "hello $  world", ExpandWithMap("$KUTTL_TEST_123 $$ $DOES_NOT_EXIST_1234 ${EXPAND_ME}", map[string]string{
 		"EXPAND_ME": "world",
 	}))
@@ -40,7 +36,7 @@ func TestExpand(t *testing.T) {
 		},
 	}
 
-	os.Setenv("KUTTL_TEST_123", "hello")
+	t.Setenv("KUTTL_TEST_123", "hello")
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			got := Expand(tt.in)

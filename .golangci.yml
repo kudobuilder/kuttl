@@ -18,6 +18,7 @@ linters:
     - errchkjson
     - errname
     - exhaustive
+    - exptostd
     - fatcontext
     - forcetypeassert
     - ginkgolinter
@@ -48,6 +49,7 @@ linters:
     - misspell
     - nakedret
     - nilerr
+    - nilnesserr
     - noctx
     - nolintlint
     - nosprintfhostport
@@ -70,6 +72,7 @@ linters:
     - unparam
     - unused
     - usestdlibvars
+    - usetesting
     - wastedassign
     - whitespace
     - zerologlint
