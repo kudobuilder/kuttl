@@ -97,8 +97,8 @@ func (c *Case) GetName() string {
 	return c.name
 }
 
-func (c *Case) deleteNamespace(cl client.Client, kubeconfigPath string) error {
-	c.logkcf(kubeconfigPath, "Deleting namespace %q", c.ns.name)
+func (c *Case) deleteNamespace(cl clientWithPath) error {
+	cl.Logf("Deleting namespace %q", c.ns.name)
 
 	ctx := context.Background()
 	if c.timeout > 0 {
@@ -117,9 +117,9 @@ func (c *Case) deleteNamespace(cl client.Client, kubeconfigPath string) error {
 	}
 
 	if err := cl.Delete(ctx, nsObj); k8serrors.IsNotFound(err) {
-		c.logkcf(kubeconfigPath, "Namespace %q already cleaned up.", c.ns.name)
+		cl.Logf("Namespace %q already cleaned up.", c.ns.name)
 	} else if err != nil {
-		return fmt.Errorf("failed to delete namespace %q%s: %w", c.ns.name, getKubeConfigInfo(kubeconfigPath), err)
+		return fmt.Errorf("failed to delete namespace %q%s: %w", c.ns.name, getKubeConfigInfo(cl.kubeConfigPath), err)
 	}
 
 	err := wait.PollUntilContextCancel(ctx, 100*time.Millisecond, true, func(ctx context.Context) (done bool, err error) {
@@ -134,13 +134,13 @@ func (c *Case) deleteNamespace(cl client.Client, kubeconfigPath string) error {
 		return false, nil
 	})
 	if err != nil {
-		return fmt.Errorf("waiting for namespace %q to be deleted timed out%s: %w", c.ns.name, getKubeConfigInfo(kubeconfigPath), err)
+		return fmt.Errorf("waiting for namespace %q to be deleted timed out%s: %w", c.ns.name, getKubeConfigInfo(cl.kubeConfigPath), err)
 	}
 	return nil
 }
 
-func (c *Case) createNamespace(test *testing.T, cl client.Client, kubeconfigPath string) error {
-	c.logkcf(kubeconfigPath, "Creating namespace %q", c.ns.name)
+func (c *Case) createNamespace(test *testing.T, cl clientWithPath) error {
+	cl.Logf("Creating namespace %q", c.ns.name)
 
 	ctx := context.Background()
 	if c.timeout > 0 {
@@ -162,9 +162,9 @@ func (c *Case) createNamespace(test *testing.T, cl client.Client, kubeconfigPath
 			// Namespace cleanup is tracked per-client for multi-cluster tests.
 			// See KEP-0008 for details on backward compatibility decisions.
 			if c.ns.userSupplied && k8serrors.IsAlreadyExists(err) {
-				c.logkcf(kubeconfigPath, "Skipping deletion of pre-existing user supplied namespace %s", c.ns.name)
+				cl.Logf("Skipping deletion of pre-existing user supplied namespace %s", c.ns.name)
 			} else {
-				if err := c.deleteNamespace(cl, kubeconfigPath); err != nil {
+				if err := c.deleteNamespace(cl); err != nil {
 					test.Error(err)
 				}
 			}
@@ -172,7 +172,7 @@ func (c *Case) createNamespace(test *testing.T, cl client.Client, kubeconfigPath
 	}
 
 	if k8serrors.IsAlreadyExists(err) {
-		c.logkcf(kubeconfigPath, "Namespace %q already exists", c.ns.name)
+		cl.Logf("Namespace %q already exists", c.ns.name)
 		return nil
 	}
 	if err != nil {
@@ -218,7 +218,7 @@ func (c *Case) Run(test *testing.T, rep report.TestReporter) {
 			cl, err := testStep.Client(false)
 			if err != nil {
 				errs = append(errs, fmt.Errorf("failed to lazy-load kubeconfig: %w", err))
-			} else if err = c.createNamespace(test, cl, testStep.Kubeconfig); err != nil {
+			} else if err = c.createNamespace(test, clientWithPath{cl, testStep.Kubeconfig, c.logger}); err != nil {
 				errs = append(errs, err)
 			}
 		}
@@ -249,8 +249,8 @@ func (c *Case) setup(test *testing.T) error {
 		return err
 	}
 
-	for kubeConfigPath, cl := range clients {
-		if err := c.createNamespace(test, cl, kubeConfigPath); err != nil {
+	for _, cl := range clients {
+		if err := c.createNamespace(test, cl); err != nil {
 			return err
 		}
 	}
@@ -258,11 +258,10 @@ func (c *Case) setup(test *testing.T) error {
 }
 
 // Returns clients for all steps other than the lazy loaded ones.
-// The returned map will always contain at least a default client with a key of empty string.
-// However, there may be more pairs, since each step may optionally specify a path to kubeconfig that should be used.
+// The returned slice will always contain at least a default client with an empty path.
+// However, there may be more clients, since each step may optionally specify a path to kubeconfig that should be used.
 // This is useful for multi-cluster or multi-context tests.
-// For those, the client will be keyed with the specified path to kubeconfig file.
-func (c *Case) getEagerClients() (map[string]client.Client, error) {
+func (c *Case) getEagerClients() ([]clientWithPath, error) {
 	defaultClient, err := c.getClient(false)
 	if err != nil {
 		return nil, err
@@ -281,7 +280,16 @@ func (c *Case) getEagerClients() (map[string]client.Client, error) {
 		}
 		clients[testStep.Kubeconfig] = cl
 	}
-	return clients, nil
+
+	var clientsWithPaths []clientWithPath
+	for kubeConfigPath, cl := range clients {
+		clientsWithPaths = append(clientsWithPaths, clientWithPath{
+			Client:         cl,
+			kubeConfigPath: kubeConfigPath,
+			logger:         c.logger,
+		})
+	}
+	return clientsWithPaths, nil
 }
 
 // LoadTestSteps loads all the test steps for a test case.
@@ -325,18 +333,4 @@ func (c *Case) LoadTestSteps() error {
 // SetLogger sets the logger for the test case.
 func (c *Case) SetLogger(logger testutils.Logger) {
 	c.logger = logger
-}
-
-// logkcf behaves like logger.Logf, but potentially appends a note about which kubeconfig is being used.
-// See also getKubeConfigInfo.
-func (c *Case) logkcf(kubeConfigPath string, format string, args ...any) {
-	c.logger.Log(fmt.Sprintf(format, args...) + getKubeConfigInfo(kubeConfigPath))
-}
-
-// getKubeConfigInfo returns a note about kubeConfig (with a space prepended), unless empty.
-func getKubeConfigInfo(kubeConfigPath string) string {
-	if kubeConfigPath == "" {
-		return ""
-	}
-	return fmt.Sprintf(" (using kubeconfig %q)", kubeConfigPath)
 }
