@@ -200,7 +200,7 @@ func (s *Step) Create(test *testing.T, namespace string) []error {
 			errors = append(errors, err)
 			continue
 		}
-		ctx := test.Context()
+		ctx := context.Background()
 		if s.Timeout > 0 {
 			var cancel context.CancelFunc
 			ctx, cancel = context.WithTimeout(ctx, time.Duration(s.Timeout)*time.Second)
@@ -214,7 +214,7 @@ func (s *Step) Create(test *testing.T, namespace string) []error {
 			if !updated && !s.SkipDelete {
 				obj := obj
 				test.Cleanup(func() {
-					if err := cl.Delete(test.Context(), obj); err != nil && !k8serrors.IsNotFound(err) {
+					if err := cl.Delete(context.TODO(), obj); err != nil && !k8serrors.IsNotFound(err) {
 						test.Error(err)
 					}
 				})
@@ -479,7 +479,7 @@ func (s *Step) Run(test *testing.T, namespace string) []error {
 				command.Background = false
 			}
 		}
-		if _, err := testutils.RunCommands(test.Context(), s.Logger, namespace, s.Step.Commands, s.Dir, s.Timeout, s.Kubeconfig); err != nil {
+		if _, err := testutils.RunCommands(context.TODO(), s.Logger, namespace, s.Step.Commands, s.Dir, s.Timeout, s.Kubeconfig); err != nil {
 			testErrors = append(testErrors, err)
 		}
 	}
@@ -521,7 +521,7 @@ func (s *Step) Run(test *testing.T, namespace string) []error {
 			s.Logger.Log("skipping invalid assertion collector")
 			continue
 		}
-		_, err := testutils.RunCommand(test.Context(), namespace, *collector.Command(), s.Dir, s.Logger, s.Logger, s.Logger, s.Timeout, s.Kubeconfig)
+		_, err := testutils.RunCommand(context.TODO(), namespace, *collector.Command(), s.Dir, s.Logger, s.Logger, s.Logger, s.Timeout, s.Kubeconfig)
 		if err != nil {
 			s.Logger.Log("post assert collector failure: %s", err)
 		}

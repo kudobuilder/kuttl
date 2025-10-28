@@ -90,11 +90,11 @@ func TestClientWatch(t *testing.T) {
 	events, err := testenv.Client.Watch(t.Context(), pod)
 	assert.Nil(t, err)
 
-	go func() {
+	go func(t *testing.T) {
 		assert.Nil(t, testenv.Client.Create(t.Context(), pod))
 		assert.Nil(t, testenv.Client.Update(t.Context(), pod))
 		assert.Nil(t, testenv.Client.Delete(t.Context(), pod))
-	}()
+	}(t)
 
 	eventCh := events.ResultChan()
 
