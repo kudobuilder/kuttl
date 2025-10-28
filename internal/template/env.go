@@ -2,7 +2,7 @@ package template
 
 import (
 	"bytes"
-	"encoding/gob"
+	"encoding/json"
 	"fmt"
 	"io"
 	"text/template"
@@ -20,11 +20,11 @@ type Env struct {
 
 func (e Env) Clone() (Env, error) {
 	buf := bytes.Buffer{}
-	if err := gob.NewEncoder(&buf).Encode(e); err != nil {
+	if err := json.NewEncoder(&buf).Encode(e); err != nil {
 		return Env{}, err
 	}
 	clone := Env{}
-	if err := gob.NewDecoder(&buf).Decode(&clone); err != nil {
+	if err := json.NewDecoder(&buf).Decode(&clone); err != nil {
 		return Env{}, err
 	}
 	return clone, nil
