@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/kudobuilder/kuttl/internal/template"
 	"path/filepath"
 	"testing"
 	"time"
@@ -26,6 +25,7 @@ import (
 	kfile "github.com/kudobuilder/kuttl/internal/file"
 	"github.com/kudobuilder/kuttl/internal/http"
 	"github.com/kudobuilder/kuttl/internal/kubernetes"
+	"github.com/kudobuilder/kuttl/internal/template"
 	testutils "github.com/kudobuilder/kuttl/internal/utils"
 	harness "github.com/kudobuilder/kuttl/pkg/apis/testharness/v1beta1"
 )

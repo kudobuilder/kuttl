@@ -3,13 +3,10 @@ package testcase
 import (
 	"context"
 	"fmt"
-	"github.com/kudobuilder/kuttl/internal/template"
 	"path/filepath"
 	"sort"
 	"testing"
 	"time"
-
-	kfile "github.com/kudobuilder/kuttl/internal/file"
 
 	petname "github.com/dustinkirkland/golang-petname"
 	"github.com/thoas/go-funk"
@@ -21,9 +18,11 @@ import (
 	"k8s.io/client-go/discovery"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
+	kfile "github.com/kudobuilder/kuttl/internal/file"
 	"github.com/kudobuilder/kuttl/internal/kubernetes"
 	"github.com/kudobuilder/kuttl/internal/report"
 	"github.com/kudobuilder/kuttl/internal/step"
+	"github.com/kudobuilder/kuttl/internal/template"
 	testutils "github.com/kudobuilder/kuttl/internal/utils"
 	eventutils "github.com/kudobuilder/kuttl/internal/utils/events"
 	"github.com/kudobuilder/kuttl/internal/utils/files"
