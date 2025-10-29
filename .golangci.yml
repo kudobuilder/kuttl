@@ -134,6 +134,7 @@ linters-settings:
           - (github.com/kudobuilder/kuttl/internal/utils.Logger).Logf
           - (github.com/kudobuilder/kuttl/internal/utils.TestLogger).Logf
           - (github.com/kudobuilder/kuttl/internal/case.Case).logkcf
+  # TODO: fix the `context` usage in step package and enable these linters.
   usetesting:
     context-background: false
     context-todo: false
