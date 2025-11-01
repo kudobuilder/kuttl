@@ -272,8 +272,11 @@ func TestRunCommand(t *testing.T) {
 	cmd, err = RunCommand(t.Context(), "", hcmd, "", stdout, stderr, logger, 0, "")
 	assert.NoError(t, err)
 	assert.NotNil(t, cmd)
-	// no stdout for background processes
-	assert.Empty(t, strings.TrimSpace(stdout.String()))
+
+	// Wait for background process to complete before checking stdout
+	err = cmd.Wait()
+	assert.NoError(t, err)
+	assert.Equal(t, "hello", strings.TrimSpace(stdout.String()))
 
 	stdout = &bytes.Buffer{}
 	hcmd.Background = false
