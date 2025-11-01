@@ -2,7 +2,6 @@ package kubernetes
 
 import (
 	"os"
-	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -140,7 +139,9 @@ func TestPrettyDiff(t *testing.T) {
 +  observedGeneration: 2
 +  replicas: 1
 +  unavailableReplicas: 1
-+  updatedReplicas: 1`, strings.TrimSpace(result))
++  updatedReplicas: 1
+ 
+`, result)
 }
 
 func TestMatchesKind(t *testing.T) {
