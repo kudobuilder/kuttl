@@ -3,7 +3,6 @@
 package kubernetes
 
 import (
-	"context"
 	"fmt"
 	"log"
 	"os"
@@ -39,7 +38,7 @@ func TestCreateOrUpdate(t *testing.T) {
 		namespaceName := fmt.Sprintf("default-%d", i)
 		namespaceObj := NewResource("v1", "Namespace", namespaceName, "default")
 
-		_, err := CreateOrUpdate(context.TODO(), testenv.Client, namespaceObj, true)
+		_, err := CreateOrUpdate(t.Context(), testenv.Client, namespaceObj, true)
 		assert.Nil(t, err)
 
 		depToUpdate := WithSpec(t, NewPod("update-me", namespaceName), map[string]interface{}{
@@ -51,7 +50,7 @@ func TestCreateOrUpdate(t *testing.T) {
 			},
 		})
 
-		_, err = CreateOrUpdate(context.TODO(), testenv.Client, SetAnnotation(depToUpdate, "test", "hi"), true)
+		_, err = CreateOrUpdate(t.Context(), testenv.Client, SetAnnotation(depToUpdate, "test", "hi"), true)
 		assert.Nil(t, err)
 
 		quit := make(chan bool)
@@ -62,7 +61,7 @@ func TestCreateOrUpdate(t *testing.T) {
 				case <-quit:
 					return
 				default:
-					CreateOrUpdate(context.TODO(), testenv.Client, SetAnnotation(depToUpdate, "test", fmt.Sprintf("%d", i)), false) //nolint:errcheck
+					CreateOrUpdate(t.Context(), testenv.Client, SetAnnotation(depToUpdate, "test", fmt.Sprintf("%d", i)), false) //nolint:errcheck
 					time.Sleep(time.Millisecond * 75)
 				}
 			}
@@ -70,7 +69,7 @@ func TestCreateOrUpdate(t *testing.T) {
 
 		time.Sleep(time.Millisecond * 50)
 
-		_, err = CreateOrUpdate(context.TODO(), testenv.Client, SetAnnotation(depToUpdate, "test", "hello"), true)
+		_, err = CreateOrUpdate(t.Context(), testenv.Client, SetAnnotation(depToUpdate, "test", "hello"), true)
 		assert.Nil(t, err)
 
 		quit <- true
@@ -88,14 +87,14 @@ func TestClientWatch(t *testing.T) {
 	})
 	gvk := pod.GetObjectKind().GroupVersionKind()
 
-	events, err := testenv.Client.Watch(context.TODO(), pod)
+	events, err := testenv.Client.Watch(t.Context(), pod)
 	assert.Nil(t, err)
 
-	go func() {
-		assert.Nil(t, testenv.Client.Create(context.TODO(), pod))
-		assert.Nil(t, testenv.Client.Update(context.TODO(), pod))
-		assert.Nil(t, testenv.Client.Delete(context.TODO(), pod))
-	}()
+	go func(t *testing.T) {
+		assert.Nil(t, testenv.Client.Create(t.Context(), pod))
+		assert.Nil(t, testenv.Client.Update(t.Context(), pod))
+		assert.Nil(t, testenv.Client.Delete(t.Context(), pod))
+	}(t)
 
 	eventCh := events.ResultChan()
 

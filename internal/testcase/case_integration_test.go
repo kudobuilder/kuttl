@@ -42,11 +42,8 @@ func TestMultiClusterCase(t *testing.T) {
 		},
 	}
 
-	tmpfile, err := os.CreateTemp("", "kubeconfig")
+	tmpfile, err := os.CreateTemp(t.TempDir(), "kubeconfig")
 	require.NoError(t, err)
-	t.Cleanup(func() {
-		os.Remove(tmpfile.Name())
-	})
 	require.NoError(t, kubernetes.Kubeconfig(testenv2.Config, tmpfile))
 
 	c := NewCase("multicluster", "", true, "", 20, nil, nil,

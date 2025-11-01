@@ -37,7 +37,7 @@ func buildTestStep(t *testing.T, testenv kubernetes.TestEnvironment) *Step {
 }
 
 func TestAssertExpressions(t *testing.T) {
-	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
+	ctx, cancel := context.WithTimeout(t.Context(), 2*time.Minute)
 	defer cancel()
 
 	testenv, err := kubernetes.StartTestEnvironment(false)

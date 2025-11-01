@@ -13,7 +13,7 @@ import (
 func TestRetry(t *testing.T) {
 	index := 0
 
-	assert.Nil(t, retry(context.TODO(), func(context.Context) error {
+	assert.Nil(t, retry(t.Context(), func(context.Context) error {
 		index++
 		if index == 1 {
 			return errors.New("ignore this error")
@@ -29,7 +29,7 @@ func TestRetry(t *testing.T) {
 func TestRetryWithUnexpectedError(t *testing.T) {
 	index := 0
 
-	assert.Equal(t, errors.New("bad error"), retry(context.TODO(), func(context.Context) error {
+	assert.Equal(t, errors.New("bad error"), retry(t.Context(), func(context.Context) error {
 		index++
 		if index == 1 {
 			return errors.New("bad error")
@@ -42,11 +42,11 @@ func TestRetryWithUnexpectedError(t *testing.T) {
 }
 
 func TestRetryWithNil(t *testing.T) {
-	assert.Equal(t, nil, retry(context.TODO(), nil, isJSONSyntaxError))
+	assert.Equal(t, nil, retry(t.Context(), nil, isJSONSyntaxError))
 }
 
 func TestRetryWithNilFromFn(t *testing.T) {
-	assert.Equal(t, nil, retry(context.TODO(), func(context.Context) error {
+	assert.Equal(t, nil, retry(t.Context(), func(context.Context) error {
 		return nil
 	}, isJSONSyntaxError))
 }
@@ -54,13 +54,13 @@ func TestRetryWithNilFromFn(t *testing.T) {
 func TestRetryWithNilInFn(t *testing.T) {
 	c := RetryClient{}
 	var list client.ObjectList
-	assert.Error(t, retry(context.TODO(), func(ctx context.Context) error {
+	assert.Error(t, retry(t.Context(), func(ctx context.Context) error {
 		return c.Client.List(ctx, list)
 	}, isJSONSyntaxError))
 }
 
 func TestRetryWithTimeout(t *testing.T) {
-	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
+	ctx, cancel := context.WithTimeout(t.Context(), 1*time.Second)
 	defer cancel()
 
 	assert.Equal(t, errors.New("error"), retry(ctx, func(context.Context) error {
