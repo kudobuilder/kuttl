@@ -159,33 +159,8 @@ func (c *Case) createNamespace(test *testing.T, cl client.Client, kubeconfigPath
 	})
 	if !c.skipDelete {
 		test.Cleanup(func() {
-			// The subtlety of whether a namespace should be cleaned up or not becomes obvious when we consider
-			// that each test step can use a different kubeconfig. There is no easy way to tell whether the clusters
-			// behind these kubeconfigs overlap, especially when using lazy kubeconfig loading. If they do, then there
-			// is no clear client <-> namespace ownership relation.
-			//
-			// Historically the rules that kuttl obeyed had been:
-			// - no user-specified namespace: make ephemeral namespace name, for every client: create it (no error if
-			//   already present), and clean it up afterward
-			// - otherwise:
-			//   - BEFORE the test, check if the supplied namespace exists, but USING THE DEFAULT CLIENT ONLY,
-			//     remember this fact for all clients in the case (!)
-			//   - if existed, do not touch it, for any client
-			//   - if missing, then for EVERY CLIENT create it (no error if already present) and clean it up afterward
-			//
-			// There are following issues in the above logic:
-			// - if the ephemeral namespace exists, we do not know whether we're clashing with a third-party-created
-			//   namespace (and should abort the test) or just seeing the same namespace resource via two different
-			//   kubeconfigs.
-			// - the existence of namespace for the default client should not determine (at least not unconditionally)
-			//   the fate of the namespace for other clients.
-			// - in particular, if a namespace was missing on default cluster, but pre-existed on auxiliary cluster,
-			//   kuttl would clean the latter up. If it was the other way round, it would not touch any namespace,
-			//   and likely fail due to missing namespace on the auxiliary cluster.
-			//
-			// Here we try to be more thoughtful, by maintaining the presence/absence information separately for every
-			// client. However, for backward compatibility we still take into account whether the namespace was user
-			// supplied or not.
+			// Namespace cleanup is tracked per-client for multi-cluster tests.
+			// See KEP-0008 for details on backward compatibility decisions.
 			if c.ns.userSupplied && k8serrors.IsAlreadyExists(err) {
 				c.logkcf(kubeconfigPath, "Skipping deletion of pre-existing user supplied namespace %s", c.ns.name)
 			} else {
