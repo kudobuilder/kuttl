@@ -62,8 +62,8 @@ func WithTimeout(timeout int) CaseOption {
 	}
 }
 
-// WithSuppressions sets the list of log types to suppress.
-func WithSuppressions(suppressions []string) CaseOption {
+// WithLogSuppressions sets the list of log types to suppress.
+func WithLogSuppressions(suppressions []string) CaseOption {
 	return func(c *Case) {
 		c.suppressions = suppressions
 	}
