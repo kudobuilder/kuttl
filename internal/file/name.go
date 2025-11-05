@@ -38,7 +38,7 @@ type Info struct {
 // - name of files contained in a test step directory
 // Apart from the extension separated with a dot, the groups are separated by dashes and are:
 //   - optional numeric prefix - required only for entries directly in the test case directory
-//   - first (or only) name component, it is special in that if it's equal to "assert" or "error" it denotes
+//   - first (or only) name component, it is special in that if it's equal to "assert" or "errors" it denotes
 //     the file as an assert or error file, respectively.
 //   - optional additional components separated by dashes
 var fileNameRegex = regexp.MustCompile(`^(\d+-)?([^-.]+)(-[^.]+)?(?:\.yaml)?$`)
