@@ -119,7 +119,7 @@ func (c *Case) deleteNamespace(cl clientWithPath) error {
 	if err := cl.Delete(ctx, nsObj); k8serrors.IsNotFound(err) {
 		cl.Logf("Namespace %q already cleaned up.", c.ns.name)
 	} else if err != nil {
-		return fmt.Errorf("failed to delete namespace %q%s: %w", c.ns.name, getKubeConfigInfo(cl.kubeConfigPath), err)
+		return cl.Wrapf(err, "failed to delete namespace %q", c.ns.name)
 	}
 
 	err := wait.PollUntilContextCancel(ctx, 100*time.Millisecond, true, func(ctx context.Context) (done bool, err error) {
@@ -133,10 +133,7 @@ func (c *Case) deleteNamespace(cl clientWithPath) error {
 		}
 		return false, nil
 	})
-	if err != nil {
-		return fmt.Errorf("waiting for namespace %q to be deleted timed out%s: %w", c.ns.name, getKubeConfigInfo(cl.kubeConfigPath), err)
-	}
-	return nil
+	return cl.Wrapf(err, "waiting for namespace %q to be deleted timed out", c.ns.name)
 }
 
 func (c *Case) createNamespace(test *testing.T, cl clientWithPath) error {
