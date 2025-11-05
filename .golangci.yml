@@ -130,7 +130,8 @@ linters-settings:
         funcs:
           - (github.com/kudobuilder/kuttl/internal/utils.Logger).Logf
           - (github.com/kudobuilder/kuttl/internal/utils.TestLogger).Logf
-          - (github.com/kudobuilder/kuttl/internal/case.Case).logkcf
+          - (github.com/kudobuilder/kuttl/internal/case.clientWithPath).Logf
+          - (github.com/kudobuilder/kuttl/internal/case.clientWithPath).Wrapf
 issues:
   exclude-dirs:
     - hack
