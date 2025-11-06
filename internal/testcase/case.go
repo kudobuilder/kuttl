@@ -97,7 +97,7 @@ func (c *Case) GetName() string {
 	return c.name
 }
 
-func (c *Case) deleteNamespace(cl clientWithPath) error {
+func (c *Case) deleteNamespace(cl clientWithKubeConfig) error {
 	cl.Logf("Deleting namespace %q", c.ns.name)
 
 	ctx := context.Background()
@@ -136,7 +136,7 @@ func (c *Case) deleteNamespace(cl clientWithPath) error {
 	return cl.Wrapf(err, "waiting for namespace %q to be deleted timed out", c.ns.name)
 }
 
-func (c *Case) createNamespace(test *testing.T, cl clientWithPath) error {
+func (c *Case) createNamespace(test *testing.T, cl clientWithKubeConfig) error {
 	cl.Logf("Creating namespace %q", c.ns.name)
 
 	ctx := context.Background()
@@ -215,7 +215,7 @@ func (c *Case) Run(test *testing.T, rep report.TestReporter) {
 			cl, err := testStep.Client(false)
 			if err != nil {
 				errs = append(errs, fmt.Errorf("failed to lazy-load kubeconfig: %w", err))
-			} else if err = c.createNamespace(test, clientWithPath{cl, testStep.Kubeconfig, c.logger}); err != nil {
+			} else if err = c.createNamespace(test, clientWithKubeConfig{cl, testStep.Kubeconfig, c.logger}); err != nil {
 				errs = append(errs, err)
 			}
 		}
@@ -258,7 +258,7 @@ func (c *Case) setup(test *testing.T) error {
 // The returned slice will always contain at least a default client with an empty path.
 // However, there may be more clients, since each step may optionally specify a path to kubeconfig that should be used.
 // This is useful for multi-cluster or multi-context tests.
-func (c *Case) getEagerClients() ([]clientWithPath, error) {
+func (c *Case) getEagerClients() ([]clientWithKubeConfig, error) {
 	defaultClient, err := c.getClient(false)
 	if err != nil {
 		return nil, err
@@ -278,9 +278,9 @@ func (c *Case) getEagerClients() ([]clientWithPath, error) {
 		clients[testStep.Kubeconfig] = cl
 	}
 
-	var clientsWithPaths []clientWithPath
+	var clientsWithPaths []clientWithKubeConfig
 	for kubeConfigPath, cl := range clients {
-		clientsWithPaths = append(clientsWithPaths, clientWithPath{
+		clientsWithPaths = append(clientsWithPaths, clientWithKubeConfig{
 			Client:         cl,
 			kubeConfigPath: kubeConfigPath,
 			logger:         c.logger,

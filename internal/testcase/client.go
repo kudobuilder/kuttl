@@ -8,7 +8,7 @@ import (
 	testutils "github.com/kudobuilder/kuttl/internal/utils"
 )
 
-type clientWithPath struct {
+type clientWithKubeConfig struct {
 	client.Client
 	kubeConfigPath string
 	logger         testutils.Logger
@@ -16,14 +16,14 @@ type clientWithPath struct {
 
 // Logf behaves like logger.Logf, but potentially appends a note about which kubeconfig is being used.
 // See also getKubeConfigInfo.
-func (cl clientWithPath) Logf(format string, args ...any) {
+func (cl clientWithKubeConfig) Logf(format string, args ...any) {
 	cl.logger.Log(fmt.Sprintf(format, args...) + getKubeConfigInfo(cl.kubeConfigPath))
 }
 
 // Wrapf returns an error based on format and args, potentially with the addition of a note about
 // which kubeconfig is being used, and wrapping err.
 // Note: if err is nil, returns nil.
-func (cl clientWithPath) Wrapf(err error, format string, args ...any) error {
+func (cl clientWithKubeConfig) Wrapf(err error, format string, args ...any) error {
 	if err == nil {
 		return nil
 	}
