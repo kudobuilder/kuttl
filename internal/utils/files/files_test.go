@@ -53,25 +53,3 @@ func TestCollectTestStepFiles(t *testing.T) {
 		})
 	}
 }
-
-func TestGetIndexFromFile(t *testing.T) {
-	for _, tt := range []struct {
-		fileName string
-		indexExp int64
-	}{
-		{"00-foo.yaml", 0},
-		{"01-foo.yaml", 1},
-		{"1-foo.yaml", 1},
-		{"01-foo", 1},
-		{"01234-foo.yaml", 1234},
-		{"1-foo-bar.yaml", 1},
-		{"01.yaml", -1},
-		{"foo-01.yaml", -1},
-	} {
-		t.Run(tt.fileName, func(t *testing.T) {
-			index, err := getIndexFromFile(tt.fileName)
-			assert.Nil(t, err)
-			assert.Equal(t, tt.indexExp, index)
-		})
-	}
-}

@@ -11,6 +11,8 @@ import (
 	"testing"
 	"time"
 
+	kfile "github.com/kudobuilder/kuttl/internal/file"
+
 	"github.com/stretchr/testify/assert"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
@@ -152,7 +154,7 @@ func TestAssertExpressions(t *testing.T) {
 			step := buildTestStep(t, testenv)
 			for _, file := range files {
 				fName := fmt.Sprintf("%s/%s", dirName, file.Name())
-				if err = step.LoadYAML(fName); err != nil {
+				if err = step.LoadYAML(kfile.Parse(fName)); err != nil {
 					break
 				}
 			}
