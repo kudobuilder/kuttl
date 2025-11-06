@@ -38,8 +38,10 @@ import (
 
 // Harness loads and runs tests based on the configuration provided.
 type Harness struct {
-	TestSuite harness.TestSuite
-	T         *testing.T
+	TestSuite    harness.TestSuite
+	T            *testing.T
+	RunLabels    labels.Set
+	TemplateVars map[string]any
 
 	logger        testutils.Logger
 	managerStopCh chan struct{}
@@ -55,7 +57,6 @@ type Harness struct {
 	stopping      bool
 	bgProcesses   []*exec.Cmd
 	report        *report.Testsuites
-	RunLabels     labels.Set
 }
 
 // LoadTests loads all of the tests in a given directory.
@@ -88,7 +89,8 @@ func (h *Harness) LoadTests(dir string) ([]*testcase.Case, error) {
 			testcase.WithTimeout(timeout),
 			testcase.WithLogSuppressions(h.TestSuite.Suppress),
 			testcase.WithRunLabels(h.RunLabels),
-			testcase.WithClients(h.Client, h.DiscoveryClient)))
+			testcase.WithClients(h.Client, h.DiscoveryClient),
+			testcase.WithTemplateVars(h.TemplateVars)))
 	}
 
 	return tests, nil

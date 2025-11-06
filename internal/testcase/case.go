@@ -8,8 +8,6 @@ import (
 	"testing"
 	"time"
 
-	kfile "github.com/kudobuilder/kuttl/internal/file"
-
 	petname "github.com/dustinkirkland/golang-petname"
 	"github.com/thoas/go-funk"
 	corev1 "k8s.io/api/core/v1"
@@ -20,9 +18,11 @@ import (
 	"k8s.io/client-go/discovery"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
+	kfile "github.com/kudobuilder/kuttl/internal/file"
 	"github.com/kudobuilder/kuttl/internal/kubernetes"
 	"github.com/kudobuilder/kuttl/internal/report"
 	"github.com/kudobuilder/kuttl/internal/step"
+	"github.com/kudobuilder/kuttl/internal/template"
 	testutils "github.com/kudobuilder/kuttl/internal/utils"
 	eventutils "github.com/kudobuilder/kuttl/internal/utils/events"
 	"github.com/kudobuilder/kuttl/internal/utils/files"
@@ -78,6 +78,12 @@ func WithRunLabels(runLabels labels.Set) CaseOption {
 	}
 }
 
+func WithTemplateVars(vars map[string]any) CaseOption {
+	return func(c *Case) {
+		c.templateEnv = template.Env{Vars: vars}
+	}
+}
+
 // WithClients sets both the client and discovery client functions.
 func WithClients(getClientFunc getClientFuncType, getDiscoveryClientFunc getDiscoveryClientFuncType) CaseOption {
 	return func(c *Case) {
@@ -112,6 +118,8 @@ type Case struct {
 	logger testutils.Logger
 	// List of log types which should be suppressed.
 	suppressions []string
+	// Caution: the Vars element of this struct may be shared with other Case objects.
+	templateEnv template.Env
 }
 
 // namespace contains information about namespace name and its provenance.
@@ -134,6 +142,8 @@ func NewCase(name string, parentPath string, options ...CaseOption) *Case {
 			userSupplied: false,
 		}
 	}
+
+	c.templateEnv.Namespace = c.ns.name
 
 	return c
 }
@@ -354,6 +364,7 @@ func (c *Case) LoadTestSteps() error {
 			Asserts:       []client.Object{},
 			Apply:         []client.Object{},
 			Errors:        []client.Object{},
+			TemplateEnv:   c.templateEnv,
 		}
 
 		for _, file := range files {

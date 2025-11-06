@@ -12,6 +12,9 @@ By default, a test step will wait for up to 30 seconds for the defined state to 
 
 Note that an assertion or errors file is optional. If absent, the test step will be considered successful immediately once the object(s) in the test step have been created. It is also valid to create a test step that does not create any objects, but only has an assertion or errors file.
 
+If a file name ends with `.gotmpl.yaml`, then it will be treated as a template for expansion.
+See [templating.md](templating.md) for more information.
+
 ## Getting a Resource from the Cluster
 
 If an object has a name set, then the harness will look specifically for that object to exist and then verify that its state matches what is defined in the assert file. For example, if the assert file has:
