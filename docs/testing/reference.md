@@ -42,11 +42,14 @@ suppress          | list of strings  | Suppresses log collection of the specifie
 
 ## TestStep
 
-The `TestStep` object can be used to specify settings for a test step and can be specified in any test step YAML.
+The `TestStep` object can be used to specify settings for a test step and can be specified in any test step YAML
+file other than the assert and errors files.
 
 ```yaml
 apiVersion: kuttl.dev/v1beta1
 kind: TestStep
+metadata:
+  name: example-step
 apply:
 - my-new-resource.yaml
 assert:
@@ -67,6 +70,7 @@ Supported settings:
 
 Field    | Type                          | Description
 ---------|-------------------------------|---------------------------------------------------------------------
+metadata.name | string                   | Step name. If not specified, then the name of the first encountered file of the step is used.
 apply    | list of files                 | A list of files to apply as part of this step. Specified path is relative to that in which the step occurs.
 assert   | list of files                 | A list of files to assert as part of this step. See documentation for [asserts and errors](asserts-errors.md) for more information. Specified path is relative to that in which the step occurs.
 error    | list of files                 | A list of files to error as part of this step. See documentation for [asserts and errors](asserts-errors.md) for more information. Specified path is relative to that in which the step occurs.

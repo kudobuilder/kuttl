@@ -4,6 +4,8 @@ import (
 	"testing"
 	"time"
 
+	kfile "github.com/kudobuilder/kuttl/internal/file"
+
 	"github.com/stretchr/testify/assert"
 	corev1 "k8s.io/api/core/v1"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
@@ -410,7 +412,7 @@ func TestPopulateObjectsByFileName(t *testing.T) {
 	} {
 		t.Run(tt.fileName, func(t *testing.T) {
 			step := &Step{}
-			err := step.populateObjectsByFileName(tt.fileName, []client.Object{kubernetes.NewPod("foo", "")})
+			err := step.populateObjectsByType(kfile.Parse(tt.fileName), []client.Object{kubernetes.NewPod("foo", "")})
 			assert.Nil(t, err)
 			assert.Equal(t, tt.isAssert, len(step.Asserts) != 0)
 			assert.Equal(t, tt.isError, len(step.Errors) != 0)
