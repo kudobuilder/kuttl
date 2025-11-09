@@ -10,7 +10,7 @@ import (
 )
 
 func TestLoadYAML(t *testing.T) {
-	tmpfile, err := os.CreateTemp("", "test.yaml")
+	tmpfile, err := os.CreateTemp(t.TempDir(), "test.yaml")
 	assert.Nil(t, err)
 	defer tmpfile.Close()
 
@@ -145,7 +145,7 @@ func TestPrettyDiff(t *testing.T) {
 }
 
 func TestMatchesKind(t *testing.T) {
-	tmpfile, err := os.CreateTemp("", "test.yaml")
+	tmpfile, err := os.CreateTemp(t.TempDir(), "test.yaml")
 	assert.Nil(t, err)
 	defer tmpfile.Close()
 

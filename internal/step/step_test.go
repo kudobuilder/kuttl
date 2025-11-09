@@ -1,7 +1,6 @@
 package step
 
 import (
-	"context"
 	"testing"
 	"time"
 
@@ -49,9 +48,9 @@ func TestStepClean(t *testing.T) {
 
 	assert.Nil(t, step.Clean(testNamespace))
 
-	assert.True(t, k8serrors.IsNotFound(cl.Get(context.TODO(), kubernetes.ObjectKey(podWithNamespace), podWithNamespace)))
-	assert.Nil(t, cl.Get(context.TODO(), kubernetes.ObjectKey(pod2WithNamespace), pod2WithNamespace))
-	assert.True(t, k8serrors.IsNotFound(cl.Get(context.TODO(), kubernetes.ObjectKey(pod2WithDiffNamespace), pod2WithDiffNamespace)))
+	assert.True(t, k8serrors.IsNotFound(cl.Get(t.Context(), kubernetes.ObjectKey(podWithNamespace), podWithNamespace)))
+	assert.Nil(t, cl.Get(t.Context(), kubernetes.ObjectKey(pod2WithNamespace), pod2WithNamespace))
+	assert.True(t, k8serrors.IsNotFound(cl.Get(t.Context(), kubernetes.ObjectKey(pod2WithDiffNamespace), pod2WithDiffNamespace)))
 }
 
 // Verify the test state as loaded from disk.
@@ -81,16 +80,16 @@ func TestStepCreate(t *testing.T) {
 
 	assert.Equal(t, []error{}, step.Create(t, testNamespace))
 
-	assert.Nil(t, cl.Get(context.TODO(), kubernetes.ObjectKey(pod), pod))
-	assert.Nil(t, cl.Get(context.TODO(), kubernetes.ObjectKey(clusterScopedResource), clusterScopedResource))
+	assert.Nil(t, cl.Get(t.Context(), kubernetes.ObjectKey(pod), pod))
+	assert.Nil(t, cl.Get(t.Context(), kubernetes.ObjectKey(clusterScopedResource), clusterScopedResource))
 
 	updatedPod := &unstructured.Unstructured{Object: map[string]interface{}{"apiVersion": "v1", "kind": "Pod"}}
-	assert.Nil(t, cl.Get(context.TODO(), kubernetes.ObjectKey(podToUpdate), updatedPod))
+	assert.Nil(t, cl.Get(t.Context(), kubernetes.ObjectKey(podToUpdate), updatedPod))
 	assert.Equal(t, specToApply, updatedPod.Object["spec"])
 
-	assert.Nil(t, cl.Get(context.TODO(), kubernetes.ObjectKey(podWithNamespace), podWithNamespace))
+	assert.Nil(t, cl.Get(t.Context(), kubernetes.ObjectKey(podWithNamespace), podWithNamespace))
 	actual := kubernetes.NewPod("hello2", testNamespace)
-	assert.True(t, k8serrors.IsNotFound(cl.Get(context.TODO(), kubernetes.ObjectKey(actual), actual)))
+	assert.True(t, k8serrors.IsNotFound(cl.Get(t.Context(), kubernetes.ObjectKey(actual), actual)))
 }
 
 // Verify that the DeleteExisting method properly cleans up resources during a test step.
@@ -126,15 +125,15 @@ func TestStepDeleteExisting(t *testing.T) {
 		DiscoveryClient: func() (discovery.DiscoveryInterface, error) { return k8sfake.DiscoveryClient(), nil },
 	}
 
-	assert.Nil(t, cl.Get(context.TODO(), kubernetes.ObjectKey(podToKeep), podToKeep))
-	assert.Nil(t, cl.Get(context.TODO(), kubernetes.ObjectKey(podToDelete), podToDelete))
-	assert.Nil(t, cl.Get(context.TODO(), kubernetes.ObjectKey(podToDeleteDefaultNS), podToDeleteDefaultNS))
+	assert.Nil(t, cl.Get(t.Context(), kubernetes.ObjectKey(podToKeep), podToKeep))
+	assert.Nil(t, cl.Get(t.Context(), kubernetes.ObjectKey(podToDelete), podToDelete))
+	assert.Nil(t, cl.Get(t.Context(), kubernetes.ObjectKey(podToDeleteDefaultNS), podToDeleteDefaultNS))
 
 	assert.Nil(t, step.DeleteExisting(testNamespace))
 
-	assert.Nil(t, cl.Get(context.TODO(), kubernetes.ObjectKey(podToKeep), podToKeep))
-	assert.True(t, k8serrors.IsNotFound(cl.Get(context.TODO(), kubernetes.ObjectKey(podToDelete), podToDelete)))
-	assert.True(t, k8serrors.IsNotFound(cl.Get(context.TODO(), kubernetes.ObjectKey(podToDeleteDefaultNS), podToDeleteDefaultNS)))
+	assert.Nil(t, cl.Get(t.Context(), kubernetes.ObjectKey(podToKeep), podToKeep))
+	assert.True(t, k8serrors.IsNotFound(cl.Get(t.Context(), kubernetes.ObjectKey(podToDelete), podToDelete)))
+	assert.True(t, k8serrors.IsNotFound(cl.Get(t.Context(), kubernetes.ObjectKey(podToDeleteDefaultNS), podToDeleteDefaultNS)))
 }
 
 func TestCheckResource(t *testing.T) {
@@ -353,10 +352,10 @@ func TestRun(t *testing.T) {
 				},
 			}, func(t *testing.T, client client.Client) {
 				pod := kubernetes.NewPod("hello", testNamespace)
-				assert.Nil(t, client.Get(context.TODO(), types.NamespacedName{Namespace: testNamespace, Name: "hello"}, pod))
+				assert.Nil(t, client.Get(t.Context(), types.NamespacedName{Namespace: testNamespace, Name: "hello"}, pod))
 
 				// mock kubelet to set the pod status
-				assert.Nil(t, client.Status().Update(context.TODO(), kubernetes.WithStatus(t, pod, map[string]interface{}{
+				assert.Nil(t, client.Status().Update(t.Context(), kubernetes.WithStatus(t, pod, map[string]interface{}{
 					"phase": "Ready",
 				})))
 			},

@@ -185,7 +185,7 @@ func (c *Case) deleteNamespace(cl clientWithKubeConfig) error {
 func (c *Case) createNamespace(test *testing.T, cl clientWithKubeConfig) error {
 	cl.Logf("Creating namespace %q", c.ns.name)
 
-	ctx := context.Background()
+	ctx := test.Context()
 	if c.timeout > 0 {
 		var cancel context.CancelFunc
 		ctx, cancel = context.WithTimeout(ctx, time.Duration(c.timeout)*time.Second)
