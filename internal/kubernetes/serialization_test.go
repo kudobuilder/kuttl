@@ -11,7 +11,7 @@ import (
 
 func TestLoadYAML(t *testing.T) {
 	tmpfile, err := os.CreateTemp(t.TempDir(), "test.yaml")
-	assert.Nil(t, err)
+	require.NoError(t, err)
 	defer tmpfile.Close()
 
 	err = os.WriteFile(tmpfile.Name(), []byte(`
@@ -41,7 +41,7 @@ spec:
 	}
 
 	objs, err := LoadYAMLFromFile(tmpfile.Name())
-	assert.Nil(t, err)
+	require.NoError(t, err)
 
 	assert.Equal(t, &unstructured.Unstructured{
 		Object: map[string]interface{}{
@@ -146,7 +146,7 @@ func TestPrettyDiff(t *testing.T) {
 
 func TestMatchesKind(t *testing.T) {
 	tmpfile, err := os.CreateTemp(t.TempDir(), "test.yaml")
-	assert.Nil(t, err)
+	require.NoError(t, err)
 	defer tmpfile.Close()
 
 	err = os.WriteFile(tmpfile.Name(), []byte(`
@@ -169,7 +169,7 @@ metadata:
 	}
 
 	objs, err := LoadYAMLFromFile(tmpfile.Name())
-	assert.Nil(t, err)
+	require.NoError(t, err)
 
 	crd := NewResource("apiextensions.k8s.io/v1beta1", "CustomResourceDefinition", "", "")
 	pod := NewResource("v1", "Pod", "", "")

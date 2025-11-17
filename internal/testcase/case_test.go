@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -332,7 +333,7 @@ func TestLoadTestSteps(t *testing.T) {
 			test := &Case{dir: tt.path, logger: testutils.NewTestLogger(t, tt.path), runLabels: tt.runLabels}
 
 			err := test.LoadTestSteps()
-			assert.Nil(t, err)
+			require.NoError(t, err)
 
 			testStepsVal := []step.Step{}
 			for _, testStep := range test.steps {

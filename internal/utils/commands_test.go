@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
 	harness "github.com/kudobuilder/kuttl/pkg/apis/testharness/v1beta1"
 )
@@ -178,7 +179,7 @@ func TestGetKubectlArgs(t *testing.T) {
 				Command:    test.args,
 				Namespaced: true,
 			}, test.namespace, nil)
-			assert.Nil(t, err)
+			require.NoError(t, err)
 			assert.Equal(t, test.expected, cmd.Args)
 		})
 	}

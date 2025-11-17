@@ -13,6 +13,7 @@ import (
 
 	petname "github.com/dustinkirkland/golang-petname"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	corev1 "k8s.io/api/core/v1"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -238,13 +239,13 @@ func TestCheckResourceIntegration(t *testing.T) {
 			err := testenv.Client.Create(t.Context(), kubernetes.NewResource("v1", "Namespace", namespace, ""))
 			if !k8serrors.IsAlreadyExists(err) {
 				// we are ignoring already exists here because in tests we by default use retry client so this can happen
-				assert.Nil(t, err)
+				require.NoError(t, err)
 			}
 			for _, actual := range test.actual {
 				_, _, err := kubernetes.Namespaced(testenv.DiscoveryClient, actual, namespace)
-				assert.Nil(t, err)
+				require.NoError(t, err)
 
-				assert.Nil(t, testenv.Client.Create(t.Context(), actual))
+				require.NoError(t, testenv.Client.Create(t.Context(), actual))
 			}
 
 			step := Step{
@@ -311,18 +312,18 @@ func TestStepDeleteExistingLabelMatch(t *testing.T) {
 
 	namespaceObj := kubernetes.NewResource("v1", "Namespace", namespace, "default")
 
-	assert.Nil(t, testenv.Client.Create(t.Context(), namespaceObj))
-	assert.Nil(t, testenv.Client.Create(t.Context(), podToKeep))
-	assert.Nil(t, testenv.Client.Create(t.Context(), podToDelete))
-	assert.Nil(t, testenv.Client.Create(t.Context(), podToDelete2))
+	require.NoError(t, testenv.Client.Create(t.Context(), namespaceObj))
+	require.NoError(t, testenv.Client.Create(t.Context(), podToKeep))
+	require.NoError(t, testenv.Client.Create(t.Context(), podToDelete))
+	require.NoError(t, testenv.Client.Create(t.Context(), podToDelete2))
 
-	assert.Nil(t, testenv.Client.Get(t.Context(), kubernetes.ObjectKey(podToKeep), podToKeep))
-	assert.Nil(t, testenv.Client.Get(t.Context(), kubernetes.ObjectKey(podToDelete), podToDelete))
-	assert.Nil(t, testenv.Client.Get(t.Context(), kubernetes.ObjectKey(podToDelete2), podToDelete2))
+	require.NoError(t, testenv.Client.Get(t.Context(), kubernetes.ObjectKey(podToKeep), podToKeep))
+	require.NoError(t, testenv.Client.Get(t.Context(), kubernetes.ObjectKey(podToDelete), podToDelete))
+	require.NoError(t, testenv.Client.Get(t.Context(), kubernetes.ObjectKey(podToDelete2), podToDelete2))
 
-	assert.Nil(t, step.DeleteExisting(namespace))
+	require.NoError(t, step.DeleteExisting(namespace))
 
-	assert.Nil(t, testenv.Client.Get(t.Context(), kubernetes.ObjectKey(podToKeep), podToKeep))
+	require.NoError(t, testenv.Client.Get(t.Context(), kubernetes.ObjectKey(podToKeep), podToKeep))
 	assert.True(t, k8serrors.IsNotFound(testenv.Client.Get(t.Context(), kubernetes.ObjectKey(podToDelete), podToDelete)))
 	assert.True(t, k8serrors.IsNotFound(testenv.Client.Get(t.Context(), kubernetes.ObjectKey(podToDelete2), podToDelete2)))
 }
@@ -422,7 +423,7 @@ func TestStepFailure(t *testing.T) {
 	err := testenv.Client.Create(t.Context(), kubernetes.NewResource("v1", "Namespace", namespace, ""))
 	if !k8serrors.IsAlreadyExists(err) {
 		// we are ignoring already exists here because in tests we by default use retry client so this can happen
-		assert.Nil(t, err)
+		require.NoError(t, err)
 	}
 
 	asserts := []client.Object{expected}
