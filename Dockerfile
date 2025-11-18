@@ -16,7 +16,7 @@
 # artifacts by default will land in the root of the mount point.
 
 # kuttl builder
-FROM golang:1.23 as builder
+FROM golang:1.24 as builder
 
 WORKDIR /go/src/kuttl
 COPY . .

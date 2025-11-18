@@ -18,6 +18,7 @@ linters:
     - errchkjson
     - errname
     - exhaustive
+    - exptostd
     - fatcontext
     - forcetypeassert
     - ginkgolinter
@@ -48,6 +49,7 @@ linters:
     - misspell
     - nakedret
     - nilerr
+    - nilnesserr
     - noctx
     - nolintlint
     - nosprintfhostport
@@ -70,6 +72,7 @@ linters:
     - unparam
     - unused
     - usestdlibvars
+    - usetesting
     - wastedassign
     - whitespace
     - zerologlint
@@ -132,6 +135,10 @@ linters-settings:
           - (github.com/kudobuilder/kuttl/internal/utils.TestLogger).Logf
           - (github.com/kudobuilder/kuttl/internal/case.clientWithKubeConfig).Logf
           - (github.com/kudobuilder/kuttl/internal/case.clientWithKubeConfig).Wrapf
+  # TODO: fix the `context` usage in step package and enable these linters.
+  usetesting:
+    context-background: false
+    context-todo: false
 issues:
   exclude-dirs:
     - hack
