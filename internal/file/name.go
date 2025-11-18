@@ -42,7 +42,7 @@ type Info struct {
 //   - first (or only) name component, it is special in that if it's equal to "assert" or "errors" it denotes
 //     the file as an assert or error file, respectively.
 //   - optional additional components separated by dashes
-var fileNameRegex = regexp.MustCompile(`^(\d+-)?([^-.]+)(-[^.]+)?((:?\.gotmpl)?\.yaml)?$`)
+var fileNameRegex = regexp.MustCompile(`^(\d+-)?([^-.]+)(-[^.]+)?((?:\.gotmpl)?\.yaml)?$`)
 
 // fileNamePattern is a human-readable representation of fileNameRegex.
 const fileNamePattern = "(<number>-)<name>(-<name>)((.gotmpl).yaml)"

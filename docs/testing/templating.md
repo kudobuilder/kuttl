@@ -1,6 +1,6 @@
 # Templating
 
-In most cases, if a test file ends with `.gotmpl.yaml`, then it will be treated as a [Go text/template](https://pkg.go.dev/text/template) for expansion, before it is parsed as YAML.
+In [most cases](#exceptions), if a test file ends with `.gotmpl.yaml`, then it will be treated as a [Go text/template](https://pkg.go.dev/text/template) for expansion, before it is parsed as YAML.
 
 The data structure available to templates is defined as follows:
 
@@ -33,7 +33,7 @@ suite1/
 apiVersion: v1
 kind: Pod
 metadata:
-  name: foo-{{ .Namespace }}-var1-{{ .Vars.var2 }}-var3
+  name: foo-{{ .Namespace }}-foo-{{ .Vars.var2 }}-baz
 spec:
   containers:
     - name: foo
@@ -44,16 +44,16 @@ spec:
 apiVersion: v1
 kind: Pod
 metadata:
-  name: foo-{{ .Namespace }}-{{ .Vars.var1 }}-var2-{{ .Vars.var3 }}
+  name: foo-{{ .Namespace }}-{{ .Vars.var1 }}-bar-{{ .Vars.var3 }}
 ```
 
-Then, one can invoke `kuttl test --template-var var1=var1 --template-var var2=var2,var3=var3 suite1` and see the following as expected:
+Then, one can invoke `kuttl test --template-var var1=foo --template-var var2=bar,var3=baz suite1` and see the following as expected:
 
 ```text
 === CONT  kuttl/harness/test1
     logger.go:42: 12:06:57 | test1 | Creating namespace "kuttl-test-trusted-mackerel"
     logger.go:42: 12:06:57 | test1/0-apply | starting test step 0-apply
-    logger.go:42: 12:06:57 | test1/0-apply | Pod:kuttl-test-trusted-mackerel/foo-kuttl-test-trusted-mackerel-var1-var2-var3 created
+    logger.go:42: 12:06:57 | test1/0-apply | Pod:kuttl-test-trusted-mackerel/foo-kuttl-test-trusted-mackerel-foo-bar-baz created
     logger.go:42: 12:06:57 | test1/0-apply | test step completed 0-apply
     logger.go:42: 12:06:57 | test1 | test1 events from ns kuttl-test-trusted-mackerel:
 [...]
@@ -62,3 +62,13 @@ Then, one can invoke `kuttl test --template-var var1=var1 --template-var var2=va
         --- PASS: kuttl/harness/test1 (0.04s)
 PASS
 ```
+
+## Exceptions
+
+The places where template expansion is currently _not_ available are when loading:
+- resources from a suite's `manifestDirs` and `crdDir`
+- top-level `kutt-test.yaml` config file
+- files by the `kuttl assert` and `kuttl errors` commands (as opposed to `kuttl test`)
+- files listed in the `apply`, `assert` and `error` fields of a `TestStep` [resource](../testing/reference.md#teststep)
+
+The above cases may be supported in a future version.
