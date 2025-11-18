@@ -25,6 +25,7 @@ import (
 	kfile "github.com/kudobuilder/kuttl/internal/file"
 	"github.com/kudobuilder/kuttl/internal/http"
 	"github.com/kudobuilder/kuttl/internal/kubernetes"
+	"github.com/kudobuilder/kuttl/internal/template"
 	testutils "github.com/kudobuilder/kuttl/internal/utils"
 	harness "github.com/kudobuilder/kuttl/pkg/apis/testharness/v1beta1"
 )
@@ -38,6 +39,7 @@ type Step struct {
 
 	Dir           string
 	TestRunLabels labels.Set
+	TemplateEnv   template.Env
 
 	Step   *harness.TestStep
 	Assert *harness.TestAssert
@@ -531,7 +533,7 @@ func (s *Step) String() string {
 
 // LoadYAML loads the resources from a YAML file for a test step.
 func (s *Step) LoadYAML(f kfile.Info) error {
-	skipFile, objects, err := s.loadOrSkipFile(f.FullName)
+	skipFile, objects, err := s.loadOrSkipFile(f)
 	if skipFile || err != nil {
 		return err
 	}
@@ -628,8 +630,9 @@ func (s *Step) LoadYAML(f kfile.Info) error {
 	return nil
 }
 
-func (s *Step) loadOrSkipFile(file string) (bool, []client.Object, error) {
-	loadedObjects, err := kubernetes.LoadYAMLFromFile(file)
+func (s *Step) loadOrSkipFile(info kfile.Info) (bool, []client.Object, error) {
+	file := info.FullName
+	loadedObjects, err := s.loadYAML(info)
 	if err != nil {
 		return false, nil, fmt.Errorf("loading %s: %s", file, err)
 	}
@@ -658,6 +661,17 @@ func (s *Step) loadOrSkipFile(file string) (bool, []client.Object, error) {
 		}
 	}
 	return shouldSkip, objects, nil
+}
+
+func (s *Step) loadYAML(info kfile.Info) ([]client.Object, error) {
+	if info.IsTemplate {
+		expanded, err := template.LoadAndExpand(info.FullName, s.TemplateEnv)
+		if err != nil {
+			return nil, err
+		}
+		return kubernetes.LoadYAML(info.FullName, expanded)
+	}
+	return kubernetes.LoadYAMLFromFile(info.FullName)
 }
 
 // populateObjectsByType populates s.Asserts, s.Errors, and/or s.Apply and optionally sets step name.

@@ -1,0 +1,4 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: foo-{{ .Namespace }}-{{ .Vars.var1 }}-var2-{{ .Vars.var3 }}
