@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"sync"
 	"testing"
 	"time"
 
@@ -91,10 +92,13 @@ func TestClientWatch(t *testing.T) {
 	events, err := testenv.Client.Watch(t.Context(), pod)
 	require.NoError(t, err)
 
+	var wg sync.WaitGroup
+	wg.Add(1)
 	go func(t *testing.T) {
 		require.NoError(t, testenv.Client.Create(t.Context(), pod))
 		require.NoError(t, testenv.Client.Update(t.Context(), pod))
 		require.NoError(t, testenv.Client.Delete(t.Context(), pod))
+		wg.Done()
 	}(t)
 
 	eventCh := events.ResultChan()
@@ -115,4 +119,5 @@ func TestClientWatch(t *testing.T) {
 	assert.Equal(t, client.ObjectKey{Namespace: "default", Name: "my-pod"}, ObjectKey(event.Object))
 
 	events.Stop()
+	wg.Wait() // Give the goroutine a chance to finish before the test shutdown cancels the context.
 }
