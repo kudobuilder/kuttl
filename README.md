@@ -1,6 +1,6 @@
 # KUTTL
 
-<img src="https://kuttl.dev/images/kuttl-horizontal-logo.png" width="256">
+<img src="docs/images/kuttl-horizontal-logo.png" width="256">
 
 [![lint](https://github.com/kudobuilder/kuttl/actions/workflows/lint.yml/badge.svg?branch=main)](https://github.com/kudobuilder/kuttl/actions)
 [![unit test](https://github.com/kudobuilder/kuttl/actions/workflows/unittest.yml/badge.svg?branch=main)](https://github.com/kudobuilder/kuttl/actions)
