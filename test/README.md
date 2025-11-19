@@ -37,7 +37,7 @@ make integration-test
 
 ## Declarative tests
 
-Most tests written for KUTTL use the [declarative test harness](https://kuttl.dev) with the controller-runtime's envtest (which starts `etcd` and `kube-apiserver` locally). This means that tests can be written for and run against KUTTL without requiring a Kubernetes cluster (or even Docker).
+Most tests written for KUTTL use the [declarative test harness](https://github.com/kudobuilder/kuttl) with the controller-runtime's envtest (which starts `etcd` and `kube-apiserver` locally). This means that tests can be written for and run against KUTTL without requiring a Kubernetes cluster (or even Docker).
 
 ### CLI examples
 

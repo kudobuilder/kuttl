@@ -70,7 +70,7 @@ brews:
       email: release@kudo.dev
     skip_upload: auto
     directory: Formula
-    homepage: https://kuttl.dev
+    homepage: https://github.com/kudobuilder/kuttl
     description: Interact with KUTTL via the kubectl plugin
     dependencies:
       - kubernetes-cli

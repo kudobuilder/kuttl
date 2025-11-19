@@ -59,7 +59,7 @@ spec:
   version: "v${VERSION}"
 
   shortDescription: Declaratively run and test operators
-  homepage: https://kuttl.dev/
+  homepage: https://github.com/kudobuilder/kuttl
   description: |
     The KUbernetes Test TooL (KUTTL) is a highly productive test
     toolkit for testing operators on Kubernetes.
