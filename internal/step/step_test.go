@@ -7,6 +7,7 @@ import (
 	kfile "github.com/kudobuilder/kuttl/internal/file"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	corev1 "k8s.io/api/core/v1"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -46,10 +47,10 @@ func TestStepClean(t *testing.T) {
 		DiscoveryClient: func() (discovery.DiscoveryInterface, error) { return k8sfake.DiscoveryClient(), nil },
 	}
 
-	assert.Nil(t, step.Clean(testNamespace))
+	require.NoError(t, step.Clean(testNamespace))
 
 	assert.True(t, k8serrors.IsNotFound(cl.Get(t.Context(), kubernetes.ObjectKey(podWithNamespace), podWithNamespace)))
-	assert.Nil(t, cl.Get(t.Context(), kubernetes.ObjectKey(pod2WithNamespace), pod2WithNamespace))
+	require.NoError(t, cl.Get(t.Context(), kubernetes.ObjectKey(pod2WithNamespace), pod2WithNamespace))
 	assert.True(t, k8serrors.IsNotFound(cl.Get(t.Context(), kubernetes.ObjectKey(pod2WithDiffNamespace), pod2WithDiffNamespace)))
 }
 
@@ -80,14 +81,14 @@ func TestStepCreate(t *testing.T) {
 
 	assert.Equal(t, []error{}, step.Create(t, testNamespace))
 
-	assert.Nil(t, cl.Get(t.Context(), kubernetes.ObjectKey(pod), pod))
-	assert.Nil(t, cl.Get(t.Context(), kubernetes.ObjectKey(clusterScopedResource), clusterScopedResource))
+	require.NoError(t, cl.Get(t.Context(), kubernetes.ObjectKey(pod), pod))
+	require.NoError(t, cl.Get(t.Context(), kubernetes.ObjectKey(clusterScopedResource), clusterScopedResource))
 
 	updatedPod := &unstructured.Unstructured{Object: map[string]interface{}{"apiVersion": "v1", "kind": "Pod"}}
-	assert.Nil(t, cl.Get(t.Context(), kubernetes.ObjectKey(podToUpdate), updatedPod))
+	require.NoError(t, cl.Get(t.Context(), kubernetes.ObjectKey(podToUpdate), updatedPod))
 	assert.Equal(t, specToApply, updatedPod.Object["spec"])
 
-	assert.Nil(t, cl.Get(t.Context(), kubernetes.ObjectKey(podWithNamespace), podWithNamespace))
+	require.NoError(t, cl.Get(t.Context(), kubernetes.ObjectKey(podWithNamespace), podWithNamespace))
 	actual := kubernetes.NewPod("hello2", testNamespace)
 	assert.True(t, k8serrors.IsNotFound(cl.Get(t.Context(), kubernetes.ObjectKey(actual), actual)))
 }
@@ -125,13 +126,13 @@ func TestStepDeleteExisting(t *testing.T) {
 		DiscoveryClient: func() (discovery.DiscoveryInterface, error) { return k8sfake.DiscoveryClient(), nil },
 	}
 
-	assert.Nil(t, cl.Get(t.Context(), kubernetes.ObjectKey(podToKeep), podToKeep))
-	assert.Nil(t, cl.Get(t.Context(), kubernetes.ObjectKey(podToDelete), podToDelete))
-	assert.Nil(t, cl.Get(t.Context(), kubernetes.ObjectKey(podToDeleteDefaultNS), podToDeleteDefaultNS))
+	require.NoError(t, cl.Get(t.Context(), kubernetes.ObjectKey(podToKeep), podToKeep))
+	require.NoError(t, cl.Get(t.Context(), kubernetes.ObjectKey(podToDelete), podToDelete))
+	require.NoError(t, cl.Get(t.Context(), kubernetes.ObjectKey(podToDeleteDefaultNS), podToDeleteDefaultNS))
 
-	assert.Nil(t, step.DeleteExisting(testNamespace))
+	require.NoError(t, step.DeleteExisting(testNamespace))
 
-	assert.Nil(t, cl.Get(t.Context(), kubernetes.ObjectKey(podToKeep), podToKeep))
+	require.NoError(t, cl.Get(t.Context(), kubernetes.ObjectKey(podToKeep), podToKeep))
 	assert.True(t, k8serrors.IsNotFound(cl.Get(t.Context(), kubernetes.ObjectKey(podToDelete), podToDelete)))
 	assert.True(t, k8serrors.IsNotFound(cl.Get(t.Context(), kubernetes.ObjectKey(podToDeleteDefaultNS), podToDeleteDefaultNS)))
 }
@@ -214,7 +215,7 @@ func TestCheckResource(t *testing.T) {
 
 			for _, actualObj := range test.actual {
 				_, _, err := kubernetes.Namespaced(fakeDiscovery, actualObj, namespace)
-				assert.Nil(t, err)
+				require.NoError(t, err)
 			}
 
 			step := Step{
@@ -352,10 +353,10 @@ func TestRun(t *testing.T) {
 				},
 			}, func(t *testing.T, client client.Client) {
 				pod := kubernetes.NewPod("hello", testNamespace)
-				assert.Nil(t, client.Get(t.Context(), types.NamespacedName{Namespace: testNamespace, Name: "hello"}, pod))
+				require.NoError(t, client.Get(t.Context(), types.NamespacedName{Namespace: testNamespace, Name: "hello"}, pod))
 
 				// mock kubelet to set the pod status
-				assert.Nil(t, client.Status().Update(t.Context(), kubernetes.WithStatus(t, pod, map[string]interface{}{
+				require.NoError(t, client.Status().Update(t.Context(), kubernetes.WithStatus(t, pod, map[string]interface{}{
 					"phase": "Ready",
 				})))
 			},
@@ -413,7 +414,7 @@ func TestPopulateObjectsByFileName(t *testing.T) {
 		t.Run(tt.fileName, func(t *testing.T) {
 			step := &Step{}
 			err := step.populateObjectsByType(kfile.Parse(tt.fileName), []client.Object{kubernetes.NewPod("foo", "")})
-			assert.Nil(t, err)
+			require.NoError(t, err)
 			assert.Equal(t, tt.isAssert, len(step.Asserts) != 0)
 			assert.Equal(t, tt.isError, len(step.Errors) != 0)
 			assert.Equal(t, tt.isApply, len(step.Apply) != 0)

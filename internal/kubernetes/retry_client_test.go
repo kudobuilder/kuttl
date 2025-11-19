@@ -7,13 +7,14 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 func TestRetry(t *testing.T) {
 	index := 0
 
-	assert.Nil(t, retry(t.Context(), func(context.Context) error {
+	require.NoError(t, retry(t.Context(), func(context.Context) error {
 		index++
 		if index == 1 {
 			return errors.New("ignore this error")

@@ -6,10 +6,12 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"sync"
 	"testing"
 	"time"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"k8s.io/apimachinery/pkg/watch"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
@@ -39,7 +41,7 @@ func TestCreateOrUpdate(t *testing.T) {
 		namespaceObj := NewResource("v1", "Namespace", namespaceName, "default")
 
 		_, err := CreateOrUpdate(t.Context(), testenv.Client, namespaceObj, true)
-		assert.Nil(t, err)
+		require.NoError(t, err)
 
 		depToUpdate := WithSpec(t, NewPod("update-me", namespaceName), map[string]interface{}{
 			"containers": []map[string]interface{}{
@@ -51,7 +53,7 @@ func TestCreateOrUpdate(t *testing.T) {
 		})
 
 		_, err = CreateOrUpdate(t.Context(), testenv.Client, SetAnnotation(depToUpdate, "test", "hi"), true)
-		assert.Nil(t, err)
+		require.NoError(t, err)
 
 		quit := make(chan bool)
 
@@ -70,7 +72,7 @@ func TestCreateOrUpdate(t *testing.T) {
 		time.Sleep(time.Millisecond * 50)
 
 		_, err = CreateOrUpdate(t.Context(), testenv.Client, SetAnnotation(depToUpdate, "test", "hello"), true)
-		assert.Nil(t, err)
+		require.NoError(t, err)
 
 		quit <- true
 	}
@@ -88,12 +90,15 @@ func TestClientWatch(t *testing.T) {
 	gvk := pod.GetObjectKind().GroupVersionKind()
 
 	events, err := testenv.Client.Watch(t.Context(), pod)
-	assert.Nil(t, err)
+	require.NoError(t, err)
 
+	var wg sync.WaitGroup
+	wg.Add(1)
 	go func(t *testing.T) {
-		assert.Nil(t, testenv.Client.Create(t.Context(), pod))
-		assert.Nil(t, testenv.Client.Update(t.Context(), pod))
-		assert.Nil(t, testenv.Client.Delete(t.Context(), pod))
+		require.NoError(t, testenv.Client.Create(t.Context(), pod))
+		require.NoError(t, testenv.Client.Update(t.Context(), pod))
+		require.NoError(t, testenv.Client.Delete(t.Context(), pod))
+		wg.Done()
 	}(t)
 
 	eventCh := events.ResultChan()
@@ -114,4 +119,5 @@ func TestClientWatch(t *testing.T) {
 	assert.Equal(t, client.ObjectKey{Namespace: "default", Name: "my-pod"}, ObjectKey(event.Object))
 
 	events.Stop()
+	wg.Wait() // Give the goroutine a chance to finish before the test shutdown cancels the context.
 }

@@ -4,10 +4,11 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestIsSubset(t *testing.T) {
-	assert.Nil(t, IsSubset(map[string]interface{}{
+	require.NoError(t, IsSubset(map[string]interface{}{
 		"hello": "world",
 	}, map[string]interface{}{
 		"hello": "world",
@@ -21,7 +22,7 @@ func TestIsSubset(t *testing.T) {
 		"bye":   "moon",
 	}))
 
-	assert.Nil(t, IsSubset(map[string]interface{}{
+	require.NoError(t, IsSubset(map[string]interface{}{
 		"hello": map[string]interface{}{
 			"hello": "world",
 		},
@@ -55,7 +56,7 @@ func TestIsSubset(t *testing.T) {
 		"hello": "world",
 	}, map[string]interface{}{}))
 
-	assert.Nil(t, IsSubset(map[string]interface{}{
+	require.NoError(t, IsSubset(map[string]interface{}{
 		"hello": []int{
 			1, 2, 3,
 		},
@@ -65,7 +66,7 @@ func TestIsSubset(t *testing.T) {
 		},
 	}))
 
-	assert.Nil(t, IsSubset(map[string]interface{}{
+	require.NoError(t, IsSubset(map[string]interface{}{
 		"hello": map[string]interface{}{
 			"hello": []map[string]interface{}{
 				{

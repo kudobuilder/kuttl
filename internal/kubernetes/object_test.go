@@ -19,7 +19,7 @@ func TestGETAPIResource(t *testing.T) {
 		Kind:    "Pod",
 		Version: "v1",
 	})
-	assert.Nil(t, err)
+	require.NoError(t, err)
 	assert.Equal(t, apiResource.Kind, "Pod")
 
 	_, err = GetAPIResource(fakeClient, schema.GroupVersionKind{
@@ -70,7 +70,7 @@ func TestNamespaced(t *testing.T) {
 				assert.NotNil(t, err)
 				assert.Equal(t, "", actualName)
 			} else {
-				assert.Nil(t, err)
+				require.NoError(t, err)
 				assert.Equal(t, m.GetName(), actualName)
 			}
 

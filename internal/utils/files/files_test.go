@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
 	testutils "github.com/kudobuilder/kuttl/internal/utils"
 )
@@ -48,7 +49,7 @@ func TestCollectTestStepFiles(t *testing.T) {
 	} {
 		t.Run(tt.path, func(t *testing.T) {
 			testStepFiles, err := CollectTestStepFiles(tt.path, testutils.NewTestLogger(t, tt.path))
-			assert.Nil(t, err)
+			require.NoError(t, err)
 			assert.Equal(t, tt.expected, testStepFiles)
 		})
 	}
