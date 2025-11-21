@@ -456,6 +456,16 @@ func (h *Harness) Run() {
 // Setup spins up the test env based on configuration
 // It can be used to start env which can than be modified prior to running tests, otherwise use Run().
 func (h *Harness) Setup() {
+	if h.TestSuite.IgnoreFiles == nil {
+		h.TestSuite.IgnoreFiles = []string{"README*"}
+	}
+
+	for _, pattern := range h.TestSuite.IgnoreFiles {
+		if _, err := filepath.Match(pattern, "dummy"); err != nil {
+			h.fatal(fmt.Errorf("invalid ignore pattern %q: %w", pattern, err))
+		}
+	}
+
 	h.report = report.NewSuiteCollection(h.TestSuite.Name)
 	h.T.Log("starting setup")
 
