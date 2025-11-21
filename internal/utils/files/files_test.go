@@ -48,9 +48,30 @@ func TestCollectTestStepFiles(t *testing.T) {
 		},
 	} {
 		t.Run(tt.path, func(t *testing.T) {
-			testStepFiles, err := CollectTestStepFiles(tt.path, testutils.NewTestLogger(t, tt.path))
+			testStepFiles, err := CollectTestStepFiles(tt.path, testutils.NewTestLogger(t, tt.path), nil)
 			require.NoError(t, err)
 			assert.Equal(t, tt.expected, testStepFiles)
 		})
 	}
+}
+
+func TestCollectTestStepFilesWithIgnorePatterns(t *testing.T) {
+	// Test with ignore patterns - should silently skip README.md
+	ignorePatterns := []string{"README*", "*.md"}
+	logger := testutils.NewTestLogger(t, "test_data/with-overrides-with-ignore")
+	testStepFiles, err := CollectTestStepFiles("test_data/with-overrides", logger, ignorePatterns)
+	require.NoError(t, err)
+
+	// Verify we still get the expected test step files
+	assert.NotEmpty(t, testStepFiles)
+	assert.Contains(t, testStepFiles, int64(0))
+	assert.Contains(t, testStepFiles, int64(1))
+	assert.Contains(t, testStepFiles, int64(2))
+	assert.Contains(t, testStepFiles, int64(3))
+
+	// Test that multiple patterns work
+	multiPatterns := []string{"*.md", "*.txt", "*.rst"}
+	testStepFilesMulti, err := CollectTestStepFiles("test_data/with-overrides", logger, multiPatterns)
+	require.NoError(t, err)
+	assert.Equal(t, testStepFiles, testStepFilesMulti)
 }
