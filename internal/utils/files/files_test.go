@@ -1,6 +1,8 @@
 package files
 
 import (
+	"fmt"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -8,6 +10,38 @@ import (
 
 	testutils "github.com/kudobuilder/kuttl/internal/utils"
 )
+
+// mockLogger is a simple logger that captures log messages for testing
+type mockLogger struct {
+	messages []string
+}
+
+func (m *mockLogger) Log(args ...interface{}) {
+	m.messages = append(m.messages, fmt.Sprint(args...))
+}
+
+func (m *mockLogger) Logf(format string, args ...interface{}) {
+	m.messages = append(m.messages, fmt.Sprintf(format, args...))
+}
+
+func (m *mockLogger) WithPrefix(_ string) testutils.Logger {
+	return m
+}
+
+func (m *mockLogger) Write(p []byte) (n int, err error) {
+	return len(p), nil
+}
+
+func (m *mockLogger) Flush() {}
+
+func (m *mockLogger) hasMessageContaining(substring string) bool {
+	for _, msg := range m.messages {
+		if strings.Contains(msg, substring) {
+			return true
+		}
+	}
+	return false
+}
 
 func TestCollectTestStepFiles(t *testing.T) {
 	for _, tt := range []struct {
@@ -48,9 +82,38 @@ func TestCollectTestStepFiles(t *testing.T) {
 		},
 	} {
 		t.Run(tt.path, func(t *testing.T) {
-			testStepFiles, err := CollectTestStepFiles(tt.path, testutils.NewTestLogger(t, tt.path))
+			testStepFiles, err := CollectTestStepFiles(tt.path, testutils.NewTestLogger(t, tt.path), nil)
 			require.NoError(t, err)
 			assert.Equal(t, tt.expected, testStepFiles)
 		})
 	}
+}
+
+func TestCollectTestStepFilesWithIgnorePatterns(t *testing.T) {
+	t.Run("default patterns ignore README files", func(t *testing.T) {
+		logger := &mockLogger{}
+		_, err := CollectTestStepFiles("test_data/with-overrides", logger, nil)
+		require.NoError(t, err)
+
+		assert.False(t, logger.hasMessageContaining("Ignoring \"README.md\""),
+			"README.md should be silently ignored with default patterns")
+	})
+
+	t.Run("explicit patterns override defaults", func(t *testing.T) {
+		logger := &mockLogger{}
+		_, err := CollectTestStepFiles("test_data/with-overrides", logger, []string{})
+		require.NoError(t, err)
+
+		assert.True(t, logger.hasMessageContaining("Ignoring \"README.md\""),
+			"README.md should generate warning when default patterns are overridden with empty list")
+	})
+
+	t.Run("custom patterns silently ignore matching files", func(t *testing.T) {
+		logger := &mockLogger{}
+		_, err := CollectTestStepFiles("test_data/with-overrides", logger, []string{"*.txt", "*.md"})
+		require.NoError(t, err)
+
+		assert.False(t, logger.hasMessageContaining("Ignoring \"README.md\""),
+			"README.md should be silently ignored with matching custom pattern")
+	})
 }

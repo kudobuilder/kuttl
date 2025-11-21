@@ -71,6 +71,13 @@ func WithLogSuppressions(suppressions []string) CaseOption {
 	}
 }
 
+// WithIgnoreFiles sets the list of file patterns to ignore.
+func WithIgnoreFiles(patterns []string) CaseOption {
+	return func(c *Case) {
+		c.ignoreFiles = patterns
+	}
+}
+
 // WithRunLabels sets the run labels.
 func WithRunLabels(runLabels labels.Set) CaseOption {
 	return func(c *Case) {
@@ -118,6 +125,8 @@ type Case struct {
 	logger testutils.Logger
 	// List of log types which should be suppressed.
 	suppressions []string
+	// List of file patterns to ignore when collecting test steps.
+	ignoreFiles []string
 	// Caution: the Vars element of this struct may be shared with other Case objects.
 	templateEnv template.Env
 }
@@ -347,7 +356,7 @@ func (c *Case) getEagerClients() ([]clientWithKubeConfig, error) {
 
 // LoadTestSteps loads all the test steps for a test case.
 func (c *Case) LoadTestSteps() error {
-	testStepFiles, err := files.CollectTestStepFiles(c.dir, c.logger)
+	testStepFiles, err := files.CollectTestStepFiles(c.dir, c.logger, c.ignoreFiles)
 	if err != nil {
 		return err
 	}

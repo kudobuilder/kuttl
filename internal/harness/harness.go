@@ -88,6 +88,7 @@ func (h *Harness) LoadTests(dir string) ([]*testcase.Case, error) {
 			testcase.WithNamespace(h.TestSuite.Namespace),
 			testcase.WithTimeout(timeout),
 			testcase.WithLogSuppressions(h.TestSuite.Suppress),
+			testcase.WithIgnoreFiles(h.TestSuite.IgnoreFiles),
 			testcase.WithRunLabels(h.RunLabels),
 			testcase.WithClients(h.Client, h.DiscoveryClient),
 			testcase.WithTemplateVars(h.TemplateVars)))

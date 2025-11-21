@@ -326,6 +326,11 @@ func (in *TestSuite) DeepCopyInto(out *TestSuite) {
 		*out = make([]string, len(*in))
 		copy(*out, *in)
 	}
+	if in.IgnoreFiles != nil {
+		in, out := &in.IgnoreFiles, &out.IgnoreFiles
+		*out = make([]string, len(*in))
+		copy(*out, *in)
+	}
 	if in.Config != nil {
 		in, out := &in.Config, &out.Config
 		*out = (*in).DeepCopy()
