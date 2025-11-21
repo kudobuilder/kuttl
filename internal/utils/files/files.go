@@ -10,7 +10,7 @@ import (
 
 // CollectTestStepFiles collects a map of test steps and their associated files
 // from a directory.
-func CollectTestStepFiles(dir string, logger testutils.Logger) (map[int64][]string, error) {
+func CollectTestStepFiles(dir string, logger testutils.Logger, ignorePatterns []string) (map[int64][]string, error) {
 	testStepFiles := map[int64][]string{}
 
 	files, err := os.ReadDir(dir)
@@ -19,6 +19,23 @@ func CollectTestStepFiles(dir string, logger testutils.Logger) (map[int64][]stri
 	}
 
 	for _, file := range files {
+		// Check if file matches any ignore pattern
+		shouldIgnore := false
+		for _, pattern := range ignorePatterns {
+			matched, err := filepath.Match(pattern, file.Name())
+			if err != nil {
+				logger.Logf("Invalid ignore pattern %q: %v", pattern, err)
+				continue
+			}
+			if matched {
+				shouldIgnore = true
+				break
+			}
+		}
+		if shouldIgnore {
+			continue
+		}
+
 		f := kfile.Parse(file.Name())
 		if f.Type == kfile.TypeUnknown {
 			logger.Logf("Ignoring %q: %v.", file.Name(), f.Error)

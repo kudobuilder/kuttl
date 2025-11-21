@@ -97,6 +97,10 @@ type TestSuite struct {
 	// Suppress is used to suppress logs
 	Suppress []string `json:"suppress"`
 
+	// IgnoreFiles is a list of file patterns (e.g., "*.md", "README*") to ignore when collecting test steps.
+	// Files matching these patterns will not generate warnings about not matching the expected test file pattern.
+	IgnoreFiles []string `json:"ignoreFiles"`
+
 	Config *RestConfig `json:"config,omitempty"`
 }
 
