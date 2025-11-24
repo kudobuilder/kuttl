@@ -192,7 +192,13 @@ func (c *Case) deleteNamespace(cl clientWithKubeConfig) error {
 	return cl.Wrapf(err, "waiting for namespace %q to be deleted timed out", c.ns.name)
 }
 
-func (c *Case) createNamespace(test *testing.T, cl clientWithKubeConfig) error {
+type T interface {
+	Context() context.Context
+	Cleanup(f func())
+	Error(args ...any)
+}
+
+func (c *Case) createNamespace(test T, cl clientWithKubeConfig) error {
 	cl.Logf("Creating namespace %q", c.ns.name)
 
 	ctx := test.Context()
@@ -210,11 +216,15 @@ func (c *Case) createNamespace(test *testing.T, cl clientWithKubeConfig) error {
 			Kind: "Namespace",
 		},
 	})
+	nsExisted, err := c.didNsExist(ctx, err, cl)
+	if err != nil {
+		return fmt.Errorf("failed to create test namespace %q: %w", c.ns.name, err)
+	}
 	if !c.skipDelete {
 		test.Cleanup(func() {
 			// Namespace cleanup is tracked per-client for multi-cluster tests.
 			// See KEP-0008 for details on backward compatibility decisions.
-			if c.ns.userSupplied && k8serrors.IsAlreadyExists(err) {
+			if c.ns.userSupplied && nsExisted {
 				cl.Logf("Skipping deletion of pre-existing user supplied namespace %s", c.ns.name)
 			} else {
 				if err := c.deleteNamespace(cl); err != nil {
@@ -224,14 +234,35 @@ func (c *Case) createNamespace(test *testing.T, cl clientWithKubeConfig) error {
 		})
 	}
 
+	return nil
+}
+
+func (c *Case) didNsExist(ctx context.Context, err error, cl clientWithKubeConfig) (bool, error) {
 	if k8serrors.IsAlreadyExists(err) {
 		cl.Logf("Namespace %q already exists", c.ns.name)
-		return nil
+		return true, nil
 	}
-	if err != nil {
-		return fmt.Errorf("failed to create test namespace %q: %w", c.ns.name, err)
+	if k8serrors.IsForbidden(err) {
+		// If we got a permission error, check separately if the namespace exists
+		var existingNs corev1.Namespace
+		getErr := cl.Get(ctx, client.ObjectKey{Name: c.ns.name}, &existingNs)
+		if getErr == nil {
+			cl.Logf("Namespace %q already exists", c.ns.name)
+			return true, nil
+		}
+		if k8serrors.IsNotFound(getErr) {
+			return false, fmt.Errorf("cannot create namespace %q: %w", c.ns.name, err)
+		}
+		cl.Logf("Namespace %q creation forbidden (%v) and cannot check its existence: %v", c.ns.name, err, getErr)
+		// If the user supplied the namespace, it might be due to restrictive RBAC, so let's trust the user.
+		// If this is an ephemeral namespace, then:
+		// a) either our permissions are very wrong and the test is unlikely to pass anyway, or
+		// b) it's a subtle multi-kubeconfig setup where this client is not meant to manage the namespace, but another is.
+		// Either way, we log the above for visibility and carry on as if a pre-existing namespace is usable.
+		// The worst that could happen is that the test will fail slightly later than during setup.
+		return true, nil
 	}
-	return nil
+	return false, err
 }
 
 func (c *Case) maybeReportEvents() {
