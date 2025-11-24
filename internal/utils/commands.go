@@ -50,7 +50,7 @@ func GetArgs(ctx context.Context, cmd harness.Command, namespace string, envMap 
 
 	if cmd.Namespaced {
 		fs := pflag.NewFlagSet("", pflag.ContinueOnError)
-		fs.ParseErrorsWhitelist.UnknownFlags = true
+		fs.ParseErrorsAllowlist.UnknownFlags = true
 
 		namespaceParsed := fs.StringP("namespace", "n", "", "")
 		if err := fs.Parse(argSplit); err != nil {
