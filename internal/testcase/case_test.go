@@ -598,10 +598,10 @@ func clientWithAbsentNs(*testing.T, string) client.Client {
 	return fake.NewClientBuilder().WithScheme(scheme.Scheme).Build()
 }
 
-func clientWithExistingNs(*testing.T, string) client.Client {
+func clientWithExistingNs(_ *testing.T, nsName string) client.Client {
 	return fake.NewClientBuilder().WithScheme(scheme.Scheme).WithRuntimeObjects(&corev1.Namespace{
 		ObjectMeta: metav1.ObjectMeta{
-			Name: "foo",
+			Name: nsName,
 		},
 	}).Build()
 }
