@@ -361,8 +361,8 @@ func TestLoadTestSteps(t *testing.T) {
 
 // testMock is an object useful for unit-testing Case.createNamespace().
 type testMock struct {
-	cleanup   func()
-	testError []any
+	cleanup    func()
+	testErrors [][]any
 }
 
 func (t *testMock) Context() context.Context {
@@ -374,17 +374,17 @@ func (t *testMock) Cleanup(f func()) {
 }
 
 func (t *testMock) Error(args ...any) {
-	t.testError = args
+	t.testErrors = append(t.testErrors, args)
 }
 
 func TestCase_createNamespace(t *testing.T) {
 	tests := map[string]struct {
-		options               []CaseOption
-		cl                    func(*testing.T, string) client.Client
-		wantErr               error
-		expectedCleanupErrors int
-		getNsBeforeCleanup    func(*testing.T, error)
-		getNsAfterCleanup     func(*testing.T, error)
+		options              []CaseOption
+		cl                   func(*testing.T, string) client.Client
+		wantErr              error
+		expectedCleanupError func(err error) bool
+		getNsBeforeCleanup   func(*testing.T, error)
+		getNsAfterCleanup    func(*testing.T, error)
 	}{
 		"user-supplied exists": {
 			options: []CaseOption{WithNamespace("foo")},
@@ -466,8 +466,8 @@ func TestCase_createNamespace(t *testing.T) {
 			},
 		},
 		"ephemeral exists and no write permission": {
-			cl:                    newClientWithExistingNsNoWritePerm,
-			expectedCleanupErrors: 1,
+			cl:                   newClientWithExistingNsNoWritePerm,
+			expectedCleanupError: k8serrors.IsForbidden,
 			getNsBeforeCleanup: func(t *testing.T, err error) {
 				require.NoError(t, err)
 			},
@@ -476,8 +476,8 @@ func TestCase_createNamespace(t *testing.T) {
 			},
 		},
 		"ephemeral exists and no permissions at all": {
-			cl:                    newClientWithExistingNsNoPerms,
-			expectedCleanupErrors: 1,
+			cl:                   newClientWithExistingNsNoPerms,
+			expectedCleanupError: k8serrors.IsForbidden,
 			getNsBeforeCleanup: func(t *testing.T, err error) {
 				require.NoError(t, err)
 			},
@@ -524,7 +524,18 @@ func TestCase_createNamespace(t *testing.T) {
 				tm.cleanup()
 			}
 
-			assert.Len(t, tm.testError, tt.expectedCleanupErrors)
+			if tt.expectedCleanupError != nil {
+				// Error should have been called once...
+				require.Len(t, tm.testErrors, 1)
+				// ...with one parameter...
+				require.Len(t, tm.testErrors[0], 1)
+				// ...which is an error.
+				err, ok := tm.testErrors[0][0].(error)
+				require.True(t, ok)
+				assert.True(t, tt.expectedCleanupError(err))
+			} else {
+				assert.Empty(t, tm.testErrors)
+			}
 			ns = &corev1.Namespace{
 				ObjectMeta: metav1.ObjectMeta{
 					Name: c.ns.name,
