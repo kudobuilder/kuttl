@@ -359,6 +359,7 @@ func TestLoadTestSteps(t *testing.T) {
 	}
 }
 
+// testMock is an object useful for unit-testing Case.createNamespace().
 type testMock struct {
 	cleanup   func()
 	testError []any
