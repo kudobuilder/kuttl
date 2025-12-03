@@ -8,18 +8,12 @@ import (
 	testutils "github.com/kudobuilder/kuttl/internal/utils"
 )
 
-var defaultIgnorePatterns = []string{"README*"}
-
 // matchesAnyPattern checks if a filename matches any of the given patterns.
 // Returns true if a match is found, false otherwise.
-func matchesAnyPattern(filename string, patterns []string, logger testutils.Logger) bool {
+func matchesAnyPattern(filename string, patterns []string) bool {
 	for _, pattern := range patterns {
-		matched, err := filepath.Match(pattern, filename)
-		if err != nil {
-			logger.Logf("Invalid ignore pattern %q: %v", pattern, err)
-			continue
-		}
-		if matched {
+		// Pattern is validated in Harness.Setup(), so Match won't return an error
+		if matched, _ := filepath.Match(pattern, filename); matched { //nolint:errcheck
 			return true
 		}
 	}
@@ -31,18 +25,13 @@ func matchesAnyPattern(filename string, patterns []string, logger testutils.Logg
 func CollectTestStepFiles(dir string, logger testutils.Logger, ignorePatterns []string) (map[int64][]string, error) {
 	testStepFiles := map[int64][]string{}
 
-	patterns := ignorePatterns
-	if patterns == nil {
-		patterns = defaultIgnorePatterns
-	}
-
 	files, err := os.ReadDir(dir)
 	if err != nil {
 		return nil, err
 	}
 
 	for _, file := range files {
-		if matchesAnyPattern(file.Name(), patterns, logger) {
+		if matchesAnyPattern(file.Name(), ignorePatterns) {
 			continue
 		}
 

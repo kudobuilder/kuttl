@@ -90,22 +90,13 @@ func TestCollectTestStepFiles(t *testing.T) {
 }
 
 func TestCollectTestStepFilesWithIgnorePatterns(t *testing.T) {
-	t.Run("default patterns ignore README files", func(t *testing.T) {
-		logger := &mockLogger{}
-		_, err := CollectTestStepFiles("test_data/with-overrides", logger, nil)
-		require.NoError(t, err)
-
-		assert.False(t, logger.hasMessageContaining("Ignoring \"README.md\""),
-			"README.md should be silently ignored with default patterns")
-	})
-
-	t.Run("explicit patterns override defaults", func(t *testing.T) {
+	t.Run("empty patterns logs warning for README files", func(t *testing.T) {
 		logger := &mockLogger{}
 		_, err := CollectTestStepFiles("test_data/with-overrides", logger, []string{})
 		require.NoError(t, err)
 
 		assert.True(t, logger.hasMessageContaining("Ignoring \"README.md\""),
-			"README.md should generate warning when default patterns are overridden with empty list")
+			"README.md should generate warning when no ignore patterns are provided")
 	})
 
 	t.Run("custom patterns silently ignore matching files", func(t *testing.T) {
