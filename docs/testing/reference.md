@@ -13,6 +13,10 @@ kindContainers:
 testDirs:
 - tests/e2e/
 timeout: 120
+ignoreFiles:
+- "*.md"
+- "README*"
+- ".gitignore"
 ```
 
 Supported settings:
@@ -39,6 +43,7 @@ reportGranularity | string           | What granularity to report failures at. O
 reportName        | string           | The name of report to create. This field is not used unless reportFormat is set.         | "kuttl-test"
 namespace         | string           | The namespace to use for tests. This namespace will be created if it does not exist and removed if it was created (unless `skipDelete` is set). If no namespace is set, one will be auto-generated. |
 suppress          | list of strings  | Suppresses log collection of the specified types. Currently only `events` is supported.  |
+ignoreFiles       | list of strings  | File patterns (e.g., `*.md`, `README*`) to ignore when collecting test steps. Files matching these patterns will not generate warnings about not matching the expected test file pattern. Setting this field (even to an empty list) overrides the defaults. | `["README*"]`
 
 ## TestStep
 

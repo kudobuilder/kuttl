@@ -8,10 +8,33 @@ import (
 	testutils "github.com/kudobuilder/kuttl/internal/utils"
 )
 
+var defaultIgnorePatterns = []string{"README*"}
+
+// matchesAnyPattern checks if a filename matches any of the given patterns.
+// Returns true if a match is found, false otherwise.
+func matchesAnyPattern(filename string, patterns []string, logger testutils.Logger) bool {
+	for _, pattern := range patterns {
+		matched, err := filepath.Match(pattern, filename)
+		if err != nil {
+			logger.Logf("Invalid ignore pattern %q: %v", pattern, err)
+			continue
+		}
+		if matched {
+			return true
+		}
+	}
+	return false
+}
+
 // CollectTestStepFiles collects a map of test steps and their associated files
 // from a directory.
-func CollectTestStepFiles(dir string, logger testutils.Logger) (map[int64][]string, error) {
+func CollectTestStepFiles(dir string, logger testutils.Logger, ignorePatterns []string) (map[int64][]string, error) {
 	testStepFiles := map[int64][]string{}
+
+	patterns := ignorePatterns
+	if patterns == nil {
+		patterns = defaultIgnorePatterns
+	}
 
 	files, err := os.ReadDir(dir)
 	if err != nil {
@@ -19,6 +42,10 @@ func CollectTestStepFiles(dir string, logger testutils.Logger) (map[int64][]stri
 	}
 
 	for _, file := range files {
+		if matchesAnyPattern(file.Name(), patterns, logger) {
+			continue
+		}
+
 		f := kfile.Parse(file.Name())
 		if f.Type == kfile.TypeUnknown {
 			logger.Logf("Ignoring %q: %v.", file.Name(), f.Error)
