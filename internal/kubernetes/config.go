@@ -1,6 +1,7 @@
 package kubernetes
 
 import (
+	"fmt"
 	"io"
 
 	"k8s.io/apimachinery/pkg/runtime/serializer/json"
@@ -15,7 +16,7 @@ var ImpersonateAs = ""
 func GetConfig() (*rest.Config, error) {
 	cfg, err := config.GetConfig()
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("error getting kubernetes client config: %w", err)
 	}
 
 	if ImpersonateAs != "" {

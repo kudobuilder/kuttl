@@ -116,7 +116,7 @@ func (s *Step) DeleteExisting(namespace string) error {
 			objNs = ref.Namespace
 		}
 
-		_, objNs, err := kubernetes.Namespaced(dClient, obj, objNs)
+		_, objNs, err = kubernetes.Namespaced(dClient, obj, objNs)
 		if err != nil {
 			return err
 		}
@@ -137,14 +137,14 @@ func (s *Step) DeleteExisting(namespace string) error {
 
 			err := cl.List(context.TODO(), u, listOptions...)
 			if err != nil {
-				return fmt.Errorf("listing matching resources: %w", err)
+				return fmt.Errorf("listing resources to delete failed: %w", err)
 			}
 
 			for index := range u.Items {
 				toDelete = append(toDelete, &u.Items[index])
 			}
 		} else {
-			// Otherwise just append the object specified.
+			// If name was specified, just append the object.
 			toDelete = append(toDelete, obj.DeepCopy())
 		}
 	}
@@ -157,23 +157,33 @@ func (s *Step) DeleteExisting(namespace string) error {
 
 		err := cl.Delete(context.TODO(), del)
 		if err != nil && !k8serrors.IsNotFound(err) {
-			return err
+			return fmt.Errorf("deleting %v %s failed: %w", obj.GetObjectKind().GroupVersionKind(), obj.GetName(), err)
 		}
 	}
 
 	// Wait for resources to be deleted.
-	return wait.PollUntilContextTimeout(context.TODO(), 100*time.Millisecond, time.Duration(s.GetTimeout())*time.Second, true, func(ctx context.Context) (done bool, err error) {
+	lastCheckMsg := ""
+	err = wait.PollUntilContextTimeout(context.TODO(), 100*time.Millisecond, time.Duration(s.GetTimeout())*time.Second, true, func(ctx context.Context) (done bool, err error) {
 		for _, obj := range toDelete {
 			actual := &unstructured.Unstructured{}
 			actual.SetGroupVersionKind(obj.GetObjectKind().GroupVersionKind())
 			err = cl.Get(ctx, kubernetes.ObjectKey(obj), actual)
-			if err == nil || !k8serrors.IsNotFound(err) {
+			if err == nil {
+				lastCheckMsg = fmt.Sprintf("%v %s still exists", obj.GetObjectKind().GroupVersionKind(), obj.GetName())
+				return false, nil
+			}
+			if !k8serrors.IsNotFound(err) {
+				lastCheckMsg = fmt.Sprintf("checking existence of %v %s failed: %v", obj.GetObjectKind().GroupVersionKind(), obj.GetName(), err)
 				return false, err
 			}
 		}
 
 		return true, nil
 	})
+	if err != nil {
+		return fmt.Errorf("timed out waiting for resource deletion (result of last check was: %q): %w", lastCheckMsg, err)
+	}
+	return nil
 }
 
 // Create applies all resources defined in the Apply list.
@@ -204,7 +214,7 @@ func (s *Step) Create(test *testing.T, namespace string) []error {
 		}
 
 		if updated, err := kubernetes.CreateOrUpdate(ctx, cl, obj, true); err != nil {
-			errors = append(errors, err)
+			errors = append(errors, fmt.Errorf("applying %v %s failed: %w", obj.GetObjectKind().GroupVersionKind(), obj.GetName(), err))
 		} else {
 			// if the object was created, register cleanup
 			if !updated && !s.SkipDelete {
@@ -457,8 +467,13 @@ func (s *Step) Check(namespace string, timeout int) []error {
 }
 
 // Run runs a KUTTL test step:
-// 1. Apply all desired objects to Kubernetes.
-// 2. Wait for all of the states defined in the test step's asserts to be true.'
+// 1. Delete objects that should be deleted. Stop if this fails.
+// 2. Run step commands.
+// 3. Apply all desired objects to Kubernetes.
+// 4. Stop if the above fails.
+// 5. Check assertions in a loop until they all pass or step times out.
+// 6. On success, return.
+// 7. On failure, run collector commands, if any.
 func (s *Step) Run(test *testing.T, namespace string) []error {
 	s.Logger.Log("starting test step", s.String())
 

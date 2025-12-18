@@ -30,18 +30,19 @@ func ResourceID(obj runtime.Object) string {
 // If the resource is cluster scoped, then it is ignored and the namespace is not set.
 // If it is a namespaced resource and a namespace is already set, then the namespace is unchanged.
 func Namespaced(dClient discovery.DiscoveryInterface, obj runtime.Object, namespace string) (string, string, error) {
+	gvk := obj.GetObjectKind().GroupVersionKind()
 	m, err := meta.Accessor(obj)
 	if err != nil {
-		return "", "", err
+		return "", "", fmt.Errorf("obtaining metadata accessor for %T %v failed: %w", obj, gvk, err)
 	}
 
 	if m.GetNamespace() != "" {
 		return m.GetName(), m.GetNamespace(), nil
 	}
 
-	resource, err := GetAPIResource(dClient, obj.GetObjectKind().GroupVersionKind())
+	resource, err := GetAPIResource(dClient, gvk)
 	if err != nil {
-		return "", "", fmt.Errorf("retrieving API resource for %v failed: %v", obj.GetObjectKind().GroupVersionKind(), err)
+		return "", "", fmt.Errorf("retrieving API resource for %v failed: %w", gvk, err)
 	}
 
 	if !resource.Namespaced {

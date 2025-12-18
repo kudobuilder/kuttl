@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"log"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -324,16 +325,22 @@ func CreateOrUpdate(ctx context.Context, cl client.Client, obj client.Object, re
 				return err
 			}
 
-			err = cl.Patch(ctx, actual, client.RawPatch(types.MergePatchType, expectedBytes))
 			updated = true
+			if err := cl.Patch(ctx, actual, client.RawPatch(types.MergePatchType, expectedBytes)); err != nil {
+				return fmt.Errorf("failed to patch object: %w", err)
+			}
+			return nil
 		} else if apierrors.IsNotFound(err) {
-			err = cl.Create(ctx, obj)
 			updated = false
+			if err := cl.Create(ctx, obj); err != nil {
+				return fmt.Errorf("failed to create object: %w", err)
+			}
+			return nil
 		}
-		return err
+		return fmt.Errorf("failed to check object's existence: %w", err)
 	}, validators...)
 	if errors.Is(ctx.Err(), context.DeadlineExceeded) {
-		err = errors.New("create/update timeout exceeded")
+		err = fmt.Errorf("create/update timeout exceeded, last attempt was: %w", err)
 	}
 	return updated, err
 }
