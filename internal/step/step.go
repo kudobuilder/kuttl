@@ -163,7 +163,7 @@ func (s *Step) DeleteExisting(namespace string) error {
 		if k8serrors.IsNotFound(err) {
 			action = "already gone"
 		}
-		kubernetes.ResourceID(del), action)
+		s.Logger.Log(kubernetes.ResourceID(del), action)
 	}
 
 	// Wait for resources to be deleted.
