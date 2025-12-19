@@ -159,6 +159,11 @@ func (s *Step) DeleteExisting(namespace string) error {
 		if err != nil && !k8serrors.IsNotFound(err) {
 			return fmt.Errorf("deleting %v %s failed: %w", obj.GetObjectKind().GroupVersionKind(), obj.GetName(), err)
 		}
+		action := "deleted"
+		if k8serrors.IsNotFound(err) {
+			action = "already gone"
+		}
+		kubernetes.ResourceID(del), action)
 	}
 
 	// Wait for resources to be deleted.
