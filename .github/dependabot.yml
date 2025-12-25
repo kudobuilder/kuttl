@@ -9,3 +9,8 @@ updates:
         patterns:
           - "k8s.io/*"
           - "sigs.k8s.io/*"
+
+  - package-ecosystem: "gomod"
+    directory: "/hack/"
+    schedule:
+      interval: "weekly"

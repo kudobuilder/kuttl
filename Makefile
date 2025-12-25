@@ -11,8 +11,6 @@ DATE_FMT := "%Y-%m-%dT%H:%M:%SZ"
 BUILD_DATE := $(shell date -u -d "@$SOURCE_DATE_EPOCH" "+${DATE_FMT}" 2>/dev/null || date -u -r "${SOURCE_DATE_EPOCH}" "+${DATE_FMT}" 2>/dev/null || date -u "+${DATE_FMT}")
 LDFLAGS := -X ${GIT_VERSION_PATH}=${GIT_VERSION} -X ${GIT_COMMIT_PATH}=${GIT_COMMIT} -X ${BUILD_DATE_PATH}=${BUILD_DATE}
 
-# Please update the list of linters in .golagci.yml when bumping the version.
-GOLANGCI_LINT_VER = 1.64.8
 # ENVTEST_K8S_VERSION refers to the version of kubebuilder assets to be downloaded by envtest binary.
 ENVTEST_K8S_VERSION ?= 1.25.0
 
@@ -35,11 +33,7 @@ help: ## Show this help screen
 
 .PHONY: lint
 lint: ## Run golangci-lint
-ifneq (${GOLANGCI_LINT_VER}, $(shell test -x ./bin/golangci-lint && ./bin/golangci-lint version --format short 2>&1))
-	@echo "golangci-lint missing or not version '${GOLANGCI_LINT_VER}', downloading..."
-	curl -sSfL "https://raw.githubusercontent.com/golangci/golangci-lint/v${GOLANGCI_LINT_VER}/install.sh" | sh -s -- -b ./bin "v${GOLANGCI_LINT_VER}"
-endif
-	./bin/golangci-lint --timeout 5m run --build-tags integration
+	go tool -modfile=hack/go.golangci.mod github.com/golangci/golangci-lint/cmd/golangci-lint --timeout 5m run --build-tags integration
 
 .PHONY: download
 download:  ## Downloads go dependencies
