@@ -71,7 +71,7 @@ func (c *Client) Download(url string, path string) error {
 	if err != nil {
 		return err
 	}
-	defer resp.Body.Close()
+	defer resp.Body.Close() //nolint:errcheck
 
 	_, err = os.Stat(path)
 	if err == nil || os.IsExist(err) {
@@ -88,7 +88,7 @@ func (c *Client) Download(url string, path string) error {
 	if err != nil {
 		return err
 	}
-	defer out.Close()
+	defer out.Close() //nolint:errcheck
 
 	// Create our bytes counter and pass it to be used alongside our writer
 	counter := &writeCounter{Name: filepath.Base(path)}

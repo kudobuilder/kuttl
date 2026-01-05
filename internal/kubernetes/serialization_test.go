@@ -12,7 +12,7 @@ import (
 func TestLoadYAML(t *testing.T) {
 	tmpfile, err := os.CreateTemp(t.TempDir(), "test.yaml")
 	require.NoError(t, err)
-	defer tmpfile.Close()
+	defer tmpfile.Close() //nolint:errcheck
 
 	err = os.WriteFile(tmpfile.Name(), []byte(`
 apiVersion: v1
@@ -147,7 +147,7 @@ func TestPrettyDiff(t *testing.T) {
 func TestMatchesKind(t *testing.T) {
 	tmpfile, err := os.CreateTemp(t.TempDir(), "test.yaml")
 	require.NoError(t, err)
-	defer tmpfile.Close()
+	defer tmpfile.Close() //nolint:errcheck
 
 	err = os.WriteFile(tmpfile.Name(), []byte(`
 apiVersion: v1

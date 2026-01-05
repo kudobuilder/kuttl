@@ -13,7 +13,7 @@ func TestUntarInPlace(t *testing.T) {
 	assert.NoError(t, err)
 
 	folder := "testdata/tar-test"
-	defer os.RemoveAll(folder)
+	defer os.RemoveAll(folder) //nolint:errcheck
 
 	fi, err := os.Stat(folder)
 	assert.NoError(t, err)

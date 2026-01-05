@@ -15,6 +15,7 @@ linters:
     - dupl
     - dupword
     - durationcheck
+    - errcheck
     - errchkjson
     - errname
     - exhaustive
@@ -77,7 +78,6 @@ linters:
   # These linters are disabled ONLY because fixing/investigating their complaints initially was too overwhelming.
   # We SHOULD try and evaluate each of them eventually and either fix their reports
   # or comment here on why we decided to not listen to them.
-    - errcheck  # temporarily disabled - has 11 issues
     - cyclop
     - depguard
     - err113

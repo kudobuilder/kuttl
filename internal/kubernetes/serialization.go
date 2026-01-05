@@ -194,7 +194,7 @@ func LoadYAMLFromFile(path string) ([]client.Object, error) {
 	if err != nil {
 		return nil, err
 	}
-	defer opened.Close()
+	defer opened.Close() //nolint:errcheck
 
 	return LoadYAML(path, opened)
 }

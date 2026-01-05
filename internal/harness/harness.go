@@ -288,7 +288,7 @@ func (h *Harness) Config() (*rest.Config, error) {
 		return nil, err
 	}
 
-	defer f.Close()
+	defer f.Close() //nolint:errcheck
 
 	return h.config, kubernetes.Kubeconfig(h.config, f)
 }
