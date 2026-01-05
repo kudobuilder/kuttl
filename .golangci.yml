@@ -109,6 +109,32 @@ linters:
     - thelper
     - varnamelen
     - wrapcheck
+  settings:
+    errcheck:
+      check-type-assertions: true
+      check-blank: true
+    lll:
+      line-length: 250
+    dupl:
+      threshold: 400
+    govet:
+      settings:
+        printf:
+          funcs:
+            - (github.com/kudobuilder/kuttl/internal/utils.Logger).Logf
+            - (github.com/kudobuilder/kuttl/internal/utils.TestLogger).Logf
+            - (github.com/kudobuilder/kuttl/internal/case.clientWithKubeConfig).Logf
+            - (github.com/kudobuilder/kuttl/internal/case.clientWithKubeConfig).Wrapf
+    # TODO: fix the `context` usage in step package and enable these linters.
+    usetesting:
+      context-background: false
+      context-todo: false
+  exclusions:
+    paths:
+      - hack
+      - dist
+      - keps
+      - kind-*
 
 formatters:
   enable:
@@ -117,31 +143,6 @@ formatters:
   settings:
     goimports:
       # Don't use 'github.com/kudobuilder/kuttl', it'll result in unreliable output!
-      local-prefixes: github.com/kudobuilder
+      local-prefixes:
+      - github.com/kudobuilder
 
-linters-settings:
-  errcheck:
-    check-type-assertions: true
-    check-blank: true
-  lll:
-    line-length: 250
-  dupl:
-    threshold: 400
-  govet:
-    settings:
-      printf:
-        funcs:
-          - (github.com/kudobuilder/kuttl/internal/utils.Logger).Logf
-          - (github.com/kudobuilder/kuttl/internal/utils.TestLogger).Logf
-          - (github.com/kudobuilder/kuttl/internal/case.clientWithKubeConfig).Logf
-          - (github.com/kudobuilder/kuttl/internal/case.clientWithKubeConfig).Wrapf
-  # TODO: fix the `context` usage in step package and enable these linters.
-  usetesting:
-    context-background: false
-    context-todo: false
-issues:
-  exclude-dirs:
-    - hack
-    - dist
-    - keps
-    - kind-*
