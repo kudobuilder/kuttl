@@ -12,7 +12,7 @@ linters:
     - copyloopvar
     - decorder
     - dogsled
-    # - dupl  # temporarily disabled - has 2 issues
+    - dupl
     - dupword
     - durationcheck
     - errchkjson
