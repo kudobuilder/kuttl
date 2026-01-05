@@ -1,3 +1,4 @@
+// Package events provides event processing utilities.
 package events
 
 import "testing"

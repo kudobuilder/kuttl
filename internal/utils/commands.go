@@ -1,3 +1,4 @@
+// Package utils provides utility functions for commands, logging, and common operations.
 package utils
 
 // Contains functions helpful for running commands.

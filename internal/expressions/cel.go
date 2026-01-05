@@ -1,3 +1,4 @@
+// Package expressions provides Common Expression Language (CEL) evaluation functionality.
 package expressions
 
 import (

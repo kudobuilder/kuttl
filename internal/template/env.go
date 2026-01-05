@@ -1,3 +1,4 @@
+// Package template provides template processing functionality.
 package template
 
 import (

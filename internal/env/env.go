@@ -1,3 +1,4 @@
+// Package env provides environment variable expansion functionality.
 package env
 
 import (

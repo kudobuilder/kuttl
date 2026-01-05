@@ -1,3 +1,4 @@
+// Package http provides HTTP client functionality for downloading files and making requests.
 package http
 
 import (

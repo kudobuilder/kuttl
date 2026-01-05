@@ -1,3 +1,4 @@
+// Package test provides a public API for KUTTL test harness functionality.
 package test
 
 import "github.com/kudobuilder/kuttl/internal/harness"

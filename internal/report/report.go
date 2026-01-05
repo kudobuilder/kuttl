@@ -1,3 +1,4 @@
+// Package report provides test result reporting functionality in various formats.
 package report
 
 import (

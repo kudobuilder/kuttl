@@ -1,3 +1,4 @@
+// Package file provides file manipulation and processing utilities.
 package file
 
 import (

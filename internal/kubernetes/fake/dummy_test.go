@@ -1,3 +1,4 @@
+// Package fake provides fake Kubernetes client implementations for testing.
 package fake
 
 import "testing"

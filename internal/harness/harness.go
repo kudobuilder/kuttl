@@ -1,3 +1,4 @@
+// Package harness provides the main test harness functionality for KUTTL.
 package harness
 
 import (

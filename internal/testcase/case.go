@@ -1,3 +1,4 @@
+// Package testcase provides test case execution functionality for KUTTL.
 package testcase
 
 import (
