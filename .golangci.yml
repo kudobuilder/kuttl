@@ -39,7 +39,7 @@ linters:
     - importas
     - ineffassign
     - interfacebloat
-    # - lll  # temporarily disabled - has 50 issues
+    - lll
     - loggercheck
     - makezero
     - mirror
