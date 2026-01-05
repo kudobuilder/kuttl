@@ -11,8 +11,10 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client/config"
 )
 
+// ImpersonateAs holds the username to impersonate in Kubernetes API calls.
 var ImpersonateAs = ""
 
+// GetConfig returns a Kubernetes REST configuration with optional user impersonation.
 func GetConfig() (*rest.Config, error) {
 	cfg, err := config.GetConfig()
 	if err != nil {
@@ -26,6 +28,7 @@ func GetConfig() (*rest.Config, error) {
 	return cfg, nil
 }
 
+// BuildConfigWithContext creates a Kubernetes REST configuration from a kubeconfig file and context.
 func BuildConfigWithContext(kubeconfigPath, context string) (*rest.Config, error) {
 	if context == "" {
 		// Use default context

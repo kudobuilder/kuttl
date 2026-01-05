@@ -17,6 +17,7 @@ var (
 	errRefNotSpecified   = errors.New("ref not specified")
 )
 
+// BuildResourceReference constructs a NamespacedName and unstructured resource from the TestResourceRef.
 func (t *TestResourceRef) BuildResourceReference() (namespacedName types.NamespacedName, referencedResource *unstructured.Unstructured) {
 	referencedResource = &unstructured.Unstructured{}
 	apiVersionSplit := strings.Split(t.APIVersion, "/")
@@ -37,6 +38,7 @@ func (t *TestResourceRef) BuildResourceReference() (namespacedName types.Namespa
 	return
 }
 
+// Validate checks that all required fields in TestResourceRef are properly set.
 func (t *TestResourceRef) Validate() error {
 	apiVersionSplit := strings.Split(t.APIVersion, "/")
 	switch {

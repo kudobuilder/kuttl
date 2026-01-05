@@ -230,6 +230,7 @@ func (ts *Testsuite) summarize() time.Time {
 	return end
 }
 
+// NewTestReporter creates a new test reporter based on the configured granularity.
 func (ts *Testsuite) NewTestReporter(name string) TestReporter {
 	switch ts.reportGranularity {
 	case "test":

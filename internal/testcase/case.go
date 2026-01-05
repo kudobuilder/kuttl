@@ -86,6 +86,7 @@ func WithRunLabels(runLabels labels.Set) CaseOption {
 	}
 }
 
+// WithTemplateVars returns a CaseOption that sets template variables for the test case.
 func WithTemplateVars(vars map[string]any) CaseOption {
 	return func(c *Case) {
 		c.templateEnv = template.Env{Vars: vars}
@@ -202,6 +203,7 @@ func (c *Case) deleteNamespace(cl clientWithKubeConfig) error {
 	return cl.Wrapf(err, "waiting for namespace %q to be deleted timed out", c.ns.name)
 }
 
+// T represents a testing context interface with essential methods for test execution.
 type T interface {
 	Context() context.Context
 	Cleanup(f func())

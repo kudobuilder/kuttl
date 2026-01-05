@@ -12,7 +12,7 @@ import (
 	"github.com/kudobuilder/kuttl/internal/kubernetes"
 )
 
-// from a list of paths, returns an array of runtime objects
+// ToObjects from a list of paths, returns an array of runtime objects.
 func ToObjects(paths []string) ([]client.Object, error) {
 	apply := []client.Object{}
 
@@ -27,7 +27,7 @@ func ToObjects(paths []string) ([]client.Object, error) {
 	return apply, nil
 }
 
-// From a file or dir path returns an array of flat file paths
+// FromPath from a file or dir path returns an array of flat file paths.
 // pattern is a filepath.Match pattern to limit files to a pattern
 func FromPath(path, pattern string) ([]string, error) {
 	files := []string{}

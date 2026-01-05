@@ -87,6 +87,7 @@ func RunAssertExpressions(
 	return errs
 }
 
+// LoadPrograms loads and compiles CEL programs from test assertions.
 func LoadPrograms(testAssert *harness.TestAssert) (map[string]cel.Program, error) {
 	var errs []error
 	var assertions []*harness.Assertion

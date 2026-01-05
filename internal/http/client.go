@@ -34,7 +34,7 @@ func (c *Client) Get(url string) (*http.Response, error) {
 	return resp, err
 }
 
-// Get performs HTTP get, retrieves the contents and returns a bytes.Buffer of the entire contents
+// GetByteBuffer performs HTTP get, retrieves the contents and returns a bytes.Buffer of the entire contents
 // this could be dangerous against an extremely large file
 func (c *Client) GetByteBuffer(url string) (*bytes.Buffer, error) {
 	buf := bytes.NewBuffer(nil)
