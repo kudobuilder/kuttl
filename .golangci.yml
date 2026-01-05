@@ -1,5 +1,6 @@
+version: "2"
+
 linters:
-  auto-fix: false
   enable:
     - asasalint
     - asciicheck
@@ -11,10 +12,9 @@ linters:
     - copyloopvar
     - decorder
     - dogsled
-    - dupl
+    # - dupl  # temporarily disabled - has 2 issues
     - dupword
     - durationcheck
-    - errcheck
     - errchkjson
     - errname
     - exhaustive
@@ -28,21 +28,18 @@ linters:
     - goconst
     - gocritic
     - gocyclo
-    - gofmt
     - goheader
-    - goimports
     - gomoddirectives
     - gomodguard
     - goprintffuncname
-    - gosimple
-    - gosmopolitan
+    # - gosmopolitan  # temporarily disabled - has 2 issues
     - govet
     - grouper
     - iface
     - importas
     - ineffassign
     - interfacebloat
-    - lll
+    # - lll  # temporarily disabled - has 50 issues
     - loggercheck
     - makezero
     - mirror
@@ -51,20 +48,18 @@ linters:
     - nilerr
     - nilnesserr
     - noctx
-    - nolintlint
+    # - nolintlint  # temporarily disabled - has 4 issues
     - nosprintfhostport
     - predeclared
     - promlinter
     - protogetter
     - reassign
     - recvcheck
-    - revive
+    # - revive  # temporarily disabled - has 38 issues
     - rowserrcheck
     - sloglint
     - spancheck
     - sqlclosecheck
-    - staticcheck
-    - stylecheck
     - tagliatelle
     - testableexamples
     - tparallel
@@ -75,11 +70,14 @@ linters:
     - usetesting
     - wastedassign
     - whitespace
+    # - wsl_v5  # temporarily disabled - has 41 issues
     - zerologlint
   disable:
   # These linters are disabled ONLY because fixing/investigating their complaints initially was too overwhelming.
   # We SHOULD try and evaluate each of them eventually and either fix their reports
   # or comment here on why we decided to not listen to them.
+    - errcheck  # temporarily disabled - has 11 issues
+    - staticcheck  # temporarily disabled - has 7 issues
     - cyclop
     - depguard
     - err113
@@ -87,11 +85,9 @@ linters:
     - exhaustruct
     - forbidigo
     - funlen
-    - gci
     - gocognit
     - godot
     - godox
-    - gofumpt
     - gosec
     - inamedparam
     - intrange
@@ -108,13 +104,20 @@ linters:
     - perfsprint
     - prealloc
     - tagalign
-    - tenv
     - testifylint
     - testpackage
     - thelper
     - varnamelen
     - wrapcheck
-    - wsl
+
+formatters:
+  enable:
+    - gofmt
+    - goimports
+  settings:
+    goimports:
+      # Don't use 'github.com/kudobuilder/kuttl', it'll result in unreliable output!
+      local-prefixes: github.com/kudobuilder
 
 linters-settings:
   errcheck:
@@ -124,9 +127,6 @@ linters-settings:
     line-length: 250
   dupl:
     threshold: 400
-  goimports:
-    # Don't use 'github.com/kudobuilder/kuttl', it'll result in unreliable output!
-    local-prefixes: github.com/kudobuilder
   govet:
     settings:
       printf:

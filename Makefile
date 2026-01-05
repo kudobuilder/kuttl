@@ -12,7 +12,7 @@ BUILD_DATE := $(shell date -u -d "@$SOURCE_DATE_EPOCH" "+${DATE_FMT}" 2>/dev/nul
 LDFLAGS := -X ${GIT_VERSION_PATH}=${GIT_VERSION} -X ${GIT_COMMIT_PATH}=${GIT_COMMIT} -X ${BUILD_DATE_PATH}=${BUILD_DATE}
 
 # Please update the list of linters in .golagci.yml when bumping the version.
-GOLANGCI_LINT_VER = 1.64.8
+GOLANGCI_LINT_VER = 2.7.2
 # ENVTEST_K8S_VERSION refers to the version of kubebuilder assets to be downloaded by envtest binary.
 ENVTEST_K8S_VERSION ?= 1.25.0
 
