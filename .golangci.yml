@@ -32,7 +32,7 @@ linters:
     - gomoddirectives
     - gomodguard
     - goprintffuncname
-    # - gosmopolitan  # temporarily disabled - has 2 issues
+    - gosmopolitan
     - govet
     - grouper
     - iface
