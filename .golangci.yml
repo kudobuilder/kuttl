@@ -56,7 +56,7 @@ linters:
     - protogetter
     - reassign
     - recvcheck
-    # - revive  # temporarily disabled - has 38 issues
+    - revive
     - rowserrcheck
     - sloglint
     - spancheck
