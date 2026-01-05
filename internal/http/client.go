@@ -1,5 +1,5 @@
 // Package http provides HTTP client functionality for downloading files and making requests.
-package http
+package http //nolint:revive,nolintlint // apparently nolintlint is confused
 
 import (
 	"bytes"

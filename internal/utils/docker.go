@@ -1,4 +1,4 @@
-package utils //nolint:revive
+package utils //nolint:revive,nolintlint // apparently nolintlint is confused
 
 import (
 	"context"
