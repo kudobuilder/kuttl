@@ -48,7 +48,7 @@ linters:
     - nilerr
     - nilnesserr
     - noctx
-    # - nolintlint  # temporarily disabled - has 4 issues
+    - nolintlint
     - nosprintfhostport
     - predeclared
     - promlinter
