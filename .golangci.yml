@@ -60,6 +60,7 @@ linters:
     - sloglint
     - spancheck
     - sqlclosecheck
+    - staticcheck
     - tagliatelle
     - testableexamples
     - tparallel
@@ -77,7 +78,6 @@ linters:
   # We SHOULD try and evaluate each of them eventually and either fix their reports
   # or comment here on why we decided to not listen to them.
     - errcheck  # temporarily disabled - has 11 issues
-    - staticcheck  # temporarily disabled - has 7 issues
     - cyclop
     - depguard
     - err113

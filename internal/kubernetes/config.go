@@ -74,8 +74,8 @@ func Kubeconfig(cfg *rest.Config, w io.Writer) error {
 				Name: "cluster",
 				Cluster: appsv1.Cluster{
 					Server:                   cfg.Host,
-					CertificateAuthorityData: cfg.TLSClientConfig.CAData,
-					InsecureSkipTLSVerify:    cfg.TLSClientConfig.Insecure,
+					CertificateAuthorityData: cfg.CAData,
+					InsecureSkipTLSVerify:    cfg.Insecure,
 				},
 			},
 		},
@@ -92,8 +92,8 @@ func Kubeconfig(cfg *rest.Config, w io.Writer) error {
 			{
 				Name: "user",
 				AuthInfo: appsv1.AuthInfo{
-					ClientCertificateData: cfg.TLSClientConfig.CertData,
-					ClientKeyData:         cfg.TLSClientConfig.KeyData,
+					ClientCertificateData: cfg.CertData,
+					ClientKeyData:         cfg.KeyData,
 					Token:                 cfg.BearerToken,
 					Username:              cfg.Username,
 					Password:              cfg.Password,
