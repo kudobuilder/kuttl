@@ -120,6 +120,10 @@ func (testDeps) InitRuntimeCoverage() (mode string, tearDown func(string, string
 	return
 }
 
+func (testDeps) ModulePath() string {
+	return ""
+}
+
 // corpusEntry is from the public go testing which references an internal structure.
 // corpusEntry is an alias to the same type as internal/fuzz.CorpusEntry.
 // We use a type alias because we don't want to export this type, and we can't
