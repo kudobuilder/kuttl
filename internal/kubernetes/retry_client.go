@@ -200,6 +200,7 @@ func (r *RetryClient) Patch(ctx context.Context, obj client.Object, patch client
 	}, isJSONSyntaxError)
 }
 
+// Apply applies a Kubernetes configuration with automatic retry on transient failures.
 func (r *RetryClient) Apply(ctx context.Context, obj runtime.ApplyConfiguration, opts ...client.ApplyOption) error {
 	return retry(ctx, func(ctx context.Context) error {
 		return r.Client.Apply(ctx, obj, opts...)

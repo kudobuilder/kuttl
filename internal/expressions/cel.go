@@ -1,3 +1,4 @@
+// Package expressions provides Common Expression Language (CEL) evaluation functionality.
 package expressions
 
 import (
@@ -86,6 +87,7 @@ func RunAssertExpressions(
 	return errs
 }
 
+// LoadPrograms loads and compiles CEL programs from test assertions.
 func LoadPrograms(testAssert *harness.TestAssert) (map[string]cel.Program, error) {
 	var errs []error
 	var assertions []*harness.Assertion

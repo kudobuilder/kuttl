@@ -1,3 +1,4 @@
+// Package env provides environment variable expansion functionality.
 package env
 
 import (
@@ -5,7 +6,7 @@ import (
 	"strings"
 )
 
-// Expand provides OS expansion of defined ENV VARs inside args to commands.  The expansion is limited to what is defined on the OS
+// ExpandWithMap provides OS expansion of defined ENV VARs inside args to commands. The expansion is limited to what is defined on the OS
 // and the variables passed into to the env parameter. To escape a dollar sign, pass in two dollar signs.
 func ExpandWithMap(c string, env map[string]string) string {
 	// expand $$ -> $

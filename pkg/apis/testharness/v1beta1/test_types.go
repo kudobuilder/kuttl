@@ -6,10 +6,13 @@ import (
 	"k8s.io/client-go/rest"
 )
 
+// KubeconfigLoadingEager specifies that kubeconfig should be loaded eagerly.
 const KubeconfigLoadingEager = "Eager"
+
+// KubeconfigLoadingLazy specifies that kubeconfig should be loaded lazily.
 const KubeconfigLoadingLazy = "Lazy"
 
-// Create embedded struct to implement custom DeepCopyInto method
+// RestConfig embeds rest.Config to implement custom DeepCopyInto method.
 type RestConfig struct {
 	RC *rest.Config
 }
@@ -236,6 +239,7 @@ type TestCollector struct {
 	Cmd string `json:"command,omitempty"`
 }
 
+// TestResourceRef defines a reference to a Kubernetes resource for testing.
 type TestResourceRef struct {
 	APIVersion string `json:"apiVersion,omitempty"`
 	Kind       string `json:"kind,omitempty"`
@@ -244,6 +248,7 @@ type TestResourceRef struct {
 	Ref        string `json:"ref,omitempty"`
 }
 
+// Assertion defines a test assertion using CEL expressions.
 type Assertion struct {
 	CELExpression string `json:"celExpr,omitempty"`
 }
@@ -251,6 +256,7 @@ type Assertion struct {
 // DefaultKINDContext defines the default kind context to use.
 const DefaultKINDContext = "kind"
 
+// DeepCopyInto creates a deep copy of the RestConfig.
 func (in *RestConfig) DeepCopyInto(out *RestConfig) {
 	out.RC = rest.CopyConfig(in.RC)
 }

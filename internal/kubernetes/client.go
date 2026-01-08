@@ -1,3 +1,4 @@
+// Package kubernetes provides utilities for working with Kubernetes clients and resources.
 package kubernetes
 
 import (

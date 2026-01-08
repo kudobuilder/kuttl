@@ -1,4 +1,4 @@
-package utils
+package utils //nolint:revive,nolintlint // apparently nolintlint is confused
 
 import (
 	"bytes"

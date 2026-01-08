@@ -120,14 +120,14 @@ func TestParseVars(t *testing.T) {
 		},
 		"unicode and special characters": {
 			input: map[string]string{
-				"unicode":        "测试",
+				"unicode":        "测试", //nolint:gosmopolitan // Unicode test data
 				"emoji":          "🚀",
 				"special_chars":  "name@domain.com",
 				"with_quotes":    `"quoted string"`,
 				"with_backslash": `path\to\file`,
 			},
 			expected: map[string]any{
-				"unicode":        "测试",
+				"unicode":        "测试", //nolint:gosmopolitan // Unicode test data
 				"emoji":          "🚀",
 				"special_chars":  "name@domain.com",
 				"with_quotes":    "quoted string",

@@ -17,7 +17,7 @@ func UntarInPlace(path string) error {
 	if err != nil {
 		return err
 	}
-	defer file.Close()
+	defer file.Close() //nolint:errcheck // We are just reading, don't care if closing fails as long as UnTar works.
 
 	compressed := filepath.Ext(path) == ".tgz"
 	return UnTar(folder, file, compressed)
@@ -33,7 +33,7 @@ func UnTar(dest string, r io.Reader, compressed bool) (err error) {
 		if err != nil {
 			return err
 		}
-		defer gzr.Close()
+		defer gzr.Close() //nolint:errcheck // We are just reading, don't care if closing fails as long as reading works.
 		r = gzr
 	}
 	tr := tar.NewReader(r)
@@ -76,7 +76,9 @@ func UnTar(dest string, r io.Reader, compressed bool) (err error) {
 				return err
 			}
 
-			f.Close()
+			if err := f.Close(); err != nil {
+				return err
+			}
 		}
 	}
 }

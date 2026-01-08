@@ -8,6 +8,7 @@ import (
 	"strings"
 )
 
+// Type represents the type of a test file.
 type Type int
 
 const (
@@ -21,6 +22,7 @@ const (
 	TypeError
 )
 
+// Info contains parsed information about a test file name.
 type Info struct {
 	Type Type
 	// Error is set for TypeUnknown objects and describes the reason.
@@ -47,6 +49,7 @@ var fileNameRegex = regexp.MustCompile(`^(\d+-)?([^-.]+)(-[^.]+)?((?:\.gotmpl)?\
 // fileNamePattern is a human-readable representation of fileNameRegex.
 const fileNamePattern = "(<number>-)<name>(-<name>)((.gotmpl).yaml)"
 
+// Parse parses a file name and returns information about its type and structure.
 func Parse(fullName string) Info {
 	name := filepath.Base(fullName)
 	matches := fileNameRegex.FindStringSubmatch(name)

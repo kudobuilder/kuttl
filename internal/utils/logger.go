@@ -1,4 +1,4 @@
-package utils
+package utils //nolint:revive,nolintlint // apparently nolintlint is confused
 
 import (
 	"bytes"
@@ -67,6 +67,7 @@ func (t *TestLogger) Write(p []byte) (n int, err error) {
 	return len(p), nil
 }
 
+// Flush outputs any buffered log messages to the underlying test logger.
 func (t *TestLogger) Flush() {
 	if len(t.buffer) != 0 {
 		t.Log(string(t.buffer))

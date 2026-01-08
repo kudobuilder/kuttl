@@ -44,6 +44,44 @@ func TestMain(m *testing.M) {
 }
 
 func TestCheckResourceIntegration(t *testing.T) {
+	// Helper function to create nginx container spec
+	createNginxContainerSpec := func() map[string]interface{} {
+		return map[string]interface{}{
+			"containers": []interface{}{
+				map[string]interface{}{
+					"image": "nginx:1.7.9",
+					"name":  "nginx",
+				},
+			},
+		}
+	}
+
+	// Helper function to create a pod with labels and nginx container
+	createPodWithLabels := func(name string, labels map[string]string) client.Object {
+		return kubernetes.WithSpec(t, kubernetes.WithLabels(t, kubernetes.NewPod(name, ""), labels), createNginxContainerSpec())
+	}
+
+	// Common expected pod object
+	expectedNginxPod := &unstructured.Unstructured{
+		Object: map[string]interface{}{
+			"apiVersion": "v1",
+			"kind":       "Pod",
+			"metadata": map[string]interface{}{
+				"labels": map[string]interface{}{
+					"app": "nginx",
+				},
+			},
+			"spec": map[string]interface{}{
+				"containers": []interface{}{
+					map[string]interface{}{
+						"image": "nginx:1.7.9",
+						"name":  "nginx",
+					},
+				},
+			},
+		},
+	}
+
 	for _, test := range []struct {
 		testName    string
 		actual      []client.Object
@@ -53,90 +91,18 @@ func TestCheckResourceIntegration(t *testing.T) {
 		{
 			testName: "match object by labels, first in list matches",
 			actual: []client.Object{
-				kubernetes.WithSpec(t, kubernetes.WithLabels(t, kubernetes.NewPod("labels-match-pod", ""), map[string]string{
-					"app": "nginx",
-				}), map[string]interface{}{
-					"containers": []interface{}{
-						map[string]interface{}{
-							"image": "nginx:1.7.9",
-							"name":  "nginx",
-						},
-					},
-				}),
-				kubernetes.WithSpec(t, kubernetes.WithLabels(t, kubernetes.NewPod("bb", ""), map[string]string{
-					"app": "not-match",
-				}), map[string]interface{}{
-					"containers": []interface{}{
-						map[string]interface{}{
-							"image": "nginx:1.7.9",
-							"name":  "nginx",
-						},
-					},
-				}),
+				createPodWithLabels("labels-match-pod", map[string]string{"app": "nginx"}),
+				createPodWithLabels("bb", map[string]string{"app": "not-match"}),
 			},
-			expected: &unstructured.Unstructured{
-				Object: map[string]interface{}{
-					"apiVersion": "v1",
-					"kind":       "Pod",
-					"metadata": map[string]interface{}{
-						"labels": map[string]interface{}{
-							"app": "nginx",
-						},
-					},
-					"spec": map[string]interface{}{
-						"containers": []interface{}{
-							map[string]interface{}{
-								"image": "nginx:1.7.9",
-								"name":  "nginx",
-							},
-						},
-					},
-				},
-			},
+			expected: expectedNginxPod,
 		},
 		{
 			testName: "match object by labels, last in list matches",
 			actual: []client.Object{
-				kubernetes.WithSpec(t, kubernetes.WithLabels(t, kubernetes.NewPod("last-in-list", ""), map[string]string{
-					"app": "not-match",
-				}), map[string]interface{}{
-					"containers": []interface{}{
-						map[string]interface{}{
-							"image": "nginx:1.7.9",
-							"name":  "nginx",
-						},
-					},
-				}),
-				kubernetes.WithSpec(t, kubernetes.WithLabels(t, kubernetes.NewPod("bb", ""), map[string]string{
-					"app": "nginx",
-				}), map[string]interface{}{
-					"containers": []interface{}{
-						map[string]interface{}{
-							"image": "nginx:1.7.9",
-							"name":  "nginx",
-						},
-					},
-				}),
+				createPodWithLabels("last-in-list", map[string]string{"app": "not-match"}),
+				createPodWithLabels("bb", map[string]string{"app": "nginx"}),
 			},
-			expected: &unstructured.Unstructured{
-				Object: map[string]interface{}{
-					"apiVersion": "v1",
-					"kind":       "Pod",
-					"metadata": map[string]interface{}{
-						"labels": map[string]interface{}{
-							"app": "nginx",
-						},
-					},
-					"spec": map[string]interface{}{
-						"containers": []interface{}{
-							map[string]interface{}{
-								"image": "nginx:1.7.9",
-								"name":  "nginx",
-							},
-						},
-					},
-				},
-			},
+			expected: expectedNginxPod,
 		},
 		{
 			testName: "match object by labels, does not exist",

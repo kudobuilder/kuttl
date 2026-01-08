@@ -1,3 +1,4 @@
+// Package assert provides assertion functionality for KUTTL test harness.
 package assert
 
 import (

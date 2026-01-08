@@ -1,3 +1,4 @@
+// Package cmd provides command-line interface commands for KUTTL.
 package cmd
 
 import (

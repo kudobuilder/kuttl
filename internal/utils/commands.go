@@ -1,4 +1,5 @@
-package utils
+// Package utils provides utility functions for commands, logging, and common operations.
+package utils //nolint:revive,nolintlint // apparently nolintlint is confused
 
 // Contains functions helpful for running commands.
 
