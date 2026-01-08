@@ -67,14 +67,8 @@ func (c *Client) DownloadFile(url, path string) (string, error) {
 // Download takes a url to download and a filepath to write it to
 // this will write the response to any url request to a file.
 func (c *Client) Download(url string, path string) error {
-	// Get the data
-	resp, err := c.Get(url)
-	if err != nil {
-		return err
-	}
-	defer resp.Body.Close() //nolint:errcheck
-
-	_, err = os.Stat(path)
+	// Check destination path.
+	_, err := os.Stat(path)
 	if err == nil || os.IsExist(err) {
 		return os.ErrExist
 	}
@@ -83,17 +77,46 @@ func (c *Client) Download(url string, path string) error {
 		return err
 	}
 
-	// Create the file with .tmp extension, so that we won't overwrite a
-	// file until it's downloaded fully
-	out, err := os.Create(path + ".tmp")
+	// Get the data
+	resp, err := c.Get(url) //nolint:bodyclose // downloadWithProgress takes ownership of resp.Body and closes it.
 	if err != nil {
 		return err
 	}
-	defer out.Close() //nolint:errcheck
+
+	// Create the file with .tmp extension, so that we won't overwrite a
+	// file until it's downloaded fully
+	tmpPath := path + ".tmp"
+	if err := downloadWithProgress(resp.Body, tmpPath); err != nil {
+		// Try to clean up garbage if download fails.
+		rmErr := os.Remove(tmpPath)
+		// At least warn if unable to clean up for some reason.
+		if !os.IsNotExist(rmErr) {
+			fmt.Printf("Warning: failed to remove temporary file %q: %v\n", tmpPath, rmErr)
+		}
+		return err
+	}
+	// Rename the tmp file back to the original file
+	return os.Rename(tmpPath, path)
+}
+
+func downloadWithProgress(body io.ReadCloser, path string) (err error) {
+	defer body.Close() //nolint:errcheck // If the download completed OK, we don't care if closing fails.
+
+	var out *os.File
+	out, err = os.Create(path)
+	if err != nil {
+		return err
+	}
+	defer func() {
+		closeErr := out.Close()
+		if err == nil {
+			err = fmt.Errorf("failed to close downloaded file %q: %w", path, closeErr)
+		}
+	}()
 
 	// Create our bytes counter and pass it to be used alongside our writer
 	counter := &writeCounter{Name: filepath.Base(path)}
-	_, err = io.Copy(out, io.TeeReader(resp.Body, counter))
+	_, err = io.Copy(out, io.TeeReader(body, counter))
 	if err != nil {
 		return err
 	}
@@ -101,13 +124,7 @@ func (c *Client) Download(url string, path string) error {
 	// The progress use the same line so print a new line once it's finished downloading
 	fmt.Println()
 
-	// Rename the tmp file back to the original file
-	err = os.Rename(path+".tmp", path)
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return err
 }
 
 type writeCounter struct {

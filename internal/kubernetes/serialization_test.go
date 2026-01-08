@@ -12,7 +12,6 @@ import (
 func TestLoadYAML(t *testing.T) {
 	tmpfile, err := os.CreateTemp(t.TempDir(), "test.yaml")
 	require.NoError(t, err)
-	defer tmpfile.Close() //nolint:errcheck
 
 	err = os.WriteFile(tmpfile.Name(), []byte(`
 apiVersion: v1
@@ -36,9 +35,8 @@ spec:
   - name: nginx
     image: nginx:1.7.9
 `), 0600)
-	if err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, err)
+	require.NoError(t, tmpfile.Close())
 
 	objs, err := LoadYAMLFromFile(tmpfile.Name())
 	require.NoError(t, err)
@@ -147,7 +145,6 @@ func TestPrettyDiff(t *testing.T) {
 func TestMatchesKind(t *testing.T) {
 	tmpfile, err := os.CreateTemp(t.TempDir(), "test.yaml")
 	require.NoError(t, err)
-	defer tmpfile.Close() //nolint:errcheck
 
 	err = os.WriteFile(tmpfile.Name(), []byte(`
 apiVersion: v1
@@ -164,9 +161,8 @@ kind: CustomResourceDefinition
 metadata:
   name: hello
 `), 0600)
-	if err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, err)
+	require.NoError(t, tmpfile.Close())
 
 	objs, err := LoadYAMLFromFile(tmpfile.Name())
 	require.NoError(t, err)
