@@ -280,6 +280,13 @@ func (r *RetryStatusWriter) Patch(ctx context.Context, obj client.Object, patch 
 	}, isJSONSyntaxError)
 }
 
+// Apply applies the given obj in the Kubernetes cluster.
+func (r *RetryStatusWriter) Apply(ctx context.Context, obj runtime.ApplyConfiguration, opts ...client.SubResourceApplyOption) error {
+	return retry(ctx, func(ctx context.Context) error {
+		return r.StatusWriter.Apply(ctx, obj, opts...)
+	}, isJSONSyntaxError)
+}
+
 // patchObject updates expected with the Resource Version from actual.
 // In the future, patchObject may perform a strategic merge of actual into expected.
 func patchObject(actual, expected runtime.Object) error {
