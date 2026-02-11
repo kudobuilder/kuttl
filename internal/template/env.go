@@ -6,7 +6,10 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"path/filepath"
 	"text/template"
+
+	"github.com/Masterminds/sprig/v3"
 )
 
 // Env represents the data structure available to test file templates.
@@ -34,7 +37,7 @@ func (e Env) Clone() (Env, error) {
 
 // LoadAndExpand loads a template file and expands it with the provided environment variables.
 func LoadAndExpand(fileName string, env Env) (io.Reader, error) {
-	tpl, err := template.ParseFiles(fileName)
+	tpl, err := template.New(filepath.Base(fileName)).Funcs(sprig.FuncMap()).ParseFiles(fileName)
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse text/template file %q: %w", fileName, err)
 	}
