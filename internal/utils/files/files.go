@@ -1,3 +1,4 @@
+// Package files provides file utility functions for KUTTL.
 package files
 
 import (

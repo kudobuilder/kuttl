@@ -1,3 +1,4 @@
+// Package harness provides the main test harness functionality for KUTTL.
 package harness
 
 import (
@@ -287,8 +288,6 @@ func (h *Harness) Config() (*rest.Config, error) {
 	if err != nil {
 		return nil, err
 	}
-
-	defer f.Close()
 
 	return h.config, kubernetes.Kubeconfig(h.config, f)
 }

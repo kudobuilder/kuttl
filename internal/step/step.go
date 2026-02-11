@@ -427,6 +427,7 @@ func (s *Step) CheckAssertCommands(ctx context.Context, namespace string, comman
 	return testErrors
 }
 
+// CheckAssertExpressions validates assertion expressions against the current cluster state.
 func (s *Step) CheckAssertExpressions(namespace string) []error {
 	client, err := s.Client(false)
 	if err != nil {

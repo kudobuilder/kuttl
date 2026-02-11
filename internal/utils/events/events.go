@@ -20,10 +20,10 @@ func (o byFirstTimestamp) Len() int      { return len(o) }
 func (o byFirstTimestamp) Swap(i, j int) { o[i], o[j] = o[j], o[i] }
 
 func (o byFirstTimestamp) Less(i, j int) bool {
-	if o[i].ObjectMeta.CreationTimestamp.Equal(&o[j].ObjectMeta.CreationTimestamp) {
+	if o[i].CreationTimestamp.Equal(&o[j].CreationTimestamp) {
 		return o[i].Name < o[j].Name
 	}
-	return o[i].ObjectMeta.CreationTimestamp.Before(&o[j].ObjectMeta.CreationTimestamp)
+	return o[i].CreationTimestamp.Before(&o[j].CreationTimestamp)
 }
 
 // byFirstTimestampV1 sorts a slice of eventsv1 by first timestamp, using their involvedObject's name as a tie breaker.
@@ -33,10 +33,10 @@ func (o byFirstTimestampV1) Len() int      { return len(o) }
 func (o byFirstTimestampV1) Swap(i, j int) { o[i], o[j] = o[j], o[i] }
 
 func (o byFirstTimestampV1) Less(i, j int) bool {
-	if o[i].ObjectMeta.CreationTimestamp.Equal(&o[j].ObjectMeta.CreationTimestamp) {
+	if o[i].CreationTimestamp.Equal(&o[j].CreationTimestamp) {
 		return o[i].Name < o[j].Name
 	}
-	return o[i].ObjectMeta.CreationTimestamp.Before(&o[j].ObjectMeta.CreationTimestamp)
+	return o[i].CreationTimestamp.Before(&o[j].CreationTimestamp)
 }
 
 // byFirstTimestampCoreV1 sorts a slice of corev1 by first timestamp, using their involvedObject's name as a tie breaker.
@@ -46,10 +46,10 @@ func (o byFirstTimestampCoreV1) Len() int      { return len(o) }
 func (o byFirstTimestampCoreV1) Swap(i, j int) { o[i], o[j] = o[j], o[i] }
 
 func (o byFirstTimestampCoreV1) Less(i, j int) bool {
-	if o[i].ObjectMeta.CreationTimestamp.Equal(&o[j].ObjectMeta.CreationTimestamp) {
+	if o[i].CreationTimestamp.Equal(&o[j].CreationTimestamp) {
 		return o[i].Name < o[j].Name
 	}
-	return o[i].ObjectMeta.CreationTimestamp.Before(&o[j].ObjectMeta.CreationTimestamp)
+	return o[i].CreationTimestamp.Before(&o[j].CreationTimestamp)
 }
 
 // CollectAndLog retrieves event resources for a given namespace and logs them with the logger.
@@ -124,7 +124,7 @@ func printEventsBeta1(events []eventsbeta1.Event, logger testutils.Logger) {
 	for _, e := range events {
 		// time type regarding action reason note reportingController related
 		logger.Logf("%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s",
-			e.ObjectMeta.CreationTimestamp,
+			e.CreationTimestamp,
 			e.Type,
 			shortString(&e.Regarding),
 			e.Action,
@@ -139,7 +139,7 @@ func printEventsV1(events []eventsv1.Event, logger testutils.Logger) {
 	for _, e := range events {
 		// time type regarding action reason note reportingController related
 		logger.Logf("%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s",
-			e.ObjectMeta.CreationTimestamp,
+			e.CreationTimestamp,
 			e.Type,
 			shortString(&e.Regarding),
 			e.Action,
@@ -154,7 +154,7 @@ func printEventsCoreV1(events []corev1.Event, logger testutils.Logger) {
 	for _, e := range events {
 		// time type regarding action reason note reportingController related
 		logger.Logf("%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s",
-			e.ObjectMeta.CreationTimestamp,
+			e.CreationTimestamp,
 			e.Type,
 			shortString(&e.InvolvedObject),
 			e.Action,

@@ -1,5 +1,6 @@
 //go:build integration
 
+// Package step provides integration tests for step expression functionality.
 package step
 
 import (

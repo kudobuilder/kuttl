@@ -11,8 +11,10 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client/config"
 )
 
+// ImpersonateAs holds the username to impersonate in Kubernetes API calls.
 var ImpersonateAs = ""
 
+// GetConfig returns a Kubernetes REST configuration with optional user impersonation.
 func GetConfig() (*rest.Config, error) {
 	cfg, err := config.GetConfig()
 	if err != nil {
@@ -26,6 +28,7 @@ func GetConfig() (*rest.Config, error) {
 	return cfg, nil
 }
 
+// BuildConfigWithContext creates a Kubernetes REST configuration from a kubeconfig file and context.
 func BuildConfigWithContext(kubeconfigPath, context string) (*rest.Config, error) {
 	if context == "" {
 		// Use default context
@@ -37,8 +40,9 @@ func BuildConfigWithContext(kubeconfigPath, context string) (*rest.Config, error
 		&clientcmd.ConfigOverrides{CurrentContext: context}).ClientConfig()
 }
 
-// Kubeconfig converts a rest.Config into a YAML kubeconfig and writes it to w
-func Kubeconfig(cfg *rest.Config, w io.Writer) error {
+// Kubeconfig converts a rest.Config into a YAML kubeconfig and writes it to w.
+// Takes ownership of w and closes it.
+func Kubeconfig(cfg *rest.Config, w io.WriteCloser) error {
 	var authProvider *appsv1.AuthProviderConfig
 	var execConfig *appsv1.ExecConfig
 	if cfg.AuthProvider != nil {
@@ -65,17 +69,18 @@ func Kubeconfig(cfg *rest.Config, w io.Writer) error {
 	}
 	err := rest.LoadTLSFiles(cfg)
 	if err != nil {
+		w.Close() //nolint:errcheck // We haven't written anything, we do not care if this fails, just preventing leaks.
 		return err
 	}
-	return json.NewYAMLSerializer(json.DefaultMetaFactory, nil, nil).Encode(&appsv1.Config{
+	err = json.NewYAMLSerializer(json.DefaultMetaFactory, nil, nil).Encode(&appsv1.Config{
 		CurrentContext: "cluster",
 		Clusters: []appsv1.NamedCluster{
 			{
 				Name: "cluster",
 				Cluster: appsv1.Cluster{
 					Server:                   cfg.Host,
-					CertificateAuthorityData: cfg.TLSClientConfig.CAData,
-					InsecureSkipTLSVerify:    cfg.TLSClientConfig.Insecure,
+					CertificateAuthorityData: cfg.CAData,
+					InsecureSkipTLSVerify:    cfg.Insecure,
 				},
 			},
 		},
@@ -92,8 +97,8 @@ func Kubeconfig(cfg *rest.Config, w io.Writer) error {
 			{
 				Name: "user",
 				AuthInfo: appsv1.AuthInfo{
-					ClientCertificateData: cfg.TLSClientConfig.CertData,
-					ClientKeyData:         cfg.TLSClientConfig.KeyData,
+					ClientCertificateData: cfg.CertData,
+					ClientKeyData:         cfg.KeyData,
 					Token:                 cfg.BearerToken,
 					Username:              cfg.Username,
 					Password:              cfg.Password,
@@ -106,4 +111,13 @@ func Kubeconfig(cfg *rest.Config, w io.Writer) error {
 			},
 		},
 	}, w)
+	if err != nil {
+		w.Close() //nolint:errcheck // We do not care if closing failed in addition to writing, just preventing leaks.
+		return err
+	}
+	err = w.Close()
+	if err != nil {
+		return fmt.Errorf("error closing newly written kubeconfig file: %w", err)
+	}
+	return nil
 }

@@ -1,4 +1,4 @@
-package http
+package http //nolint:revive,nolintlint // apparently nolintlint is confused
 
 import (
 	"testing"

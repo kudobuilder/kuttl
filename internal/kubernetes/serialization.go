@@ -120,14 +120,14 @@ func convertUnstructured(in client.Object) (client.Object, error) {
 	if group != kuttlGroup {
 		return in, nil
 	}
-	switch {
-	case kind == "TestFile":
+	switch kind {
+	case "TestFile":
 		converted = &v1beta1.TestFile{}
-	case kind == "TestStep":
+	case "TestStep":
 		converted = &v1beta1.TestStep{}
-	case kind == "TestAssert":
+	case "TestAssert":
 		converted = &v1beta1.TestAssert{}
-	case kind == "TestSuite":
+	case "TestSuite":
 		converted = &v1beta1.TestSuite{}
 	default:
 		return in, nil
@@ -194,7 +194,7 @@ func LoadYAMLFromFile(path string) ([]client.Object, error) {
 	if err != nil {
 		return nil, err
 	}
-	defer opened.Close()
+	defer opened.Close() //nolint:errcheck // We do not care if closing fails as long as LoadYAML works.
 
 	return LoadYAML(path, opened)
 }

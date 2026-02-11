@@ -1,3 +1,4 @@
+// Package template provides template processing functionality.
 package template
 
 import (
@@ -18,6 +19,7 @@ type Env struct {
 	// Please keep docs/testing/templating.md in sync.
 }
 
+// Clone creates a deep copy of the template environment.
 func (e Env) Clone() (Env, error) {
 	buf := bytes.Buffer{}
 	if err := json.NewEncoder(&buf).Encode(e); err != nil {
@@ -30,6 +32,7 @@ func (e Env) Clone() (Env, error) {
 	return clone, nil
 }
 
+// LoadAndExpand loads a template file and expands it with the provided environment variables.
 func LoadAndExpand(fileName string, env Env) (io.Reader, error) {
 	tpl, err := template.ParseFiles(fileName)
 	if err != nil {
