@@ -16,6 +16,8 @@ type Env struct {
 }
 ```
 
+As of kuttl version 0.25, the [sprig](https://masterminds.github.io/sprig/) functions are also available.
+
 ## Example
 
 Let's take the [following test suite](../../test/vars/suite1):
