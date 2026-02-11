@@ -42,7 +42,16 @@ func BuildConfigWithContext(kubeconfigPath, context string) (*rest.Config, error
 
 // Kubeconfig converts a rest.Config into a YAML kubeconfig and writes it to w.
 // Takes ownership of w and closes it.
-func Kubeconfig(cfg *rest.Config, w io.WriteCloser) error {
+func Kubeconfig(cfg *rest.Config, w io.WriteCloser) (err error) {
+	defer func() {
+		closeErr := w.Close()
+		if closeErr == nil || err != nil {
+			// We do not want to overwrite a previous error with the fate of Close().
+			return
+		}
+		err = fmt.Errorf("error closing newly written kubeconfig file: %w", closeErr)
+	}()
+
 	var authProvider *appsv1.AuthProviderConfig
 	var execConfig *appsv1.ExecConfig
 	if cfg.AuthProvider != nil {
@@ -67,10 +76,9 @@ func Kubeconfig(cfg *rest.Config, w io.WriteCloser) error {
 			})
 		}
 	}
-	err := rest.LoadTLSFiles(cfg)
+	err = rest.LoadTLSFiles(cfg)
 	if err != nil {
-		w.Close() //nolint:errcheck // We haven't written anything, we do not care if this fails, just preventing leaks.
-		return err
+		return
 	}
 	err = json.NewYAMLSerializer(json.DefaultMetaFactory, nil, nil).Encode(&appsv1.Config{
 		CurrentContext: "cluster",
@@ -112,12 +120,7 @@ func Kubeconfig(cfg *rest.Config, w io.WriteCloser) error {
 		},
 	}, w)
 	if err != nil {
-		w.Close() //nolint:errcheck // We do not care if closing failed in addition to writing, just preventing leaks.
-		return err
+		return
 	}
-	err = w.Close()
-	if err != nil {
-		return fmt.Errorf("error closing newly written kubeconfig file: %w", err)
-	}
-	return nil
+	return
 }
