@@ -29,6 +29,8 @@ const (
 // Tests that Docker images are added to the nodes of a KIND cluster with the
 // 'AddContainers' method.
 func TestAddContainers(t *testing.T) {
+	// See also https://github.com/kubernetes-sigs/kind/issues/3795#issuecomment-2500048284
+	t.Skip("Broken in containerd 2: https://github.com/containerd/containerd/issues/11344")
 	ctx := context.Background()
 
 	kind := NewKind(kindTestContext, "kubeconfig", testutils.NewTestLogger(t, ""))
