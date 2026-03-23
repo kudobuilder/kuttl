@@ -18,11 +18,11 @@ require (
 	github.com/thoas/go-funk v0.9.3
 	gopkg.in/yaml.v2 v2.4.0
 	gopkg.in/yaml.v3 v3.0.1
-	k8s.io/api v0.35.2
-	k8s.io/apiextensions-apiserver v0.35.2
-	k8s.io/apimachinery v0.35.2
-	k8s.io/client-go v0.35.2
-	k8s.io/code-generator v0.35.2
+	k8s.io/api v0.35.3
+	k8s.io/apiextensions-apiserver v0.35.3
+	k8s.io/apimachinery v0.35.3
+	k8s.io/client-go v0.35.3
+	k8s.io/code-generator v0.35.3
 	sigs.k8s.io/controller-runtime v0.23.3
 	sigs.k8s.io/controller-tools v0.20.1
 	sigs.k8s.io/kind v0.31.0
