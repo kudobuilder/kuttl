@@ -60,6 +60,8 @@ archives:
     formats: ["binary"]
 homebrew_casks:
   - name: kuttl-cli
+    binaries:
+      - kubectl-kuttl
     ids:
       - kubectl-kuttl-tarball
     repository:
