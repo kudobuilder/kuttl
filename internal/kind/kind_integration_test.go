@@ -12,8 +12,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/docker/docker/api/types/image"
-	dockerClient "github.com/docker/docker/client"
+	"github.com/moby/moby/client"
 	"github.com/thoas/go-funk"
 	"sigs.k8s.io/kind/pkg/apis/config/v1alpha4"
 	"sigs.k8s.io/kind/pkg/cluster/nodes"
@@ -47,18 +46,16 @@ func TestAddContainers(t *testing.T) {
 		}
 	})
 
-	docker, err := dockerClient.NewClientWithOpts(dockerClient.FromEnv)
+	docker, err := client.New(client.FromEnv)
 	if err != nil {
 		t.Fatalf("failed to create Docker client: %v", err)
 	}
-
-	docker.NegotiateAPIVersion(ctx)
 
 	if !kind.IsRunning() {
 		t.Error("KIND isn't running")
 	}
 
-	reader, err := docker.ImagePull(ctx, testImage, image.PullOptions{})
+	reader, err := docker.ImagePull(ctx, testImage, client.ImagePullOptions{})
 	if err != nil {
 		t.Errorf("failed to pull test image: %v", err)
 	}

@@ -15,8 +15,7 @@ import (
 	"testing"
 	"time"
 
-	volumetypes "github.com/docker/docker/api/types/volume"
-	docker "github.com/docker/docker/client"
+	docker "github.com/moby/moby/client"
 	"gopkg.in/yaml.v2"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -154,9 +153,6 @@ func (h *Harness) RunKIND() (*rest.Config, error) {
 			return nil, err
 		}
 
-		// Determine the correct API version to use with the user's Docker client.
-		dockerClient.NegotiateAPIVersion(context.TODO())
-
 		h.addNodeCaches(dockerClient, kindCfg)
 
 		h.T.Log("Starting KIND cluster")
@@ -197,7 +193,7 @@ func (h *Harness) addNodeCaches(dockerClient testutils.DockerClient, kindCfg *ki
 	}
 
 	for index := range kindCfg.Nodes {
-		volume, err := dockerClient.VolumeCreate(context.TODO(), volumetypes.CreateOptions{
+		result, err := dockerClient.VolumeCreate(context.TODO(), docker.VolumeCreateOptions{
 			Driver: "local",
 			Name:   fmt.Sprintf("%s-%d", h.TestSuite.KINDContext, index),
 		})
@@ -206,10 +202,10 @@ func (h *Harness) addNodeCaches(dockerClient testutils.DockerClient, kindCfg *ki
 			continue
 		}
 
-		h.T.Log("node mount point", volume.Mountpoint)
+		h.T.Log("node mount point", result.Volume.Mountpoint)
 		kindCfg.Nodes[index].ExtraMounts = append(kindCfg.Nodes[index].ExtraMounts, kindConfig.Mount{
 			ContainerPath: "/var/lib/containerd",
-			HostPath:      volume.Mountpoint,
+			HostPath:      result.Volume.Mountpoint,
 		})
 	}
 }
@@ -353,7 +349,7 @@ func (h *Harness) DockerClient() (testutils.DockerClient, error) {
 	}
 
 	var err error
-	h.docker, err = docker.NewClientWithOpts(docker.FromEnv)
+	h.docker, err = docker.New(docker.FromEnv)
 	return h.docker, err
 }
 

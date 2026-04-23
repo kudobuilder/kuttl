@@ -6,8 +6,8 @@ import (
 	"io"
 	"testing"
 
-	"github.com/docker/docker/api/types/volume"
-	"github.com/docker/docker/client"
+	"github.com/moby/moby/api/types/volume"
+	"github.com/moby/moby/client"
 	"github.com/stretchr/testify/assert"
 	kindConfig "sigs.k8s.io/kind/pkg/apis/config/v1alpha4"
 )
@@ -42,15 +42,15 @@ func newDockerMock() *dockerMock {
 	}
 }
 
-func (d *dockerMock) VolumeCreate(_ context.Context, options volume.CreateOptions) (volume.Volume, error) {
-	return volume.Volume{
-		Mountpoint: fmt.Sprintf("/var/lib/docker/data/%s", options.Name),
+func (d *dockerMock) VolumeCreate(_ context.Context, options client.VolumeCreateOptions) (client.VolumeCreateResult, error) {
+	return client.VolumeCreateResult{
+		Volume: volume.Volume{
+			Mountpoint: fmt.Sprintf("/var/lib/docker/data/%s", options.Name),
+		},
 	}, nil
 }
 
-func (d *dockerMock) NegotiateAPIVersion(_ context.Context) {}
-
-func (d *dockerMock) ImageSave(context.Context, []string, ...client.ImageSaveOption) (io.ReadCloser, error) {
+func (d *dockerMock) ImageSave(context.Context, []string, ...client.ImageSaveOption) (client.ImageSaveResult, error) {
 	return d.imageReader, nil
 }
 
