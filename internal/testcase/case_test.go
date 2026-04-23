@@ -3,6 +3,7 @@ package testcase
 import (
 	"context"
 	"fmt"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -380,15 +381,18 @@ func (t *testMock) Error(args ...any) {
 func TestCase_createNamespace(t *testing.T) {
 	tests := map[string]struct {
 		options              []CaseOption
+		retryOnCollision     bool
 		cl                   func(*testing.T, string) client.Client
 		wantErr              error
+		wantRegenerated      bool
 		expectedCleanupError func(err error) bool
 		getNsBeforeCleanup   func(*testing.T, error)
 		getNsAfterCleanup    func(*testing.T, error)
 	}{
 		"user-supplied exists": {
-			options: []CaseOption{WithNamespace("foo")},
-			cl:      newClientWithExistingNs,
+			options:          []CaseOption{WithNamespace("foo")},
+			retryOnCollision: true,
+			cl:               newClientWithExistingNs,
 			getNsBeforeCleanup: func(t *testing.T, err error) {
 				require.NoError(t, err)
 			},
@@ -397,8 +401,9 @@ func TestCase_createNamespace(t *testing.T) {
 			},
 		},
 		"user-supplied absent": {
-			options: []CaseOption{WithNamespace("foo")},
-			cl:      newClientWithAbsentNs,
+			options:          []CaseOption{WithNamespace("foo")},
+			retryOnCollision: true,
+			cl:               newClientWithAbsentNs,
 			getNsBeforeCleanup: func(t *testing.T, err error) {
 				require.NoError(t, err)
 			},
@@ -407,9 +412,10 @@ func TestCase_createNamespace(t *testing.T) {
 			},
 		},
 		"user-supplied absent and no write permission": {
-			options: []CaseOption{WithNamespace("foo")},
-			cl:      newClientWithAbsentNsNoWritePerm,
-			wantErr: errCreationForbidden,
+			options:          []CaseOption{WithNamespace("foo")},
+			retryOnCollision: true,
+			cl:               newClientWithAbsentNsNoWritePerm,
+			wantErr:          errCreationForbidden,
 			getNsBeforeCleanup: func(t *testing.T, err error) {
 				assert.True(t, k8serrors.IsNotFound(err), "expected namespace to be missing before cleanup, but client returned %v", err)
 			},
@@ -418,8 +424,9 @@ func TestCase_createNamespace(t *testing.T) {
 			},
 		},
 		"user-supplied exists and no write permission": {
-			options: []CaseOption{WithNamespace("foo")},
-			cl:      newClientWithExistingNsNoWritePerm,
+			options:          []CaseOption{WithNamespace("foo")},
+			retryOnCollision: true,
+			cl:               newClientWithExistingNsNoWritePerm,
 			getNsBeforeCleanup: func(t *testing.T, err error) {
 				require.NoError(t, err)
 			},
@@ -428,8 +435,9 @@ func TestCase_createNamespace(t *testing.T) {
 			},
 		},
 		"user-supplied exists and no permissions at all": {
-			options: []CaseOption{WithNamespace("foo")},
-			cl:      newClientWithExistingNsNoPerms,
+			options:          []CaseOption{WithNamespace("foo")},
+			retryOnCollision: true,
+			cl:               newClientWithExistingNsNoPerms,
 			getNsBeforeCleanup: func(t *testing.T, err error) {
 				require.NoError(t, err)
 			},
@@ -437,8 +445,20 @@ func TestCase_createNamespace(t *testing.T) {
 				require.NoError(t, err)
 			},
 		},
-		"ephemeral exists": {
-			cl: newClientWithExistingNs,
+		"ephemeral exists with retry": {
+			retryOnCollision: true,
+			cl:               newClientWithExistingNs,
+			wantRegenerated:  true,
+			getNsBeforeCleanup: func(t *testing.T, err error) {
+				require.NoError(t, err)
+			},
+			getNsAfterCleanup: func(t *testing.T, err error) {
+				assert.True(t, k8serrors.IsNotFound(err), "expected namespace to be deleted after cleanup, but client returned %v", err)
+			},
+		},
+		"ephemeral exists without retry": {
+			retryOnCollision: false,
+			cl:               newClientWithExistingNs,
 			getNsBeforeCleanup: func(t *testing.T, err error) {
 				require.NoError(t, err)
 			},
@@ -447,7 +467,8 @@ func TestCase_createNamespace(t *testing.T) {
 			},
 		},
 		"ephemeral absent": {
-			cl: newClientWithAbsentNs,
+			retryOnCollision: true,
+			cl:               newClientWithAbsentNs,
 			getNsBeforeCleanup: func(t *testing.T, err error) {
 				require.NoError(t, err)
 			},
@@ -456,8 +477,9 @@ func TestCase_createNamespace(t *testing.T) {
 			},
 		},
 		"ephemeral absent and no write permission": {
-			cl:      newClientWithAbsentNsNoWritePerm,
-			wantErr: errCreationForbidden,
+			retryOnCollision: true,
+			cl:               newClientWithAbsentNsNoWritePerm,
+			wantErr:          errCreationForbidden,
 			getNsBeforeCleanup: func(t *testing.T, err error) {
 				assert.True(t, k8serrors.IsNotFound(err), "expected namespace to be missing before cleanup, but client returned %v", err)
 			},
@@ -466,6 +488,7 @@ func TestCase_createNamespace(t *testing.T) {
 			},
 		},
 		"ephemeral exists and no write permission": {
+			retryOnCollision:     true,
 			cl:                   newClientWithExistingNsNoWritePerm,
 			expectedCleanupError: k8serrors.IsForbidden,
 			getNsBeforeCleanup: func(t *testing.T, err error) {
@@ -476,6 +499,7 @@ func TestCase_createNamespace(t *testing.T) {
 			},
 		},
 		"ephemeral exists and no permissions at all": {
+			retryOnCollision:     true,
 			cl:                   newClientWithExistingNsNoPerms,
 			expectedCleanupError: k8serrors.IsForbidden,
 			getNsBeforeCleanup: func(t *testing.T, err error) {
@@ -500,13 +524,18 @@ func TestCase_createNamespace(t *testing.T) {
 				logger:         testutils.NewTestLogger(t, ""),
 			}
 
-			gotErr := c.createNamespace(tm, clk)
+			gotRegenerated, gotErr := c.createNamespace(tm, clk, tt.retryOnCollision)
 			if tt.wantErr == nil {
 				assert.NoError(t, gotErr)
 			} else {
 				assert.ErrorIs(t, gotErr, tt.wantErr)
 			}
+			assert.Equal(t, tt.wantRegenerated, gotRegenerated)
 
+			// For the "ephemeral exists with retry" case, the namespace name
+			// changed, so we need to use the new name for subsequent checks.
+			// The client was built with the old name pre-existing, but the new
+			// namespace was created on the same client.
 			baseClient := cl
 			if npc, ok := cl.(*noPermClient); ok {
 				baseClient = npc.Client
@@ -604,6 +633,42 @@ func newClientWithExistingNsNoPerms(t *testing.T, nsName string) client.Client {
 		forbidGet: true,
 		t:         t,
 	}
+}
+
+func TestCase_createNamespace_collisionRetry(t *testing.T) {
+	c := NewCase("collision-test", "")
+	originalName := c.ns.name
+	require.True(t, strings.HasPrefix(originalName, "kuttl-test-"), "expected namespace to start with kuttl-test-")
+
+	// Create a fake client with the namespace already existing.
+	cl := fake.NewClientBuilder().WithScheme(scheme.Scheme).WithRuntimeObjects(&corev1.Namespace{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: originalName,
+		},
+	}).Build()
+	tm := &testMock{}
+	clk := clientWithKubeConfig{
+		Client:         cl,
+		kubeConfigPath: "",
+		logger:         testutils.NewTestLogger(t, ""),
+	}
+
+	regenerated, err := c.createNamespace(tm, clk, true)
+	require.NoError(t, err)
+	assert.True(t, regenerated, "expected namespace to be regenerated on collision")
+	assert.NotEqual(t, originalName, c.ns.name, "expected namespace name to change after collision")
+	assert.True(t, strings.HasPrefix(c.ns.name, "kuttl-test-"), "expected new namespace to start with kuttl-test-")
+	assert.Equal(t, c.ns.name, c.templateEnv.Namespace, "expected templateEnv.Namespace to match the new namespace name")
+
+	// Verify the new namespace was actually created in the cluster.
+	ns := &corev1.Namespace{}
+	err = cl.Get(t.Context(), client.ObjectKey{Name: c.ns.name}, ns)
+	assert.NoError(t, err, "expected new namespace to exist in the cluster")
+
+	// Verify the old namespace still exists (it was not touched).
+	oldNs := &corev1.Namespace{}
+	err = cl.Get(t.Context(), client.ObjectKey{Name: originalName}, oldNs)
+	assert.NoError(t, err, "expected old namespace to still exist in the cluster")
 }
 
 func newClientWithAbsentNs(*testing.T, string) client.Client {
