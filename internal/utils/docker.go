@@ -2,15 +2,12 @@ package utils //nolint:revive,nolintlint // apparently nolintlint is confused
 
 import (
 	"context"
-	"io"
 
-	"github.com/docker/docker/api/types/volume"
-	"github.com/docker/docker/client"
+	"github.com/moby/moby/client"
 )
 
 // DockerClient is a wrapper interface for the Docker library to support unit testing.
 type DockerClient interface {
-	NegotiateAPIVersion(context.Context)
-	VolumeCreate(context.Context, volume.CreateOptions) (volume.Volume, error)
-	ImageSave(context.Context, []string, ...client.ImageSaveOption) (io.ReadCloser, error)
+	VolumeCreate(context.Context, client.VolumeCreateOptions) (client.VolumeCreateResult, error)
+	ImageSave(context.Context, []string, ...client.ImageSaveOption) (client.ImageSaveResult, error)
 }
