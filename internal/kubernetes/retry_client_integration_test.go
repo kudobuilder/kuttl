@@ -36,7 +36,7 @@ func TestMain(m *testing.M) {
 
 func TestCreateOrUpdate(t *testing.T) {
 	// Run the test a bunch of times to try to trigger a conflict and ensure that it handles conflicts properly.
-	for i := 0; i < 10; i++ {
+	for i := range 10 {
 		namespaceName := fmt.Sprintf("default-%d", i)
 		namespaceObj := NewResource("v1", "Namespace", namespaceName, "default")
 
