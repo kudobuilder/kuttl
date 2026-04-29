@@ -45,6 +45,7 @@ linters:
     - importas
     - ineffassign
     - interfacebloat
+    - intrange
     - iotamixing
     - lll
     - loggercheck
@@ -109,8 +110,6 @@ linters:
     - godox
     # 11 issues: flags potential security issues (hardcoded credentials, weak crypto, etc.)
     - gosec
-    # 4 issues: requires integer range loops (Go 1.22+)
-    - intrange
     # 28 issues: forbids returning interfaces
     - ireturn
     # 2 issues: flags functions with low maintainability index

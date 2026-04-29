@@ -31,7 +31,7 @@ func Assert(namespace string, timeout int, assertFiles ...string) error {
 	s := setupStep()
 
 	var testErrors []error
-	for i := 0; i < timeout; i++ {
+	for range timeout {
 		// start fresh
 		testErrors = []error{}
 		for _, expected := range objects {
@@ -71,7 +71,7 @@ func Errors(namespace string, timeout int, errorFiles ...string) error {
 	s := setupStep()
 
 	var testErrors []error
-	for i := 0; i < timeout; i++ {
+	for range timeout {
 		// start fresh
 		testErrors = []error{}
 		for _, expected := range objects {
