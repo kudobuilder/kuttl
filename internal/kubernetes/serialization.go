@@ -77,7 +77,7 @@ func countLines(k string, v interface{}) (int, error) {
 	return strings.Count(buf.String(), "\n"), nil
 }
 
-// PrettyDiff creates a unified diff highlighting the differences between two Kubernetes resources
+// PrettyDiff creates a unified diff highlighting the differences between two Kubernetes resources.
 func PrettyDiff(expected *unstructured.Unstructured, actual *unstructured.Unstructured) (string, error) {
 	actualPruned := pruneLargeAdditions(expected, actual)
 
@@ -199,7 +199,7 @@ func LoadYAMLFromFile(path string) ([]client.Object, error) {
 	return LoadYAML(path, opened)
 }
 
-// LoadYAML loads all objects from a reader
+// LoadYAML loads all objects from a reader.
 func LoadYAML(path string, r io.Reader) ([]client.Object, error) {
 	yamlReader := yaml.NewYAMLReader(bufio.NewReader(r))
 

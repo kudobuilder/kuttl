@@ -16,7 +16,7 @@ import (
 	"github.com/kudobuilder/kuttl/internal/step"
 )
 
-// Assert checks all provided assert files against a namespace.  Upon assert failure, it prints the failures and returns an error
+// Assert checks all provided assert files against a namespace.  Upon assert failure, it prints the failures and returns an error.
 func Assert(namespace string, timeout int, assertFiles ...string) error {
 	var objects []client.Object
 
@@ -56,7 +56,7 @@ func Assert(namespace string, timeout int, assertFiles ...string) error {
 	return errors.New("asserts not valid")
 }
 
-// Errors checks all provided errors files against a namespace.  Upon assert failure, it prints the failures and returns an error
+// Errors checks all provided errors files against a namespace.  Upon assert failure, it prints the failures and returns an error.
 func Errors(namespace string, timeout int, errorFiles ...string) error {
 	var objects []client.Object
 

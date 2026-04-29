@@ -52,7 +52,7 @@ func TestHarnessRunIntegrationWithConfig(t *testing.T) {
 	}
 }
 
-// This test requires external KinD support to run thus is an integration test
+// This test requires external KinD support to run thus is an integration test.
 func TestRunBackgroundCommands(t *testing.T) {
 	h := Harness{
 		T: t,

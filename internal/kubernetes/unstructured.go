@@ -31,7 +31,7 @@ func NewResource(apiVersion, kind, name, namespace string) *unstructured.Unstruc
 	}
 }
 
-// NewClusterRoleBinding Create a clusterrolebinding for the serviceAccount passed
+// NewClusterRoleBinding Create a clusterrolebinding for the serviceAccount passed.
 func NewClusterRoleBinding(apiVersion, kind, name, namespace string, serviceAccount string, roleName string) runtime.Object {
 	sa := &rbacv1.ClusterRoleBinding{
 		ObjectMeta: metav1.ObjectMeta{

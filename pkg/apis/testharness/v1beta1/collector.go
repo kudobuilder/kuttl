@@ -13,7 +13,7 @@ const (
 )
 
 // validate checks user input and updates type if not provided.
-// It is expected to be called prior to any other call
+// It is expected to be called prior to any other call.
 func (tc *TestCollector) validate() error {
 	cleanType(tc)
 	switch tc.Type {
@@ -55,7 +55,7 @@ func validateCmd(tc *TestCollector) error {
 	return nil
 }
 
-// determines and cleans collector type
+// determines and cleans collector type.
 func cleanType(tc *TestCollector) {
 	// intuit pod or command or invalid
 	if tc.Type == "" {
@@ -69,7 +69,7 @@ func cleanType(tc *TestCollector) {
 	tc.Type = strings.ToLower(tc.Type)
 }
 
-// Command provides the command to exec to perform the collection
+// Command provides the command to exec to perform the collection.
 func (tc *TestCollector) Command() *Command {
 	err := tc.validate()
 	if err != nil {
@@ -139,7 +139,7 @@ func podCommand(tc *TestCollector) *Command {
 	}
 }
 
-// String provides defaults of the type of collector
+// String provides defaults of the type of collector.
 func (tc *TestCollector) String() string {
 	err := tc.validate()
 	if err != nil {

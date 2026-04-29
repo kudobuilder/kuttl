@@ -13,7 +13,7 @@ var (
   kubectl kuttl version`
 )
 
-// newVersionCmd returns a new initialized instance of the version sub command
+// newVersionCmd returns a new initialized instance of the version sub command.
 func newVersionCmd() *cobra.Command {
 	versionCmd := &cobra.Command{
 		Use:     "version",
@@ -26,7 +26,7 @@ func newVersionCmd() *cobra.Command {
 	return versionCmd
 }
 
-// VersionCmd performs the version sub command
+// VersionCmd performs the version sub command.
 func VersionCmd(_ *cobra.Command, _ []string) error {
 	kuttlVersion := version.Get()
 	fmt.Printf("KUTTL Version: %s\n", fmt.Sprintf("%#v", kuttlVersion))
