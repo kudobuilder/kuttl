@@ -15,6 +15,7 @@ import (
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
+	utilrand "k8s.io/apimachinery/pkg/util/rand"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/discovery"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -149,7 +150,7 @@ func NewCase(name string, parentPath string, options ...CaseOption) *Case {
 
 	if c.ns == nil {
 		c.ns = &namespace{
-			name:         fmt.Sprintf("kuttl-test-%s", petname.Generate(2, "-")),
+			name:         fmt.Sprintf("kuttl-%s-%s", petname.Generate(2, "-"), utilrand.String(4)),
 			userSupplied: false,
 		}
 	}
