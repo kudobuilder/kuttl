@@ -197,7 +197,8 @@ func (c *Case) deleteNamespace(cl clientWithKubeConfig) error {
 			return true, nil
 		}
 		if err != nil {
-			return false, fmt.Errorf("failed to check deletion of namespace %q: %w", c.ns.name, err)
+			cl.Logf("failed to check deletion of namespace %q (will retry): %v", c.ns.name, err)
+			return false, nil
 		}
 		return false, nil
 	})

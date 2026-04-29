@@ -179,7 +179,7 @@ func (s *Step) DeleteExisting(namespace string) error {
 			}
 			if !k8serrors.IsNotFound(err) {
 				lastCheckMsg = fmt.Sprintf("checking existence of %v %s failed: %v", obj.GetObjectKind().GroupVersionKind(), obj.GetName(), err)
-				return false, err
+				return false, nil
 			}
 		}
 

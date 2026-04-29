@@ -21,8 +21,11 @@ func WaitForDelete(c *RetryClient, objs []runtime.Object) error {
 			actual := &unstructured.Unstructured{}
 			actual.SetGroupVersionKind(obj.GetObjectKind().GroupVersionKind())
 			err = c.Get(ctx, ObjectKey(obj), actual)
-			if err == nil || !errors.IsNotFound(err) {
-				return false, err
+			// Retry on transient API errors (return nil to keep polling) rather
+			// than aborting the entire wait, which would surface as a misleading
+			// "timed out" error well before the real deadline.
+			if !errors.IsNotFound(err) {
+				return false, nil
 			}
 		}
 
@@ -50,8 +53,9 @@ func WaitForSA(config *rest.Config, name, namespace string) error {
 		if errors.IsNotFound(err) {
 			return false, nil
 		}
+		// Retry on transient API errors rather than aborting the wait.
 		if err != nil {
-			return false, err
+			return false, nil
 		}
 		return true, nil
 	})
