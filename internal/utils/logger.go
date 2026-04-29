@@ -11,7 +11,7 @@ import (
 type Logger interface {
 	Log(args ...interface{})
 	Logf(format string, args ...interface{})
-	WithPrefix(string) Logger
+	WithPrefix(prefix string) Logger
 	Write(p []byte) (n int, err error)
 	Flush()
 }

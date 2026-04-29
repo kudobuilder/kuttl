@@ -11,7 +11,7 @@ type SubsetError struct {
 	message string
 }
 
-// AppendPath appends key to the existing struct path. For example, in struct member `a.Key1.Key2`, the path would be ["Key1", "Key2"]
+// AppendPath appends key to the existing struct path. For example, in struct member `a.Key1.Key2`, the path would be ["Key1", "Key2"].
 func (e *SubsetError) AppendPath(key string) {
 	if e.path == nil {
 		e.path = []string{}

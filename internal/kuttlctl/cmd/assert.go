@@ -14,7 +14,7 @@ var (
   kubectl kuttl assert <path/to/assertfile.yaml>`
 )
 
-// newAssertCmd returns a new initialized instance of the assert sub command
+// newAssertCmd returns a new initialized instance of the assert sub command.
 func newAssertCmd() *cobra.Command {
 	timeout := 5
 	namespace := "default"

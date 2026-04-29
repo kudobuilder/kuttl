@@ -28,7 +28,7 @@ func ToObjects(paths []string) ([]client.Object, error) {
 }
 
 // FromPath from a file or dir path returns an array of flat file paths.
-// pattern is a filepath.Match pattern to limit files to a pattern
+// pattern is a filepath.Match pattern to limit files to a pattern.
 func FromPath(path, pattern string) ([]string, error) {
 	files := []string{}
 
@@ -61,7 +61,7 @@ func FromPath(path, pattern string) ([]string, error) {
 	return files, nil
 }
 
-// TrimExt removes the ext of a file path, foo.tar == foo
+// TrimExt removes the ext of a file path, foo.tar == foo.
 func TrimExt(path string) string {
 	return strings.TrimSuffix(path, filepath.Ext(path))
 }

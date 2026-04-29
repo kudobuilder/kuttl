@@ -11,7 +11,7 @@ import (
 	testutils "github.com/kudobuilder/kuttl/internal/utils"
 )
 
-// mockLogger is a simple logger that captures log messages for testing
+// mockLogger is a simple logger that captures log messages for testing.
 type mockLogger struct {
 	messages []string
 }

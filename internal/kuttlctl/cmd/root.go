@@ -7,7 +7,7 @@ import (
 	"github.com/kudobuilder/kuttl/internal/version"
 )
 
-// NewKuttlCmd creates a new root command for kuttlctl
+// NewKuttlCmd creates a new root command for kuttlctl.
 func NewKuttlCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "kubectl-kuttl",

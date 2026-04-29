@@ -10,7 +10,7 @@ import (
 
 // UntarInPlace untars a .tar file using the same name as the file as the sub-folder name in the folder it was referenced in.
 // i.e., /opt/foo.tar will land in /opt/foo
-// supports tar and tgz file formats
+// supports tar and tgz file formats.
 func UntarInPlace(path string) error {
 	folder := TrimExt(path)
 	file, err := os.Open(path)
@@ -26,7 +26,7 @@ func UntarInPlace(path string) error {
 // UnTar untars a tar or tgz file into the dest folder.
 // dest is the folder location
 // io.Reader is a reader that is tar (or compressed tar) format
-// compressed is true if reader is a compressed format
+// compressed is true if reader is a compressed format.
 func UnTar(dest string, r io.Reader, compressed bool) (err error) {
 	if compressed {
 		gzr, err := gzip.NewReader(r)

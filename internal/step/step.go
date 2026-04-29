@@ -704,7 +704,7 @@ func (s *Step) Setup(caseLogger testutils.Logger, defaultClientFunc func(forceNe
 	}
 }
 
-// ObjectsFromPath returns an array of runtime.Objects for files / urls provided
+// ObjectsFromPath returns an array of runtime.Objects for files / urls provided.
 func ObjectsFromPath(path, dir string) ([]client.Object, error) {
 	if http.IsURL(path) {
 		apply, err := http.ToObjects(path)
@@ -727,7 +727,7 @@ func ObjectsFromPath(path, dir string) ([]client.Object, error) {
 	return apply, nil
 }
 
-// cleanPath returns either the abs path or the joined path
+// cleanPath returns either the abs path or the joined path.
 func cleanPath(path, dir string) string {
 	if filepath.IsAbs(path) {
 		return path
