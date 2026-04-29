@@ -552,6 +552,7 @@ func TestCase_createNamespace(t *testing.T) {
 // Optionally it also refuses Get operations.
 type noPermClient struct {
 	client.Client
+
 	forbidGet bool
 	t         *testing.T
 }
