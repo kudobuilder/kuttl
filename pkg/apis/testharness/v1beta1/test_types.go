@@ -158,6 +158,7 @@ type TestAssert struct {
 	metav1.TypeMeta `json:",inline"`
 	// Override the default metadata. Set labels or override the test step name.
 	metav1.ObjectMeta `json:"metadata,omitempty"`
+
 	// Override the default timeout of 30 seconds (in seconds).
 	Timeout int `json:"timeout"`
 	// Collectors is a set of pod log collectors fired on an assert failure
@@ -189,6 +190,7 @@ type TestAssertCommand struct {
 // objects by label.
 type ObjectReference struct {
 	corev1.ObjectReference `json:",inline"`
+
 	// Labels to match on.
 	Labels map[string]string `json:"labels"`
 }

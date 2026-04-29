@@ -2,6 +2,7 @@ version: "2"
 
 linters:
   enable:
+    - arangolint
     - asasalint
     - asciicheck
     - bidichk
@@ -14,6 +15,7 @@ linters:
     - dogsled
     - dupl
     - dupword
+    - embeddedstructfieldcheck
     - durationcheck
     - errcheck
     - errchkjson
@@ -24,6 +26,7 @@ linters:
     - forcetypeassert
     - ginkgolinter
     - gocheckcompilerdirectives
+    - godoclint
     - gochecknoinits
     - gochecksumtype
     - goconst
@@ -40,6 +43,7 @@ linters:
     - importas
     - ineffassign
     - interfacebloat
+    - iotamixing
     - lll
     - loggercheck
     - makezero
@@ -67,6 +71,7 @@ linters:
     - tparallel
     - unconvert
     - unparam
+    - unqueryvet
     - unused
     - usestdlibvars
     - usetesting
@@ -78,10 +83,6 @@ linters:
   # These linters are disabled ONLY because fixing/investigating their complaints initially was too overwhelming.
   # We SHOULD try and evaluate each of them eventually and either fix their reports
   # or comment here on why we decided to not listen to them.
-    - arangolint
-    - cyclop
-    - depguard
-    - embeddedstructfieldcheck
     - err113
     - errorlint
     - exhaustruct
@@ -90,13 +91,11 @@ linters:
     - funlen
     - gochecknoglobals
     - gocognit
-    - godoclint
     - godot
     - godox
     - gosec
     - inamedparam
     - intrange
-    - iotamixing
     - ireturn
     - maintidx
     - mnd
@@ -114,7 +113,6 @@ linters:
     - testifylint
     - testpackage
     - thelper
-    - unqueryvet
     - varnamelen
     - wrapcheck
   settings:
