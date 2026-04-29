@@ -78,27 +78,34 @@ linters:
   # These linters are disabled ONLY because fixing/investigating their complaints initially was too overwhelming.
   # We SHOULD try and evaluate each of them eventually and either fix their reports
   # or comment here on why we decided to not listen to them.
+    - arangolint
     - cyclop
     - depguard
+    - embeddedstructfieldcheck
     - err113
     - errorlint
     - exhaustruct
     - forbidigo
+    - funcorder
     - funlen
+    - gochecknoglobals
     - gocognit
+    - godoclint
     - godot
     - godox
     - gosec
     - inamedparam
     - intrange
+    - iotamixing
     - ireturn
-    - gochecknoglobals
     - maintidx
     - mnd
+    - modernize
     - musttag
     - nestif
     - nilnil
     - nlreturn
+    - noinlineerr
     - nonamedreturns
     - paralleltest
     - perfsprint
@@ -107,6 +114,7 @@ linters:
     - testifylint
     - testpackage
     - thelper
+    - unqueryvet
     - varnamelen
     - wrapcheck
   settings:
