@@ -49,14 +49,7 @@ func WaitForSA(config *rest.Config, name, namespace string) error {
 		Name:      name,
 	}
 	return wait.PollUntilContextTimeout(context.TODO(), 500*time.Millisecond, 60*time.Second, true, func(ctx context.Context) (done bool, err error) {
-		err = c.Get(ctx, key, obj)
-		if errors.IsNotFound(err) {
-			return false, nil
-		}
-		// Retry on transient API errors rather than aborting the wait.
-		if err != nil {
-			return false, nil
-		}
-		return true, nil
+		// Retry on all errors (not-found, transient) rather than aborting the wait.
+		return c.Get(ctx, key, obj) == nil, nil
 	})
 }

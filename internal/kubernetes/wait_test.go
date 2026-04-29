@@ -35,7 +35,7 @@ func TestWaitForDelete_AlreadyGone(t *testing.T) {
 func TestWaitForDelete_TransientErrorThenGone(t *testing.T) {
 	callCount := 0
 	cl := fake.NewClientBuilder().WithInterceptorFuncs(interceptor.Funcs{
-		Get: func(ctx context.Context, c client.WithWatch, key client.ObjectKey, obj client.Object, opts ...client.GetOption) error {
+		Get: func(context.Context, client.WithWatch, client.ObjectKey, client.Object, ...client.GetOption) error {
 			callCount++
 			if callCount <= 3 {
 				return fmt.Errorf("transient API error")
@@ -53,7 +53,7 @@ func TestWaitForDelete_TransientErrorThenGone(t *testing.T) {
 func TestWaitForDelete_StillExistsThenGone(t *testing.T) {
 	callCount := 0
 	cl := fake.NewClientBuilder().WithInterceptorFuncs(interceptor.Funcs{
-		Get: func(ctx context.Context, c client.WithWatch, key client.ObjectKey, obj client.Object, opts ...client.GetOption) error {
+		Get: func(context.Context, client.WithWatch, client.ObjectKey, client.Object, ...client.GetOption) error {
 			callCount++
 			if callCount <= 2 {
 				return nil
@@ -70,7 +70,7 @@ func TestWaitForDelete_StillExistsThenGone(t *testing.T) {
 
 func TestWaitForDelete_PersistentErrorTimesOut(t *testing.T) {
 	cl := fake.NewClientBuilder().WithInterceptorFuncs(interceptor.Funcs{
-		Get: func(ctx context.Context, c client.WithWatch, key client.ObjectKey, obj client.Object, opts ...client.GetOption) error {
+		Get: func(context.Context, client.WithWatch, client.ObjectKey, client.Object, ...client.GetOption) error {
 			return fmt.Errorf("persistent API error")
 		},
 	}).Build()
