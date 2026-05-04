@@ -16,7 +16,6 @@ import (
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
-	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/discovery"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
@@ -166,29 +165,7 @@ func (s *Step) DeleteExisting(namespace string) error {
 		s.Logger.Log(kubernetes.ResourceID(del), action)
 	}
 
-	// Wait for resources to be deleted.
-	lastCheckMsg := ""
-	err = wait.PollUntilContextTimeout(context.TODO(), 100*time.Millisecond, time.Duration(s.GetTimeout())*time.Second, true, func(ctx context.Context) (done bool, err error) {
-		for _, obj := range toDelete {
-			actual := &unstructured.Unstructured{}
-			actual.SetGroupVersionKind(obj.GetObjectKind().GroupVersionKind())
-			err = cl.Get(ctx, kubernetes.ObjectKey(obj), actual)
-			if err == nil {
-				lastCheckMsg = fmt.Sprintf("%v %s still exists", obj.GetObjectKind().GroupVersionKind(), obj.GetName())
-				return false, nil
-			}
-			if !k8serrors.IsNotFound(err) {
-				lastCheckMsg = fmt.Sprintf("checking existence of %v %s failed: %v", obj.GetObjectKind().GroupVersionKind(), obj.GetName(), err)
-				return false, nil
-			}
-		}
-
-		return true, nil
-	})
-	if err != nil {
-		return fmt.Errorf("timed out waiting for resource deletion (result of last check was: %q): %w", lastCheckMsg, err)
-	}
-	return nil
+	return kubernetes.WaitForDelete(cl, toDelete, time.Duration(s.GetTimeout())*time.Second)
 }
 
 // Create applies all resources defined in the Apply list.
