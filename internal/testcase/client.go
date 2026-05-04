@@ -10,6 +10,7 @@ import (
 
 type clientWithKubeConfig struct {
 	client.Client
+
 	kubeConfigPath string
 	logger         testutils.Logger
 }

@@ -11,7 +11,7 @@ type SubsetError struct {
 	message string
 }
 
-// AppendPath appends key to the existing struct path. For example, in struct member `a.Key1.Key2`, the path would be ["Key1", "Key2"]
+// AppendPath appends key to the existing struct path. For example, in struct member `a.Key1.Key2`, the path would be ["Key1", "Key2"].
 func (e *SubsetError) AppendPath(key string) {
 	if e.path == nil {
 		e.path = []string{}
@@ -55,7 +55,7 @@ func IsSubset(expected, actual interface{}) error {
 			}
 		}
 
-		for i := 0; i < reflect.ValueOf(expected).Len(); i++ {
+		for i := range reflect.ValueOf(expected).Len() {
 			if err := IsSubset(reflect.ValueOf(expected).Index(i).Interface(), reflect.ValueOf(actual).Index(i).Interface()); err != nil {
 				return err
 			}

@@ -109,7 +109,7 @@ type TestSuite struct {
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 
-// TestStep settings to apply to a test step.go
+// TestStep settings to apply to a test step.go.
 type TestStep struct {
 	// The type meta object, should always be a GVK of kuttl.dev/v1beta1/TestStep or kuttl.dev/v1beta1/TestStep.
 	metav1.TypeMeta `json:",inline"`
@@ -158,6 +158,7 @@ type TestAssert struct {
 	metav1.TypeMeta `json:",inline"`
 	// Override the default metadata. Set labels or override the test step name.
 	metav1.ObjectMeta `json:"metadata,omitempty"`
+
 	// Override the default timeout of 30 seconds (in seconds).
 	Timeout int `json:"timeout"`
 	// Collectors is a set of pod log collectors fired on an assert failure
@@ -171,7 +172,7 @@ type TestAssert struct {
 	AssertAll []*Assertion `json:"assertAll,omitempty"`
 }
 
-// TestAssertCommand an assertion based on the result of the execution of a command
+// TestAssertCommand an assertion based on the result of the execution of a command.
 type TestAssertCommand struct {
 	// The command and argument to run as a string.
 	Command string `json:"command"`
@@ -189,6 +190,7 @@ type TestAssertCommand struct {
 // objects by label.
 type ObjectReference struct {
 	corev1.ObjectReference `json:",inline"`
+
 	// Labels to match on.
 	Labels map[string]string `json:"labels"`
 }

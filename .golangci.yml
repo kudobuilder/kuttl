@@ -2,6 +2,7 @@ version: "2"
 
 linters:
   enable:
+    - arangolint
     - asasalint
     - asciicheck
     - bidichk
@@ -15,6 +16,7 @@ linters:
     - dupl
     - dupword
     - durationcheck
+    - embeddedstructfieldcheck
     - errcheck
     - errchkjson
     - errname
@@ -24,6 +26,8 @@ linters:
     - forcetypeassert
     - ginkgolinter
     - gocheckcompilerdirectives
+    - godoclint
+    - godot
     - gochecknoinits
     - gochecksumtype
     - goconst
@@ -37,9 +41,12 @@ linters:
     - govet
     - grouper
     - iface
+    - inamedparam
     - importas
     - ineffassign
     - interfacebloat
+    - intrange
+    - iotamixing
     - lll
     - loggercheck
     - makezero
@@ -67,6 +74,7 @@ linters:
     - tparallel
     - unconvert
     - unparam
+    - unqueryvet
     - unused
     - usestdlibvars
     - usetesting
@@ -78,36 +86,67 @@ linters:
   # These linters are disabled ONLY because fixing/investigating their complaints initially was too overwhelming.
   # We SHOULD try and evaluate each of them eventually and either fix their reports
   # or comment here on why we decided to not listen to them.
+    # 15 issues: many functions exceed default cyclomatic complexity threshold
     - cyclop
+    # 50 issues: needs allowlist configuration for all imports
     - depguard
+    # 50 issues: requires wrapping all errors with fmt.Errorf
     - err113
+    # 6 issues: requires error type assertions to use errors.As/errors.Is
     - errorlint
+    # 50 issues: requires initializing every struct field explicitly
     - exhaustruct
+    # 6 issues: forbids fmt.Print*/os.Stdout usage
     - forbidigo
+    # 18 issues: enforces function declaration ordering within files
+    - funcorder
+    # 28 issues: many functions exceed default length limit
     - funlen
-    - gocognit
-    - godot
-    - godox
-    - gosec
-    - inamedparam
-    - intrange
-    - ireturn
+    # 15 issues: flags all package-level variables
     - gochecknoglobals
+    # 4 issues: similar to cyclop, flags high cognitive complexity
+    - gocognit
+    # 9 issues: flags TODO/FIXME comments
+    - godox
+    # 11 issues: flags potential security issues (hardcoded credentials, weak crypto, etc.)
+    - gosec
+    # 28 issues: forbids returning interfaces
+    - ireturn
+    # 2 issues: flags functions with low maintainability index
     - maintidx
+    # 20 issues: flags magic numbers throughout the code
     - mnd
+    # 7 issues: suggests using modern Go idioms (e.g. slices.Contains)
+    - modernize
+    # 4 issues: requires struct tags on marshaled types
     - musttag
+    # 7 issues: flags deeply nested if statements
     - nestif
+    # 3 issues: flags functions returning both nil error and nil value
     - nilnil
+    # 7 issues: requires blank lines before return/branch statements
     - nlreturn
+    # 3 issues: forbids inline error handling (if err := ...; err != nil)
+    - noinlineerr
+    # 13 issues: forbids named return values
     - nonamedreturns
+    # 50 issues: requires t.Parallel() in every test
     - paralleltest
+    # 8 issues: suggests replacing fmt.Sprintf with faster alternatives
     - perfsprint
+    # 4 issues: suggests preallocating slices
     - prealloc
+    # 27 issues: enforces struct tag alignment
     - tagalign
+    # 27 issues: enforces testify best practices
     - testifylint
+    # 31 issues: requires using separate _test packages
     - testpackage
+    # 6 issues: requires t.Helper() in test helper functions
     - thelper
+    # 50 issues: enforces minimum variable name length
     - varnamelen
+    # 50 issues: requires wrapping errors from external packages
     - wrapcheck
   settings:
     errcheck:

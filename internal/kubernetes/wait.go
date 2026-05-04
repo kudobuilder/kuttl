@@ -13,7 +13,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-// WaitForDelete waits for the provide runtime objects to be deleted from cluster
+// WaitForDelete waits for the provide runtime objects to be deleted from cluster.
 func WaitForDelete(c *RetryClient, objs []runtime.Object) error {
 	// Wait for resources to be deleted.
 	return wait.PollUntilContextTimeout(context.TODO(), 100*time.Millisecond, 10*time.Second, true, func(ctx context.Context) (done bool, err error) {
@@ -30,7 +30,7 @@ func WaitForDelete(c *RetryClient, objs []runtime.Object) error {
 	})
 }
 
-// WaitForSA waits for a service account to be present
+// WaitForSA waits for a service account to be present.
 func WaitForSA(config *rest.Config, name, namespace string) error {
 	c, err := NewRetryClient(config, client.Options{
 		Scheme: Scheme(),

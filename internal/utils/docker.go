@@ -8,6 +8,6 @@ import (
 
 // DockerClient is a wrapper interface for the Docker library to support unit testing.
 type DockerClient interface {
-	VolumeCreate(context.Context, client.VolumeCreateOptions) (client.VolumeCreateResult, error)
-	ImageSave(context.Context, []string, ...client.ImageSaveOption) (client.ImageSaveResult, error)
+	VolumeCreate(ctx context.Context, options client.VolumeCreateOptions) (client.VolumeCreateResult, error)
+	ImageSave(ctx context.Context, imageIDs []string, opts ...client.ImageSaveOption) (client.ImageSaveResult, error)
 }
