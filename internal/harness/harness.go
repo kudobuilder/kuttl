@@ -17,8 +17,11 @@ import (
 
 	docker "github.com/moby/moby/client"
 	"gopkg.in/yaml.v2"
+	corev1 "k8s.io/api/core/v1"
+	apiErrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/discovery"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
@@ -289,19 +292,47 @@ func (h *Harness) Config() (*rest.Config, error) {
 }
 
 func (h *Harness) waitForFunctionalCluster() error {
-	err := kubernetes.WaitForSA(h.config, "default", "default")
+	err := h.waitForSA("default", "default")
 	if err == nil {
 		return nil
 	}
 	// if there is a namespace provided but no "default"/"default" SA found, also check a SA in the provided NS
 	if h.TestSuite.Namespace != "" {
-		tempErr := kubernetes.WaitForSA(h.config, "default", h.TestSuite.Namespace)
+		tempErr := h.waitForSA("default", h.TestSuite.Namespace)
 		if tempErr == nil {
 			return nil
 		}
 	}
 	// either way, return the first "default"/"default" error
 	return err
+}
+
+// waitForSA waits for a service account to be present.
+func (h *Harness) waitForSA(name, namespace string) error {
+	c, err := kubernetes.NewRetryClient(h.config, client.Options{
+		Scheme: kubernetes.Scheme(),
+	})
+	if err != nil {
+		return err
+	}
+
+	obj := &corev1.ServiceAccount{}
+
+	key := client.ObjectKey{
+		Namespace: namespace,
+		Name:      name,
+	}
+	return wait.PollUntilContextTimeout(context.TODO(), 500*time.Millisecond, 60*time.Second, true, func(ctx context.Context) (done bool, err error) {
+		err = c.Get(ctx, key, obj)
+		if apiErrors.IsNotFound(err) {
+			return false, nil
+		}
+		if err != nil {
+			h.T.Logf("Error waiting for service account %s/%s (will retry): %v", namespace, name, err)
+			return false, nil
+		}
+		return true, nil
+	})
 }
 
 // Client returns the current Kubernetes client for the test harness.
