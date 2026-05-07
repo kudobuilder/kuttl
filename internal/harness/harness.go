@@ -644,7 +644,7 @@ func (h *Harness) Report() {
 	}
 }
 
-// NewSuiteReport creates and assigns a TestSuite to the TestSuites (then returns the suite),.
+// NewSuiteReport creates and assigns a TestSuite to the TestSuites (then returns the suite).
 func (h *Harness) NewSuiteReport(name string) *report.Testsuite {
 	suite := report.NewSuite(name, h.TestSuite.ReportGranularity)
 	h.report.AddTestSuite(suite)
