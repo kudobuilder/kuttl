@@ -13,7 +13,7 @@ var (
   kubectl kuttl errors <path/to/errorsfile.yaml> <path/to/errorsfile.yaml>...`
 )
 
-// newErrorsCmd returns a new initialized instance of the errors sub command
+// newErrorsCmd returns a new initialized instance of the errors sub command.
 func newErrorsCmd() *cobra.Command {
 	timeout := 5
 	namespace := "default"

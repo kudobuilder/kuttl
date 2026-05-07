@@ -16,7 +16,7 @@ package version
 var (
 	// semantic version, derived by build scripts (see
 	// https://github.com/kubernetes/community/blob/master/contributors/design-proposals/release/versioning.md
-	// for a detailed discussion of this field)
+	// for a detailed discussion of this field).
 
 	gitVersion = "v0.0.0-main+$Format:%h$"
 	gitCommit  = "$Format:%H$" // sha1 from git, output of $(git rev-parse HEAD)

@@ -52,7 +52,7 @@ func Get() Info {
 	}
 }
 
-// Version is an extension of semver.Version
+// Version is an extension of semver.Version.
 type Version struct {
 	*semver.Version
 }
@@ -70,7 +70,7 @@ func (v *Version) CompareMajorMinor(o *Version) int {
 	return 0
 }
 
-// compares v1 against v2 resulting in -1, 0, 1 for less than, equal, greater than
+// compares v1 against v2 resulting in -1, 0, 1 for less than, equal, greater than.
 func compareSegment(v1, v2 uint64) int {
 	if v1 < v2 {
 		return -1
@@ -82,7 +82,7 @@ func compareSegment(v1, v2 uint64) int {
 	return 0
 }
 
-// New provides an instance of Version from a semver string
+// New provides an instance of Version from a semver string.
 func New(v string) (*Version, error) {
 	ver, err := semver.NewVersion(v)
 	if err != nil {
@@ -92,12 +92,12 @@ func New(v string) (*Version, error) {
 }
 
 // FromGithubVersion provides a version parsed from github semver which starts with "v".
-// v1.5.2 provides a sem version of 1.5.2
+// v1.5.2 provides a sem version of 1.5.2.
 func FromGithubVersion(v string) (*Version, error) {
 	return New(Clean(v))
 }
 
-// FromSemVer converts a semver.Version to our Version
+// FromSemVer converts a semver.Version to our Version.
 func FromSemVer(v *semver.Version) *Version {
 	return &Version{v}
 }
@@ -107,7 +107,7 @@ func MustParse(v string) *Version {
 	return FromSemVer(semver.MustParse(v))
 }
 
-// Clean returns version without a prefixed v if it exists
+// Clean returns version without a prefixed v if it exists.
 func Clean(ver string) string {
 	if strings.HasPrefix(ver, "v") {
 		return ver[1:]

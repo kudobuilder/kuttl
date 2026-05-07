@@ -172,7 +172,7 @@ func (h *Harness) RunKIND() (*rest.Config, error) {
 }
 
 // initTempPath creates the temp folder if needed.
-// various parts of system may need it, starting with kind, or working with tar test suites
+// various parts of system may need it, starting with kind, or working with tar test suites.
 func (h *Harness) initTempPath() (err error) {
 	if h.tempPath == "" {
 		h.tempPath, err = os.MkdirTemp("", "kuttl")
@@ -430,7 +430,7 @@ func (h *Harness) RunTests() {
 	h.T.Log("run tests finished")
 }
 
-// testPreProcessing provides preprocessing bring all tests suites local if there are any refers to URLs
+// testPreProcessing provides preprocessing bring all tests suites local if there are any refers to URLs.
 func (h *Harness) testPreProcessing() []string {
 	testDirs := []string{}
 	// preprocessing step
@@ -617,7 +617,7 @@ func (h *Harness) Stop() {
 }
 
 // wraps Test.Fatal in order to clean up harness
-// fatal should NOT be used with a go routine, it is not thread safe
+// fatal should NOT be used with a go routine, it is not thread safe.
 func (h *Harness) fatal(err error) {
 	// clean up on fatal in setup
 	if !h.stopping {
@@ -644,7 +644,7 @@ func (h *Harness) Report() {
 	}
 }
 
-// NewSuiteReport creates and assigns a TestSuite to the TestSuites (then returns the suite),
+// NewSuiteReport creates and assigns a TestSuite to the TestSuites (then returns the suite).
 func (h *Harness) NewSuiteReport(name string) *report.Testsuite {
 	suite := report.NewSuite(name, h.TestSuite.ReportGranularity)
 	h.report.AddTestSuite(suite)

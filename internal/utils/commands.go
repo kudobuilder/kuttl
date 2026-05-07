@@ -71,7 +71,7 @@ func GetArgs(ctx context.Context, cmd harness.Command, namespace string, envMap 
 
 // RunCommand runs a command with args.
 // args gets split on spaces (respecting quoted strings).
-// if the command is run in the background a reference to the process is returned for later cleanup
+// if the command is run in the background a reference to the process is returned for later cleanup.
 func RunCommand(ctx context.Context, namespace string, cmd harness.Command, cwd string, stdout io.Writer, stderr io.Writer, logger Logger, timeout int, kubeconfigOverride string) (*exec.Cmd, error) {
 	actualDir, err := os.Getwd()
 	if err != nil {
@@ -180,14 +180,14 @@ func convertAssertCommand(assertCommands []harness.TestAssertCommand, timeout in
 	return commands
 }
 
-// RunAssertCommands runs a set of commands specified as TestAssertCommand
+// RunAssertCommands runs a set of commands specified as TestAssertCommand.
 func RunAssertCommands(ctx context.Context, logger Logger, namespace string, commands []harness.TestAssertCommand, workdir string, timeout int, kubeconfigOverride string) ([]*exec.Cmd, error) {
 	return RunCommands(ctx, logger, namespace, convertAssertCommand(commands, timeout), workdir, timeout, kubeconfigOverride)
 }
 
 // RunCommands runs a set of commands, returning any errors.
 // If any (non-background) command fails, the following commands are skipped
-// commands running in the background are returned
+// commands running in the background are returned.
 func RunCommands(ctx context.Context, logger Logger, namespace string, commands []harness.Command, workdir string, timeout int, kubeconfigOverride string) ([]*exec.Cmd, error) {
 	bgs := []*exec.Cmd{}
 

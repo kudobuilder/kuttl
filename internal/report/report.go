@@ -130,25 +130,25 @@ type TestReporter interface {
 	Done()
 }
 
-// NewSuiteCollection returns the address of a newly created TestSuites
+// NewSuiteCollection returns the address of a newly created TestSuites.
 func NewSuiteCollection(name string) *Testsuites {
 	start := time.Now()
 	return &Testsuites{XMLName: xml.Name{Local: "testsuites"}, Name: name, start: start}
 }
 
-// NewSuite returns the address of a newly created TestSuite
+// NewSuite returns the address of a newly created TestSuite.
 func NewSuite(name string, reportGranularity string) *Testsuite {
 	start := time.Now()
 	return &Testsuite{Name: name, Timestamp: start, reportGranularity: reportGranularity}
 }
 
-// NewCase returns the address of a newly create Testcase
+// NewCase returns the address of a newly create Testcase.
 func NewCase(name string) *Testcase {
 	start := time.Now()
 	return &Testcase{Name: name, Timestamp: start}
 }
 
-// NewFailure returns the address of a newly created Failure
+// NewFailure returns the address of a newly created Failure.
 func NewFailure(msg string, errs []error) *Failure {
 	f := &Failure{Message: msg}
 
@@ -162,7 +162,7 @@ func NewFailure(msg string, errs []error) *Failure {
 	return f
 }
 
-// AddTestcase adds a testcase to a suite, providing stats and calculations to both
+// AddTestcase adds a testcase to a suite, providing stats and calculations to both.
 func (ts *Testsuite) AddTestcase(testcase *Testcase) {
 	// this is needed to calc elapse time of testsuite in a async work
 	testcase.end = time.Now()
@@ -182,7 +182,7 @@ func (ts *Testsuite) AddTestcase(testcase *Testcase) {
 	}
 }
 
-// AddProperty adds a property to a testsuite
+// AddProperty adds a property to a testsuite.
 func (ts *Testsuite) AddProperty(property Property) {
 	if ts.Properties == nil {
 		ts.Properties = &Properties{Property: []Property{property}}
@@ -299,7 +299,7 @@ func (r *testReporter) Done() {
 var _ TestReporter = (*testReporter)(nil)
 var _ StepReporter = (*stepReport)(nil)
 
-// AddTestSuite is a convenience method to add a testsuite to the collection in testsuites
+// AddTestSuite is a convenience method to add a testsuite to the collection in testsuites.
 func (ts *Testsuites) AddTestSuite(testsuite *Testsuite) {
 	// testsuite is added prior to stat availability, stat management in the close of the testsuites
 	ts.lock.Lock()
@@ -311,7 +311,7 @@ func (ts *Testsuites) AddTestSuite(testsuite *Testsuite) {
 	})
 }
 
-// AddProperty adds a property to a testsuites
+// AddProperty adds a property to a testsuites.
 func (ts *Testsuites) AddProperty(property Property) {
 	if ts.Properties == nil {
 		ts.Properties = &Properties{Property: []Property{property}}
@@ -324,7 +324,7 @@ func (ts *Testsuites) AddProperty(property Property) {
 	ts.Properties.Property = append(ts.Properties.Property, property)
 }
 
-// Close closes the report and does all end stat calculations
+// Close closes the report and does all end stat calculations.
 func (ts *Testsuites) Close() {
 	elapsed := time.Since(ts.start)
 	ts.Time = fmt.Sprintf("%.3f", elapsed.Seconds())
@@ -340,7 +340,7 @@ func (ts *Testsuites) Close() {
 
 // latestEnd provides the time of the latest end out of the collection of testcases
 
-// Report prints a report for TestSuites to the directory.  ftype == json | xml
+// Report prints a report for TestSuites to the directory.  ftype == json | xml.
 func (ts *Testsuites) Report(dir, name string, ftype Type) error {
 	ts.Close()
 
@@ -374,7 +374,7 @@ func ensureDir(dir string) error {
 	return err
 }
 
-// SetFailure adds a failure to the TestSuites collection for startup failures in the test harness
+// SetFailure adds a failure to the TestSuites collection for startup failures in the test harness.
 func (ts *Testsuites) SetFailure(message string) {
 	ts.Failure = &Failure{
 		Message: message,

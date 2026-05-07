@@ -16,7 +16,7 @@ import (
 	"github.com/kudobuilder/kuttl/internal/version"
 )
 
-// Client is client used to simplified http requests for tarballs
+// Client is client used to simplified http requests for tarballs.
 type Client struct {
 	client    *http.Client
 	UserAgent string
@@ -35,7 +35,7 @@ func (c *Client) Get(url string) (*http.Response, error) {
 }
 
 // GetByteBuffer performs HTTP get, retrieves the contents and returns a bytes.Buffer of the entire contents
-// this could be dangerous against an extremely large file
+// this could be dangerous against an extremely large file.
 func (c *Client) GetByteBuffer(url string) (*bytes.Buffer, error) {
 	buf := bytes.NewBuffer(nil)
 
@@ -139,7 +139,7 @@ func (wc *writeCounter) Write(p []byte) (int, error) {
 	return n, nil
 }
 
-// PrintProgress prints the progress of a file write
+// PrintProgress prints the progress of a file write.
 func (wc *writeCounter) PrintProgress() {
 	// Clear the line by using a character return to go back to the start and remove
 	// the remaining characters by filling it with spaces
@@ -150,7 +150,7 @@ func (wc *writeCounter) PrintProgress() {
 	fmt.Printf("\rDownloading (%s) %s complete", wc.Name, humanize.Bytes(wc.Total))
 }
 
-// NewClient creates HTTP client
+// NewClient creates HTTP client.
 func NewClient() *Client {
 	var client Client
 	tr := &http.Transport{
