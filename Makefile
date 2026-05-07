@@ -14,7 +14,8 @@ LDFLAGS := -X ${GIT_VERSION_PATH}=${GIT_VERSION} -X ${GIT_COMMIT_PATH}=${GIT_COM
 # Please update the list of linters in .golagci.yml when bumping the version.
 GOLANGCI_LINT_VER = 2.11.4
 # ENVTEST_K8S_VERSION refers to the version of kubebuilder assets to be downloaded by envtest binary.
-ENVTEST_K8S_VERSION ?= 1.25.0
+# Dynamically derived from the k8s.io/api dependency version in go.mod (v0.X.Y -> 1.X.Y).
+ENVTEST_K8S_VERSION ?= $(shell go list -m -f '{{.Version}}' k8s.io/api | sed 's/^v0\./1./')
 
 export GO111MODULE=on
 
@@ -138,12 +139,12 @@ endif
 
 .PHONY: integration-test
 # Run integration tests
-integration-test: envtest  ## Runs integration tests
+integration-test:  ## Runs integration tests
 	KUBEBUILDER_ASSETS="$(shell $(ENVTEST) use $(ENVTEST_K8S_VERSION) --bin-dir $(LOCALBIN) -p path)" ./hack/run-integration-tests.sh $(TEST_FLAGS)
 
 .PHONY: e2e-test
 # Run e2e tests
-e2e-test: envtest  ## Runs end-to-end tests
+e2e-test:  ## Runs end-to-end tests
 	KUBEBUILDER_ASSETS="$(shell $(ENVTEST) use $(ENVTEST_K8S_VERSION) --bin-dir $(LOCALBIN) -p path)" $(MAKE) -C ./test/junit
 	KUBEBUILDER_ASSETS="$(shell $(ENVTEST) use $(ENVTEST_K8S_VERSION) --bin-dir $(LOCALBIN) -p path)" $(MAKE) -C ./test/vars
 
@@ -155,9 +156,4 @@ $(LOCALBIN):
 	mkdir -p $(LOCALBIN)
 
 ## Tool Binaries
-ENVTEST ?= $(LOCALBIN)/setup-envtest
-
-.PHONY: envtest
-envtest: $(ENVTEST) ## Download envtest-setup locally if necessary.
-$(ENVTEST): $(LOCALBIN)
-	test -s $(LOCALBIN)/setup-envtest || GOBIN=$(LOCALBIN) go install sigs.k8s.io/controller-runtime/tools/setup-envtest@latest
+ENVTEST ?= echo >&2 Using $(ENVTEST_K8S_VERSION) k8s binaries...; go tool sigs.k8s.io/controller-runtime/tools/setup-envtest
