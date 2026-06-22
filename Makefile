@@ -14,8 +14,9 @@ LDFLAGS := -X ${GIT_VERSION_PATH}=${GIT_VERSION} -X ${GIT_COMMIT_PATH}=${GIT_COM
 # Please update the list of linters in .golagci.yml when bumping the version.
 GOLANGCI_LINT_VER = 2.11.4
 # ENVTEST_K8S_VERSION refers to the version of kubebuilder assets to be downloaded by envtest binary.
-# Dynamically derived from the k8s.io/api dependency version in go.mod (v0.X.Y -> 1.X.Y).
-ENVTEST_K8S_VERSION ?= $(shell go list -m -f '{{.Version}}' k8s.io/api | sed 's/^v0\./1./')
+# Dynamically derived from the k8s.io/api dependency version in go.mod (v0.X.Y -> 1.X),
+# since not all patch versions are re-published.
+ENVTEST_K8S_VERSION ?= $(shell go list -m -f '{{.Version}}' k8s.io/api | sed 's/^v0\.\([0-9]*\).*/1.\1/')
 
 export GO111MODULE=on
 
