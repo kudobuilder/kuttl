@@ -233,7 +233,7 @@ func TestCheckResourceIntegration(t *testing.T) {
 
 // Verify that the DeleteExisting method properly cleans up resources that are matched on labels during a test step.
 func TestStepDeleteExistingLabelMatch(t *testing.T) {
-	namespace := "world"
+	namespace := fmt.Sprintf("kuttl-test-%s", petname.Generate(2, "-"))
 
 	podSpec := map[string]interface{}{
 		"containers": []interface{}{
@@ -244,15 +244,15 @@ func TestStepDeleteExistingLabelMatch(t *testing.T) {
 		},
 	}
 
-	podToDelete := kubernetes.WithSpec(t, kubernetes.WithLabels(t, kubernetes.NewPod("aa-delete-me", "world"), map[string]string{
+	podToDelete := kubernetes.WithSpec(t, kubernetes.WithLabels(t, kubernetes.NewPod("aa-delete-me", namespace), map[string]string{
 		"hello": "world",
 	}), podSpec)
 
-	podToKeep := kubernetes.WithSpec(t, kubernetes.WithLabels(t, kubernetes.NewPod("bb-dont-delete-me", "world"), map[string]string{
+	podToKeep := kubernetes.WithSpec(t, kubernetes.WithLabels(t, kubernetes.NewPod("bb-dont-delete-me", namespace), map[string]string{
 		"bye": "moon",
 	}), podSpec)
 
-	podToDelete2 := kubernetes.WithSpec(t, kubernetes.WithLabels(t, kubernetes.NewPod("cc-delete-me", "world"), map[string]string{
+	podToDelete2 := kubernetes.WithSpec(t, kubernetes.WithLabels(t, kubernetes.NewPod("cc-delete-me", namespace), map[string]string{
 		"hello": "world",
 	}), podSpec)
 
