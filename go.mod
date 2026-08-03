@@ -11,7 +11,7 @@ require (
 	github.com/google/cel-go v0.29.2
 	github.com/google/shlex v0.0.0-20191202100458-e7afc7fbc510
 	github.com/moby/moby/api v1.55.0
-	github.com/moby/moby/client v0.5.0
+	github.com/moby/moby/client v0.5.1
 	github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2
 	github.com/spf13/cobra v1.10.2
 	github.com/spf13/pflag v1.0.10
