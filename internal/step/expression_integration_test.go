@@ -15,6 +15,7 @@ import (
 	kfile "github.com/kudobuilder/kuttl/internal/file"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -44,7 +45,7 @@ func TestAssertExpressions(t *testing.T) {
 	defer cancel()
 
 	testenv, err := kubernetes.StartTestEnvironment(false)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	codednsDeployment := &appsv1.Deployment{
 		ObjectMeta: metav1.ObjectMeta{
