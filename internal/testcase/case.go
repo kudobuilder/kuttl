@@ -38,9 +38,21 @@ type getDiscoveryClientFuncType func() (discovery.DiscoveryInterface, error)
 type CaseOption func(*Case)
 
 // WithSkipDelete sets whether to skip deletion of resources.
+// Deprecated: use WithDeletePolicy instead.
 func WithSkipDelete(skip bool) CaseOption {
 	return func(c *Case) {
-		c.skipDelete = skip
+		if skip {
+			c.deletePolicy = v1beta1.DeleteNone
+		} else {
+			c.deletePolicy = v1beta1.DeleteAll
+		}
+	}
+}
+
+// WithDeletePolicy sets the delete policy controlling which resources are removed after each test.
+func WithDeletePolicy(policy v1beta1.DeletePolicy) CaseOption {
+	return func(c *Case) {
+		c.deletePolicy = policy
 	}
 }
 
@@ -118,7 +130,7 @@ type Case struct {
 	steps              []*step.Step
 	name               string
 	dir                string
-	skipDelete         bool
+	deletePolicy       v1beta1.DeletePolicy
 	timeout            int
 	runLabels          labels.Set
 	ns                 *namespace
@@ -212,7 +224,11 @@ type T interface {
 	Error(args ...any)
 }
 
-func (c *Case) createNamespace(test T, cl clientWithKubeConfig) error {
+// createNamespace creates the test namespace and, depending on the delete policy, schedules its
+// deletion at cleanup time. When the policy is DeleteSuccess, caseSucceeded must be a non-nil
+// pointer that will be set to true by the caller once all test steps pass; the cleanup closure
+// reads it and skips deletion if the case did not succeed.
+func (c *Case) createNamespace(test T, cl clientWithKubeConfig, caseSucceeded *bool) error {
 	cl.Logf("Creating namespace %q", c.ns.name)
 
 	ctx := test.Context()
@@ -234,8 +250,12 @@ func (c *Case) createNamespace(test T, cl clientWithKubeConfig) error {
 	if err != nil {
 		return fmt.Errorf("failed to create test namespace %q: %w", c.ns.name, err)
 	}
-	if !c.skipDelete {
+	if c.deletePolicy != v1beta1.DeleteNone {
 		test.Cleanup(func() {
+			if c.deletePolicy == v1beta1.DeleteSuccess && (caseSucceeded == nil || !*caseSucceeded) {
+				cl.Logf("Skipping namespace deletion for %q: test did not pass (delete policy: success)", c.ns.name)
+				return
+			}
 			// Namespace cleanup is tracked per-client for multi-cluster tests.
 			// See KEP-0008 for details on backward compatibility decisions.
 			if c.ns.userSupplied && nsExisted {
@@ -297,12 +317,16 @@ func (c *Case) maybeReportEvents() {
 func (c *Case) Run(test *testing.T, rep report.TestReporter) {
 	defer rep.Done()
 
+	// caseSucceeded is set to true once every step passes; it gates DeleteSuccess cleanups.
+	caseSucceeded := false
+
 	setupReport := rep.Step("setup")
-	if err := c.setup(test); err != nil {
+	if err := c.setup(test, &caseSucceeded); err != nil {
 		setupReport.Failure(err.Error())
 		test.Fatal(err)
 	}
 
+	caseFailed := false
 	for _, testStep := range c.steps {
 		stepReport := rep.Step("step " + testStep.String())
 		testStep.Setup(c.logger, c.getClient, c.getDiscoveryClient)
@@ -316,7 +340,7 @@ func (c *Case) Run(test *testing.T, rep report.TestReporter) {
 			cl, err := testStep.Client(false)
 			if err != nil {
 				errs = append(errs, fmt.Errorf("failed to lazy-load kubeconfig: %w", err))
-			} else if err = c.createNamespace(test, clientWithKubeConfig{cl, testStep.Kubeconfig, c.logger}); err != nil {
+			} else if err = c.createNamespace(test, clientWithKubeConfig{cl, testStep.Kubeconfig, c.logger}, &caseSucceeded); err != nil {
 				errs = append(errs, err)
 			}
 		}
@@ -334,21 +358,27 @@ func (c *Case) Run(test *testing.T, rep report.TestReporter) {
 			for _, err := range errs {
 				test.Error(err)
 			}
+			caseFailed = true
 			break
 		}
+	}
+
+	// Mark the case as succeeded only if every step passed.
+	if !caseFailed {
+		caseSucceeded = true
 	}
 
 	c.maybeReportEvents()
 }
 
-func (c *Case) setup(test *testing.T) error {
+func (c *Case) setup(test *testing.T, caseSucceeded *bool) error {
 	clients, err := c.getEagerClients()
 	if err != nil {
 		return err
 	}
 
 	for _, cl := range clients {
-		if err := c.createNamespace(test, cl); err != nil {
+		if err := c.createNamespace(test, cl, caseSucceeded); err != nil {
 			return err
 		}
 	}
@@ -403,7 +433,7 @@ func (c *Case) LoadTestSteps() error {
 		testStep := &step.Step{
 			Timeout:       c.timeout,
 			Index:         int(index),
-			SkipDelete:    c.skipDelete,
+			DeletePolicy:  c.deletePolicy,
 			Dir:           c.dir,
 			TestRunLabels: c.runLabels,
 			Asserts:       []client.Object{},

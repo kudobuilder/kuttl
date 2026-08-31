@@ -500,7 +500,8 @@ func TestCase_createNamespace(t *testing.T) {
 				logger:         testutils.NewTestLogger(t, ""),
 			}
 
-			gotErr := c.createNamespace(tm, clk)
+			caseSucceeded := true // always treat as succeeded for these unit tests
+			gotErr := c.createNamespace(tm, clk, &caseSucceeded)
 			if tt.wantErr == nil {
 				assert.NoError(t, gotErr)
 			} else {

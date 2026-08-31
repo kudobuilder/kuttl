@@ -55,6 +55,7 @@ func newTestCmd() *cobra.Command { //nolint:gocyclo
 	kindConfig := ""
 	kindContext := ""
 	skipDelete := false
+	deletePolicy := ""
 	skipClusterDelete := false
 	parallel := 0
 	artifactsDir := ""
@@ -166,11 +167,23 @@ For more detailed documentation, visit: https://github.com/kudobuilder/kuttl`,
 			// perhaps there are cases where that is part of the test.  In general, there is no cluster to delete and
 			// there is no namespace controller.
 			if options.StartControlPlane {
-				options.SkipDelete = true
+				options.Delete = harnessApi.DeleteNone
 			}
 
 			if isSet(flags, "skip-delete") {
-				options.SkipDelete = skipDelete
+				log.Println("--skip-delete is deprecated; use --delete=none instead")
+				if skipDelete {
+					options.Delete = harnessApi.DeleteNone
+				}
+			}
+
+			if isSet(flags, "delete") {
+				switch harnessApi.DeletePolicy(deletePolicy) {
+				case harnessApi.DeleteAll, harnessApi.DeleteSuccess, harnessApi.DeleteNone:
+					options.Delete = harnessApi.DeletePolicy(deletePolicy)
+				default:
+					return fmt.Errorf("invalid --delete value %q: must be one of all, success, none", deletePolicy)
+				}
 			}
 
 			if isSet(flags, "skip-cluster-delete") {
@@ -271,7 +284,8 @@ For more detailed documentation, visit: https://github.com/kudobuilder/kuttl`,
 	testCmd.Flags().StringVar(&kindConfig, "kind-config", "", "Specify the KIND configuration file path (implies --start-kind, cannot be used with --start-control-plane).")
 	testCmd.Flags().StringVar(&kindContext, "kind-context", "", "Specify the KIND context name to use (default: kind).")
 	testCmd.Flags().StringVar(&artifactsDir, "artifacts-dir", "", "Directory to output kind logs to (if not specified, the current working directory).")
-	testCmd.Flags().BoolVar(&skipDelete, "skip-delete", false, "If set, do not delete resources created during tests (helpful for debugging test failures, implies --skip-cluster-delete).")
+	testCmd.Flags().BoolVar(&skipDelete, "skip-delete", false, "Deprecated: use --delete=none instead. If set, do not delete resources created during tests (helpful for debugging test failures, implies --skip-cluster-delete).")
+	testCmd.Flags().StringVar(&deletePolicy, "delete", "", "Control which resources are deleted after tests: all (default), success (only on pass), none (never delete, useful for debugging).")
 	testCmd.Flags().BoolVar(&skipClusterDelete, "skip-cluster-delete", false, "If set, do not delete the mocked control plane or kind cluster.")
 	// The default value here is only used for the help message. The default is actually enforced in RunTests.
 	testCmd.Flags().IntVar(&parallel, "parallel", 8, "The maximum number of tests to run at once.")

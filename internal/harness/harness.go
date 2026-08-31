@@ -87,7 +87,7 @@ func (h *Harness) LoadTests(dir string) ([]*testcase.Case, error) {
 		tests = append(tests, testcase.NewCase(
 			dirEntry.Name(),
 			dir,
-			testcase.WithSkipDelete(h.TestSuite.SkipDelete),
+			testcase.WithDeletePolicy(h.TestSuite.ResolvedDeletePolicy()),
 			testcase.WithNamespace(h.TestSuite.Namespace),
 			testcase.WithTimeout(timeout),
 			testcase.WithLogSuppressions(h.TestSuite.Suppress),
