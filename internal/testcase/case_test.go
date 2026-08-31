@@ -489,6 +489,7 @@ func TestCase_createNamespace(t *testing.T) {
 	for name, tt := range tests {
 		t.Run(name, func(t *testing.T) {
 			c := NewCase(name, "", tt.options...)
+			// c.failed remains false (default) so namespace deletion proceeds in these unit tests.
 			tm := &testMock{}
 			cl := tt.cl(t, c.ns.name)
 			if npc, ok := cl.(*noPermClient); ok {
