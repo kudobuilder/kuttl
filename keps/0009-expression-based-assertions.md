@@ -45,7 +45,7 @@ evaluation and more flexible assertions.
 1. Reading non-Kubernetes resources for assertions.
 2. Reading resources from multiple clusters for assertions.
 
-> **Note:** These goals are not in the scope of the first development of this feature but should be targetted in its later phases.
+> **Note:** These goals are not in the scope of the first development of this feature but should be targeted in its later phases.
 
 ## Proposal
 

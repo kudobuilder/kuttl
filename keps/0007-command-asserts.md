@@ -61,7 +61,7 @@ ENV variables avaible for scripts will be provided to the command environment.  
 * The list of commands will be after the current declarative asserts and will not be called until the declarative asserts pass
 * If a command assert fails, the full suit of asserts are started again (declarative asserts must pass again)
 
-If it is desired that a command assert pass before running any declarative asserts, then it is necessary to have the declarative asserts in the preceeding step.
+If it is desired that a command assert pass before running any declarative asserts, then it is necessary to have the declarative asserts in the preceding step.
 
 ### User Stories
 
