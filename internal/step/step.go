@@ -536,13 +536,16 @@ func (s *Step) LoadYAML(f kfile.Info) error {
 		return err
 	}
 
+	assertStart := len(s.Asserts)
+	applyStart := len(s.Apply)
+
 	if err = s.populateObjectsByType(f, objects); err != nil {
 		return fmt.Errorf("populating step: %v", err)
 	}
 
-	asserts := []client.Object{}
+	asserts := s.Asserts[:assertStart]
 
-	for _, obj := range s.Asserts {
+	for _, obj := range s.Asserts[assertStart:] {
 		if obj.GetObjectKind().GroupVersionKind().Kind == "TestAssert" {
 			if testAssert, ok := obj.DeepCopyObject().(*harness.TestAssert); ok {
 				s.Assert = testAssert
@@ -559,15 +562,17 @@ func (s *Step) LoadYAML(f kfile.Info) error {
 		}
 	}
 
-	applies := []client.Object{}
+	applies := s.Apply[:applyStart]
+	testStepLoaded := false
 
-	for _, obj := range s.Apply {
+	for _, obj := range s.Apply[applyStart:] {
 		if obj.GetObjectKind().GroupVersionKind().Kind == "TestStep" {
 			if testStep, ok := obj.(*harness.TestStep); ok {
 				if s.Step != nil {
 					return fmt.Errorf("more than 1 TestStep not allowed in step %q", s.Name)
 				}
 				s.Step = testStep
+				testStepLoaded = true
 			} else {
 				return fmt.Errorf("failed to load TestStep object from %s: it contains an object of type %T", f.FullName, obj)
 			}
@@ -593,7 +598,7 @@ func (s *Step) LoadYAML(f kfile.Info) error {
 	}
 
 	// process provided steps configured TestStep kind
-	if s.Step != nil {
+	if testStepLoaded {
 		// process configured step applies
 		for _, applyPath := range s.Step.Apply {
 			exApply := env.Expand(applyPath)
