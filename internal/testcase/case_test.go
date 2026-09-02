@@ -500,8 +500,10 @@ func TestCase_createNamespace(t *testing.T) {
 				logger:         testutils.NewTestLogger(t, ""),
 			}
 
-			caseSucceeded := true // always treat as succeeded for these unit tests
-			gotErr := c.createNamespace(tm, clk, &caseSucceeded)
+			// Treat as succeeded for these unit tests (namespace deletion should proceed).
+			succeeded := true
+			c.succeeded = &succeeded
+			gotErr := c.createNamespace(tm, clk)
 			if tt.wantErr == nil {
 				assert.NoError(t, gotErr)
 			} else {

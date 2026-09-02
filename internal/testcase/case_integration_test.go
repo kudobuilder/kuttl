@@ -47,7 +47,7 @@ func TestMultiClusterCase(t *testing.T) {
 	require.NoError(t, kubernetes.Kubeconfig(testenv2.Config, tmpfile))
 
 	c := NewCase("multicluster", "",
-		WithSkipDelete(true),
+		WithDeletePolicy("none"),
 		WithTimeout(20),
 		WithClients(
 			func(bool) (client.Client, error) {

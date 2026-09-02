@@ -20,7 +20,7 @@ const (
 	DeleteAll DeletePolicy = "all"
 	// DeleteSuccess deletes resources only when the test case passes without errors.
 	DeleteSuccess DeletePolicy = "success"
-	// DeleteNone skips deletion of all resources.
+	// DeleteNone skips deletion of resources in all test cases.
 	DeleteNone DeletePolicy = "none"
 )
 
@@ -80,7 +80,8 @@ type TestSuite struct {
 	// Containers to load to each KIND node prior to running the tests.
 	KINDContainers []string `json:"kindContainers"`
 	// If set, do not delete the resources after running the tests (implies SkipClusterDelete).
-	// Deprecated: use Delete instead.
+	//
+	// Deprecated: use Delete as DeleteNone instead.
 	SkipDelete bool `json:"skipDelete"`
 	// Delete controls which resources are deleted after a test run.
 	Delete DeletePolicy `json:"delete,omitempty"`
@@ -276,14 +277,23 @@ const DefaultKINDContext = "kind"
 // ResolvedDeletePolicy returns the effective DeletePolicy for the suite, taking into account
 // the legacy SkipDelete field.
 func (ts *TestSuite) ResolvedDeletePolicy() DeletePolicy {
-	switch ts.Delete {
-	case DeleteAll, DeleteSuccess, DeleteNone:
+	if ValidDeletePolicy(ts.Delete) {
 		return ts.Delete
 	}
 	if ts.SkipDelete {
 		return DeleteNone
 	}
 	return DeleteAll
+}
+
+// ValidDeletePolicy returns whether the set DeletePolicy for a given
+// TestSuite has an acceptable value.
+func ValidDeletePolicy(deletePolicy DeletePolicy) bool {
+	switch deletePolicy {
+	case DeleteAll, DeleteSuccess, DeleteNone:
+		return true
+	}
+	return false
 }
 
 // DeepCopyInto creates a deep copy of the RestConfig.

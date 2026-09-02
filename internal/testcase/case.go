@@ -37,18 +37,6 @@ type getDiscoveryClientFuncType func() (discovery.DiscoveryInterface, error)
 // CaseOption represents a functional option for configuring a Case.
 type CaseOption func(*Case)
 
-// WithSkipDelete sets whether to skip deletion of resources.
-// Deprecated: use WithDeletePolicy instead.
-func WithSkipDelete(skip bool) CaseOption {
-	return func(c *Case) {
-		if skip {
-			c.deletePolicy = v1beta1.DeleteNone
-		} else {
-			c.deletePolicy = v1beta1.DeleteAll
-		}
-	}
-}
-
 // WithDeletePolicy sets the delete policy controlling which resources are removed after each test.
 func WithDeletePolicy(policy v1beta1.DeletePolicy) CaseOption {
 	return func(c *Case) {
@@ -136,6 +124,7 @@ type Case struct {
 	ns                 *namespace
 	getClient          getClientFuncType
 	getDiscoveryClient getDiscoveryClientFuncType
+	succeeded          *bool
 
 	logger testutils.Logger
 	// List of log types which should be suppressed.
@@ -225,10 +214,9 @@ type T interface {
 }
 
 // createNamespace creates the test namespace and, depending on the delete policy, schedules its
-// deletion at cleanup time. When the policy is DeleteSuccess, caseSucceeded must be a non-nil
-// pointer that will be set to true by the caller once all test steps pass; the cleanup closure
-// reads it and skips deletion if the case did not succeed.
-func (c *Case) createNamespace(test T, cl clientWithKubeConfig, caseSucceeded *bool) error {
+// deletion at cleanup time. When the policy is DeleteSuccess, the cleanup closure reads
+// c.succeeded at cleanup time to decide whether to delete.
+func (c *Case) createNamespace(test T, cl clientWithKubeConfig) error {
 	cl.Logf("Creating namespace %q", c.ns.name)
 
 	ctx := test.Context()
@@ -252,7 +240,7 @@ func (c *Case) createNamespace(test T, cl clientWithKubeConfig, caseSucceeded *b
 	}
 	if c.deletePolicy != v1beta1.DeleteNone {
 		test.Cleanup(func() {
-			if c.deletePolicy == v1beta1.DeleteSuccess && (caseSucceeded == nil || !*caseSucceeded) {
+			if c.deletePolicy == v1beta1.DeleteSuccess && (c.succeeded == nil || !*c.succeeded) {
 				cl.Logf("Skipping namespace deletion for %q: test did not pass (delete policy: success)", c.ns.name)
 				return
 			}
@@ -317,11 +305,11 @@ func (c *Case) maybeReportEvents() {
 func (c *Case) Run(test *testing.T, rep report.TestReporter) {
 	defer rep.Done()
 
-	// caseSucceeded is set to true once every step passes; it gates DeleteSuccess cleanups.
-	caseSucceeded := false
+	succeeded := false
+	c.succeeded = &succeeded
 
 	setupReport := rep.Step("setup")
-	if err := c.setup(test, &caseSucceeded); err != nil {
+	if err := c.setup(test); err != nil {
 		setupReport.Failure(err.Error())
 		test.Fatal(err)
 	}
@@ -340,7 +328,7 @@ func (c *Case) Run(test *testing.T, rep report.TestReporter) {
 			cl, err := testStep.Client(false)
 			if err != nil {
 				errs = append(errs, fmt.Errorf("failed to lazy-load kubeconfig: %w", err))
-			} else if err = c.createNamespace(test, clientWithKubeConfig{cl, testStep.Kubeconfig, c.logger}, &caseSucceeded); err != nil {
+			} else if err = c.createNamespace(test, clientWithKubeConfig{cl, testStep.Kubeconfig, c.logger}); err != nil {
 				errs = append(errs, err)
 			}
 		}
@@ -365,20 +353,20 @@ func (c *Case) Run(test *testing.T, rep report.TestReporter) {
 
 	// Mark the case as succeeded only if every step passed.
 	if !caseFailed {
-		caseSucceeded = true
+		*c.succeeded = true
 	}
 
 	c.maybeReportEvents()
 }
 
-func (c *Case) setup(test *testing.T, caseSucceeded *bool) error {
+func (c *Case) setup(test *testing.T) error {
 	clients, err := c.getEagerClients()
 	if err != nil {
 		return err
 	}
 
 	for _, cl := range clients {
-		if err := c.createNamespace(test, cl, caseSucceeded); err != nil {
+		if err := c.createNamespace(test, cl); err != nil {
 			return err
 		}
 	}

@@ -12,8 +12,8 @@ import (
 // TestDeleteFlagValidation exercises the --delete flag validation logic.
 func TestDeleteFlagValidation(t *testing.T) {
 	tests := map[string]struct {
-		args          []string
-		expectedErr   string
+		args           []string
+		expectedErr    string
 		expectedPolicy harnessApi.DeletePolicy
 	}{
 		"--delete all is valid": {

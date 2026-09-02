@@ -42,7 +42,8 @@ func TestCreateDeletePolicy_None(t *testing.T) {
 	errs := s.Create(t, testNamespace)
 	require.Empty(t, errs)
 
-	// Object was created and must survive – no cleanup is registered for DeleteNone.
+	// Since DeletePolicy is DeleteNone, no clean callback was
+	// registered, and therefore the resource should not be deleted.
 	pod := kubernetes.NewPod("test-pod", testNamespace)
 	require.NoError(t, cl.Get(t.Context(), kubernetes.ObjectKey(pod), pod))
 }

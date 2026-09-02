@@ -178,10 +178,12 @@ For more detailed documentation, visit: https://github.com/kudobuilder/kuttl`,
 			}
 
 			if isSet(flags, "delete") {
-				switch harnessApi.DeletePolicy(deletePolicy) {
-				case harnessApi.DeleteAll, harnessApi.DeleteSuccess, harnessApi.DeleteNone:
+				if isSet(flags, "skip-delete") {
+					return fmt.Errorf("you can not set both --skip-delete and --delete; use only --delete instead")
+				}
+				if harnessApi.ValidDeletePolicy(harnessApi.DeletePolicy(deletePolicy)) {
 					options.Delete = harnessApi.DeletePolicy(deletePolicy)
-				default:
+				} else {
 					return fmt.Errorf("invalid --delete value %q: must be one of all, success, none", deletePolicy)
 				}
 			}
@@ -284,8 +286,8 @@ For more detailed documentation, visit: https://github.com/kudobuilder/kuttl`,
 	testCmd.Flags().StringVar(&kindConfig, "kind-config", "", "Specify the KIND configuration file path (implies --start-kind, cannot be used with --start-control-plane).")
 	testCmd.Flags().StringVar(&kindContext, "kind-context", "", "Specify the KIND context name to use (default: kind).")
 	testCmd.Flags().StringVar(&artifactsDir, "artifacts-dir", "", "Directory to output kind logs to (if not specified, the current working directory).")
-	testCmd.Flags().BoolVar(&skipDelete, "skip-delete", false, "Deprecated: use --delete=none instead. If set, do not delete resources created during tests (helpful for debugging test failures, implies --skip-cluster-delete).")
-	testCmd.Flags().StringVar(&deletePolicy, "delete", "", "Control which resources are deleted after tests: all (default), success (only on pass), none (never delete, useful for debugging).")
+	testCmd.Flags().BoolVar(&skipDelete, "skip-delete", false, "Deprecated: same as --delete=none - use that instead.")
+	testCmd.Flags().StringVar(&deletePolicy, "delete", "", "Control which resources are deleted after tests: all (default), success (only in passing test cases), none (never delete, useful for debugging).")
 	testCmd.Flags().BoolVar(&skipClusterDelete, "skip-cluster-delete", false, "If set, do not delete the mocked control plane or kind cluster.")
 	// The default value here is only used for the help message. The default is actually enforced in RunTests.
 	testCmd.Flags().IntVar(&parallel, "parallel", 8, "The maximum number of tests to run at once.")
