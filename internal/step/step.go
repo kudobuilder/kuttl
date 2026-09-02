@@ -32,9 +32,9 @@ import (
 // A Step contains the name of the test step, its index in the test,
 // and all of the test step's settings (including objects to apply and assert on).
 type Step struct {
-	Name       string
-	Index      int
-	SkipDelete bool
+	Name         string
+	Index        int
+	DeletePolicy harness.DeletePolicy
 
 	Dir           string
 	TestRunLabels labels.Set
@@ -59,6 +59,9 @@ type Step struct {
 	DiscoveryClient func() (discovery.DiscoveryInterface, error)
 
 	Logger testutils.Logger
+
+	// succeeded is set to true by Run once all assertions pass.
+	succeeded bool
 }
 
 // Clean deletes all resources defined in the Apply list.
@@ -198,10 +201,15 @@ func (s *Step) Create(test *testing.T, namespace string) []error {
 		if updated, err := kubernetes.CreateOrUpdate(ctx, cl, obj, true); err != nil {
 			errors = append(errors, fmt.Errorf("applying %v %s failed: %w", obj.GetObjectKind().GroupVersionKind(), obj.GetName(), err))
 		} else {
-			// if the object was created, register cleanup
-			if !updated && !s.SkipDelete {
+			// Register a cleanup callback when the policy is not DeleteNone.
+			// For DeleteSuccess the closure reads s.succeeded (set by Run) to decide
+			// whether to actually delete.
+			if !updated && s.DeletePolicy != harness.DeleteNone {
 				obj := obj
 				test.Cleanup(func() {
+					if s.DeletePolicy == harness.DeleteSuccess && !s.succeeded {
+						return
+					}
 					if err := cl.Delete(context.TODO(), obj); err != nil && !k8serrors.IsNotFound(err) {
 						test.Error(err)
 					}
@@ -501,6 +509,7 @@ func (s *Step) Run(test *testing.T, namespace string) []error {
 
 	// all is good
 	if len(testErrors) == 0 {
+		s.succeeded = true
 		s.Logger.Log("test step completed", s.String())
 		return testErrors
 	}

@@ -12,6 +12,18 @@ const KubeconfigLoadingEager = "Eager"
 // KubeconfigLoadingLazy specifies that kubeconfig should be loaded lazily.
 const KubeconfigLoadingLazy = "Lazy"
 
+// DeletePolicy controls which test resources are deleted after a test run.
+type DeletePolicy string
+
+const (
+	// DeleteAll deletes all resources after the test, regardless of pass or fail (default).
+	DeleteAll DeletePolicy = "all"
+	// DeleteSuccess deletes resources only when the test case passes without errors.
+	DeleteSuccess DeletePolicy = "success"
+	// DeleteNone skips deletion of resources in all test cases.
+	DeleteNone DeletePolicy = "none"
+)
+
 // RestConfig embeds rest.Config to implement custom DeepCopyInto method.
 type RestConfig struct {
 	RC *rest.Config
@@ -68,7 +80,11 @@ type TestSuite struct {
 	// Containers to load to each KIND node prior to running the tests.
 	KINDContainers []string `json:"kindContainers"`
 	// If set, do not delete the resources after running the tests (implies SkipClusterDelete).
+	//
+	// Deprecated: use Delete as DeleteNone instead.
 	SkipDelete bool `json:"skipDelete"`
+	// Delete controls which resources are deleted after a test run.
+	Delete DeletePolicy `json:"delete,omitempty"`
 	// If set, do not delete the mocked control plane or kind cluster.
 	SkipClusterDelete bool `json:"skipClusterDelete"`
 	// Override the default timeout of 30 seconds (in seconds).
@@ -257,6 +273,28 @@ type Assertion struct {
 
 // DefaultKINDContext defines the default kind context to use.
 const DefaultKINDContext = "kind"
+
+// ResolvedDeletePolicy returns the effective DeletePolicy for the suite, taking into account
+// the legacy SkipDelete field.
+func (ts *TestSuite) ResolvedDeletePolicy() DeletePolicy {
+	if ValidDeletePolicy(ts.Delete) {
+		return ts.Delete
+	}
+	if ts.SkipDelete {
+		return DeleteNone
+	}
+	return DeleteAll
+}
+
+// ValidDeletePolicy returns whether the set DeletePolicy for a given
+// TestSuite has an acceptable value.
+func ValidDeletePolicy(deletePolicy DeletePolicy) bool {
+	switch deletePolicy {
+	case DeleteAll, DeleteSuccess, DeleteNone:
+		return true
+	}
+	return false
+}
 
 // DeepCopyInto creates a deep copy of the RestConfig.
 func (in *RestConfig) DeepCopyInto(out *RestConfig) {
