@@ -31,7 +31,8 @@ startKIND         | bool             | Whether or not to start a local kind clus
 kindNodeCache     | bool             | If set, each node defined in the kind configuration will have a docker volume mounted into it to persist pulled container images across test runs | false
 kindConfig        | string           | Path to the KIND configuration file to use.                                              |
 kindContext       | string           | KIND context to use.                                                                     | "kind"
-skipDelete        | bool             | If set, do not delete the resources after running the tests (implies SkipClusterDelete). | false
+delete            | string           | Controls which resources are deleted after the test run. One of: `all` (delete everything, default), `success` (delete only resources from passing test cases; implies `skipClusterDelete` when any case fails), `none` (never delete anything; implies `skipClusterDelete`). | `all`
+skipDelete        | bool             | Deprecated: use `delete: none` instead. If set, do not delete the resources after running the tests (implies `skipClusterDelete`). | false
 skipClusterDelete | bool             | If set, do not delete the mocked control plane or kind cluster.                          | false
 timeout           | int              | Override the default timeout of 30 seconds (in seconds).                                 | 30
 parallel          | int              | The maximum number of tests to run at once.                                              | 8
