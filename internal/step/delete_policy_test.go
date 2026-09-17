@@ -33,87 +33,49 @@ func newStepWithClient(t *testing.T, cl client.Client, policy harness.DeletePoli
 	}
 }
 
-// TestCreateDeletePolicy_None verifies that DeleteNone registers no cleanup callback,
-// leaving created objects alive after the test ends.
-func TestCreateDeletePolicy_None(t *testing.T) {
-	cl := fake.NewClientBuilder().WithScheme(scheme.Scheme).Build()
+// TestCreateDeletePolicy verifies that Step.Create registers a cleanup callback that
+// honours the configured DeletePolicy (and, for DeleteSuccess, the step's succeeded state)
+// once the sub-test in which Create ran has ended.
+func TestCreateDeletePolicy(t *testing.T) {
+	tests := []struct {
+		name          string
+		policy        harness.DeletePolicy
+		succeeded     bool
+		shouldSurvive bool
+	}{
+		{"None never deletes on failure", harness.DeleteNone, false, true},
+		{"None never deletes on success", harness.DeleteNone, true, true},
+		{"All ignores succeeded on failure", harness.DeleteAll, false, false},
+		{"All ignores succeeded on success", harness.DeleteAll, true, false},
+		{"Success deletes on success", harness.DeleteSuccess, true, false},
+		{"Success keeps on failure", harness.DeleteSuccess, false, true},
+	}
 
-	t.Run("inner", func(t *testing.T) {
-		s := newStepWithClient(t, cl, harness.DeleteNone)
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			cl := fake.NewClientBuilder().WithScheme(scheme.Scheme).Build()
 
-		errs := s.Create(t, testNamespace)
-		require.Empty(t, errs)
-		// t.Cleanup fires when the sub-test ends; no cleanup was registered → object survives.
-	})
+			t.Run("inner", func(t *testing.T) {
+				s := newStepWithClient(t, cl, tt.policy)
+				s.succeeded = tt.succeeded
 
-	// After the sub-test cleanup the object must still be present.
-	pod := kubernetes.NewPod("test-pod", testNamespace)
-	require.NoError(t, cl.Get(t.Context(), kubernetes.ObjectKey(pod), pod),
-		"DeleteNone: object should survive after test cleanup")
-}
+				errs := s.Create(t, testNamespace)
+				require.Empty(t, errs)
 
-// TestCreateDeletePolicy_All verifies that DeleteAll cleans up resources regardless of
-// whether the step succeeded.
-func TestCreateDeletePolicy_All(t *testing.T) {
-	cl := fake.NewClientBuilder().WithScheme(scheme.Scheme).Build()
+				// The object exists once Create succeeds, before cleanup runs.
+				pod := kubernetes.NewPod("test-pod", testNamespace)
+				require.NoError(t, cl.Get(t.Context(), kubernetes.ObjectKey(pod), pod))
+				// t.Cleanup fires when this sub-test ends, applying the delete policy.
+			})
 
-	t.Run("inner", func(t *testing.T) {
-		s := newStepWithClient(t, cl, harness.DeleteAll)
-		// s.succeeded remains false – DeleteAll must ignore it.
-
-		errs := s.Create(t, testNamespace)
-		require.Empty(t, errs)
-		// t.Cleanup fires when the sub-test ends; succeeded==false is irrelevant → deletion runs.
-	})
-
-	// After the sub-test cleanup the object must be gone.
-	pod := kubernetes.NewPod("test-pod", testNamespace)
-	assert.True(t, k8serrors.IsNotFound(cl.Get(t.Context(), kubernetes.ObjectKey(pod), pod)),
-		"DeleteAll: object should be gone after test cleanup")
-}
-
-// TestCreateDeletePolicy_Success_OnSuccess verifies that DeleteSuccess deletes resources
-// when s.succeeded is true at cleanup time.
-func TestCreateDeletePolicy_Success_OnSuccess(t *testing.T) {
-	cl := fake.NewClientBuilder().WithScheme(scheme.Scheme).Build()
-
-	t.Run("inner", func(t *testing.T) {
-		s := newStepWithClient(t, cl, harness.DeleteSuccess)
-		s.succeeded = true // simulate a passing step
-
-		errs := s.Create(t, testNamespace)
-		require.Empty(t, errs)
-
-		pod := kubernetes.NewPod("test-pod", testNamespace)
-		require.NoError(t, cl.Get(t.Context(), kubernetes.ObjectKey(pod), pod))
-		// t.Cleanup fires when the sub-test ends; succeeded==true → deletion runs.
-	})
-
-	// After the sub-test cleanup the object must be gone.
-	pod := kubernetes.NewPod("test-pod", testNamespace)
-	assert.True(t, k8serrors.IsNotFound(cl.Get(t.Context(), kubernetes.ObjectKey(pod), pod)),
-		"DeleteSuccess+succeeded=true: object should be deleted after test cleanup")
-}
-
-// TestCreateDeletePolicy_Success_OnFailure verifies that DeleteSuccess preserves resources
-// when s.succeeded is false at cleanup time.
-func TestCreateDeletePolicy_Success_OnFailure(t *testing.T) {
-	cl := fake.NewClientBuilder().WithScheme(scheme.Scheme).Build()
-
-	t.Run("inner", func(t *testing.T) {
-		s := newStepWithClient(t, cl, harness.DeleteSuccess)
-		// s.succeeded remains false (default) – cleanup closure must skip deletion.
-
-		errs := s.Create(t, testNamespace)
-		require.Empty(t, errs)
-
-		pod := kubernetes.NewPod("test-pod", testNamespace)
-		require.NoError(t, cl.Get(t.Context(), kubernetes.ObjectKey(pod), pod))
-		// t.Cleanup fires when the sub-test ends; succeeded==false → deletion skipped.
-	})
-
-	// After the sub-test the object must still be present.
-	pod := kubernetes.NewPod("test-pod", testNamespace)
-	require.NoError(t, cl.Get(t.Context(), kubernetes.ObjectKey(pod), pod),
-		"DeleteSuccess+succeeded=false: object should survive after test cleanup")
+			// After the sub-test cleanup, check whether the object survived.
+			pod := kubernetes.NewPod("test-pod", testNamespace)
+			err := cl.Get(t.Context(), kubernetes.ObjectKey(pod), pod)
+			if tt.shouldSurvive {
+				require.NoError(t, err, "object should survive after test cleanup")
+			} else {
+				assert.True(t, k8serrors.IsNotFound(err), "object should be gone after test cleanup")
+			}
+		})
+	}
 }
