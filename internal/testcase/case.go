@@ -37,10 +37,10 @@ type getDiscoveryClientFuncType func() (discovery.DiscoveryInterface, error)
 // CaseOption represents a functional option for configuring a Case.
 type CaseOption func(*Case)
 
-// WithSkipDelete sets whether to skip deletion of resources.
-func WithSkipDelete(skip bool) CaseOption {
+// WithDeletePolicy sets the delete policy controlling which resources are removed after each test.
+func WithDeletePolicy(policy v1beta1.DeletePolicy) CaseOption {
 	return func(c *Case) {
-		c.skipDelete = skip
+		c.deletePolicy = policy
 	}
 }
 
@@ -118,12 +118,13 @@ type Case struct {
 	steps              []*step.Step
 	name               string
 	dir                string
-	skipDelete         bool
+	deletePolicy       v1beta1.DeletePolicy
 	timeout            int
 	runLabels          labels.Set
 	ns                 *namespace
 	getClient          getClientFuncType
 	getDiscoveryClient getDiscoveryClientFuncType
+	failed             bool
 
 	logger testutils.Logger
 	// List of log types which should be suppressed.
@@ -212,6 +213,9 @@ type T interface {
 	Error(args ...any)
 }
 
+// createNamespace creates the test namespace and, depending on the delete policy, schedules its
+// deletion at cleanup time. When the policy is DeleteSuccess, the cleanup closure reads
+// c.failed at cleanup time to decide whether to delete.
 func (c *Case) createNamespace(test T, cl clientWithKubeConfig) error {
 	cl.Logf("Creating namespace %q", c.ns.name)
 
@@ -234,8 +238,12 @@ func (c *Case) createNamespace(test T, cl clientWithKubeConfig) error {
 	if err != nil {
 		return fmt.Errorf("failed to create test namespace %q: %w", c.ns.name, err)
 	}
-	if !c.skipDelete {
+	if c.deletePolicy != v1beta1.DeleteNone {
 		test.Cleanup(func() {
+			if c.deletePolicy == v1beta1.DeleteSuccess && c.failed {
+				cl.Logf("Skipping deletion of namespace %q: test failed & delete policy=success", c.ns.name)
+				return
+			}
 			// Namespace cleanup is tracked per-client for multi-cluster tests.
 			// See KEP-0008 for details on backward compatibility decisions.
 			if c.ns.userSupplied && nsExisted {
@@ -299,6 +307,7 @@ func (c *Case) Run(test *testing.T, rep report.TestReporter) {
 
 	setupReport := rep.Step("setup")
 	if err := c.setup(test); err != nil {
+		c.failed = true
 		setupReport.Failure(err.Error())
 		test.Fatal(err)
 	}
@@ -327,6 +336,7 @@ func (c *Case) Run(test *testing.T, rep report.TestReporter) {
 		}
 
 		if len(errs) > 0 {
+			c.failed = true
 			caseErr := fmt.Errorf("failed in step %s", testStep.String())
 			stepReport.Failure(caseErr.Error(), errs...)
 
@@ -403,7 +413,7 @@ func (c *Case) LoadTestSteps() error {
 		testStep := &step.Step{
 			Timeout:       c.timeout,
 			Index:         int(index),
-			SkipDelete:    c.skipDelete,
+			DeletePolicy:  c.deletePolicy,
 			Dir:           c.dir,
 			TestRunLabels: c.runLabels,
 			Asserts:       []client.Object{},

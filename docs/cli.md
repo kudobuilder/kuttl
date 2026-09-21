@@ -89,13 +89,17 @@ Flags are:
 
   The maximum number of tests to run at once. (default `8`)
 
+* **`--delete (string)`**
+
+  Controls which resources are deleted after the test run. `all` (default) deletes everything regardless of outcome. `success` deletes only resources from passing test cases, preserving failing ones for inspection, and implies `--skip-cluster-delete` when any case fails. `none` never deletes any resources and implies `--skip-cluster-delete`.
+
 * **`--skip-cluster-delete (bool)`**
 
   If set, do not delete the mocked control plane or kind cluster.
 
 * **`--skip-delete (bool)`**
 
-  If set, do not delete resources created during tests (helpful for debugging test failures, implies `--skip-cluster-delete`).
+  Deprecated: use `--delete=none` instead. If set, do not delete resources created during tests (helpful for debugging test failures, implies `--skip-cluster-delete`).
 
 * **`--start-control-plane (bool)`**
 

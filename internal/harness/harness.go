@@ -87,7 +87,7 @@ func (h *Harness) LoadTests(dir string) ([]*testcase.Case, error) {
 		tests = append(tests, testcase.NewCase(
 			dirEntry.Name(),
 			dir,
-			testcase.WithSkipDelete(h.TestSuite.SkipDelete),
+			testcase.WithDeletePolicy(h.TestSuite.ResolvedDeletePolicy()),
 			testcase.WithNamespace(h.TestSuite.Namespace),
 			testcase.WithTimeout(timeout),
 			testcase.WithLogSuppressions(h.TestSuite.Suppress),
@@ -579,7 +579,7 @@ func (h *Harness) Stop() {
 
 	h.Report()
 
-	if h.TestSuite.SkipClusterDelete {
+	if h.shouldSkipClusterDelete() {
 		cwd, err := os.Getwd()
 		if err != nil {
 			h.T.Logf("issue getting work directory %v", err)
@@ -614,6 +614,25 @@ func (h *Harness) Stop() {
 
 		h.kind = nil
 	}
+}
+
+// shouldSkipClusterDelete returns true when the cluster should be
+// kept alive after the run. If --skip-cluster-delete was explicitly
+// set by the user it always wins. Otherwise the decision is inferred
+// from the delete policy and the test success/failure.
+func (h *Harness) shouldSkipClusterDelete() bool {
+	// An explicit --skip-cluster-delete always wins.
+	if h.TestSuite.SkipClusterDelete {
+		return true
+	}
+	policy := h.TestSuite.ResolvedDeletePolicy()
+	if policy == harness.DeleteNone {
+		return true
+	}
+	if policy == harness.DeleteSuccess {
+		return h.T.Failed()
+	}
+	return false
 }
 
 // wraps Test.Fatal in order to clean up harness
