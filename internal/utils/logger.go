@@ -26,16 +26,19 @@ type TestLogger struct {
 }
 
 // NewTestLogger creates a new test logger.
-func NewTestLogger(test *testing.T, prefix string) *TestLogger {
+//
+//nolint:thelper // this only stores t; t.Helper() belongs in the logging methods that call t.test.Log
+func NewTestLogger(t *testing.T, prefix string) *TestLogger {
 	return &TestLogger{
 		prefix: prefix,
-		test:   test,
+		test:   t,
 		buffer: []byte{},
 	}
 }
 
 // Log logs the provided arguments with the logger's prefix. See testing.Log for more details.
 func (t *TestLogger) Log(args ...interface{}) {
+	t.test.Helper()
 	args = append([]interface{}{
 		fmt.Sprintf("%s | %s |", time.Now().Format("15:04:05"), t.prefix),
 	}, args...)
@@ -44,6 +47,7 @@ func (t *TestLogger) Log(args ...interface{}) {
 
 // Logf logs the provided arguments with the logger's prefix. See testing.Logf for more details.
 func (t *TestLogger) Logf(format string, args ...interface{}) {
+	t.test.Helper()
 	t.Log(fmt.Sprintf(format, args...))
 }
 

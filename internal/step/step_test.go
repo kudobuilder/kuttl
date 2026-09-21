@@ -351,7 +351,7 @@ func TestRun(t *testing.T) {
 						"phase": "Ready",
 					}),
 				},
-			}, func(t *testing.T, client client.Client) {
+			}, func(t *testing.T, client client.Client) { //nolint:thelper // mock-kubelet setup callback, not an assertion helper
 				pod := kubernetes.NewPod("hello", testNamespace)
 				require.NoError(t, client.Get(t.Context(), types.NamespacedName{Namespace: testNamespace, Name: "hello"}, pod))
 
