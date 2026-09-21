@@ -17,7 +17,6 @@ import (
 	"github.com/kudobuilder/kuttl/internal/harness"
 	"github.com/kudobuilder/kuttl/internal/kind"
 	"github.com/kudobuilder/kuttl/internal/kubernetes"
-	"github.com/kudobuilder/kuttl/internal/report"
 	testutils "github.com/kudobuilder/kuttl/internal/utils"
 	harnessApi "github.com/kudobuilder/kuttl/pkg/apis/testharness/v1beta1"
 )
@@ -197,8 +196,22 @@ For more detailed documentation, visit: https://github.com/kudobuilder/kuttl`,
 			}
 
 			if isSet(flags, "report") {
-				var ftype = report.Type(strings.ToLower(reportFormat))
-				options.ReportFormat = reportType(ftype)
+				options.ReportFormat = harnessApi.ReportType(reportFormat)
+			}
+
+			// Normalize the report format so that documented values such as "JSON"/"XML"
+			// are matched case-insensitively for backward compatibility. See issue #449.
+			rawReportFormat := options.ReportFormat
+			options.ReportFormat = options.ReportFormat.Normalize()
+			if !options.ReportFormat.Valid() {
+				// Keep the (inconsistent) fallback behaviour for backward compatibility, but warn.
+				if isSet(flags, "report") {
+					log.Printf("Warning: unrecognized --report format %q; no report will be generated (expected one of JSON, XML)", rawReportFormat)
+					options.ReportFormat = harnessApi.ReportTypeNil
+				} else {
+					log.Printf("Warning: unrecognized report format %q; defaulting to JSON (expected one of JSON, XML)", rawReportFormat)
+					options.ReportFormat = harnessApi.ReportTypeJSON
+				}
 			}
 
 			if isSet(flags, "report-name") {
@@ -304,17 +317,6 @@ For more detailed documentation, visit: https://github.com/kudobuilder/kuttl`,
 	kind.SetFlags(testCmd.Flags())
 
 	return testCmd
-}
-
-func reportType(ftype report.Type) string {
-	switch ftype {
-	case report.JSON:
-		fallthrough
-	case report.XML:
-		return string(ftype)
-	default:
-		return ""
-	}
 }
 
 // isSet returns true if a flag is set on the command line.

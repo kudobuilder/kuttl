@@ -10,6 +10,8 @@ import (
 	"sort"
 	"sync"
 	"time"
+
+	harnessapi "github.com/kudobuilder/kuttl/pkg/apis/testharness/v1beta1"
 )
 
 // The structs below define the report output useful in either json or xml format.  The xml format and structs
@@ -18,16 +20,6 @@ import (
 
 // KUTTL is different than junit testing in that the test steps could be useful to have a report on.  There could be value in
 // having a TestCaseStep struct providing step details.  Sticking with the JUnit standard for now.
-
-// Type defines the report.type of report to create.
-type Type string
-
-const (
-	// XML defines the xml Type.
-	XML Type = "xml"
-	// JSON defines the json Type.
-	JSON Type = "json"
-)
 
 // Property are name/value pairs which can be provided in the report for things such as kuttl.version.
 type Property struct {
@@ -341,22 +333,26 @@ func (ts *Testsuites) Close() {
 // latestEnd provides the time of the latest end out of the collection of testcases
 
 // Report prints a report for TestSuites to the directory.  ftype == json | xml.
-func (ts *Testsuites) Report(dir, name string, ftype Type) error {
+// The format is expected to be already normalized (see ReportType.Normalize,
+// applied at the command-line boundary); an empty format means no report.
+func (ts *Testsuites) Report(dir, name string, ftype harnessapi.ReportType) error {
+	if ftype == harnessapi.ReportTypeNil {
+		return nil
+	}
+
 	ts.Close()
 
-	err := ensureDir(dir)
-	if err != nil {
+	if err := ensureDir(dir); err != nil {
 		return err
 	}
 
-	// if a report is requested it is always created
-	switch ftype {
-	case XML:
+	switch ftype { //nolint:exhaustive // ReportTypeNil is handled by the early return above; any other value is an error.
+	case harnessapi.ReportTypeXML:
 		return writeXMLReport(dir, name, ts)
-	case JSON:
-		fallthrough
-	default:
+	case harnessapi.ReportTypeJSON:
 		return writeJSONReport(dir, name, ts)
+	default:
+		return fmt.Errorf("unknown report format %q", ftype)
 	}
 }
 
