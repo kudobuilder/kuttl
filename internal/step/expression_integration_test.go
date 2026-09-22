@@ -26,7 +26,7 @@ import (
 	testutils "github.com/kudobuilder/kuttl/internal/utils"
 )
 
-func buildTestStep(t *testing.T, testenv kubernetes.TestEnvironment) *Step {
+func buildTestStep(t *testing.T, testenv kubernetes.TestEnvironment) *Step { //nolint:thelper // builds a Step for tests; not an assertion helper
 	return &Step{
 		Name:   t.Name(),
 		Index:  0,

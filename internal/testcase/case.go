@@ -302,14 +302,14 @@ func (c *Case) maybeReportEvents() {
 }
 
 // Run runs a test case including all of its steps.
-func (c *Case) Run(test *testing.T, rep report.TestReporter) {
+func (c *Case) Run(t *testing.T, rep report.TestReporter) { //nolint:thelper // runs the case and reports via t; not an assertion helper
 	defer rep.Done()
 
 	setupReport := rep.Step("setup")
-	if err := c.setup(test); err != nil {
+	if err := c.setup(t); err != nil {
 		c.failed = true
 		setupReport.Failure(err.Error())
-		test.Fatal(err)
+		t.Fatal(err)
 	}
 
 	for _, testStep := range c.steps {
@@ -325,14 +325,14 @@ func (c *Case) Run(test *testing.T, rep report.TestReporter) {
 			cl, err := testStep.Client(false)
 			if err != nil {
 				errs = append(errs, fmt.Errorf("failed to lazy-load kubeconfig: %w", err))
-			} else if err = c.createNamespace(test, clientWithKubeConfig{cl, testStep.Kubeconfig, c.logger}); err != nil {
+			} else if err = c.createNamespace(t, clientWithKubeConfig{cl, testStep.Kubeconfig, c.logger}); err != nil {
 				errs = append(errs, err)
 			}
 		}
 
 		// Run test case only if no setup errors are encountered
 		if len(errs) == 0 {
-			errs = append(errs, testStep.Run(test, c.ns.name)...)
+			errs = append(errs, testStep.Run(t, c.ns.name)...)
 		}
 
 		if len(errs) > 0 {
@@ -340,9 +340,9 @@ func (c *Case) Run(test *testing.T, rep report.TestReporter) {
 			caseErr := fmt.Errorf("failed in step %s", testStep.String())
 			stepReport.Failure(caseErr.Error(), errs...)
 
-			test.Error(caseErr)
+			t.Error(caseErr)
 			for _, err := range errs {
-				test.Error(err)
+				t.Error(err)
 			}
 			break
 		}
@@ -351,14 +351,14 @@ func (c *Case) Run(test *testing.T, rep report.TestReporter) {
 	c.maybeReportEvents()
 }
 
-func (c *Case) setup(test *testing.T) error {
+func (c *Case) setup(t *testing.T) error { //nolint:thelper // sets up the case and reports via t; not an assertion helper
 	clients, err := c.getEagerClients()
 	if err != nil {
 		return err
 	}
 
 	for _, cl := range clients {
-		if err := c.createNamespace(test, cl); err != nil {
+		if err := c.createNamespace(t, cl); err != nil {
 			return err
 		}
 	}

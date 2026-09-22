@@ -383,26 +383,20 @@ func TestCase_createNamespace(t *testing.T) {
 		cl                   func(*testing.T, string) client.Client
 		wantErr              error
 		expectedCleanupError func(err error) bool
-		getNsBeforeCleanup   func(*testing.T, error)
-		getNsAfterCleanup    func(*testing.T, error)
+		getNsBeforeCleanup   require.ErrorAssertionFunc
+		getNsAfterCleanup    require.ErrorAssertionFunc
 	}{
 		"user-supplied exists": {
-			options: []CaseOption{WithNamespace("foo")},
-			cl:      newClientWithExistingNs,
-			getNsBeforeCleanup: func(t *testing.T, err error) {
-				require.NoError(t, err)
-			},
-			getNsAfterCleanup: func(t *testing.T, err error) {
-				require.NoError(t, err)
-			},
+			options:            []CaseOption{WithNamespace("foo")},
+			cl:                 newClientWithExistingNs,
+			getNsBeforeCleanup: require.NoError,
+			getNsAfterCleanup:  require.NoError,
 		},
 		"user-supplied absent": {
-			options: []CaseOption{WithNamespace("foo")},
-			cl:      newClientWithAbsentNs,
-			getNsBeforeCleanup: func(t *testing.T, err error) {
-				require.NoError(t, err)
-			},
-			getNsAfterCleanup: func(t *testing.T, err error) {
+			options:            []CaseOption{WithNamespace("foo")},
+			cl:                 newClientWithAbsentNs,
+			getNsBeforeCleanup: require.NoError,
+			getNsAfterCleanup: func(t require.TestingT, err error, _ ...interface{}) {
 				assert.True(t, k8serrors.IsNotFound(err), "expected namespace to be deleted after cleanup, but client returned %v", err)
 			},
 		},
@@ -410,80 +404,60 @@ func TestCase_createNamespace(t *testing.T) {
 			options: []CaseOption{WithNamespace("foo")},
 			cl:      newClientWithAbsentNsNoWritePerm,
 			wantErr: errCreationForbidden,
-			getNsBeforeCleanup: func(t *testing.T, err error) {
+			getNsBeforeCleanup: func(t require.TestingT, err error, _ ...interface{}) {
 				assert.True(t, k8serrors.IsNotFound(err), "expected namespace to be missing before cleanup, but client returned %v", err)
 			},
-			getNsAfterCleanup: func(t *testing.T, err error) {
+			getNsAfterCleanup: func(t require.TestingT, err error, _ ...interface{}) {
 				assert.True(t, k8serrors.IsNotFound(err), "expected namespace to be missing after cleanup, but client returned %v", err)
 			},
 		},
 		"user-supplied exists and no write permission": {
-			options: []CaseOption{WithNamespace("foo")},
-			cl:      newClientWithExistingNsNoWritePerm,
-			getNsBeforeCleanup: func(t *testing.T, err error) {
-				require.NoError(t, err)
-			},
-			getNsAfterCleanup: func(t *testing.T, err error) {
-				require.NoError(t, err)
-			},
+			options:            []CaseOption{WithNamespace("foo")},
+			cl:                 newClientWithExistingNsNoWritePerm,
+			getNsBeforeCleanup: require.NoError,
+			getNsAfterCleanup:  require.NoError,
 		},
 		"user-supplied exists and no permissions at all": {
-			options: []CaseOption{WithNamespace("foo")},
-			cl:      newClientWithExistingNsNoPerms,
-			getNsBeforeCleanup: func(t *testing.T, err error) {
-				require.NoError(t, err)
-			},
-			getNsAfterCleanup: func(t *testing.T, err error) {
-				require.NoError(t, err)
-			},
+			options:            []CaseOption{WithNamespace("foo")},
+			cl:                 newClientWithExistingNsNoPerms,
+			getNsBeforeCleanup: require.NoError,
+			getNsAfterCleanup:  require.NoError,
 		},
 		"ephemeral exists": {
-			cl: newClientWithExistingNs,
-			getNsBeforeCleanup: func(t *testing.T, err error) {
-				require.NoError(t, err)
-			},
-			getNsAfterCleanup: func(t *testing.T, err error) {
+			cl:                 newClientWithExistingNs,
+			getNsBeforeCleanup: require.NoError,
+			getNsAfterCleanup: func(t require.TestingT, err error, _ ...interface{}) {
 				assert.True(t, k8serrors.IsNotFound(err), "expected namespace to be deleted after cleanup, but client returned %v", err)
 			},
 		},
 		"ephemeral absent": {
-			cl: newClientWithAbsentNs,
-			getNsBeforeCleanup: func(t *testing.T, err error) {
-				require.NoError(t, err)
-			},
-			getNsAfterCleanup: func(t *testing.T, err error) {
+			cl:                 newClientWithAbsentNs,
+			getNsBeforeCleanup: require.NoError,
+			getNsAfterCleanup: func(t require.TestingT, err error, _ ...interface{}) {
 				assert.True(t, k8serrors.IsNotFound(err), "expected namespace to be deleted after cleanup, but client returned %v", err)
 			},
 		},
 		"ephemeral absent and no write permission": {
 			cl:      newClientWithAbsentNsNoWritePerm,
 			wantErr: errCreationForbidden,
-			getNsBeforeCleanup: func(t *testing.T, err error) {
+			getNsBeforeCleanup: func(t require.TestingT, err error, _ ...interface{}) {
 				assert.True(t, k8serrors.IsNotFound(err), "expected namespace to be missing before cleanup, but client returned %v", err)
 			},
-			getNsAfterCleanup: func(t *testing.T, err error) {
+			getNsAfterCleanup: func(t require.TestingT, err error, _ ...interface{}) {
 				assert.True(t, k8serrors.IsNotFound(err), "expected namespace to be missing after cleanup, but client returned %v", err)
 			},
 		},
 		"ephemeral exists and no write permission": {
 			cl:                   newClientWithExistingNsNoWritePerm,
 			expectedCleanupError: k8serrors.IsForbidden,
-			getNsBeforeCleanup: func(t *testing.T, err error) {
-				require.NoError(t, err)
-			},
-			getNsAfterCleanup: func(t *testing.T, err error) {
-				require.NoError(t, err)
-			},
+			getNsBeforeCleanup:   require.NoError,
+			getNsAfterCleanup:    require.NoError,
 		},
 		"ephemeral exists and no permissions at all": {
 			cl:                   newClientWithExistingNsNoPerms,
 			expectedCleanupError: k8serrors.IsForbidden,
-			getNsBeforeCleanup: func(t *testing.T, err error) {
-				require.NoError(t, err)
-			},
-			getNsAfterCleanup: func(t *testing.T, err error) {
-				require.NoError(t, err)
-			},
+			getNsBeforeCleanup:   require.NoError,
+			getNsAfterCleanup:    require.NoError,
 		},
 	}
 	for name, tt := range tests {
@@ -578,7 +552,9 @@ func (c *noPermClient) Get(ctx context.Context, key client.ObjectKey, obj client
 	return c.Client.Get(ctx, key, obj, opts...)
 }
 
-func newClientWithExistingNsNoWritePerm(t *testing.T, nsName string) client.Client {
+// The returned client's t field is set by the caller (npc.t = t), so these constructors
+// take *testing.T only to satisfy the table's cl signature.
+func newClientWithExistingNsNoWritePerm(_ *testing.T, nsName string) client.Client {
 	return &noPermClient{
 		Client: fake.NewClientBuilder().WithScheme(scheme.Scheme).WithRuntimeObjects(&corev1.Namespace{
 			ObjectMeta: metav1.ObjectMeta{
@@ -586,17 +562,15 @@ func newClientWithExistingNsNoWritePerm(t *testing.T, nsName string) client.Clie
 			},
 		}).Build(),
 		forbidGet: false,
-		t:         t,
 	}
 }
-func newClientWithAbsentNsNoWritePerm(t *testing.T, _ string) client.Client {
+func newClientWithAbsentNsNoWritePerm(*testing.T, string) client.Client {
 	return &noPermClient{
 		Client:    fake.NewClientBuilder().WithScheme(scheme.Scheme).Build(),
 		forbidGet: false,
-		t:         t,
 	}
 }
-func newClientWithExistingNsNoPerms(t *testing.T, nsName string) client.Client {
+func newClientWithExistingNsNoPerms(_ *testing.T, nsName string) client.Client {
 	return &noPermClient{
 		Client: fake.NewClientBuilder().WithScheme(scheme.Scheme).WithRuntimeObjects(&corev1.Namespace{
 			ObjectMeta: metav1.ObjectMeta{
@@ -604,7 +578,6 @@ func newClientWithExistingNsNoPerms(t *testing.T, nsName string) client.Client {
 			},
 		}).Build(),
 		forbidGet: true,
-		t:         t,
 	}
 }
 

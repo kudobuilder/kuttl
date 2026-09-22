@@ -94,7 +94,7 @@ func TestClientWatch(t *testing.T) {
 
 	var wg sync.WaitGroup
 	wg.Add(1)
-	go func(t *testing.T) {
+	go func(t *testing.T) { //nolint:thelper // goroutine body, not a helper
 		require.NoError(t, testenv.Client.Create(t.Context(), pod))
 		require.NoError(t, testenv.Client.Update(t.Context(), pod))
 		require.NoError(t, testenv.Client.Delete(t.Context(), pod))

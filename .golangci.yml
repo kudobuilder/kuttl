@@ -71,6 +71,7 @@ linters:
     - staticcheck
     - tagliatelle
     - testableexamples
+    - thelper
     - tparallel
     - unconvert
     - unparam
@@ -142,8 +143,6 @@ linters:
     - testifylint
     # 31 issues: requires using separate _test packages
     - testpackage
-    # 6 issues: requires t.Helper() in test helper functions
-    - thelper
     # 50 issues: enforces minimum variable name length
     - varnamelen
     # 50 issues: requires wrapping errors from external packages

@@ -259,7 +259,7 @@ For more detailed documentation, visit: https://github.com/kudobuilder/kuttl`,
 			return nil
 		},
 		Run: func(*cobra.Command, []string) {
-			testutils.RunTests("kuttl", testToRun, options.Parallel, func(t *testing.T) {
+			testutils.RunTests("kuttl", testToRun, options.Parallel, func(t *testing.T) { //nolint:thelper // test entry point, not a helper
 				h := harness.Harness{
 					TestSuite:    options,
 					T:            t,

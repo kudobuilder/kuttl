@@ -78,6 +78,7 @@ func WithNamespace(obj *unstructured.Unstructured, namespace string) *unstructur
 
 // WithSpec applies the provided spec to the Kubernetes object.
 func WithSpec(t *testing.T, obj *unstructured.Unstructured, spec map[string]interface{}) *unstructured.Unstructured {
+	t.Helper()
 	res, err := WithKeyValue(obj, "spec", spec)
 	if err != nil {
 		t.Fatalf("failed to apply spec %v to object %v: %v", spec, obj, err)
@@ -87,6 +88,7 @@ func WithSpec(t *testing.T, obj *unstructured.Unstructured, spec map[string]inte
 
 // WithStatus applies the provided status to the Kubernetes object.
 func WithStatus(t *testing.T, obj *unstructured.Unstructured, status map[string]interface{}) *unstructured.Unstructured {
+	t.Helper()
 	res, err := WithKeyValue(obj, "status", status)
 	if err != nil {
 		t.Fatalf("failed to apply status %v to object %v: %v", status, obj, err)
@@ -112,6 +114,7 @@ func WithKeyValue(obj *unstructured.Unstructured, key string, value map[string]i
 
 // WithLabels sets the labels on an object.
 func WithLabels(t *testing.T, obj *unstructured.Unstructured, labels map[string]string) *unstructured.Unstructured {
+	t.Helper()
 	obj = obj.DeepCopy()
 
 	m, err := meta.Accessor(obj)

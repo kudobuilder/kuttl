@@ -172,7 +172,7 @@ func (s *Step) DeleteExisting(namespace string) error {
 }
 
 // Create applies all resources defined in the Apply list.
-func (s *Step) Create(test *testing.T, namespace string) []error {
+func (s *Step) Create(t *testing.T, namespace string) []error { //nolint:thelper // not an assertion helper: executes the step and registers cleanups on t
 	cl, err := s.Client(true)
 	if err != nil {
 		return []error{err}
@@ -206,12 +206,12 @@ func (s *Step) Create(test *testing.T, namespace string) []error {
 			// whether to actually delete.
 			if !updated && s.DeletePolicy != harness.DeleteNone {
 				obj := obj
-				test.Cleanup(func() {
+				t.Cleanup(func() {
 					if s.DeletePolicy == harness.DeleteSuccess && !s.succeeded {
 						return
 					}
 					if err := cl.Delete(context.TODO(), obj); err != nil && !k8serrors.IsNotFound(err) {
-						test.Error(err)
+						t.Error(err)
 					}
 				})
 			}
@@ -465,7 +465,7 @@ func (s *Step) Check(namespace string, timeout int) []error {
 // 5. Check assertions in a loop until they all pass or step times out.
 // 6. On success, return.
 // 7. On failure, run collector commands, if any.
-func (s *Step) Run(test *testing.T, namespace string) []error {
+func (s *Step) Run(t *testing.T, namespace string) []error { //nolint:thelper // executes the step and reports via t; not an assertion helper
 	s.Logger.Log("starting test step", s.String())
 
 	if err := s.DeleteExisting(namespace); err != nil {
@@ -486,7 +486,7 @@ func (s *Step) Run(test *testing.T, namespace string) []error {
 		}
 	}
 
-	testErrors = append(testErrors, s.Create(test, namespace)...)
+	testErrors = append(testErrors, s.Create(t, namespace)...)
 
 	if len(testErrors) != 0 {
 		return testErrors
