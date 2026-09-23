@@ -33,8 +33,8 @@ const (
 type ReportType string
 
 const (
-	// ReportTypeNil is the empty value and means no report is generated.
-	ReportTypeNil ReportType = ""
+	// ReportTypeNone is the empty value and means no report is generated.
+	ReportTypeNone ReportType = ""
 	// ReportTypeXML generates a JUnit XML report.
 	ReportTypeXML ReportType = "XML"
 	// ReportTypeJSON generates a JSON report.
@@ -47,7 +47,7 @@ const (
 // "no report" value). It expects an already-normalized value.
 func (r ReportType) Valid() bool {
 	switch r {
-	case ReportTypeNil, ReportTypeXML, ReportTypeJSON:
+	case ReportTypeNone, ReportTypeXML, ReportTypeJSON:
 		return true
 	}
 	return false
@@ -136,7 +136,7 @@ type TestSuite struct {
 	// Commands to run prior to running the tests.
 	Commands []Command `json:"commands"`
 
-	// ReportFormat determines test report format (JSON|XML|"") "" == no report.
+	// ReportFormat determines test report format (JSON|XML|""), where "" means no report.
 	// The value is matched case-insensitively via ReportType.Normalize.
 	ReportFormat ReportType `json:"reportFormat"`
 

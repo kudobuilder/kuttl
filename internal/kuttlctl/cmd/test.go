@@ -207,7 +207,7 @@ For more detailed documentation, visit: https://github.com/kudobuilder/kuttl`,
 				// Keep the (inconsistent) fallback behaviour for backward compatibility, but warn.
 				if isSet(flags, "report") {
 					log.Printf("Warning: unrecognized --report format %q; no report will be generated (expected one of JSON, XML)", rawReportFormat)
-					options.ReportFormat = harnessApi.ReportTypeNil
+					options.ReportFormat = harnessApi.ReportTypeNone
 				} else {
 					log.Printf("Warning: unrecognized report format %q; defaulting to JSON (expected one of JSON, XML)", rawReportFormat)
 					options.ReportFormat = harnessApi.ReportTypeJSON

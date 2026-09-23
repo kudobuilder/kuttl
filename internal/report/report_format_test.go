@@ -24,7 +24,7 @@ func TestReportFormat(t *testing.T) {
 	}{
 		"XML":                  {ftype: harnessapi.ReportTypeXML, wantXMLFile: true},
 		"JSON":                 {ftype: harnessapi.ReportTypeJSON, wantJSON: true},
-		"empty writes nothing": {ftype: harnessapi.ReportTypeNil},
+		"empty writes nothing": {ftype: harnessapi.ReportTypeNone},
 		"lowercase is unknown": {ftype: "xml", wantErr: true},
 		"unknown is an error":  {ftype: "foobar", wantErr: true},
 	}
@@ -51,7 +51,7 @@ func TestReportFormat(t *testing.T) {
 			// The artifacts subdirectory is created whenever a report is attempted
 			// (i.e. for any non-empty format), and not for the empty "no report" case.
 			_, dirErr := os.Stat(dir)
-			assert.Equal(t, tt.ftype != harnessapi.ReportTypeNil, dirErr == nil, "subdirectory creation")
+			assert.Equal(t, tt.ftype != harnessapi.ReportTypeNone, dirErr == nil, "subdirectory creation")
 		})
 	}
 }

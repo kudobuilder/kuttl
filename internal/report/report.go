@@ -332,11 +332,11 @@ func (ts *Testsuites) Close() {
 
 // latestEnd provides the time of the latest end out of the collection of testcases
 
-// Report prints a report for TestSuites to the directory.  ftype == json | xml.
+// Report prints a report for TestSuites to the directory.
 // The format is expected to be already normalized (see ReportType.Normalize,
 // applied at the command-line boundary); an empty format means no report.
 func (ts *Testsuites) Report(dir, name string, ftype harnessapi.ReportType) error {
-	if ftype == harnessapi.ReportTypeNil {
+	if ftype == harnessapi.ReportTypeNone {
 		return nil
 	}
 
@@ -346,7 +346,7 @@ func (ts *Testsuites) Report(dir, name string, ftype harnessapi.ReportType) erro
 		return err
 	}
 
-	switch ftype { //nolint:exhaustive // ReportTypeNil is handled by the early return above; any other value is an error.
+	switch ftype { //nolint:exhaustive // ReportTypeNone is handled by the early return above; any other value is an error.
 	case harnessapi.ReportTypeXML:
 		return writeXMLReport(dir, name, ts)
 	case harnessapi.ReportTypeJSON:
