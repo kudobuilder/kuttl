@@ -2,17 +2,21 @@ name-template: 'kuttl-v$NEXT_MINOR_VERSION Draft'
 tag-template: 'v$NEXT_MINOR_VERSION-draft'
 categories:
   - title: '🚀 Highlights'
-    labels:
-      - 'release/highlight'
+    when:
+      labels:
+        - 'release/highlight'
   - title: '⚠️ Breaking Changes'
-    labels:
-      - 'release/breaking-change'
+    when:
+      labels:
+        - 'release/breaking-change'
   - title: '🐛 Bug Fixes'
-    labels:
-      - 'release/bugfix'
+    when:
+      labels:
+        - 'release/bugfix'
   - title: '🌱 Dependency bumps'
-    labels:
-      - 'dependencies'
+    when:
+      labels:
+        - 'dependencies'
 change-template: '- $TITLE (#$NUMBER)'
 template: |
   This is a draft for the next release.
