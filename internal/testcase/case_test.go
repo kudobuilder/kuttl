@@ -49,9 +49,9 @@ func TestLoadTestSteps(t *testing.T) {
 						Index: 0,
 					},
 					Apply: []client.Object{
-						kubernetes.WithSpec(t, kubernetes.NewPod("test", ""), map[string]interface{}{
+						kubernetes.WithSpec(t, kubernetes.NewPod("test", ""), map[string]any{
 							"restartPolicy": "Never",
-							"containers": []map[string]interface{}{
+							"containers": []map[string]any{
 								{
 									"name":  "nginx",
 									"image": "nginx:1.7.9",
@@ -60,7 +60,7 @@ func TestLoadTestSteps(t *testing.T) {
 						}),
 					},
 					Asserts: []client.Object{
-						kubernetes.WithStatus(t, kubernetes.NewPod("test", ""), map[string]interface{}{
+						kubernetes.WithStatus(t, kubernetes.NewPod("test", ""), map[string]any{
 							"qosClass": "BestEffort",
 						}),
 					},
@@ -94,9 +94,9 @@ func TestLoadTestSteps(t *testing.T) {
 						Timeout: 20,
 					},
 					Apply: []client.Object{
-						kubernetes.WithSpec(t, kubernetes.NewPod("test2", ""), map[string]interface{}{
+						kubernetes.WithSpec(t, kubernetes.NewPod("test2", ""), map[string]any{
 							"restartPolicy": "Never",
-							"containers": []map[string]interface{}{
+							"containers": []map[string]any{
 								{
 									"name":  "nginx",
 									"image": "nginx:1.7.9",
@@ -105,7 +105,7 @@ func TestLoadTestSteps(t *testing.T) {
 						}),
 					},
 					Asserts: []client.Object{
-						kubernetes.WithStatus(t, kubernetes.NewPod("test2", ""), map[string]interface{}{
+						kubernetes.WithStatus(t, kubernetes.NewPod("test2", ""), map[string]any{
 							"qosClass": "BestEffort",
 						}),
 					},
@@ -116,16 +116,16 @@ func TestLoadTestSteps(t *testing.T) {
 					Name:  "pod",
 					Index: 2,
 					Apply: []client.Object{
-						kubernetes.WithSpec(t, kubernetes.NewPod("test4", ""), map[string]interface{}{
-							"containers": []map[string]interface{}{
+						kubernetes.WithSpec(t, kubernetes.NewPod("test4", ""), map[string]any{
+							"containers": []map[string]any{
 								{
 									"name":  "nginx",
 									"image": "nginx:1.7.9",
 								},
 							},
 						}),
-						kubernetes.WithSpec(t, kubernetes.NewPod("test3", ""), map[string]interface{}{
-							"containers": []map[string]interface{}{
+						kubernetes.WithSpec(t, kubernetes.NewPod("test3", ""), map[string]any{
+							"containers": []map[string]any{
 								{
 									"name":  "nginx",
 									"image": "nginx:1.7.9",
@@ -134,7 +134,7 @@ func TestLoadTestSteps(t *testing.T) {
 						}),
 					},
 					Asserts: []client.Object{
-						kubernetes.WithStatus(t, kubernetes.NewPod("test3", ""), map[string]interface{}{
+						kubernetes.WithStatus(t, kubernetes.NewPod("test3", ""), map[string]any{
 							"qosClass": "BestEffort",
 						}),
 					},
@@ -155,18 +155,18 @@ func TestLoadTestSteps(t *testing.T) {
 						Index: 3,
 					},
 					Apply: []client.Object{
-						kubernetes.WithSpec(t, kubernetes.NewPod("test6", ""), map[string]interface{}{
+						kubernetes.WithSpec(t, kubernetes.NewPod("test6", ""), map[string]any{
 							"restartPolicy": "Never",
-							"containers": []map[string]interface{}{
+							"containers": []map[string]any{
 								{
 									"name":  "nginx",
 									"image": "nginx:1.7.9",
 								},
 							},
 						}),
-						kubernetes.WithSpec(t, kubernetes.NewPod("test5", ""), map[string]interface{}{
+						kubernetes.WithSpec(t, kubernetes.NewPod("test5", ""), map[string]any{
 							"restartPolicy": "Never",
-							"containers": []map[string]interface{}{
+							"containers": []map[string]any{
 								{
 									"name":  "nginx",
 									"image": "nginx:1.7.9",
@@ -175,7 +175,7 @@ func TestLoadTestSteps(t *testing.T) {
 						}),
 					},
 					Asserts: []client.Object{
-						kubernetes.WithSpec(t, kubernetes.NewPod("test5", ""), map[string]interface{}{
+						kubernetes.WithSpec(t, kubernetes.NewPod("test5", ""), map[string]any{
 							"restartPolicy": "Never",
 						}),
 					},
@@ -193,18 +193,18 @@ func TestLoadTestSteps(t *testing.T) {
 					Index: 0,
 					Apply: []client.Object{
 						&unstructured.Unstructured{
-							Object: map[string]interface{}{
+							Object: map[string]any{
 								"apiVersion": "v1",
 								"kind":       "Pod",
-								"metadata": map[string]interface{}{
+								"metadata": map[string]any{
 									"name": "pod-1",
-									"labels": map[string]interface{}{
+									"labels": map[string]any{
 										"app": "nginx",
 									},
 								},
-								"spec": map[string]interface{}{
-									"containers": []interface{}{
-										map[string]interface{}{
+								"spec": map[string]any{
+									"containers": []any{
+										map[string]any{
 											"image": "nginx:1.7.9",
 											"name":  "nginx",
 										},
@@ -215,17 +215,17 @@ func TestLoadTestSteps(t *testing.T) {
 					},
 					Asserts: []client.Object{
 						&unstructured.Unstructured{
-							Object: map[string]interface{}{
+							Object: map[string]any{
 								"apiVersion": "v1",
 								"kind":       "Pod",
-								"metadata": map[string]interface{}{
-									"labels": map[string]interface{}{
+								"metadata": map[string]any{
+									"labels": map[string]any{
 										"app": "nginx",
 									},
 								},
-								"spec": map[string]interface{}{
-									"containers": []interface{}{
-										map[string]interface{}{
+								"spec": map[string]any{
+									"containers": []any{
+										map[string]any{
 											"image": "nginx:1.7.9",
 											"name":  "nginx",
 										},
@@ -263,13 +263,13 @@ func TestLoadTestSteps(t *testing.T) {
 					TestRunLabels: labels.Set{"flavor": "a"},
 					Apply: []client.Object{
 						&unstructured.Unstructured{
-							Object: map[string]interface{}{
+							Object: map[string]any{
 								"apiVersion": "v1",
 								"kind":       "ConfigMap",
-								"metadata": map[string]interface{}{
+								"metadata": map[string]any{
 									"name": "test",
 								},
-								"data": map[string]interface{}{
+								"data": map[string]any{
 									"flavor": "a",
 								},
 							},
@@ -277,13 +277,13 @@ func TestLoadTestSteps(t *testing.T) {
 					},
 					Asserts: []client.Object{
 						&unstructured.Unstructured{
-							Object: map[string]interface{}{
+							Object: map[string]any{
 								"apiVersion": "v1",
 								"kind":       "ConfigMap",
-								"metadata": map[string]interface{}{
+								"metadata": map[string]any{
 									"name": "test",
 								},
-								"data": map[string]interface{}{
+								"data": map[string]any{
 									"flavor": "a",
 								},
 							},
@@ -303,13 +303,13 @@ func TestLoadTestSteps(t *testing.T) {
 					TestRunLabels: labels.Set{"flavor": "b"},
 					Apply: []client.Object{
 						&unstructured.Unstructured{
-							Object: map[string]interface{}{
+							Object: map[string]any{
 								"apiVersion": "v1",
 								"kind":       "ConfigMap",
-								"metadata": map[string]interface{}{
+								"metadata": map[string]any{
 									"name": "test",
 								},
-								"data": map[string]interface{}{
+								"data": map[string]any{
 									"flavor": "b",
 								},
 							},
@@ -317,13 +317,13 @@ func TestLoadTestSteps(t *testing.T) {
 					},
 					Asserts: []client.Object{
 						&unstructured.Unstructured{
-							Object: map[string]interface{}{
+							Object: map[string]any{
 								"apiVersion": "v1",
 								"kind":       "ConfigMap",
-								"metadata": map[string]interface{}{
+								"metadata": map[string]any{
 									"name": "test",
 								},
-								"data": map[string]interface{}{
+								"data": map[string]any{
 									"flavor": "b",
 								},
 							},
@@ -396,7 +396,7 @@ func TestCase_createNamespace(t *testing.T) {
 			options:            []CaseOption{WithNamespace("foo")},
 			cl:                 newClientWithAbsentNs,
 			getNsBeforeCleanup: require.NoError,
-			getNsAfterCleanup: func(t require.TestingT, err error, _ ...interface{}) {
+			getNsAfterCleanup: func(t require.TestingT, err error, _ ...any) {
 				assert.True(t, k8serrors.IsNotFound(err), "expected namespace to be deleted after cleanup, but client returned %v", err)
 			},
 		},
@@ -404,10 +404,10 @@ func TestCase_createNamespace(t *testing.T) {
 			options: []CaseOption{WithNamespace("foo")},
 			cl:      newClientWithAbsentNsNoWritePerm,
 			wantErr: errCreationForbidden,
-			getNsBeforeCleanup: func(t require.TestingT, err error, _ ...interface{}) {
+			getNsBeforeCleanup: func(t require.TestingT, err error, _ ...any) {
 				assert.True(t, k8serrors.IsNotFound(err), "expected namespace to be missing before cleanup, but client returned %v", err)
 			},
-			getNsAfterCleanup: func(t require.TestingT, err error, _ ...interface{}) {
+			getNsAfterCleanup: func(t require.TestingT, err error, _ ...any) {
 				assert.True(t, k8serrors.IsNotFound(err), "expected namespace to be missing after cleanup, but client returned %v", err)
 			},
 		},
@@ -426,24 +426,24 @@ func TestCase_createNamespace(t *testing.T) {
 		"ephemeral exists": {
 			cl:                 newClientWithExistingNs,
 			getNsBeforeCleanup: require.NoError,
-			getNsAfterCleanup: func(t require.TestingT, err error, _ ...interface{}) {
+			getNsAfterCleanup: func(t require.TestingT, err error, _ ...any) {
 				assert.True(t, k8serrors.IsNotFound(err), "expected namespace to be deleted after cleanup, but client returned %v", err)
 			},
 		},
 		"ephemeral absent": {
 			cl:                 newClientWithAbsentNs,
 			getNsBeforeCleanup: require.NoError,
-			getNsAfterCleanup: func(t require.TestingT, err error, _ ...interface{}) {
+			getNsAfterCleanup: func(t require.TestingT, err error, _ ...any) {
 				assert.True(t, k8serrors.IsNotFound(err), "expected namespace to be deleted after cleanup, but client returned %v", err)
 			},
 		},
 		"ephemeral absent and no write permission": {
 			cl:      newClientWithAbsentNsNoWritePerm,
 			wantErr: errCreationForbidden,
-			getNsBeforeCleanup: func(t require.TestingT, err error, _ ...interface{}) {
+			getNsBeforeCleanup: func(t require.TestingT, err error, _ ...any) {
 				assert.True(t, k8serrors.IsNotFound(err), "expected namespace to be missing before cleanup, but client returned %v", err)
 			},
-			getNsAfterCleanup: func(t require.TestingT, err error, _ ...interface{}) {
+			getNsAfterCleanup: func(t require.TestingT, err error, _ ...any) {
 				assert.True(t, k8serrors.IsNotFound(err), "expected namespace to be missing after cleanup, but client returned %v", err)
 			},
 		},

@@ -45,10 +45,10 @@ func TestMain(m *testing.M) {
 
 func TestCheckResourceIntegration(t *testing.T) {
 	// Helper function to create nginx container spec
-	createNginxContainerSpec := func() map[string]interface{} {
-		return map[string]interface{}{
-			"containers": []interface{}{
-				map[string]interface{}{
+	createNginxContainerSpec := func() map[string]any {
+		return map[string]any{
+			"containers": []any{
+				map[string]any{
 					"image": "nginx:1.7.9",
 					"name":  "nginx",
 				},
@@ -63,17 +63,17 @@ func TestCheckResourceIntegration(t *testing.T) {
 
 	// Common expected pod object
 	expectedNginxPod := &unstructured.Unstructured{
-		Object: map[string]interface{}{
+		Object: map[string]any{
 			"apiVersion": "v1",
 			"kind":       "Pod",
-			"metadata": map[string]interface{}{
-				"labels": map[string]interface{}{
+			"metadata": map[string]any{
+				"labels": map[string]any{
 					"app": "nginx",
 				},
 			},
-			"spec": map[string]interface{}{
-				"containers": []interface{}{
-					map[string]interface{}{
+			"spec": map[string]any{
+				"containers": []any{
+					map[string]any{
 						"image": "nginx:1.7.9",
 						"name":  "nginx",
 					},
@@ -109,9 +109,9 @@ func TestCheckResourceIntegration(t *testing.T) {
 			actual: []client.Object{
 				kubernetes.WithSpec(t, kubernetes.WithLabels(t, kubernetes.NewPod("hello", ""), map[string]string{
 					"app": "NOT-A-MATCH",
-				}), map[string]interface{}{
-					"containers": []interface{}{
-						map[string]interface{}{
+				}), map[string]any{
+					"containers": []any{
+						map[string]any{
 							"image": "nginx:1.7.9",
 							"name":  "nginx",
 						},
@@ -119,17 +119,17 @@ func TestCheckResourceIntegration(t *testing.T) {
 				}),
 			},
 			expected: &unstructured.Unstructured{
-				Object: map[string]interface{}{
+				Object: map[string]any{
 					"apiVersion": "v1",
 					"kind":       "Pod",
-					"metadata": map[string]interface{}{
-						"labels": map[string]interface{}{
+					"metadata": map[string]any{
+						"labels": map[string]any{
 							"app": "nginx",
 						},
 					},
-					"spec": map[string]interface{}{
-						"containers": []interface{}{
-							map[string]interface{}{
+					"spec": map[string]any{
+						"containers": []any{
+							map[string]any{
 								"image": "nginx:1.7.9",
 								"name":  "nginx",
 							},
@@ -144,9 +144,9 @@ func TestCheckResourceIntegration(t *testing.T) {
 			actual: []client.Object{
 				kubernetes.WithSpec(t, kubernetes.WithLabels(t, kubernetes.NewPod("hello", ""), map[string]string{
 					"app": "nginx",
-				}), map[string]interface{}{
-					"containers": []interface{}{
-						map[string]interface{}{
+				}), map[string]any{
+					"containers": []any{
+						map[string]any{
 							"image": "otherimage:latest",
 							"name":  "nginx",
 						},
@@ -154,17 +154,17 @@ func TestCheckResourceIntegration(t *testing.T) {
 				}),
 			},
 			expected: &unstructured.Unstructured{
-				Object: map[string]interface{}{
+				Object: map[string]any{
 					"apiVersion": "v1",
 					"kind":       "Pod",
-					"metadata": map[string]interface{}{
-						"labels": map[string]interface{}{
+					"metadata": map[string]any{
+						"labels": map[string]any{
 							"app": "nginx",
 						},
 					},
-					"spec": map[string]interface{}{
-						"containers": []interface{}{
-							map[string]interface{}{
+					"spec": map[string]any{
+						"containers": []any{
+							map[string]any{
 								"image": "nginx:1.7.9",
 								"name":  "nginx",
 							},
@@ -178,17 +178,17 @@ func TestCheckResourceIntegration(t *testing.T) {
 			testName: "step should fail if there are no objects of the same type in the namespace",
 			actual:   []client.Object{},
 			expected: &unstructured.Unstructured{
-				Object: map[string]interface{}{
+				Object: map[string]any{
 					"apiVersion": "v1",
 					"kind":       "Pod",
-					"metadata": map[string]interface{}{
-						"labels": map[string]interface{}{
+					"metadata": map[string]any{
+						"labels": map[string]any{
 							"app": "nginx",
 						},
 					},
-					"spec": map[string]interface{}{
-						"containers": []interface{}{
-							map[string]interface{}{
+					"spec": map[string]any{
+						"containers": []any{
+							map[string]any{
 								"image": "nginx:1.7.9",
 								"name":  "nginx",
 							},
@@ -235,9 +235,9 @@ func TestCheckResourceIntegration(t *testing.T) {
 func TestStepDeleteExistingLabelMatch(t *testing.T) {
 	namespace := fmt.Sprintf("kuttl-test-%s", petname.Generate(2, "-"))
 
-	podSpec := map[string]interface{}{
-		"containers": []interface{}{
-			map[string]interface{}{
+	podSpec := map[string]any{
+		"containers": []any{
+			map[string]any{
 				"image": "otherimage:latest",
 				"name":  "nginx",
 			},
@@ -365,17 +365,17 @@ func TestTwoTestStepping(t *testing.T) {
 func TestStepFailure(t *testing.T) {
 	// an assert without setup
 	var expected client.Object = &unstructured.Unstructured{
-		Object: map[string]interface{}{
+		Object: map[string]any{
 			"apiVersion": "v1",
 			"kind":       "Pod",
-			"metadata": map[string]interface{}{
-				"labels": map[string]interface{}{
+			"metadata": map[string]any{
+				"labels": map[string]any{
 					"app": "nginx",
 				},
 			},
-			"spec": map[string]interface{}{
-				"containers": []interface{}{
-					map[string]interface{}{
+			"spec": map[string]any{
+				"containers": []any{
+					map[string]any{
 						"image": "nginx:1.7.9",
 						"name":  "nginx",
 					},

@@ -54,7 +54,7 @@ func buildEnv(resourceRefs []harness.TestResourceRef) (*cel.Env, error) {
 // RunAssertExpressions evaluates a set of CEL expressions.
 func RunAssertExpressions(
 	programs map[string]cel.Program,
-	variables map[string]interface{},
+	variables map[string]any,
 	assertAny,
 	assertAll []*harness.Assertion,
 ) []error {
@@ -124,7 +124,7 @@ func LoadPrograms(testAssert *harness.TestAssert) (map[string]cel.Program, error
 
 func evaluateExpression(expr string,
 	programs map[string]cel.Program,
-	variables map[string]interface{},
+	variables map[string]any,
 ) error {
 	prg, ok := programs[expr]
 	if !ok {

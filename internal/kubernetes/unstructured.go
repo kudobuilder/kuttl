@@ -13,7 +13,7 @@ import (
 // NewResource generates a Kubernetes object using the provided apiVersion, kind, name, and namespace.
 // The name and namespace are omitted if empty.
 func NewResource(apiVersion, kind, name, namespace string) *unstructured.Unstructured {
-	meta := map[string]interface{}{}
+	meta := map[string]any{}
 
 	if name != "" {
 		meta["name"] = name
@@ -23,7 +23,7 @@ func NewResource(apiVersion, kind, name, namespace string) *unstructured.Unstruc
 	}
 
 	return &unstructured.Unstructured{
-		Object: map[string]interface{}{
+		Object: map[string]any{
 			"apiVersion": apiVersion,
 			"kind":       kind,
 			"metadata":   meta,
@@ -50,7 +50,7 @@ func NewClusterRoleBinding(apiVersion, kind, name, namespace string, serviceAcco
 	}
 
 	return &unstructured.Unstructured{
-		Object: map[string]interface{}{
+		Object: map[string]any{
 			"apiVersion": apiVersion,
 			"kind":       kind,
 			"metadata":   sa.ObjectMeta,
@@ -77,7 +77,7 @@ func WithNamespace(obj *unstructured.Unstructured, namespace string) *unstructur
 }
 
 // WithSpec applies the provided spec to the Kubernetes object.
-func WithSpec(t *testing.T, obj *unstructured.Unstructured, spec map[string]interface{}) *unstructured.Unstructured {
+func WithSpec(t *testing.T, obj *unstructured.Unstructured, spec map[string]any) *unstructured.Unstructured {
 	t.Helper()
 	res, err := WithKeyValue(obj, "spec", spec)
 	if err != nil {
@@ -87,7 +87,7 @@ func WithSpec(t *testing.T, obj *unstructured.Unstructured, spec map[string]inte
 }
 
 // WithStatus applies the provided status to the Kubernetes object.
-func WithStatus(t *testing.T, obj *unstructured.Unstructured, status map[string]interface{}) *unstructured.Unstructured {
+func WithStatus(t *testing.T, obj *unstructured.Unstructured, status map[string]any) *unstructured.Unstructured {
 	t.Helper()
 	res, err := WithKeyValue(obj, "status", status)
 	if err != nil {
@@ -97,7 +97,7 @@ func WithStatus(t *testing.T, obj *unstructured.Unstructured, status map[string]
 }
 
 // WithKeyValue sets key in the provided object to value.
-func WithKeyValue(obj *unstructured.Unstructured, key string, value map[string]interface{}) (*unstructured.Unstructured, error) {
+func WithKeyValue(obj *unstructured.Unstructured, key string, value map[string]any) (*unstructured.Unstructured, error) {
 	obj = obj.DeepCopy()
 	// we need to convert to and from unstructured here so that the types in case_test match when comparing
 	content, err := runtime.DefaultUnstructuredConverter.ToUnstructured(obj)

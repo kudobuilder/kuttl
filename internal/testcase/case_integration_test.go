@@ -32,9 +32,9 @@ func TestMultiClusterCase(t *testing.T) {
 		assert.NoError(t, testenv2.Environment.Stop())
 	})
 
-	podSpec := map[string]interface{}{
+	podSpec := map[string]any{
 		"restartPolicy": "Never",
-		"containers": []map[string]interface{}{
+		"containers": []map[string]any{
 			{
 				"name":  "nginx",
 				"image": "nginx:1.7.9",

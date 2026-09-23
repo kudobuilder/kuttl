@@ -39,7 +39,7 @@ func pruneLargeAdditions(expected *unstructured.Unstructured, actual *unstructur
 // for example, but will omit spec completely unless the assertion also mentions it.
 //
 // This saves hundreds to thousands of lines of logs to scroll when debugging failures of some operator tests.
-func prune(expected map[string]interface{}, actual map[string]interface{}) {
+func prune(expected map[string]any, actual map[string]any) {
 	// This value was chosen so that it is low enough to hide huge fields like `metadata.managedFields`,
 	// but large enough such that for example a typical `metadata.labels` still shows,
 	// since it might be useful for identifying reported objects like pods.
@@ -48,8 +48,8 @@ func prune(expected map[string]interface{}, actual map[string]interface{}) {
 	var toRemove []string
 	for k, v := range actual {
 		if _, inExpected := expected[k]; inExpected {
-			expectedMap, isExpectedMap := expected[k].(map[string]interface{})
-			actualMap, isActualMap := actual[k].(map[string]interface{})
+			expectedMap, isExpectedMap := expected[k].(map[string]any)
+			actualMap, isActualMap := actual[k].(map[string]any)
 			if isActualMap && isExpectedMap {
 				prune(expectedMap, actualMap)
 			}
@@ -66,10 +66,10 @@ func prune(expected map[string]interface{}, actual map[string]interface{}) {
 	}
 }
 
-func countLines(k string, v interface{}) (int, error) {
+func countLines(k string, v any) (int, error) {
 	buf := strings.Builder{}
 	dummyObj := &unstructured.Unstructured{
-		Object: map[string]interface{}{k: v}}
+		Object: map[string]any{k: v}}
 	err := marshalObject(dummyObj, &buf)
 	if err != nil {
 		return 0, fmt.Errorf("cannot marshal field %s to compute its length in lines: %w", k, err)

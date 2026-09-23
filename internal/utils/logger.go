@@ -9,8 +9,8 @@ import (
 
 // Logger is an interface used by the KUTTL test operator to provide logging of tests.
 type Logger interface {
-	Log(args ...interface{})
-	Logf(format string, args ...interface{})
+	Log(args ...any)
+	Logf(format string, args ...any)
 	WithPrefix(prefix string) Logger
 	Write(p []byte) (n int, err error)
 	Flush()
@@ -37,16 +37,16 @@ func NewTestLogger(t *testing.T, prefix string) *TestLogger {
 }
 
 // Log logs the provided arguments with the logger's prefix. See testing.Log for more details.
-func (t *TestLogger) Log(args ...interface{}) {
+func (t *TestLogger) Log(args ...any) {
 	t.test.Helper()
-	args = append([]interface{}{
+	args = append([]any{
 		fmt.Sprintf("%s | %s |", time.Now().Format("15:04:05"), t.prefix),
 	}, args...)
 	t.test.Log(args...)
 }
 
 // Logf logs the provided arguments with the logger's prefix. See testing.Logf for more details.
-func (t *TestLogger) Logf(format string, args ...interface{}) {
+func (t *TestLogger) Logf(format string, args ...any) {
 	t.test.Helper()
 	t.Log(fmt.Sprintf(format, args...))
 }

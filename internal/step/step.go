@@ -419,7 +419,7 @@ func (s *Step) CheckAssertExpressions(namespace string) []error {
 		return []error{err}
 	}
 
-	variables := make(map[string]interface{})
+	variables := make(map[string]any)
 	for _, resourceRef := range s.Assert.ResourceRefs {
 		if resourceRef.Namespace == "" {
 			resourceRef.Namespace = namespace
