@@ -655,10 +655,7 @@ func (h *Harness) kubeconfigPath() string {
 // Report defines the report phase of the kuttl tests.  If report format is nil it is skipped.
 // otherwise it will provide a json or xml format report of tests in a junit format.
 func (h *Harness) Report() {
-	if len(h.TestSuite.ReportFormat) == 0 {
-		return
-	}
-	if err := h.report.Report(h.TestSuite.ArtifactsDir, h.reportName(), report.Type(h.TestSuite.ReportFormat)); err != nil {
+	if err := h.report.Report(h.TestSuite.ArtifactsDir, h.reportName(), h.TestSuite.ReportFormat); err != nil {
 		h.fatal(fmt.Errorf("fatal error writing report: %v", err))
 	}
 }

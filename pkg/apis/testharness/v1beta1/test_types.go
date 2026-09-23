@@ -1,6 +1,8 @@
 package v1beta1
 
 import (
+	"strings"
+
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/rest"
@@ -25,6 +27,38 @@ const (
 	// If you are adding a new delete policy, remember to also add it to
 	// ValidDeletePolicy function at this same file.
 )
+
+// ReportType determines the format of the test report. It maps to the report
+// package output formats. An empty value means no report is generated.
+type ReportType string
+
+const (
+	// ReportTypeNone is the empty value and means no report is generated.
+	ReportTypeNone ReportType = ""
+	// ReportTypeXML generates a JUnit XML report.
+	ReportTypeXML ReportType = "XML"
+	// ReportTypeJSON generates a JSON report.
+	ReportTypeJSON ReportType = "JSON"
+	// If you are adding a new report type, remember to also add it to the
+	// Valid method on ReportType in this same file.
+)
+
+// Valid reports whether r is a recognized report format (including the empty
+// "no report" value). It expects an already-normalized value.
+func (r ReportType) Valid() bool {
+	switch r {
+	case ReportTypeNone, ReportTypeXML, ReportTypeJSON:
+		return true
+	}
+	return false
+}
+
+// Normalize returns the ReportType upper-cased so that case variations in the
+// kuttl-test.yaml config file or on the command line still match the defined
+// ReportType constants. See issue #449.
+func (r ReportType) Normalize() ReportType {
+	return ReportType(strings.ToUpper(string(r)))
+}
 
 // RestConfig embeds rest.Config to implement custom DeepCopyInto method.
 type RestConfig struct {
@@ -102,9 +136,9 @@ type TestSuite struct {
 	// Commands to run prior to running the tests.
 	Commands []Command `json:"commands"`
 
-	// ReportFormat determines test report format (JSON|XML|nil) nil == no report
-	// maps to report.Type, however we don't want generated.deepcopy to have reference to it.
-	ReportFormat string `json:"reportFormat"`
+	// ReportFormat determines test report format (JSON|XML|""), where "" means no report.
+	// The value is matched case-insensitively via ReportType.Normalize.
+	ReportFormat ReportType `json:"reportFormat"`
 
 	// ReportName defines the name of report to create.  It defaults to "kuttl-report" and is not used unless ReportFormat is defined.
 	ReportName string `json:"reportName"`
