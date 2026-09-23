@@ -36,7 +36,7 @@ func (e *SubsetError) Error() string {
 
 // IsSubset checks to see if `expected` is a subset of `actual`. A "subset" is an object that is equivalent to
 // the other object, but where map keys found in actual that are not defined in expected are ignored.
-func IsSubset(expected, actual interface{}) error {
+func IsSubset(expected, actual any) error {
 	if reflect.TypeOf(expected) != reflect.TypeOf(actual) {
 		return &SubsetError{
 			message: fmt.Sprintf("type mismatch: %v != %v", reflect.TypeOf(expected), reflect.TypeOf(actual)),

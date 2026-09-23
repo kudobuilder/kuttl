@@ -8,75 +8,75 @@ import (
 )
 
 func TestIsSubset(t *testing.T) {
-	require.NoError(t, IsSubset(map[string]interface{}{
+	require.NoError(t, IsSubset(map[string]any{
 		"hello": "world",
-	}, map[string]interface{}{
+	}, map[string]any{
 		"hello": "world",
 		"bye":   "moon",
 	}))
 
-	assert.NotNil(t, IsSubset(map[string]interface{}{
+	assert.NotNil(t, IsSubset(map[string]any{
 		"hello": "moon",
-	}, map[string]interface{}{
+	}, map[string]any{
 		"hello": "world",
 		"bye":   "moon",
 	}))
 
-	require.NoError(t, IsSubset(map[string]interface{}{
-		"hello": map[string]interface{}{
+	require.NoError(t, IsSubset(map[string]any{
+		"hello": map[string]any{
 			"hello": "world",
 		},
-	}, map[string]interface{}{
-		"hello": map[string]interface{}{
-			"hello": "world",
-			"bye":   "moon",
-		},
-	}))
-
-	assert.NotNil(t, IsSubset(map[string]interface{}{
-		"hello": map[string]interface{}{
-			"hello": "moon",
-		},
-	}, map[string]interface{}{
-		"hello": map[string]interface{}{
+	}, map[string]any{
+		"hello": map[string]any{
 			"hello": "world",
 			"bye":   "moon",
 		},
 	}))
 
-	assert.NotNil(t, IsSubset(map[string]interface{}{
-		"hello": map[string]interface{}{
+	assert.NotNil(t, IsSubset(map[string]any{
+		"hello": map[string]any{
 			"hello": "moon",
 		},
-	}, map[string]interface{}{
-		"hello": "world",
-	}))
-
-	assert.NotNil(t, IsSubset(map[string]interface{}{
-		"hello": "world",
-	}, map[string]interface{}{}))
-
-	require.NoError(t, IsSubset(map[string]interface{}{
-		"hello": []int{
-			1, 2, 3,
-		},
-	}, map[string]interface{}{
-		"hello": []int{
-			1, 2, 3,
+	}, map[string]any{
+		"hello": map[string]any{
+			"hello": "world",
+			"bye":   "moon",
 		},
 	}))
 
-	require.NoError(t, IsSubset(map[string]interface{}{
-		"hello": map[string]interface{}{
-			"hello": []map[string]interface{}{
+	assert.NotNil(t, IsSubset(map[string]any{
+		"hello": map[string]any{
+			"hello": "moon",
+		},
+	}, map[string]any{
+		"hello": "world",
+	}))
+
+	assert.NotNil(t, IsSubset(map[string]any{
+		"hello": "world",
+	}, map[string]any{}))
+
+	require.NoError(t, IsSubset(map[string]any{
+		"hello": []int{
+			1, 2, 3,
+		},
+	}, map[string]any{
+		"hello": []int{
+			1, 2, 3,
+		},
+	}))
+
+	require.NoError(t, IsSubset(map[string]any{
+		"hello": map[string]any{
+			"hello": []map[string]any{
 				{
 					"image": "hello",
 				},
 			},
 		},
-	}, map[string]interface{}{
-		"hello": map[string]interface{}{
-			"hello": []map[string]interface{}{
+	}, map[string]any{
+		"hello": map[string]any{
+			"hello": []map[string]any{
 				{
 					"image": "hello",
 					"bye":   "moon",
@@ -85,17 +85,17 @@ func TestIsSubset(t *testing.T) {
 		},
 	}))
 
-	assert.NotNil(t, IsSubset(map[string]interface{}{
-		"hello": map[string]interface{}{
-			"hello": []map[string]interface{}{
+	assert.NotNil(t, IsSubset(map[string]any{
+		"hello": map[string]any{
+			"hello": []map[string]any{
 				{
 					"image": "hello",
 				},
 			},
 		},
-	}, map[string]interface{}{
-		"hello": map[string]interface{}{
-			"hello": []map[string]interface{}{
+	}, map[string]any{
+		"hello": map[string]any{
+			"hello": []map[string]any{
 				{
 					"image": "hello",
 					"bye":   "moon",
@@ -107,17 +107,17 @@ func TestIsSubset(t *testing.T) {
 		},
 	}))
 
-	assert.NotNil(t, IsSubset(map[string]interface{}{
-		"hello": map[string]interface{}{
-			"hello": []map[string]interface{}{
+	assert.NotNil(t, IsSubset(map[string]any{
+		"hello": map[string]any{
+			"hello": []map[string]any{
 				{
 					"image": "hello",
 				},
 			},
 		},
-	}, map[string]interface{}{
-		"hello": map[string]interface{}{
-			"hello": []map[string]interface{}{
+	}, map[string]any{
+		"hello": map[string]any{
+			"hello": []map[string]any{
 				{
 					"image": "world",
 				},

@@ -61,7 +61,7 @@ func TestStepCreate(t *testing.T) {
 	podWithNamespace := kubernetes.NewPod("hello2", "different-namespace")
 	clusterScopedResource := kubernetes.NewResource("v1", "Namespace", "my-namespace", "default")
 	podToUpdate := kubernetes.NewPod("update-me", "default")
-	specToApply := map[string]interface{}{
+	specToApply := map[string]any{
 		"containers":    nil,
 		"restartPolicy": "OnFailure",
 	}
@@ -84,7 +84,7 @@ func TestStepCreate(t *testing.T) {
 	require.NoError(t, cl.Get(t.Context(), kubernetes.ObjectKey(pod), pod))
 	require.NoError(t, cl.Get(t.Context(), kubernetes.ObjectKey(clusterScopedResource), clusterScopedResource))
 
-	updatedPod := &unstructured.Unstructured{Object: map[string]interface{}{"apiVersion": "v1", "kind": "Pod"}}
+	updatedPod := &unstructured.Unstructured{Object: map[string]any{"apiVersion": "v1", "kind": "Pod"}}
 	require.NoError(t, cl.Get(t.Context(), kubernetes.ObjectKey(podToUpdate), updatedPod))
 	assert.Equal(t, specToApply, updatedPod.Object["spec"])
 
@@ -155,7 +155,7 @@ func TestCheckResource(t *testing.T) {
 			testName: "resource matches with labels",
 			actual: []runtime.Object{
 				kubernetes.WithSpec(t, kubernetes.NewPod("deploy-8b2d", ""),
-					map[string]interface{}{
+					map[string]any{
 						"containers":         nil,
 						"serviceAccountName": "invalid",
 					}),
@@ -166,7 +166,7 @@ func TestCheckResource(t *testing.T) {
 						kubernetes.NewPod("deploy-8c2z", ""),
 						map[string]string{"label": "my-label"},
 					),
-					map[string]interface{}{
+					map[string]any{
 						"containers":         nil,
 						"serviceAccountName": "valid",
 					},
@@ -180,7 +180,7 @@ func TestCheckResource(t *testing.T) {
 					kubernetes.NewPod("", ""),
 					map[string]string{"label": "my-label"},
 				),
-				map[string]interface{}{
+				map[string]any{
 					"containers":         nil,
 					"serviceAccountName": "valid",
 				},
@@ -189,16 +189,16 @@ func TestCheckResource(t *testing.T) {
 		{
 			testName:    "resource mis-match",
 			actual:      []runtime.Object{kubernetes.NewPod("hello", "")},
-			expected:    kubernetes.WithSpec(t, kubernetes.NewPod("hello", ""), map[string]interface{}{"invalid": "key"}),
+			expected:    kubernetes.WithSpec(t, kubernetes.NewPod("hello", ""), map[string]any{"invalid": "key"}),
 			shouldError: true,
 		},
 		{
 			testName: "resource subset match",
-			actual: []runtime.Object{kubernetes.WithSpec(t, kubernetes.NewPod("hello", ""), map[string]interface{}{
+			actual: []runtime.Object{kubernetes.WithSpec(t, kubernetes.NewPod("hello", ""), map[string]any{
 				"containers":    nil,
 				"restartPolicy": "OnFailure",
 			})},
-			expected: kubernetes.WithSpec(t, kubernetes.NewPod("hello", ""), map[string]interface{}{
+			expected: kubernetes.WithSpec(t, kubernetes.NewPod("hello", ""), map[string]any{
 				"restartPolicy": "OnFailure",
 			}),
 		},
@@ -256,7 +256,7 @@ func TestCheckResourceAbsent(t *testing.T) {
 				kubernetes.NewV1Pod("pod1", "", "val1"),
 				kubernetes.NewV1Pod("pod2", "", "val2"),
 			},
-			expected:    kubernetes.WithSpec(t, kubernetes.NewPod("", ""), map[string]interface{}{"serviceAccountName": "val1"}),
+			expected:    kubernetes.WithSpec(t, kubernetes.NewPod("", ""), map[string]any{"serviceAccountName": "val1"}),
 			shouldError: true,
 			expectedErr: "resource /v1, Kind=Pod pod1 matched error assertion",
 		},
@@ -267,14 +267,14 @@ func TestCheckResourceAbsent(t *testing.T) {
 				kubernetes.NewV1Pod("pod2", "", "val1"),
 				kubernetes.NewV1Pod("pod3", "", "val2"),
 			},
-			expected:    kubernetes.WithSpec(t, kubernetes.NewPod("", ""), map[string]interface{}{"serviceAccountName": "val1"}),
+			expected:    kubernetes.WithSpec(t, kubernetes.NewPod("", ""), map[string]any{"serviceAccountName": "val1"}),
 			shouldError: true,
 			expectedErr: "resource /v1, Kind=Pod pod1 (and 1 other resources) matched error assertion",
 		},
 		{
 			name:     "resource mis-match",
 			actual:   []runtime.Object{kubernetes.NewPod("hello", "")},
-			expected: kubernetes.WithSpec(t, kubernetes.NewPod("hello", ""), map[string]interface{}{"invalid": "key"}),
+			expected: kubernetes.WithSpec(t, kubernetes.NewPod("hello", ""), map[string]any{"invalid": "key"}),
 		},
 		{
 			name:     "resource does not exist",
@@ -335,7 +335,7 @@ func TestRun(t *testing.T) {
 					kubernetes.NewPod("hello", ""),
 				},
 				Asserts: []client.Object{
-					kubernetes.WithStatus(t, kubernetes.NewPod("hello", ""), map[string]interface{}{
+					kubernetes.WithStatus(t, kubernetes.NewPod("hello", ""), map[string]any{
 						"phase": "Ready",
 					}),
 				},
@@ -347,7 +347,7 @@ func TestRun(t *testing.T) {
 					kubernetes.NewPod("hello", ""),
 				},
 				Asserts: []client.Object{
-					kubernetes.WithStatus(t, kubernetes.NewPod("hello", ""), map[string]interface{}{
+					kubernetes.WithStatus(t, kubernetes.NewPod("hello", ""), map[string]any{
 						"phase": "Ready",
 					}),
 				},
@@ -356,7 +356,7 @@ func TestRun(t *testing.T) {
 				require.NoError(t, client.Get(t.Context(), types.NamespacedName{Namespace: testNamespace, Name: "hello"}, pod))
 
 				// mock kubelet to set the pod status
-				require.NoError(t, client.Status().Update(t.Context(), kubernetes.WithStatus(t, pod, map[string]interface{}{
+				require.NoError(t, client.Status().Update(t.Context(), kubernetes.WithStatus(t, pod, map[string]any{
 					"phase": "Ready",
 				})))
 			},

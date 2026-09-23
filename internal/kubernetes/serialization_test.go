@@ -42,17 +42,17 @@ spec:
 	require.NoError(t, err)
 
 	assert.Equal(t, &unstructured.Unstructured{
-		Object: map[string]interface{}{
+		Object: map[string]any{
 			"apiVersion": "v1",
 			"kind":       "Pod",
-			"metadata": map[string]interface{}{
-				"labels": map[string]interface{}{
+			"metadata": map[string]any{
+				"labels": map[string]any{
 					"app": "nginx",
 				},
 			},
-			"spec": map[string]interface{}{
-				"containers": []interface{}{
-					map[string]interface{}{
+			"spec": map[string]any{
+				"containers": []any{
+					map[string]any{
 						"image": "nginx:1.7.9",
 						"name":  "nginx",
 					},
@@ -62,18 +62,18 @@ spec:
 	}, objs[0])
 
 	assert.Equal(t, &unstructured.Unstructured{
-		Object: map[string]interface{}{
+		Object: map[string]any{
 			"apiVersion": "v1",
 			"kind":       "Pod",
-			"metadata": map[string]interface{}{
-				"labels": map[string]interface{}{
+			"metadata": map[string]any{
+				"labels": map[string]any{
 					"app": "nginx",
 				},
 				"name": "hello",
 			},
-			"spec": map[string]interface{}{
-				"containers": []interface{}{
-					map[string]interface{}{
+			"spec": map[string]any{
+				"containers": []any{
+					map[string]any{
 						"image": "nginx:1.7.9",
 						"name":  "nginx",
 					},
