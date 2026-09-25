@@ -80,6 +80,18 @@ type TestFile struct {
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 
+// TestCase contains attributes of a test case.
+type TestCase struct {
+	// The type meta object, should always be a GVK of kuttl.dev/v1beta1/TestCase
+	metav1.TypeMeta   `json:",inline"`
+	metav1.ObjectMeta `json:"metadata,omitempty"`
+
+	// Which test runs should this case be used in. Empty selector matches all test runs.
+	TestRunSelector *metav1.LabelSelector `json:"testRunSelector,omitempty"`
+}
+
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+
 // TestSuite configures which tests should be loaded.
 type TestSuite struct {
 	// The type meta object, should always be a GVK of kuttl.dev/v1beta1/TestSuite or kuttl.dev/v1beta1/TestSuite.

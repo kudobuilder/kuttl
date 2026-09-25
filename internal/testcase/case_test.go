@@ -335,7 +335,8 @@ func TestLoadTestSteps(t *testing.T) {
 		},
 	} {
 		t.Run(fmt.Sprintf("%s/%s", tt.path, tt.runLabels), func(t *testing.T) {
-			test := &Case{dir: tt.path, logger: testutils.NewTestLogger(t, tt.path), runLabels: tt.runLabels}
+			logger := testutils.NewTestLogger(t, tt.path)
+			test := &Case{dir: tt.path, logger: logger, runLabels: tt.runLabels}
 
 			err := test.LoadTestSteps()
 			require.NoError(t, err)
@@ -348,6 +349,7 @@ func TestLoadTestSteps(t *testing.T) {
 			assert.Equal(t, len(tt.testSteps), len(testStepsVal))
 			for index := range tt.testSteps {
 				tt.testSteps[index].Dir = tt.path
+				tt.testSteps[index].Logger = logger
 				assert.Equal(t, tt.testSteps[index].Apply, testStepsVal[index].Apply, "apply objects need to match")
 				assert.Equal(t, tt.testSteps[index].Asserts, testStepsVal[index].Asserts, "assert objects need to match")
 				assert.Equal(t, tt.testSteps[index].Errors, testStepsVal[index].Errors, "error objects need to match")
@@ -591,4 +593,135 @@ func newClientWithExistingNs(_ *testing.T, nsName string) client.Client {
 			Name: nsName,
 		},
 	}).Build()
+}
+
+func TestCase_shouldSkip(t *testing.T) {
+	cases := []struct {
+		runLabels       labels.Set
+		runSelector     *metav1.LabelSelector
+		shouldBeSkipped bool
+	}{
+		{
+			runLabels: map[string]string{
+				"key": "value",
+			},
+			runSelector: &metav1.LabelSelector{
+				MatchLabels: map[string]string{
+					"key": "value",
+				},
+			},
+			shouldBeSkipped: false,
+		},
+		{
+			runLabels: map[string]string{
+				"key": "value",
+			},
+			runSelector: &metav1.LabelSelector{
+				MatchExpressions: []metav1.LabelSelectorRequirement{
+					{
+						Key:      "key",
+						Operator: metav1.LabelSelectorOpIn,
+						Values: []string{
+							"value",
+						},
+					},
+				},
+			},
+			shouldBeSkipped: false,
+		},
+		{
+			runLabels: map[string]string{
+				"key": "value",
+			},
+			runSelector: &metav1.LabelSelector{
+				MatchExpressions: []metav1.LabelSelectorRequirement{
+					{
+						Key:      "key",
+						Operator: metav1.LabelSelectorOpNotIn,
+						Values: []string{
+							"value1",
+						},
+					},
+				},
+			},
+			shouldBeSkipped: false,
+		},
+		{
+			runLabels: map[string]string{
+				"key": "value",
+			},
+			runSelector: &metav1.LabelSelector{
+				MatchLabels: map[string]string{
+					"key": "value1",
+				},
+			},
+			shouldBeSkipped: true,
+		},
+		{
+			runLabels: map[string]string{
+				"key": "value",
+			},
+			runSelector: &metav1.LabelSelector{
+				MatchExpressions: []metav1.LabelSelectorRequirement{
+					{
+						Key:      "key",
+						Operator: metav1.LabelSelectorOpIn,
+						Values: []string{
+							"value1",
+						},
+					},
+				},
+			},
+			shouldBeSkipped: true,
+		},
+		{
+			runLabels: nil,
+			runSelector: &metav1.LabelSelector{
+				MatchLabels: map[string]string{
+					"key": "value",
+				},
+			},
+			shouldBeSkipped: true,
+		},
+		{
+			runLabels: nil,
+			runSelector: &metav1.LabelSelector{
+				MatchExpressions: []metav1.LabelSelectorRequirement{
+					{
+						Key:      "key",
+						Operator: metav1.LabelSelectorOpIn,
+						Values: []string{
+							"value",
+						},
+					},
+				},
+			},
+			shouldBeSkipped: true,
+		},
+		{
+			runLabels: map[string]string{
+				"key": "value",
+			},
+			runSelector:     nil,
+			shouldBeSkipped: false,
+		},
+		{
+			runLabels:       nil,
+			runSelector:     nil,
+			shouldBeSkipped: false,
+		},
+	}
+
+	for _, tc := range cases {
+		var runSelector labels.Selector
+		var err error
+		if tc.runSelector == nil {
+			runSelector = labels.Everything()
+		} else {
+			runSelector, err = metav1.LabelSelectorAsSelector(tc.runSelector)
+			assert.NoError(t, err, tc.runSelector)
+		}
+		c := NewCase("", "", WithRunLabels(tc.runLabels), WithRunSelector(runSelector))
+		assert.Equalf(t, tc.shouldBeSkipped, c.shouldSkip(), "failed to check shouldSkip %q %q", tc.runSelector, tc.runLabels)
+	}
 }
