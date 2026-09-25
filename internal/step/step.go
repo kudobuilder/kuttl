@@ -29,6 +29,10 @@ import (
 	harness "github.com/kudobuilder/kuttl/pkg/apis/testharness/v1beta1"
 )
 
+const kindTestCase = "TestCase"
+const kindTestAssert = "TestAssert"
+const kindTestStep = "TestStep"
+
 // A Step contains the name of the test step, its index in the test,
 // and all of the test step's settings (including objects to apply and assert on).
 type Step struct {
@@ -539,31 +543,40 @@ func (s *Step) String() string {
 }
 
 // LoadYAML loads the resources from a YAML file for a test step.
-func (s *Step) LoadYAML(f kfile.Info) error {
+func (s *Step) LoadYAML(f kfile.Info) ([]*harness.TestCase, error) {
 	skipFile, objects, err := s.loadOrSkipFile(f)
 	if skipFile || err != nil {
-		return err
+		return nil, err
 	}
 
 	if err = s.populateObjectsByType(f, objects); err != nil {
-		return fmt.Errorf("populating step: %v", err)
+		return nil, fmt.Errorf("populating step: %v", err)
 	}
 
+	testCases := []*harness.TestCase{}
 	asserts := []client.Object{}
 
 	for _, obj := range s.Asserts {
-		if obj.GetObjectKind().GroupVersionKind().Kind == "TestAssert" {
+		kind := obj.GetObjectKind().GroupVersionKind().Kind
+		switch kind {
+		case kindTestAssert:
 			if testAssert, ok := obj.DeepCopyObject().(*harness.TestAssert); ok {
 				s.Assert = testAssert
 			} else {
-				return fmt.Errorf("failed to load TestAssert object from %s: it contains an object of type %T", f.FullName, obj)
+				return nil, fmt.Errorf("failed to load TestAssert object from %s: it contains an object of type %T", f.FullName, obj)
 			}
 
 			s.Programs, err = expressions.LoadPrograms(s.Assert)
 			if err != nil {
-				return fmt.Errorf("failed to prepare expression evaluation: %w", err)
+				return nil, fmt.Errorf("failed to prepare expression evaluation: %w", err)
 			}
-		} else {
+		case kindTestCase:
+			testCase, ok := obj.(*harness.TestCase)
+			if !ok {
+				return nil, fmt.Errorf("failed to load TestCase object from %s: it contains an object of type %T", f.FullName, obj)
+			}
+			testCases = append(testCases, testCase)
+		default:
 			asserts = append(asserts, obj)
 		}
 	}
@@ -571,14 +584,16 @@ func (s *Step) LoadYAML(f kfile.Info) error {
 	applies := []client.Object{}
 
 	for _, obj := range s.Apply {
-		if obj.GetObjectKind().GroupVersionKind().Kind == "TestStep" {
+		kind := obj.GetObjectKind().GroupVersionKind().Kind
+		switch kind {
+		case kindTestStep:
 			if testStep, ok := obj.(*harness.TestStep); ok {
 				if s.Step != nil {
-					return fmt.Errorf("more than 1 TestStep not allowed in step %q", s.Name)
+					return nil, fmt.Errorf("more than 1 TestStep not allowed in step %q", s.Name)
 				}
 				s.Step = testStep
 			} else {
-				return fmt.Errorf("failed to load TestStep object from %s: it contains an object of type %T", f.FullName, obj)
+				return nil, fmt.Errorf("failed to load TestStep object from %s: it contains an object of type %T", f.FullName, obj)
 			}
 			s.Step.Index = s.Index
 			if s.Step.Name != "" {
@@ -594,12 +609,32 @@ func (s *Step) LoadYAML(f kfile.Info) error {
 			case "", harness.KubeconfigLoadingEager, harness.KubeconfigLoadingLazy:
 				s.KubeconfigLoading = s.Step.KubeconfigLoading
 			default:
-				return fmt.Errorf("attribute 'kubeconfigLoading' has invalid value %q", s.Step.KubeconfigLoading)
+				return nil, fmt.Errorf("attribute 'kubeconfigLoading' has invalid value %q", s.Step.KubeconfigLoading)
 			}
-		} else {
+		case kindTestCase:
+			testCase, ok := obj.(*harness.TestCase)
+			if !ok {
+				return nil, fmt.Errorf("failed to load TestCase object from %s: it contains an object of type %T", f.FullName, obj)
+			}
+			testCases = append(testCases, testCase)
+		default:
 			applies = append(applies, obj)
 		}
 	}
+
+	errors := []client.Object{}
+	for _, obj := range s.Errors {
+		if obj.GetObjectKind().GroupVersionKind().Kind == kindTestCase {
+			testCase, ok := obj.(*harness.TestCase)
+			if !ok {
+				return nil, fmt.Errorf("failed to load TestCase object from %s: it contains an object of type %T", f.FullName, obj)
+			}
+			testCases = append(testCases, testCase)
+		} else {
+			errors = append(errors, obj)
+		}
+	}
+	s.Errors = errors
 
 	// process provided steps configured TestStep kind
 	if s.Step != nil {
@@ -608,7 +643,7 @@ func (s *Step) LoadYAML(f kfile.Info) error {
 			exApply := env.Expand(applyPath)
 			apply, err := ObjectsFromPath(exApply, s.Dir)
 			if err != nil {
-				return fmt.Errorf("step %q apply path %s: %w", s.Name, exApply, err)
+				return nil, fmt.Errorf("step %q apply path %s: %w", s.Name, exApply, err)
 			}
 			applies = append(applies, apply...)
 		}
@@ -617,7 +652,7 @@ func (s *Step) LoadYAML(f kfile.Info) error {
 			exAssert := env.Expand(assertPath)
 			assert, err := ObjectsFromPath(exAssert, s.Dir)
 			if err != nil {
-				return fmt.Errorf("step %q assert path %s: %w", s.Name, exAssert, err)
+				return nil, fmt.Errorf("step %q assert path %s: %w", s.Name, exAssert, err)
 			}
 			asserts = append(asserts, assert...)
 		}
@@ -626,7 +661,7 @@ func (s *Step) LoadYAML(f kfile.Info) error {
 			exError := env.Expand(errorPath)
 			errObjs, err := ObjectsFromPath(exError, s.Dir)
 			if err != nil {
-				return fmt.Errorf("step %q error path %s: %w", s.Name, exError, err)
+				return nil, fmt.Errorf("step %q error path %s: %w", s.Name, exError, err)
 			}
 			s.Errors = append(s.Errors, errObjs...)
 		}
@@ -634,7 +669,7 @@ func (s *Step) LoadYAML(f kfile.Info) error {
 
 	s.Apply = applies
 	s.Asserts = asserts
-	return nil
+	return testCases, nil
 }
 
 func (s *Step) loadOrSkipFile(info kfile.Info) (bool, []client.Object, error) {

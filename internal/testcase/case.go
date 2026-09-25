@@ -3,6 +3,7 @@ package testcase
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"path/filepath"
 	"sort"
@@ -30,6 +31,8 @@ import (
 	"github.com/kudobuilder/kuttl/internal/utils/files"
 	"github.com/kudobuilder/kuttl/pkg/apis/testharness/v1beta1"
 )
+
+var errMoreThanOneTestCaseObject = errors.New("more than one TestCase object found")
 
 type getClientFuncType func(forceNew bool) (client.Client, error)
 type getDiscoveryClientFuncType func() (discovery.DiscoveryInterface, error)
@@ -102,6 +105,13 @@ func WithClients(getClientFunc getClientFuncType, getDiscoveryClientFunc getDisc
 	}
 }
 
+// WithRunSelector sets the test run selector.
+func WithRunSelector(runSelector labels.Selector) CaseOption {
+	return func(c *Case) {
+		c.runSelector = runSelector
+	}
+}
+
 // Case contains all the test steps and the Kubernetes client and other global configuration
 // for a test. It represents a leaf directory containing test step files.
 // Case lifecycle:
@@ -133,6 +143,10 @@ type Case struct {
 	ignoreFiles []string
 	// Caution: the Vars element of this struct may be shared with other Case objects.
 	templateEnv template.Env
+
+	// runSelector is a selector used to determine whether this case should run in the current test run
+	// by matching against runLabels.
+	runSelector labels.Selector
 }
 
 // namespace contains information about namespace name and its provenance.
@@ -308,6 +322,10 @@ func (c *Case) maybeReportEvents() {
 func (c *Case) Run(t *testing.T, rep report.TestReporter) { //nolint:thelper // runs the case and reports via t; not an assertion helper
 	defer rep.Done()
 
+	if c.shouldSkip() {
+		t.Skipf("test case skipped because test run selector %q does not match test run labels %q", c.runSelector, c.runLabels)
+	}
+
 	setupReport := rep.Step("setup")
 	if err := c.setup(t); err != nil {
 		c.failed = true
@@ -410,6 +428,8 @@ func (c *Case) LoadTestSteps() error {
 		return err
 	}
 
+	var testCase *v1beta1.TestCase
+
 	testSteps := []*step.Step{}
 
 	for index, files := range testStepFiles {
@@ -425,10 +445,31 @@ func (c *Case) LoadTestSteps() error {
 			TemplateEnv:   c.templateEnv,
 		}
 
+		var testCaseSet bool
 		for _, file := range files {
-			if err := testStep.LoadYAML(kfile.Parse(file)); err != nil {
+			testCases, err := testStep.LoadYAML(kfile.Parse(file))
+			if err != nil {
 				return err
 			}
+
+			if len(testCases) > 0 {
+				if testCase != nil || len(testCases) > 1 {
+					return errMoreThanOneTestCaseObject
+				}
+
+				testCase = testCases[0]
+				testCaseSet = true
+			}
+		}
+
+		// Ignore a step if it only contains a TestCase object.
+		if testCaseSet &&
+			len(testStep.Apply) == 0 &&
+			len(testStep.Asserts) == 0 &&
+			len(testStep.Errors) == 0 &&
+			testStep.Assert == nil &&
+			testStep.Step == nil {
+			continue
 		}
 
 		testSteps = append(testSteps, testStep)
@@ -439,7 +480,8 @@ func (c *Case) LoadTestSteps() error {
 	})
 
 	c.steps = testSteps
-	return nil
+
+	return c.setRunSelector(testCase)
 }
 
 // SetLogger sets the logger for the test case.
@@ -456,4 +498,29 @@ func (c *Case) dumpStuckNamespace(cl clientWithKubeConfig) {
 		return
 	}
 	kubernetes.DumpStuckNamespace(cl, discoveryClient, c.ns.name)
+}
+
+func (c *Case) shouldSkip() bool {
+	return c.runSelector != nil && !c.runSelector.Matches(c.runLabels)
+}
+
+func (c *Case) setRunSelector(testCase *v1beta1.TestCase) error {
+	if testCase != nil && testCase.TestRunSelector != nil {
+		// Respect the run selector set by user with WithRunSelector
+		if c.runSelector != nil {
+			c.logger.Log("ignoring the run selector from the TestCase object as it has already been set")
+			return nil
+		}
+		var err error
+		c.runSelector, err = metav1.LabelSelectorAsSelector(testCase.TestRunSelector)
+		if err != nil {
+			return fmt.Errorf("invalid testRunSelector %v: %w", testCase.TestRunSelector, err)
+		}
+
+		return nil
+	} else if c.runSelector == nil {
+		c.runSelector = labels.Everything()
+	}
+
+	return nil
 }

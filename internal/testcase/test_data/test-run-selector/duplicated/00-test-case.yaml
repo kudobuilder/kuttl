@@ -1,0 +1,12 @@
+---
+apiVersion: kuttl.dev/v1beta1
+kind: TestCase
+testRunSelector:
+  matchLabels:
+    key: value1
+---
+apiVersion: kuttl.dev/v1beta1
+kind: TestCase
+testRunSelector:
+  matchLabels:
+    key: value2
