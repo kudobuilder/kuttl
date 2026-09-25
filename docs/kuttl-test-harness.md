@@ -137,6 +137,36 @@ Run the test suite again and the test will pass:
 kubectl kuttl test --start-kind=true ./tests/e2e/
 ```
 
+### Conditionally Skipping a Test Case
+
+Sometimes you only want a test case to run in certain test runs — for example, to exclude a test from a particular environment. You can control this with a `TestCase` object and a label selector.
+
+When you invoke `kubectl kuttl test`, you can associate a set of labels with the run using the `--test-run-labels` flag:
+
+```sh
+kubectl kuttl test --test-run-labels env=prod ./tests/e2e/
+```
+
+A `TestCase` object's `testRunSelector` is then matched against those labels. If the selector does not match, the whole test case is skipped. A `TestCase` object can live in any step file, but only one may exist per test case, so it is convenient to put it in a dedicated file such as `00-test-case.yaml`.
+
+For example, to skip `example-test` whenever the test run targets an `env` of `prod` or `integration`, create `tests/e2e/example-test/00-test-case.yaml`:
+
+```yaml
+apiVersion: kuttl.dev/v1beta1
+kind: TestCase
+testRunSelector:
+  matchExpressions:
+  - key: env
+    operator: NotIn
+    values:
+    - prod
+    - integration
+```
+
+With this in place, the run above (labeled `env=prod`) skips `example-test`, while a run with no labels or a different environment executes it normally. An empty or absent `testRunSelector` matches every run, so the test case is never skipped.
+
+See the [TestCase reference](testing/reference.md#testcase) for the full list of supported settings.
+
 ### Test Suite Configuration
 
 To add this test suite to your project, create a `kuttl-test.yaml` file:

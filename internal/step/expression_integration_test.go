@@ -156,7 +156,7 @@ func TestAssertExpressions(t *testing.T) {
 			step := buildTestStep(t, testenv)
 			for _, file := range files {
 				fName := fmt.Sprintf("%s/%s", dirName, file.Name())
-				if err = step.LoadYAML(kfile.Parse(fName)); err != nil {
+				if _, err = step.LoadYAML(kfile.Parse(fName)); err != nil {
 					break
 				}
 			}
