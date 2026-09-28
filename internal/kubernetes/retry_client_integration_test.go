@@ -43,8 +43,8 @@ func TestCreateOrUpdate(t *testing.T) {
 		_, err := CreateOrUpdate(t.Context(), testenv.Client, namespaceObj, true)
 		require.NoError(t, err)
 
-		depToUpdate := WithSpec(t, NewPod("update-me", namespaceName), map[string]interface{}{
-			"containers": []map[string]interface{}{
+		depToUpdate := WithSpec(t, NewPod("update-me", namespaceName), map[string]any{
+			"containers": []map[string]any{
 				{
 					"image": "nginx",
 					"name":  "nginx",
@@ -79,8 +79,8 @@ func TestCreateOrUpdate(t *testing.T) {
 }
 
 func TestClientWatch(t *testing.T) {
-	pod := WithSpec(t, NewPod("my-pod", "default"), map[string]interface{}{
-		"containers": []map[string]interface{}{
+	pod := WithSpec(t, NewPod("my-pod", "default"), map[string]any{
+		"containers": []map[string]any{
 			{
 				"image": "nginx",
 				"name":  "nginx",

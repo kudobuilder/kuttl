@@ -104,7 +104,7 @@ func (testDeps) ReadCorpus(string, []reflect.Type) ([]corpusEntry, error) {
 	return nil, nil
 }
 
-func (testDeps) CheckCorpus([]interface{}, []reflect.Type) error {
+func (testDeps) CheckCorpus([]any, []reflect.Type) error {
 	return nil
 }
 
@@ -132,7 +132,7 @@ type corpusEntry = struct {
 	Parent     string
 	Path       string
 	Data       []byte
-	Values     []interface{}
+	Values     []any
 	Generation int
 	IsSeed     bool
 }

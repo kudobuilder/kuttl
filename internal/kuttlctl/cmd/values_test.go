@@ -80,10 +80,10 @@ func TestParseVars(t *testing.T) {
 				"empty_array":  "[]",
 			},
 			expected: map[string]any{
-				"simple_array": []interface{}{1, 2, 3},
-				"string_array": []interface{}{"apple", "banana", "cherry"},
-				"mixed_array":  []interface{}{1, "two", true, nil},
-				"empty_array":  []interface{}{},
+				"simple_array": []any{1, 2, 3},
+				"string_array": []any{"apple", "banana", "cherry"},
+				"mixed_array":  []any{1, "two", true, nil},
+				"empty_array":  []any{},
 			},
 		},
 		"object values": {
@@ -92,8 +92,8 @@ func TestParseVars(t *testing.T) {
 				"empty_object":  "{}",
 			},
 			expected: map[string]any{
-				"simple_object": map[string]interface{}{"name": "test", "value": 42},
-				"empty_object":  map[string]interface{}{},
+				"simple_object": map[string]any{"name": "test", "value": 42},
+				"empty_object":  map[string]any{},
 			},
 		},
 		"YAML flow syntax": {
@@ -102,8 +102,8 @@ func TestParseVars(t *testing.T) {
 				"flow_object": "{name: test, count: 5, enabled: true}",
 			},
 			expected: map[string]any{
-				"flow_array":  []interface{}{"a", "b", "c"},
-				"flow_object": map[string]interface{}{"name": "test", "count": 5, "enabled": true},
+				"flow_array":  []any{"a", "b", "c"},
+				"flow_object": map[string]any{"name": "test", "count": 5, "enabled": true},
 			},
 		},
 		"multiline YAML": {
@@ -111,10 +111,10 @@ func TestParseVars(t *testing.T) {
 				"multiline": "name: test\nversion: 0.1\ntags:\n  - v1\n  - stable",
 			},
 			expected: map[string]any{
-				"multiline": map[string]interface{}{
+				"multiline": map[string]any{
 					"name":    "test",
 					"version": 0.1,
-					"tags":    []interface{}{"v1", "stable"},
+					"tags":    []any{"v1", "stable"},
 				},
 			},
 		},

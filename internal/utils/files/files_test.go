@@ -16,11 +16,11 @@ type mockLogger struct {
 	messages []string
 }
 
-func (m *mockLogger) Log(args ...interface{}) {
+func (m *mockLogger) Log(args ...any) {
 	m.messages = append(m.messages, fmt.Sprint(args...))
 }
 
-func (m *mockLogger) Logf(format string, args ...interface{}) {
+func (m *mockLogger) Logf(format string, args ...any) {
 	m.messages = append(m.messages, fmt.Sprintf(format, args...))
 }
 
