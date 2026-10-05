@@ -156,7 +156,29 @@ Supported settings:
 
 An invocation of `kuttl test` may specify a label set associated with a test run using a command line flag.
 One can then use a `TestFile` object with `testRunSelector` to decide whether a given test YAML file should be included
-in a test run or not.
+in a test run or not. It can also be used in a `TestCase` object to skip the whole test case.
+
+## TestCase
+
+A `TestCase` object provides configuration for a test case. The `TestCase` object needs to be in a file named `test-case.yaml` in the test folder.
+
+```yaml
+apiVersion: kuttl.dev/v1beta1
+kind: TestCase
+testRunSelector:
+  matchExpressions:
+  - key: flavor
+    operator: NotIn
+    values:
+    - lemon
+    - orange
+```
+
+Supported settings:
+
+| Field           | Type           | Description                                                                                                                     | Default                                                      |
+|-----------------|----------------|---------------------------------------------------------------------------------------------------------------------------------|--------------------------------------------------------------|
+| testRunSelector | label selector | If this selector does not match [labels of this test run](#test-run-labels-and-selectors), the test case will be skipped. | Empty label selector (matches all possible test label sets). |
 
 ## Collectors
 

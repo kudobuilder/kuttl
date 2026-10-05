@@ -31,6 +31,10 @@ import (
 	"github.com/kudobuilder/kuttl/pkg/apis/testharness/v1beta1"
 )
 
+// TestCaseFileName is the name of the file to describe the test case located in the test case folder.
+// Only a `TestCase` object should exist in this file.
+const TestCaseFileName = "test-case.yaml"
+
 type getClientFuncType func(forceNew bool) (client.Client, error)
 type getDiscoveryClientFuncType func() (discovery.DiscoveryInterface, error)
 
@@ -102,6 +106,13 @@ func WithClients(getClientFunc getClientFuncType, getDiscoveryClientFunc getDisc
 	}
 }
 
+// WithRunSelector sets the test run selector.
+func WithRunSelector(runSelector labels.Selector) CaseOption {
+	return func(c *Case) {
+		c.runSelector = runSelector
+	}
+}
+
 // Case contains all the test steps and the Kubernetes client and other global configuration
 // for a test. It represents a leaf directory containing test step files.
 // Case lifecycle:
@@ -133,6 +144,10 @@ type Case struct {
 	ignoreFiles []string
 	// Caution: the Vars element of this struct may be shared with other Case objects.
 	templateEnv template.Env
+
+	// runSelector is a selector used to determine if this case should run in the current test run
+	// by matching against runLabels.
+	runSelector labels.Selector
 }
 
 // namespace contains information about namespace name and its provenance.
@@ -305,6 +320,10 @@ func (c *Case) maybeReportEvents() {
 func (c *Case) Run(t *testing.T, rep report.TestReporter) { //nolint:thelper // runs the case and reports via t; not an assertion helper
 	defer rep.Done()
 
+	if c.shouldSkip() {
+		t.Skipf("test case skipped because test run labels %q don't match test run selector %q", c.runLabels, c.runSelector)
+	}
+
 	setupReport := rep.Step("setup")
 	if err := c.setup(t); err != nil {
 		c.failed = true
@@ -420,6 +439,7 @@ func (c *Case) LoadTestSteps() error {
 			Apply:         []client.Object{},
 			Errors:        []client.Object{},
 			TemplateEnv:   c.templateEnv,
+			Logger:        c.logger,
 		}
 
 		for _, file := range files {
@@ -442,4 +462,8 @@ func (c *Case) LoadTestSteps() error {
 // SetLogger sets the logger for the test case.
 func (c *Case) SetLogger(logger testutils.Logger) {
 	c.logger = logger
+}
+
+func (c *Case) shouldSkip() bool {
+	return c.runSelector != nil && !c.runSelector.Matches(c.runLabels)
 }

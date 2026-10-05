@@ -19,6 +19,7 @@ import (
 	"gopkg.in/yaml.v2"
 	corev1 "k8s.io/api/core/v1"
 	apiErrors "k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/util/wait"
@@ -84,6 +85,18 @@ func (h *Harness) LoadTests(dir string) ([]*testcase.Case, error) {
 			continue
 		}
 
+		var testCase *harness.TestCase
+		var runSelector labels.Selector
+
+		testCase, err = loadTestCaseFile(h.T, dir, dirEntry)
+		if err != nil {
+			return nil, err
+		}
+		runSelector, err = extractRunSelector(testCase)
+		if err != nil {
+			return nil, err
+		}
+
 		tests = append(tests, testcase.NewCase(
 			dirEntry.Name(),
 			dir,
@@ -94,7 +107,8 @@ func (h *Harness) LoadTests(dir string) ([]*testcase.Case, error) {
 			testcase.WithIgnoreFiles(h.TestSuite.IgnoreFiles),
 			testcase.WithRunLabels(h.RunLabels),
 			testcase.WithClients(h.Client, h.DiscoveryClient),
-			testcase.WithTemplateVars(h.TemplateVars)))
+			testcase.WithTemplateVars(h.TemplateVars),
+			testcase.WithRunSelector(runSelector)))
 	}
 
 	return tests, nil
@@ -486,6 +500,8 @@ func (h *Harness) Setup() {
 		h.TestSuite.IgnoreFiles = []string{"README*"}
 	}
 
+	h.TestSuite.IgnoreFiles = append(h.TestSuite.IgnoreFiles, testcase.TestCaseFileName)
+
 	for _, pattern := range h.TestSuite.IgnoreFiles {
 		if _, err := filepath.Match(pattern, "dummy"); err != nil {
 			h.fatal(fmt.Errorf("invalid ignore pattern %q: %w", pattern, err))
@@ -693,4 +709,58 @@ func (h *Harness) loadKindConfig(path string) (*kindConfig.Cluster, error) {
 		h.T.Logf("Warning: %q in %s is not a supported version.\n", cluster.APIVersion, path)
 	}
 	return cluster, nil
+}
+
+func loadTestCaseFile(t *testing.T, dir string, dirEntry os.DirEntry) (*harness.TestCase, error) { //nolint:thelper // load test case file, not a helper
+	var testCase *harness.TestCase
+
+	testCaseFile := filepath.Join(dir, dirEntry.Name(), testcase.TestCaseFileName)
+	fileInfo, err := os.Stat(testCaseFile)
+	if err != nil && !os.IsNotExist(err) {
+		return nil, fmt.Errorf("read test case file %q: %w", testCaseFile, err)
+	}
+
+	if fileInfo != nil {
+		if fileInfo.IsDir() {
+			t.Logf("ignoring directory %q", testCaseFile)
+		} else {
+			loadedObjects, err := kubernetes.LoadYAMLFromFile(testCaseFile)
+			if err != nil {
+				return nil, fmt.Errorf("load yaml from %q: %w", testCaseFile, err)
+			}
+
+			for _, obj := range loadedObjects {
+				tc, ok := obj.(*harness.TestCase)
+				if !ok {
+					if obj.GetObjectKind().GroupVersionKind().Kind != "" {
+						return nil, fmt.Errorf("only a TestCase object is expected in %q, but got %q", testcase.TestCaseFileName, obj.GetObjectKind().GroupVersionKind().Kind)
+					}
+
+					continue
+				}
+
+				if testCase != nil {
+					return nil, fmt.Errorf("only one TestCase object is expected in %q", testcase.TestCaseFileName)
+				}
+
+				testCase = tc
+			}
+		}
+	}
+
+	return testCase, nil
+}
+
+func extractRunSelector(testCase *harness.TestCase) (labels.Selector, error) {
+	var err error
+	runSelector := labels.Everything()
+
+	if testCase != nil && testCase.TestRunSelector != nil {
+		runSelector, err = metav1.LabelSelectorAsSelector(testCase.TestRunSelector)
+		if err != nil {
+			return nil, fmt.Errorf("invalid testRunSelector %v: %w", testCase.TestRunSelector, err)
+		}
+	}
+
+	return runSelector, nil
 }

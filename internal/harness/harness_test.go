@@ -4,12 +4,17 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"os"
 	"testing"
 
 	"github.com/moby/moby/api/types/volume"
 	"github.com/moby/moby/client"
 	"github.com/stretchr/testify/assert"
+
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	kindConfig "sigs.k8s.io/kind/pkg/apis/config/v1alpha4"
+
+	harness "github.com/kudobuilder/kuttl/pkg/apis/testharness/v1beta1"
 )
 
 func TestGetTimeout(t *testing.T) {
@@ -88,4 +93,52 @@ func TestAddNodeCaches(t *testing.T) {
 	assert.Equal(t, "/var/lib/containerd", kindCfg.Nodes[0].ExtraMounts[0].ContainerPath)
 	assert.Equal(t, "/var/lib/docker/data/kind-0", kindCfg.Nodes[0].ExtraMounts[0].HostPath)
 	assert.Equal(t, "/var/lib/docker/data/kind-1", kindCfg.Nodes[1].ExtraMounts[0].HostPath)
+}
+
+func TestExtractRunSelector(t *testing.T) {
+	cases := map[string]*struct {
+		testCase    *harness.TestCase
+		runSelector string
+	}{
+		"no-test-case-file": {},
+		"test-case-file": {
+			testCase: &harness.TestCase{
+				TypeMeta: metav1.TypeMeta{
+					APIVersion: "kuttl.dev/v1beta1",
+					Kind:       "TestCase",
+				},
+			},
+			runSelector: "",
+		},
+		"test-case-file-selector": {
+			testCase: &harness.TestCase{
+				TypeMeta: metav1.TypeMeta{
+					APIVersion: "kuttl.dev/v1beta1",
+					Kind:       "TestCase",
+				},
+				TestRunSelector: &metav1.LabelSelector{
+					MatchLabels: map[string]string{
+						"key": "value",
+					},
+				},
+			},
+			runSelector: "key=value",
+		},
+	}
+
+	entries, err := os.ReadDir("test_data1")
+	assert.NoError(t, err)
+
+	for _, entry := range entries {
+		tc, ok := cases[entry.Name()]
+		assert.Truef(t, ok, "test case not found %q", entry.Name())
+
+		actualTestCase, err := loadTestCaseFile(t, "test_data1", entry)
+		assert.NoErrorf(t, err, "load test case file %q", entry.Name())
+		assert.Equalf(t, tc.testCase, actualTestCase, "unexpected test case content %q", entry.Name())
+
+		runSelector, err := extractRunSelector(actualTestCase)
+		assert.NoErrorf(t, err, "extract run selector %q", entry.Name())
+		assert.Equalf(t, tc.runSelector, runSelector.String(), "unexpected run selector %q", entry.Name())
+	}
 }
