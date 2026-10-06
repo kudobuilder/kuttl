@@ -424,3 +424,19 @@ func TestPopulateObjectsByFileName(t *testing.T) {
 		})
 	}
 }
+
+func TestLoadYAMLLoadsTestStepPathsOnce(t *testing.T) {
+	step := Step{
+		Dir: "test_data/load_yaml_once",
+	}
+
+	err := step.LoadYAML(kfile.Parse("test_data/load_yaml_once/00-step.yaml"))
+	require.NoError(t, err)
+	assert.Len(t, step.Apply, 1)
+
+	err = step.LoadYAML(kfile.Parse("test_data/load_yaml_once/00-assert.yaml"))
+	require.NoError(t, err)
+
+	assert.Len(t, step.Apply, 1)
+	assert.Len(t, step.Asserts, 1)
+}
