@@ -5,3 +5,8 @@ metadata:
   name: my-crd
 spec:
   hi: abcdef
+---
+apiVersion: kuttl.dev/v1beta1
+kind: TestAssert
+collectors:
+- command: kubectl get -o yaml crd mycrds.mycrd.example.com
