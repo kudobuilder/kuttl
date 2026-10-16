@@ -129,6 +129,8 @@ func convertUnstructured(in client.Object) (client.Object, error) {
 		converted = &v1beta1.TestAssert{}
 	case "TestSuite":
 		converted = &v1beta1.TestSuite{}
+	case "TestCase":
+		converted = &v1beta1.TestCase{}
 	default:
 		return in, nil
 	}

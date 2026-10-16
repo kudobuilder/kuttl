@@ -27,13 +27,16 @@ import (
 // Each test provides a path to a set of test steps and their rendered result.
 func TestLoadTestSteps(t *testing.T) {
 	for _, tt := range []struct {
-		path      string
-		runLabels labels.Set
-		testSteps []step.Step
+		path        string
+		runLabels   labels.Set
+		runSelector string
+		testSteps   []step.Step
+		err         error
 	}{
 		{
 			"test_data/with-overrides",
 			labels.Set{},
+			"",
 			[]step.Step{
 				{
 					Name:  "with-test-step-name-override",
@@ -183,10 +186,12 @@ func TestLoadTestSteps(t *testing.T) {
 					TestRunLabels: labels.Set{},
 				},
 			},
+			nil,
 		},
 		{
 			"test_data/list-pods",
 			labels.Set{},
+			"",
 			[]step.Step{
 				{
 					Name:  "pod",
@@ -238,10 +243,12 @@ func TestLoadTestSteps(t *testing.T) {
 					TestRunLabels: labels.Set{},
 				},
 			},
+			nil,
 		},
 		{
 			"test_data/test-run-labels",
 			labels.Set{},
+			"",
 			[]step.Step{
 				{
 					Name:          "",
@@ -252,10 +259,12 @@ func TestLoadTestSteps(t *testing.T) {
 					Errors:        []client.Object{},
 				},
 			},
+			nil,
 		},
 		{
 			"test_data/test-run-labels",
 			labels.Set{"flavor": "a"},
+			"",
 			[]step.Step{
 				{
 					Name:          "create-a",
@@ -292,10 +301,12 @@ func TestLoadTestSteps(t *testing.T) {
 					Errors: []client.Object{},
 				},
 			},
+			nil,
 		},
 		{
 			"test_data/test-run-labels",
 			labels.Set{"flavor": "b"},
+			"",
 			[]step.Step{
 				{
 					Name:          "create-b",
@@ -332,13 +343,384 @@ func TestLoadTestSteps(t *testing.T) {
 					Errors: []client.Object{},
 				},
 			},
+			nil,
+		},
+		{
+			"test_data/test-run-selector/no-selector",
+			labels.Set{},
+			"",
+			nil,
+			nil,
+		},
+		{
+			"test_data/test-run-selector/in-standalone-file",
+			labels.Set{},
+			"key=value",
+			nil,
+			nil,
+		},
+		{
+			"test_data/test-run-selector/in-standalone-file-with-apply-assert",
+			labels.Set{},
+			"key=value",
+			[]step.Step{
+				{
+					Name:  "pod",
+					Index: 0,
+					Apply: []client.Object{
+						&unstructured.Unstructured{
+							Object: map[string]interface{}{
+								"apiVersion": "v1",
+								"kind":       "Pod",
+								"metadata": map[string]interface{}{
+									"name": "pod-1",
+									"labels": map[string]interface{}{
+										"app": "nginx",
+									},
+								},
+								"spec": map[string]interface{}{
+									"containers": []interface{}{
+										map[string]interface{}{
+											"image": "nginx:1.7.9",
+											"name":  "nginx",
+										},
+									},
+								},
+							},
+						},
+					},
+					Asserts: []client.Object{
+						&unstructured.Unstructured{
+							Object: map[string]interface{}{
+								"apiVersion": "v1",
+								"kind":       "Pod",
+								"metadata": map[string]interface{}{
+									"labels": map[string]interface{}{
+										"app": "nginx",
+									},
+								},
+								"spec": map[string]interface{}{
+									"containers": []interface{}{
+										map[string]interface{}{
+											"image": "nginx:1.7.9",
+											"name":  "nginx",
+										},
+									},
+								},
+							},
+						},
+					},
+					Errors:        []client.Object{},
+					TestRunLabels: labels.Set{},
+				},
+			},
+			nil,
+		},
+		{
+			"test_data/test-run-selector/in-standalone-file-with-apply-assert-in-different-steps",
+			labels.Set{},
+			"key=value",
+			[]step.Step{
+				{
+					Name:  "pod",
+					Index: 1,
+					Apply: []client.Object{
+						&unstructured.Unstructured{
+							Object: map[string]interface{}{
+								"apiVersion": "v1",
+								"kind":       "Pod",
+								"metadata": map[string]interface{}{
+									"name": "pod-1",
+									"labels": map[string]interface{}{
+										"app": "nginx",
+									},
+								},
+								"spec": map[string]interface{}{
+									"containers": []interface{}{
+										map[string]interface{}{
+											"image": "nginx:1.7.9",
+											"name":  "nginx",
+										},
+									},
+								},
+							},
+						},
+					},
+					Asserts: []client.Object{
+						&unstructured.Unstructured{
+							Object: map[string]interface{}{
+								"apiVersion": "v1",
+								"kind":       "Pod",
+								"metadata": map[string]interface{}{
+									"labels": map[string]interface{}{
+										"app": "nginx",
+									},
+								},
+								"spec": map[string]interface{}{
+									"containers": []interface{}{
+										map[string]interface{}{
+											"image": "nginx:1.7.9",
+											"name":  "nginx",
+										},
+									},
+								},
+							},
+						},
+					},
+					Errors:        []client.Object{},
+					TestRunLabels: labels.Set{},
+				},
+			},
+			nil,
+		},
+		{
+			"test_data/test-run-selector/embedded-in-assert",
+			labels.Set{},
+			"key=value",
+			[]step.Step{
+				{
+					Name:  "",
+					Index: 0,
+					Asserts: []client.Object{
+						&unstructured.Unstructured{
+							Object: map[string]interface{}{
+								"apiVersion": "v1",
+								"kind":       "Pod",
+								"metadata": map[string]interface{}{
+									"labels": map[string]interface{}{
+										"app": "nginx",
+									},
+								},
+								"spec": map[string]interface{}{
+									"containers": []interface{}{
+										map[string]interface{}{
+											"image": "nginx:1.7.9",
+											"name":  "nginx",
+										},
+									},
+								},
+							},
+						},
+					},
+					Apply:         []client.Object{},
+					Errors:        []client.Object{},
+					TestRunLabels: labels.Set{},
+				},
+			},
+			nil,
+		},
+		{
+			"test_data/test-run-selector/embedded-in-assert-with-testassert",
+			labels.Set{},
+			"key=value",
+			[]step.Step{
+				{
+					Name:  "",
+					Index: 0,
+					Assert: &harness.TestAssert{
+						TypeMeta: metav1.TypeMeta{
+							Kind:       "TestAssert",
+							APIVersion: "kuttl.dev/v1beta1",
+						},
+					},
+					Asserts:       []client.Object{},
+					Apply:         []client.Object{},
+					Errors:        []client.Object{},
+					TestRunLabels: labels.Set{},
+				},
+			},
+			nil,
+		},
+		{
+			"test_data/test-run-selector/embedded-in-apply",
+			labels.Set{},
+			"key=value",
+			[]step.Step{
+				{
+					Name:  "pod",
+					Index: 0,
+					Apply: []client.Object{
+						&unstructured.Unstructured{
+							Object: map[string]interface{}{
+								"apiVersion": "v1",
+								"kind":       "Pod",
+								"metadata": map[string]interface{}{
+									"name": "pod-1",
+									"labels": map[string]interface{}{
+										"app": "nginx",
+									},
+								},
+								"spec": map[string]interface{}{
+									"containers": []interface{}{
+										map[string]interface{}{
+											"image": "nginx:1.7.9",
+											"name":  "nginx",
+										},
+									},
+								},
+							},
+						},
+					},
+					Asserts:       []client.Object{},
+					Errors:        []client.Object{},
+					TestRunLabels: labels.Set{},
+				},
+			},
+			nil,
+		},
+		{
+			"test_data/test-run-selector/embedded-in-teststep",
+			labels.Set{},
+			"key=value",
+			[]step.Step{
+				{
+					Name:          "step",
+					Index:         0,
+					Apply:         []client.Object{},
+					Asserts:       []client.Object{},
+					Errors:        []client.Object{},
+					TestRunLabels: labels.Set{},
+					Step: &harness.TestStep{
+						TypeMeta: metav1.TypeMeta{
+							Kind:       "TestStep",
+							APIVersion: "kuttl.dev/v1beta1",
+						},
+					},
+				},
+			},
+			nil,
+		},
+		{
+			"test_data/test-run-selector/embedded-in-errors",
+			labels.Set{},
+			"key=value",
+			[]step.Step{
+				{
+					Name:    "",
+					Index:   0,
+					Apply:   []client.Object{},
+					Asserts: []client.Object{},
+					Errors: []client.Object{
+						&unstructured.Unstructured{
+							Object: map[string]interface{}{
+								"apiVersion": "v1",
+								"kind":       "Pod",
+								"metadata": map[string]interface{}{
+									"labels": map[string]interface{}{
+										"app": "nginx",
+									},
+								},
+								"spec": map[string]interface{}{
+									"containers": []interface{}{
+										map[string]interface{}{
+											"image": "nginx:1.7.9",
+											"name":  "nginx",
+										},
+									},
+								},
+							},
+						},
+					},
+					TestRunLabels: labels.Set{},
+				},
+			},
+			nil,
+		},
+		{
+			"test_data/test-run-selector/embedded-in-errors-with-step-error",
+			labels.Set{},
+			"key=value",
+			[]step.Step{
+				{
+					Name:    "step",
+					Index:   0,
+					Apply:   []client.Object{},
+					Asserts: []client.Object{},
+					Errors: []client.Object{
+						&unstructured.Unstructured{
+							Object: map[string]interface{}{
+								"apiVersion": "v1",
+								"kind":       "Pod",
+								"metadata": map[string]interface{}{
+									"labels": map[string]interface{}{
+										"app": "nginx",
+									},
+								},
+								"spec": map[string]interface{}{
+									"containers": []interface{}{
+										map[string]interface{}{
+											"image": "nginx:1.7.9",
+											"name":  "nginx",
+										},
+									},
+								},
+							},
+						},
+						&unstructured.Unstructured{
+							Object: map[string]interface{}{
+								"apiVersion": "v1",
+								"kind":       "Pod",
+								"metadata": map[string]interface{}{
+									"name": "pod-1",
+									"labels": map[string]interface{}{
+										"app": "nginx",
+									},
+								},
+								"spec": map[string]interface{}{
+									"containers": []interface{}{
+										map[string]interface{}{
+											"image": "nginx:1.7.9",
+											"name":  "nginx",
+										},
+									},
+								},
+							},
+						},
+					},
+					TestRunLabels: labels.Set{},
+					Step: &harness.TestStep{
+						TypeMeta: metav1.TypeMeta{
+							Kind:       "TestStep",
+							APIVersion: "kuttl.dev/v1beta1",
+						},
+						Error: []string{
+							"errors/error.yaml",
+						},
+					},
+				},
+			},
+			nil,
+		},
+		{
+			"test_data/test-run-selector/duplicated",
+			labels.Set{},
+			"",
+			[]step.Step{},
+			errMoreThanOneTestCaseObject,
+		},
+		{
+			"test_data/test-run-selector/duplicated-in-same-step",
+			labels.Set{},
+			"",
+			[]step.Step{},
+			errMoreThanOneTestCaseObject,
+		},
+		{
+			"test_data/test-run-selector/duplicated-in-different-step",
+			labels.Set{},
+			"",
+			[]step.Step{},
+			errMoreThanOneTestCaseObject,
 		},
 	} {
 		t.Run(fmt.Sprintf("%s/%s", tt.path, tt.runLabels), func(t *testing.T) {
 			test := &Case{dir: tt.path, logger: testutils.NewTestLogger(t, tt.path), runLabels: tt.runLabels}
 
 			err := test.LoadTestSteps()
-			require.NoError(t, err)
+			assert.ErrorIs(t, err, tt.err, "error needs to match")
+			if err != nil {
+				return
+			}
 
 			testStepsVal := []step.Step{}
 			for _, testStep := range test.steps {
@@ -354,6 +736,7 @@ func TestLoadTestSteps(t *testing.T) {
 				assert.Equal(t, tt.testSteps[index].Step, testStepsVal[index].Step, "step object needs to match")
 				assert.Equal(t, tt.testSteps[index].Dir, testStepsVal[index].Dir, "dir needs to match")
 				assert.Equal(t, tt.testSteps[index], testStepsVal[index])
+				assert.Equal(t, tt.runSelector, test.runSelector.String(), "run selector needs to match")
 			}
 		})
 	}
@@ -591,4 +974,135 @@ func newClientWithExistingNs(_ *testing.T, nsName string) client.Client {
 			Name: nsName,
 		},
 	}).Build()
+}
+
+func TestCase_shouldSkip(t *testing.T) {
+	cases := []struct {
+		runLabels       labels.Set
+		runSelector     *metav1.LabelSelector
+		shouldBeSkipped bool
+	}{
+		{
+			runLabels: map[string]string{
+				"key": "value",
+			},
+			runSelector: &metav1.LabelSelector{
+				MatchLabels: map[string]string{
+					"key": "value",
+				},
+			},
+			shouldBeSkipped: false,
+		},
+		{
+			runLabels: map[string]string{
+				"key": "value",
+			},
+			runSelector: &metav1.LabelSelector{
+				MatchExpressions: []metav1.LabelSelectorRequirement{
+					{
+						Key:      "key",
+						Operator: metav1.LabelSelectorOpIn,
+						Values: []string{
+							"value",
+						},
+					},
+				},
+			},
+			shouldBeSkipped: false,
+		},
+		{
+			runLabels: map[string]string{
+				"key": "value",
+			},
+			runSelector: &metav1.LabelSelector{
+				MatchExpressions: []metav1.LabelSelectorRequirement{
+					{
+						Key:      "key",
+						Operator: metav1.LabelSelectorOpNotIn,
+						Values: []string{
+							"value1",
+						},
+					},
+				},
+			},
+			shouldBeSkipped: false,
+		},
+		{
+			runLabels: map[string]string{
+				"key": "value",
+			},
+			runSelector: &metav1.LabelSelector{
+				MatchLabels: map[string]string{
+					"key": "value1",
+				},
+			},
+			shouldBeSkipped: true,
+		},
+		{
+			runLabels: map[string]string{
+				"key": "value",
+			},
+			runSelector: &metav1.LabelSelector{
+				MatchExpressions: []metav1.LabelSelectorRequirement{
+					{
+						Key:      "key",
+						Operator: metav1.LabelSelectorOpIn,
+						Values: []string{
+							"value1",
+						},
+					},
+				},
+			},
+			shouldBeSkipped: true,
+		},
+		{
+			runLabels: nil,
+			runSelector: &metav1.LabelSelector{
+				MatchLabels: map[string]string{
+					"key": "value",
+				},
+			},
+			shouldBeSkipped: true,
+		},
+		{
+			runLabels: nil,
+			runSelector: &metav1.LabelSelector{
+				MatchExpressions: []metav1.LabelSelectorRequirement{
+					{
+						Key:      "key",
+						Operator: metav1.LabelSelectorOpIn,
+						Values: []string{
+							"value",
+						},
+					},
+				},
+			},
+			shouldBeSkipped: true,
+		},
+		{
+			runLabels: map[string]string{
+				"key": "value",
+			},
+			runSelector:     nil,
+			shouldBeSkipped: false,
+		},
+		{
+			runLabels:       nil,
+			runSelector:     nil,
+			shouldBeSkipped: false,
+		},
+	}
+
+	for _, tc := range cases {
+		var runSelector labels.Selector
+		var err error
+		if tc.runSelector == nil {
+			runSelector = labels.Everything()
+		} else {
+			runSelector, err = metav1.LabelSelectorAsSelector(tc.runSelector)
+			assert.NoError(t, err, tc.runSelector)
+		}
+		c := NewCase("", "", WithRunLabels(tc.runLabels), WithRunSelector(runSelector))
+		assert.Equalf(t, tc.shouldBeSkipped, c.shouldSkip(), "failed to check shouldSkip %q %q", tc.runSelector, tc.runLabels)
+	}
 }
