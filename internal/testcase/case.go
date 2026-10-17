@@ -5,6 +5,7 @@ import (
 	"context"
 	"fmt"
 	"path/filepath"
+	"slices"
 	"sort"
 	"testing"
 	"time"
@@ -14,7 +15,9 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/labels"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	utilrand "k8s.io/apimachinery/pkg/util/rand"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/discovery"
@@ -203,6 +206,9 @@ func (c *Case) deleteNamespace(cl clientWithKubeConfig) error {
 		}
 		return false, nil
 	})
+	if err != nil {
+		c.dumpStuckNamespace(cl)
+	}
 	return cl.Wrapf(err, "waiting for namespace %q to be deleted timed out", c.ns.name)
 }
 
@@ -442,4 +448,60 @@ func (c *Case) LoadTestSteps() error {
 // SetLogger sets the logger for the test case.
 func (c *Case) SetLogger(logger testutils.Logger) {
 	c.logger = logger
+}
+
+// dumpStuckNamespace logs the state of a namespace that failed to delete and
+// the objects remaining in it, to make teardown failures diagnosable in CI.
+func (c *Case) dumpStuckNamespace(cl clientWithKubeConfig) {
+	ns := &corev1.Namespace{}
+	if err := cl.Get(context.TODO(), client.ObjectKey{Name: c.ns.name}, ns); err != nil {
+		cl.Logf("failed to get namespace %q: %v", c.ns.name, err)
+	} else {
+		deletionTS := "not deleting"
+		if ns.ObjectMeta.DeletionTimestamp != nil {
+			deletionTS = ns.ObjectMeta.DeletionTimestamp.String()
+		}
+		cl.Logf("stuck namespace %q: status=%s deletionTimestamp=%s metadata.finalizers=%v spec.finalizers=%v",
+			c.ns.name, ns.Status.Phase, deletionTS, ns.ObjectMeta.Finalizers, ns.Spec.Finalizers)
+	}
+
+	discoveryClient, err := c.getDiscoveryClient()
+	if err != nil {
+		cl.Logf("failed to get discovery client, cannot dump namespace contents: %v", err)
+		return
+	}
+	resources, err := discoveryClient.ServerPreferredNamespacedResources()
+	if err != nil {
+		cl.Logf("failed to get server preferred namespaced resources: %v", err)
+		return
+	}
+
+	for _, res := range resources {
+		gv, err := schema.ParseGroupVersion(res.GroupVersion)
+		if err != nil {
+			continue
+		}
+		for _, r := range res.APIResources {
+			if !slices.Contains(r.Verbs, "list") {
+				continue
+			}
+			gvk := gv.WithKind(r.Kind)
+			list := &unstructured.UnstructuredList{}
+			list.SetGroupVersionKind(gvk)
+
+			err = cl.List(context.TODO(), list, client.InNamespace(c.ns.name))
+			if err != nil {
+				cl.Logf("list %s failed (skip): %v", r.Kind, err)
+				continue
+			}
+			for _, item := range list.Items {
+				deletionTS := "not deleting"
+				if item.GetDeletionTimestamp() != nil {
+					deletionTS = item.GetDeletionTimestamp().String()
+				}
+				cl.Logf("remaining %s/%s: deletionTimestamp=%s finalizers=%v",
+					r.Kind, item.GetName(), deletionTS, item.GetFinalizers())
+			}
+		}
+	}
 }
