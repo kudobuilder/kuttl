@@ -148,6 +148,7 @@ integration-test:  ## Runs integration tests
 e2e-test:  ## Runs end-to-end tests
 	KUBEBUILDER_ASSETS="$(shell $(ENVTEST) use $(ENVTEST_K8S_VERSION) --bin-dir $(LOCALBIN) -p path)" $(MAKE) -C ./test/junit
 	KUBEBUILDER_ASSETS="$(shell $(ENVTEST) use $(ENVTEST_K8S_VERSION) --bin-dir $(LOCALBIN) -p path)" $(MAKE) -C ./test/vars
+	KUBEBUILDER_ASSETS="$(shell $(ENVTEST) use $(ENVTEST_K8S_VERSION) --bin-dir $(LOCALBIN) -p path)" $(MAKE) -C ./test/nsdump
 
 ##@ Build Dependencies
 
