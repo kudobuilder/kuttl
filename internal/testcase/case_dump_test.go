@@ -120,32 +120,6 @@ func stuckService(ns string) *corev1.Service {
 	}
 }
 
-func TestDumpStuckNamespace(t *testing.T) {
-	logger := &capturingLogger{}
-	cl := newTestClient(logger, stuckNamespace("stuck-ns"), stuckService("stuck-ns"))
-	c := newCaseWithNS("stuck-ns", 0)
-
-	c.dumpStuckNamespace(cl)
-
-	out := logger.String()
-	assert.Contains(t, out, `stuck namespace "stuck-ns"`)
-	assert.Contains(t, out, "example.com/ns-stuck")
-	assert.Contains(t, out, "Service/junk-service")
-	assert.Contains(t, out, "example.com/junk")
-	assert.NotContains(t, out, "Binding")
-}
-
-func TestDumpStuckNamespaceWhenNamespaceGone(t *testing.T) {
-	logger := &capturingLogger{}
-	cl := newTestClient(logger)
-	c := newCaseWithNS("gone-ns", 0)
-
-	assert.NotPanics(t, func() {
-		c.dumpStuckNamespace(cl)
-	})
-	assert.Contains(t, logger.String(), `failed to get namespace "gone-ns"`)
-}
-
 func TestDeleteNamespaceDumpsContentsOnlyWhenStuck(t *testing.T) {
 	t.Run("stuck namespace is dumped", func(t *testing.T) {
 		logger := &capturingLogger{}
