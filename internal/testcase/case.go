@@ -458,11 +458,11 @@ func (c *Case) dumpStuckNamespace(cl clientWithKubeConfig) {
 		cl.Logf("failed to get namespace %q: %v", c.ns.name, err)
 	} else {
 		deletionTS := "not deleting"
-		if ns.ObjectMeta.DeletionTimestamp != nil {
-			deletionTS = ns.ObjectMeta.DeletionTimestamp.String()
+		if ns.DeletionTimestamp != nil {
+			deletionTS = ns.DeletionTimestamp.String()
 		}
 		cl.Logf("stuck namespace %q: status=%s deletionTimestamp=%s metadata.finalizers=%v spec.finalizers=%v",
-			c.ns.name, ns.Status.Phase, deletionTS, ns.ObjectMeta.Finalizers, ns.Spec.Finalizers)
+			c.ns.name, ns.Status.Phase, deletionTS, ns.Finalizers, ns.Spec.Finalizers)
 	}
 
 	discoveryClient, err := c.getDiscoveryClient()

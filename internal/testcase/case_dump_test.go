@@ -32,7 +32,7 @@ func (l *capturingLogger) Logf(format string, args ...any) {
 	l.logs = append(l.logs, fmt.Sprintf(format, args...))
 }
 
-func (l *capturingLogger) WithPrefix(prefix string) testutils.Logger {
+func (l *capturingLogger) WithPrefix(_ string) testutils.Logger {
 	return l
 }
 
