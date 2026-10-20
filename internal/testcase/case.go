@@ -203,6 +203,9 @@ func (c *Case) deleteNamespace(cl clientWithKubeConfig) error {
 		}
 		return false, nil
 	})
+	if err != nil {
+		c.dumpStuckNamespace(cl)
+	}
 	return cl.Wrapf(err, "waiting for namespace %q to be deleted timed out", c.ns.name)
 }
 
@@ -442,4 +445,15 @@ func (c *Case) LoadTestSteps() error {
 // SetLogger sets the logger for the test case.
 func (c *Case) SetLogger(logger testutils.Logger) {
 	c.logger = logger
+}
+
+// dumpStuckNamespace logs the state of a namespace that failed to delete and
+// the objects remaining in it, to make teardown failures diagnosable in CI.
+func (c *Case) dumpStuckNamespace(cl clientWithKubeConfig) {
+	discoveryClient, err := c.getDiscoveryClient()
+	if err != nil {
+		cl.Logf("failed to get discovery client, cannot dump namespace contents: %v", err)
+		return
+	}
+	kubernetes.DumpStuckNamespace(cl, discoveryClient, c.ns.name)
 }
