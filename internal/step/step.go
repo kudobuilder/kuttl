@@ -465,7 +465,7 @@ func (s *Step) Check(namespace string, timeout int) []error {
 // 1. Delete objects that should be deleted. Stop if this fails.
 // 2. Run step commands.
 // 3. Apply all desired objects to Kubernetes.
-// 4. Stop if the above fails.
+// 4. Run collector commands (if any) and stop if the above fails.
 // 5. Check assertions in a loop until they all pass or step times out.
 // 6. On success, return.
 // 7. On failure, run collector commands, if any.
@@ -493,6 +493,7 @@ func (s *Step) Run(t *testing.T, namespace string) []error { //nolint:thelper //
 	testErrors = append(testErrors, s.Create(t, namespace)...)
 
 	if len(testErrors) != 0 {
+		s.processFailure(namespace)
 		return testErrors
 	}
 
@@ -517,10 +518,14 @@ func (s *Step) Run(t *testing.T, namespace string) []error { //nolint:thelper //
 		s.Logger.Log("test step completed", s.String())
 		return testErrors
 	}
-	// test failure processing
+	s.processFailure(namespace)
+	return testErrors
+}
+
+func (s *Step) processFailure(namespace string) {
 	s.Logger.Log("test step failed", s.String())
 	if s.Assert == nil {
-		return testErrors
+		return
 	}
 	for _, collector := range s.Assert.Collectors {
 		s.Logger.Logf("collecting log output for %s", collector.String())
@@ -530,11 +535,10 @@ func (s *Step) Run(t *testing.T, namespace string) []error { //nolint:thelper //
 		}
 		_, err := testutils.RunCommand(context.TODO(), namespace, *collector.Command(), s.Dir, s.Logger, s.Logger, s.Logger, s.Timeout, s.Kubeconfig)
 		if err != nil {
-			s.Logger.Log("post assert collector failure: %s", err)
+			s.Logger.Log("step collector failure: %s", err)
 		}
 	}
 	s.Logger.Flush()
-	return testErrors
 }
 
 // String implements the string interface, returning the name of the test step.
