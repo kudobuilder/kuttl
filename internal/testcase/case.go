@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"path/filepath"
 	"sort"
+	"strconv"
 	"testing"
 	"time"
 
@@ -33,6 +34,13 @@ import (
 )
 
 var errMoreThanOneTestCaseObject = errors.New("more than one TestCase object found")
+
+const (
+	envTestCaseFailed    = "KUTTL_TEST_CASE_FAILED"
+	envTestCaseName      = "KUTTL_TEST_CASE_NAME"
+	envTestCaseStepName  = "KUTTL_TEST_CASE_STEP_NAME"
+	envTestCaseStepIndex = "KUTTL_TEST_CASE_STEP_INDEX"
+)
 
 type getClientFuncType func(forceNew bool) (client.Client, error)
 type getDiscoveryClientFuncType func() (discovery.DiscoveryInterface, error)
@@ -135,6 +143,7 @@ type Case struct {
 	getClient          getClientFuncType
 	getDiscoveryClient getDiscoveryClientFuncType
 	failed             bool
+	preCleanup         []v1beta1.Command
 
 	logger testutils.Logger
 	// List of log types which should be suppressed.
@@ -326,6 +335,11 @@ func (c *Case) Run(t *testing.T, rep report.TestReporter) { //nolint:thelper // 
 		t.Skipf("test case skipped because test run selector %q does not match test run labels %q", c.runSelector, c.runLabels)
 	}
 
+	var currentStep *step.Step
+	defer func() {
+		c.runPreCleanup(t, rep, currentStep)
+	}()
+
 	setupReport := rep.Step("setup")
 	if err := c.setup(t); err != nil {
 		c.failed = true
@@ -334,6 +348,7 @@ func (c *Case) Run(t *testing.T, rep report.TestReporter) { //nolint:thelper // 
 	}
 
 	for _, testStep := range c.steps {
+		currentStep = testStep
 		stepReport := rep.Step("step " + testStep.String())
 		testStep.Setup(c.logger, c.getClient, c.getDiscoveryClient)
 		stepReport.AddAssertions(len(testStep.Asserts))
@@ -370,6 +385,52 @@ func (c *Case) Run(t *testing.T, rep report.TestReporter) { //nolint:thelper // 
 	}
 
 	c.maybeReportEvents()
+}
+
+func (c *Case) runPreCleanup(t T, rep report.TestReporter, currentStep *step.Step) {
+	if len(c.preCleanup) == 0 {
+		return
+	}
+
+	// If the test case times out, its context is canceled and preCleanup commands may not complete.
+	// TODO: add a separate timeout setting to allow cleanup to complete.
+	ctx := t.Context()
+	if c.timeout > 0 {
+		var cancel context.CancelFunc
+		ctx, cancel = context.WithTimeout(ctx, time.Duration(c.timeout)*time.Second)
+		defer cancel()
+	}
+
+	var stepName string
+	stepIndex := -1
+	if currentStep != nil {
+		stepName = currentStep.Name
+		stepIndex = currentStep.Index
+	}
+
+	env := map[string]string{
+		envTestCaseFailed:    strconv.FormatBool(c.failed),
+		envTestCaseName:      c.name,
+		envTestCaseStepName:  stepName,
+		envTestCaseStepIndex: strconv.Itoa(stepIndex),
+	}
+
+	for i := range c.preCleanup {
+		if c.preCleanup[i].Background {
+			c.logger.Log("background commands are not allowed for preCleanup and will be run in foreground")
+			c.preCleanup[i].Background = false
+		}
+	}
+
+	if _, err := testutils.RunCommands(ctx, c.logger, c.ns.name, c.preCleanup, c.dir, c.timeout, "", env); err != nil {
+		preCleanupErr := fmt.Errorf("preCleanup failed: %w", err)
+		c.failed = true
+		t.Error(preCleanupErr)
+		if rep != nil {
+			preCleanupReport := rep.Step("preCleanup")
+			preCleanupReport.Failure(preCleanupErr.Error())
+		}
+	}
 }
 
 func (c *Case) setup(t *testing.T) error { //nolint:thelper // sets up the case and reports via t; not an assertion helper
@@ -480,6 +541,10 @@ func (c *Case) LoadTestSteps() error {
 	})
 
 	c.steps = testSteps
+
+	if testCase != nil {
+		c.preCleanup = testCase.PreCleanup
+	}
 
 	return c.setRunSelector(testCase)
 }

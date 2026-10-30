@@ -172,13 +172,16 @@ testRunSelector:
     values:
     - lemon
     - orange
+preCleanup:
+- script: kubectl delete resource --all
 ```
 
 Supported settings:
 
-| Field           | Type           | Description                                                                                                                     | Default                                                      |
-|-----------------|----------------|---------------------------------------------------------------------------------------------------------------------------------|--------------------------------------------------------------|
-| testRunSelector | label selector | If this selector does not match [labels of this test run](#test-run-labels-and-selectors), the test case will be skipped. | Empty label selector (matches all possible test label sets). |
+| Field           | Type                          | Description                                                                                                                                                                                                                     | Default                                                      |
+| --------------- | ----------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------ |
+| testRunSelector | label selector                | If this selector does not match [labels of this test run](#test-run-labels-and-selectors), the test case will be skipped.                                                                                                       | Empty label selector (matches all possible test label sets). |
+| preCleanup      | list of [Commands](#commands) | Commands to run after the test case finishes and before namespace cleanup. See the [preCleanup guide](../kuttl-test-harness.md#cleaning-up-resources-before-namespace-deletion) for environment variables and failure handling. | []                                                           |
 
 ## Collectors
 

@@ -485,7 +485,7 @@ func (s *Step) Run(t *testing.T, namespace string) []error { //nolint:thelper //
 				command.Background = false
 			}
 		}
-		if _, err := testutils.RunCommands(context.TODO(), s.Logger, namespace, s.Step.Commands, s.Dir, s.Timeout, s.Kubeconfig); err != nil {
+		if _, err := testutils.RunCommands(context.TODO(), s.Logger, namespace, s.Step.Commands, s.Dir, s.Timeout, s.Kubeconfig, nil); err != nil {
 			testErrors = append(testErrors, err)
 		}
 	}
@@ -533,7 +533,7 @@ func (s *Step) processFailure(namespace string) {
 			s.Logger.Log("skipping invalid assertion collector")
 			continue
 		}
-		_, err := testutils.RunCommand(context.TODO(), namespace, *collector.Command(), s.Dir, s.Logger, s.Logger, s.Logger, s.Timeout, s.Kubeconfig)
+		_, err := testutils.RunCommand(context.TODO(), namespace, *collector.Command(), s.Dir, s.Logger, s.Logger, s.Logger, s.Timeout, s.Kubeconfig, nil)
 		if err != nil {
 			s.Logger.Log("step collector failure: %s", err)
 		}

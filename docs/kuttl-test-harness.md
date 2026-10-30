@@ -167,6 +167,42 @@ With this in place, the run above (labeled `env=prod`) skips `example-test`, whi
 
 See the [TestCase reference](testing/reference.md#testcase) for the full list of supported settings.
 
+### Cleaning Up Resources Before Namespace Deletion
+
+By default, subject to the [suite delete setting](testing/reference.md#testsuite), KUTTL deletes the test namespace after a test case finishes, which removes all namespaced resources.
+
+Custom cleanup may be needed when a test case:
+- fails because of a logic error or a misbehaving controller,
+- creates cluster-scoped or external resources.
+
+If you define `preCleanup` commands on the test case's [TestCase](testing/reference.md#testcase) object, KUTTL runs these commands after the test case finishes and before namespace cleanup.
+
+Create `tests/e2e/example-test/00-test-case.yaml`:
+
+```yaml
+apiVersion: kuttl.dev/v1beta1
+kind: TestCase
+preCleanup:
+- script: kubectl delete clusterrole example-role --ignore-not-found=true
+```
+
+Each command receives these environment variables:
+
+| Environment variable         | Description                                                      |
+| ---------------------------- | ---------------------------------------------------------------- |
+| `KUTTL_TEST_CASE_FAILED`     | `true` if the test case failed; otherwise `false`.               |
+| `KUTTL_TEST_CASE_NAME`       | Name of the test case.                                           |
+| `KUTTL_TEST_CASE_STEP_NAME`  | Name of the last step attempted. Empty if no step was attempted. |
+| `KUTTL_TEST_CASE_STEP_INDEX` | Index of the last step attempted. `-1` if no step was attempted. |
+
+Scripts and commands can use these variables to determine how far the test case progressed and whether it passed or failed.
+For example, a shell script can run a different cleanup path when `KUTTL_TEST_CASE_FAILED` is `true`.
+
+The `preCleanup` commands must finish before namespace cleanup.
+If a command or script fails, the whole test case fails unless `ignoreFailure` is set to `true`.
+If `background` is set to `true`, KUTTL logs a warning and runs the command in the foreground instead.
+See the [Command reference](testing/reference.md#commands) for the complete command schema.
+
 ### Test Suite Configuration
 
 To add this test suite to your project, create a `kuttl-test.yaml` file:
