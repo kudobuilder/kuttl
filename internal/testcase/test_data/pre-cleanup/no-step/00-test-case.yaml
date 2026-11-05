@@ -1,0 +1,9 @@
+apiVersion: kuttl.dev/v1beta1
+kind: TestCase
+preCleanup:
+- background: true
+  script: >-
+    printf '%s\n%s\n%s\n%s\n'
+    "$KUTTL_TEST_CASE_FAILED" "$KUTTL_TEST_CASE_NAME"
+    "$KUTTL_TEST_CASE_STEP_NAME" "$KUTTL_TEST_CASE_STEP_INDEX"
+    > "$KUTTL_PRE_CLEANUP_OUTPUT"

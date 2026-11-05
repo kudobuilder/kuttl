@@ -3,6 +3,9 @@ package testcase
 import (
 	"context"
 	"fmt"
+	"os"
+	"path/filepath"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -18,6 +21,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 
 	"github.com/kudobuilder/kuttl/internal/kubernetes"
+	"github.com/kudobuilder/kuttl/internal/report"
 	"github.com/kudobuilder/kuttl/internal/step"
 	testutils "github.com/kudobuilder/kuttl/internal/utils"
 	harness "github.com/kudobuilder/kuttl/pkg/apis/testharness/v1beta1"
@@ -743,6 +747,111 @@ func TestLoadTestSteps(t *testing.T) {
 		})
 	}
 }
+
+func TestLoadTestStepsPreCleanup(t *testing.T) {
+	testCase := NewCase("loading", "test_data/pre-cleanup")
+	testCase.SetLogger(testutils.NewTestLogger(t, ""))
+	require.NoError(t, testCase.LoadTestSteps())
+
+	assert.Equal(t, []harness.Command{{Script: "cleanup-resource"}}, testCase.preCleanup)
+}
+
+func TestRunPreCleanupEnvironment(t *testing.T) {
+	outputPath := filepath.Join(t.TempDir(), "pre-cleanup-env")
+	t.Setenv("KUTTL_PRE_CLEANUP_OUTPUT", outputPath)
+
+	testCase := NewCase("environment", "test_data/pre-cleanup")
+	testCase.SetLogger(testutils.NewTestLogger(t, ""))
+	require.NoError(t, testCase.LoadTestSteps())
+
+	testCase.failed = true
+
+	currentStep := &step.Step{
+		Name:  "failing-step",
+		Index: 2,
+	}
+
+	testCase.runPreCleanup(t, nil, currentStep)
+
+	contents, err := os.ReadFile(outputPath)
+	require.NoError(t, err)
+	assert.Equal(t, []string{"true", "environment", "failing-step", "2"}, strings.Split(strings.TrimSpace(string(contents)), "\n"))
+}
+
+func TestRunPreCleanupFailure(t *testing.T) {
+	testCase := NewCase("failure", "test_data/pre-cleanup")
+	testCase.SetLogger(testutils.NewTestLogger(t, ""))
+	require.NoError(t, testCase.LoadTestSteps())
+
+	test := &testMock{}
+	reporter := &preCleanupReporter{}
+	testCase.runPreCleanup(test, reporter, nil)
+
+	assert.True(t, testCase.failed)
+	require.Len(t, test.testErrors, 1)
+	require.Len(t, test.testErrors[0], 1)
+	preCleanupErr, ok := test.testErrors[0][0].(error)
+	require.True(t, ok)
+	assert.Contains(t, preCleanupErr.Error(), "preCleanup failed")
+	assert.Equal(t, "preCleanup", reporter.stepName)
+	assert.Contains(t, reporter.failure, "preCleanup failed")
+}
+
+func TestRunPreCleanupBeforeNamespaceCleanup(t *testing.T) {
+	var events []string
+
+	outputPath := filepath.Join(t.TempDir(), "pre-cleanup")
+	t.Setenv("KUTTL_PRE_CLEANUP_OUTPUT", outputPath)
+
+	testCase := NewCase("ordering", "test_data/pre-cleanup")
+	testCase.SetLogger(testutils.NewTestLogger(t, ""))
+	require.NoError(t, testCase.LoadTestSteps())
+
+	t.Run("cleanup order", func(t *testing.T) {
+		t.Cleanup(func() {
+			contents, err := os.ReadFile(outputPath)
+			require.NoError(t, err)
+			events = append(events, string(contents))
+		})
+
+		testCase.runPreCleanup(t, nil, nil)
+	})
+
+	assert.Equal(t, []string{"cleanup"}, events)
+}
+
+func TestRunPreCleanupWithoutSteps(t *testing.T) {
+	outputPath := filepath.Join(t.TempDir(), "pre-cleanup-env")
+	t.Setenv("KUTTL_PRE_CLEANUP_OUTPUT", outputPath)
+
+	testCase := NewCase("no-step", "test_data/pre-cleanup")
+	testCase.SetLogger(testutils.NewTestLogger(t, ""))
+	require.NoError(t, testCase.LoadTestSteps())
+
+	testCase.runPreCleanup(t, nil, nil)
+
+	contents, err := os.ReadFile(outputPath)
+	require.NoError(t, err)
+	assert.Equal(t, []string{"false", "no-step", "", "-1"}, strings.Split(strings.TrimSpace(string(contents)), "\n"))
+}
+
+type preCleanupReporter struct {
+	stepName string
+	failure  string
+}
+
+func (r *preCleanupReporter) Step(stepName string) report.StepReporter {
+	r.stepName = stepName
+	return r
+}
+
+func (r *preCleanupReporter) Failure(message string, _ ...error) {
+	r.failure = message
+}
+
+func (r *preCleanupReporter) AddAssertions(int) {}
+
+func (r *preCleanupReporter) Done() {}
 
 // testMock is an object useful for unit-testing Case.createNamespace().
 type testMock struct {

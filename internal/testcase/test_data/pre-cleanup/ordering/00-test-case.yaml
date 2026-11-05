@@ -1,0 +1,4 @@
+apiVersion: kuttl.dev/v1beta1
+kind: TestCase
+preCleanup:
+- script: printf cleanup >> "$KUTTL_PRE_CLEANUP_OUTPUT"
