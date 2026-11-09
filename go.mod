@@ -14,7 +14,7 @@ require (
 	github.com/moby/moby/client v0.6.2
 	github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2
 	github.com/spf13/cobra v1.10.2
-	github.com/spf13/pflag v1.0.10
+	github.com/spf13/pflag v1.1.0
 	github.com/stretchr/testify v1.12.1
 	github.com/thoas/go-funk v0.9.3
 	gopkg.in/yaml.v2 v2.4.0
