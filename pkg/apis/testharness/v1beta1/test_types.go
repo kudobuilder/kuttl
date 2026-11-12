@@ -88,6 +88,9 @@ type TestCase struct {
 
 	// Which test runs should this case be used in. Empty selector matches all test runs.
 	TestRunSelector *metav1.LabelSelector `json:"testRunSelector,omitempty"`
+
+	// Commands to run after the test case finishes and before namespace cleanup.
+	PreCleanup []Command `json:"preCleanup,omitempty"`
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object

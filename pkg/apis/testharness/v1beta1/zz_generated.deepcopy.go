@@ -185,6 +185,11 @@ func (in *TestCase) DeepCopyInto(out *TestCase) {
 		*out = new(v1.LabelSelector)
 		(*in).DeepCopyInto(*out)
 	}
+	if in.PreCleanup != nil {
+		in, out := &in.PreCleanup, &out.PreCleanup
+		*out = make([]Command, len(*in))
+		copy(*out, *in)
+	}
 	return
 }
 
