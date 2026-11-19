@@ -58,8 +58,6 @@ func newTestCmd() *cobra.Command { //nolint:gocyclo
 	skipClusterDelete := false
 	parallel := 0
 	artifactsDir := ""
-	// TODO: remove after v0.16.0 deprecated
-	mockControllerFile := ""
 	timeout := 30
 	reportFormat := ""
 	reportName := "kuttl-report"
@@ -261,9 +259,6 @@ For more detailed documentation, visit: https://github.com/kudobuilder/kuttl`,
 			if len(options.TestDirs) == 0 {
 				return errors.New("no test directories provided, please provide either --config or test directories on the command line")
 			}
-			if mockControllerFile != "" {
-				log.Println("use of --control-plane-config is deprecated and no longer functions")
-			}
 			var err error
 			if templateVarsParsed, err = parseVars(templateVarsStrings); err != nil {
 				return fmt.Errorf("invalid --template-var: %w", err)
@@ -293,8 +288,6 @@ For more detailed documentation, visit: https://github.com/kudobuilder/kuttl`,
 	testCmd.Flags().StringVar(&testToRun, "test", "", "If set, the specific test case to run (basename of the test case dir).")
 	testCmd.Flags().BoolVar(&startControlPlane, "start-control-plane", false, "Start a local Kubernetes control plane for the tests (requires etcd and kube-apiserver binaries, cannot be used with --start-kind).")
 	testCmd.Flags().BoolVar(&attachControlPlaneOutput, "attach-control-plane-output", false, "Attaches control plane to stdout when using --start-control-plane.")
-	// TODO: remove after v0.16.0 deprecated mockControllerFile is not supported in the latest testenv
-	testCmd.Flags().StringVar(&mockControllerFile, "control-plane-config", "", "Path to file to load controller-runtime APIServer configuration arguments (only useful when --startControlPlane).")
 	testCmd.Flags().BoolVar(&startKIND, "start-kind", false, "Start a KIND cluster for the tests (cannot be used with --start-control-plane).")
 	testCmd.Flags().StringVar(&kindConfig, "kind-config", "", "Specify the KIND configuration file path (implies --start-kind, cannot be used with --start-control-plane).")
 	testCmd.Flags().StringVar(&kindContext, "kind-context", "", "Specify the KIND context name to use (default: kind).")
