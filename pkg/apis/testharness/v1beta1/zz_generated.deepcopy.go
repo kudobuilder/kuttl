@@ -342,11 +342,6 @@ func (in *TestSuite) DeepCopyInto(out *TestSuite) {
 		*out = make([]string, len(*in))
 		copy(*out, *in)
 	}
-	if in.ControlPlaneArgs != nil {
-		in, out := &in.ControlPlaneArgs, &out.ControlPlaneArgs
-		*out = make([]string, len(*in))
-		copy(*out, *in)
-	}
 	if in.KINDContainers != nil {
 		in, out := &in.KINDContainers, &out.KINDContainers
 		*out = make([]string, len(*in))

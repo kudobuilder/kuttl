@@ -110,11 +110,6 @@ type TestSuite struct {
 	TestDirs []string `json:"testDirs"`
 	// Whether or not to start a local etcd and kubernetes API server for the tests.
 	StartControlPlane bool `json:"startControlPlane"`
-	// ControlPlaneArgs defaults to APIServerDefaultArgs from controller-runtime pkg/internal/testing/integration/internal/apiserver.go
-	// this allows for control over the args, however these are not serialized from a TestSuite.yaml
-	// deprecated and is no longer used!
-	// TODO: remove after v0.16.0 (provide warning message until then)
-	ControlPlaneArgs []string `json:"controlPlaneArgs"`
 	// AttachControlPlaneOutput if true, attaches control plane logs (api-server, etcd) into stdout. This is useful for debugging.
 	// defaults to false
 	AttachControlPlaneOutput bool `json:"attachControlPlaneOutput"`
