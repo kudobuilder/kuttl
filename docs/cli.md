@@ -125,7 +125,9 @@ Flags are:
   See [testing/templating.md](testing/templating.md) for more information.
 
 * **`-v or -vv (int)`**
-  Logging verbosity level. 0=normal, 1=verbose, 2=detailed, 3 or more =trace.
+
+  Logging verbosity level of the built-in KIND cluster (only has effect with `--start-kind`). 0=normal, 1=verbose, 2=detailed, 3 or more =trace.
+  It does not affect the verbosity of kuttl's own output.
 
 
 
