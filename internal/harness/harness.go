@@ -534,12 +534,20 @@ func (h *Harness) Setup() {
 			h.fatal(fmt.Errorf("fatal error installing manifests: %v", err))
 		}
 	}
-	bgs, err := testutils.RunCommands(context.TODO(), h.GetLogger(), "default", h.TestSuite.Commands, "", h.TestSuite.Timeout, "", nil)
+	bgs, err := testutils.RunCommands(context.TODO(), h.GetLogger(), h.defaultNamespace(), h.TestSuite.Commands, "", h.TestSuite.Timeout, "", nil)
 	// assign any background processes first for cleanup in case of any errors
 	h.bgProcesses = append(h.bgProcesses, bgs...)
 	if err != nil {
 		h.fatal(fmt.Errorf("fatal error running commands: %v", err))
 	}
+}
+
+// defaultNamespace returns an explicitly provided namespace (if any), or "default" otherwise.
+func (h *Harness) defaultNamespace() string {
+	if h.TestSuite.Namespace != "" {
+		return h.TestSuite.Namespace
+	}
+	return "default"
 }
 
 // Stop the test environment and clean up the harness.
