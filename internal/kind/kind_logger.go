@@ -14,7 +14,7 @@ type level int32
 var verbosity level
 
 func SetFlags(flags *pflag.FlagSet) {
-	flags.VarP(&verbosity, "v", "v", "Logging verbosity level. 0=normal, 1=verbose, 2=detailed, 3+=trace.")
+	flags.VarP(&verbosity, "v", "v", "Logging verbosity level of the built-in KIND cluster (only has effect with --start-kind). 0=normal, 1=verbose, 2=detailed, 3+=trace.")
 }
 
 func (l *level) Get() interface{} {
