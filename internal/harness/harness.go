@@ -411,9 +411,13 @@ func (h *Harness) RunTests() {
 			suiteReport := h.NewSuiteReport(testDir)
 			for _, test := range tests {
 				t.Run(test.GetName(), func(t *testing.T) {
+					// Parallel defaults to 8 when unset (0), so only skip t.Parallel() when
+					// explicitly set to 1 for sequential execution.
 					// testing.T.Parallel may block, so run it before we read time for our
 					// elapsed time calculations.
-					t.Parallel()
+					if h.TestSuite.Parallel != 1 {
+						t.Parallel()
+					}
 
 					test.SetLogger(testutils.NewTestLogger(t, test.GetName()))
 
