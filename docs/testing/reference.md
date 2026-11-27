@@ -35,7 +35,7 @@ delete            | string           | Controls which resources are deleted afte
 skipDelete        | bool             | Deprecated: use `delete: none` instead. If set, do not delete the resources after running the tests (implies `skipClusterDelete`). | false
 skipClusterDelete | bool             | If set, do not delete the mocked control plane or kind cluster.                          | false
 timeout           | int              | Override the default timeout of 30 seconds (in seconds).                                 | 30
-parallel          | int              | The maximum number of tests to run at once.                                              | 8
+parallel          | int              | The maximum number of tests to run at once. When used through the programmatic API, `1` is respected by omitting the `.Parallel()` call, but any other value is ignored and the `t` passed to `Harness` controls parallelism. | 8
 artifactsDir      | string           | The directory to output artifacts to (current working directory if not specified).       | .
 commands          | list of [Commands](#commands) | Commands to run prior to running the tests.                                   | []
 kindContainers    | list of strings  | List of Docker images to load into the KIND cluster once it is started.                  | []
