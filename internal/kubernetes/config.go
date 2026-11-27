@@ -3,6 +3,7 @@ package kubernetes
 import (
 	"fmt"
 	"io"
+	"net/http"
 
 	"k8s.io/apimachinery/pkg/runtime/serializer/json"
 	"k8s.io/client-go/rest"
@@ -72,6 +73,11 @@ func Kubeconfig(cfg *rest.Config, w io.WriteCloser) error {
 		w.Close() //nolint:errcheck // We haven't written anything, we do not care if this fails, just preventing leaks.
 		return err
 	}
+	proxyURL, err := proxyURLFor(cfg)
+	if err != nil {
+		w.Close() //nolint:errcheck // We haven't written anything, we do not care if this fails, just preventing leaks.
+		return err
+	}
 	err = json.NewYAMLSerializer(json.DefaultMetaFactory, nil, nil).Encode(&appsv1.Config{
 		CurrentContext: "cluster",
 		Clusters: []appsv1.NamedCluster{
@@ -81,6 +87,7 @@ func Kubeconfig(cfg *rest.Config, w io.WriteCloser) error {
 					Server:                   cfg.Host,
 					CertificateAuthorityData: cfg.CAData,
 					InsecureSkipTLSVerify:    cfg.Insecure,
+					ProxyURL:                 proxyURL,
 				},
 			},
 		},
@@ -120,4 +127,24 @@ func Kubeconfig(cfg *rest.Config, w io.WriteCloser) error {
 		return fmt.Errorf("error closing newly written kubeconfig file: %w", err)
 	}
 	return nil
+}
+
+// proxyURLFor returns the proxy that cfg uses to reach its API server, or an empty string if there is none.
+// rest.Config only keeps the proxy as a function, so it is resolved here to be written back as proxy-url.
+func proxyURLFor(cfg *rest.Config) (string, error) {
+	if cfg.Proxy == nil {
+		return "", nil
+	}
+	host, _, err := rest.DefaultServerUrlFor(cfg)
+	if err != nil {
+		return "", fmt.Errorf("error parsing kubernetes server URL: %w", err)
+	}
+	proxy, err := cfg.Proxy(&http.Request{URL: host})
+	if err != nil {
+		return "", fmt.Errorf("error resolving kubernetes proxy URL: %w", err)
+	}
+	if proxy == nil {
+		return "", nil
+	}
+	return proxy.String(), nil
 }
